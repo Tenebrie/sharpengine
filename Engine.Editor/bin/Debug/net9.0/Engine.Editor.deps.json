@@ -278,6 +278,7 @@
       },
       "Engine.Codegen/1.0.0": {
         "dependencies": {
+          "JetBrains.Annotations": "2024.3.0",
           "Microsoft.CodeAnalysis.CSharp": "4.14.0"
         },
         "runtime": {

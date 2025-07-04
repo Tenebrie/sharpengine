@@ -2654,7 +2654,7 @@ public static partial class Bgfx
 	/// <param name="_debug">Available flags:   - `BGFX_DEBUG_IFH` - Infinitely fast hardware. When this flag is set     all rendering calls will be skipped. This is useful when profiling     to quickly assess potential bottlenecks between CPU and GPU.   - `BGFX_DEBUG_PROFILER` - Enable profiler.   - `BGFX_DEBUG_STATS` - Display internal statistics.   - `BGFX_DEBUG_TEXT` - Display debug text.   - `BGFX_DEBUG_WIREFRAME` - Wireframe rendering. All rendering     primitives will be rendered as lines.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_set_debug", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void SetDebug(DebugFlags _debug);
+	public static extern unsafe void set_debug(uint _debug);
 	
 	/// <summary>
 	/// Clear internal debug text buffer.
@@ -2676,7 +2676,7 @@ public static partial class Bgfx
 	/// <param name="_format">`printf` style format.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_dbg_text_printf", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void dbg_text_printf(ushort _x, ushort _y, byte _attr, [MarshalAs(UnmanagedType.LPStr)] string _format, [MarshalAs(UnmanagedType.LPStr)] string args );
+	public static extern unsafe void dbg_text_printf(ushort _x, ushort _y, byte _attr, [MarshalAs(UnmanagedType.LPStr)] string _format, [MarshalAs(UnmanagedType.LPStr)] string args);
 	
 	/// <summary>
 	/// Print formatted data from variable argument list to internal debug text character-buffer (VGA-compatible text mode).
@@ -3483,7 +3483,7 @@ public static partial class Bgfx
 	/// <param name="_height">Height of view port region.</param>
 	///
 	[DllImport(DllName, EntryPoint="bgfx_set_view_rect", CallingConvention = CallingConvention.Cdecl)]
-	public static extern unsafe void SetViewRect(ushort id, ushort x, ushort y, ushort width, ushort height);
+	public static extern unsafe void set_view_rect(ushort _id, ushort _x, ushort _y, ushort _width, ushort _height);
 	
 	/// <summary>
 	/// Set view rectangle. Draw primitive outside view will be clipped.

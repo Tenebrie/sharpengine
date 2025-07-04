@@ -9,11 +9,20 @@
     ".NETStandard,Version=v2.0/": {
       "Engine.Codegen/1.0.0": {
         "dependencies": {
+          "JetBrains.Annotations": "2024.3.0",
           "Microsoft.CodeAnalysis.CSharp": "4.14.0",
           "NETStandard.Library": "2.0.3"
         },
         "runtime": {
           "Engine.Codegen.dll": {}
+        }
+      },
+      "JetBrains.Annotations/2024.3.0": {
+        "runtime": {
+          "lib/netstandard2.0/JetBrains.Annotations.dll": {
+            "assemblyVersion": "4242.42.42.42",
+            "fileVersion": "2024.3.0.0"
+          }
         }
       },
       "Microsoft.CodeAnalysis.Analyzers/3.11.0": {},
@@ -235,6 +244,13 @@
       "type": "project",
       "serviceable": false,
       "sha512": ""
+    },
+    "JetBrains.Annotations/2024.3.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-ox5pkeLQXjvJdyAB4b2sBYAlqZGLh3PjSnP1bQNVx72ONuTJ9+34/+Rq91Fc0dG29XG9RgZur9+NcP4riihTug==",
+      "path": "jetbrains.annotations/2024.3.0",
+      "hashPath": "jetbrains.annotations.2024.3.0.nupkg.sha512"
     },
     "Microsoft.CodeAnalysis.Analyzers/3.11.0": {
       "type": "package",

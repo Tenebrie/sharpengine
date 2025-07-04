@@ -1,22 +1,25 @@
-﻿using System.Runtime.CompilerServices;
+﻿#pragma warning disable 649
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Engine.Codegen.Bgfx.Unsafe;
+using static Engine.Codegen.Bgfx.Unsafe.Bgfx; 
 using JetBrains.Annotations;
 
 namespace Engine.Rendering.Bgfx;
 
+[SuppressMessage("ReSharper", "UnusedMember.Global")]
 public static unsafe class BgfxDebug
 {
     // Order of the callbacks is important, names are not
     private struct NativeCallbackStruct
     {
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, bgfx.Fatal, sbyte*, ushort, sbyte*, void>  OnFatal;
+        [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, Fatal, sbyte*, ushort, sbyte*, void>       OnFatal;
         [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, sbyte*, void*, void>                       OnTrace;
         [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, void*, void>                               ProfilerBegin;
         [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, void>                                      ProfilerEnd;
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, void*, bgfx.Memory*>                       CacheRead;
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, void*, bgfx.Memory*, void>                 CacheWrite;
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, bgfx.TextureHandle, uint, uint, void>      ScreenShot;
+        [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, void*, Memory*>                            CacheRead;
+        [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, void*, Memory*, void>                      CacheWrite;
+        [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, TextureHandle, uint, uint, void>           ScreenShot;
     }
 
     private struct Callback
@@ -25,8 +28,8 @@ public static unsafe class BgfxDebug
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    private static void Fatal(
-        Callback* self, bgfx.Fatal code,
+    private static void FatalCallback(
+        Callback* self, Fatal code,
         sbyte* file, ushort line,
         sbyte* msg)
     {
@@ -36,7 +39,7 @@ public static unsafe class BgfxDebug
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    private static void Trace(
+    private static void TraceCallback(
         Callback* self, sbyte* fmt,
         void* varargs)
     {
@@ -53,8 +56,8 @@ public static unsafe class BgfxDebug
         var callbackStruct = new Callback();
         var callbackVTable = new NativeCallbackStruct
         {
-            OnFatal = &Fatal,
-            OnTrace = &Trace
+            OnFatal = &FatalCallback,
+            OnTrace = &TraceCallback
         };
 
         // Pin both structs so their addresses never move

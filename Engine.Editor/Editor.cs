@@ -15,7 +15,7 @@ internal class Editor
             API = new GraphicsAPI(ContextAPI.None, new APIVersion()),
         };
         var window = Window.Create(opts);
-        window.Render += BgfxCore.Frame;
+        window.Render += BgfxCore.RenderSingleFrame;
         window.Resize  += s => BgfxCore.Resize();
         window.Load += () => BgfxCore.Init(window, opts);
         window.Closing += BgfxCore.Shutdown;

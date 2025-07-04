@@ -17,8 +17,4 @@
     <ProjectReference Include="..\Engine.Rendering\Engine.Rendering.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Source\" />
-  </ItemGroup>
-
 </Project>

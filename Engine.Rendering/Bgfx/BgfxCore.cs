@@ -1,5 +1,6 @@
-﻿using Engine.Codegen.Bgfx.Unsafe;
-using static Engine.Codegen.Bgfx.Unsafe.bgfx;
+﻿using System.Drawing;
+using System.Numerics;
+using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 using Silk.NET.Windowing;
 
 namespace Engine.Rendering.Bgfx;
@@ -7,50 +8,118 @@ namespace Engine.Rendering.Bgfx;
 public unsafe class BgfxCore
 {
     private static IWindow _rootWindow = null!;
+    private static Vector2 _logoVelocity = new (143, 93);
+    private static Vector2 _logoPosition = Vector2.Zero;
+    private static int _logoBumpCount = 0;
+    private static float _logoAcceleration = 0.1f;
+    
     public static void Init(IWindow window, WindowOptions opts)
     {
         _rootWindow = window;
         BgfxDebug.Hook();
-        bgfx.Init init = default;
-        bgfx.init_ctor(&init);
-        init.type = bgfx.RendererType.Count;
-        init.platformData.nwh = (void*)window.Native!.Win32!.Value.Hwnd;
-        init.resolution.width = (uint)opts.Size.X;
-        init.resolution.height = (uint)opts.Size.Y;
-        init.resolution.format = bgfx.TextureFormat.RGBA8;
-        init.resolution.reset = (uint)bgfx.ResetFlags.Vsync;
-        init.callback = BgfxDebug.CallbackPtr;
+        Init initData = default;
+        init_ctor(&initData);
+        initData.type = RendererType.Count;
+        initData.platformData.nwh = (void*)window.Native!.Win32!.Value.Hwnd;
+        initData.resolution.width = (uint)opts.Size.X;
+        initData.resolution.height = (uint)opts.Size.Y;
+        initData.resolution.format = TextureFormat.RGBA8;
+        initData.resolution.reset = (uint)ResetFlags.Vsync;
+        initData.callback = BgfxDebug.CallbackPtr;
         
-        if (!bgfx.init(&init))
+        if (!init(&initData))
             throw new InvalidOperationException("bgfx init failed");
         SetDebug(DebugFlags.Text);
+        SetViewClear(0, (ClearFlags.Color | ClearFlags.Depth), 0x303030ff, 0, 0);
+
+        const int logoSizeX = 40;
+        const int logoSizeY = 12;
+        _logoPosition = new Vector2(opts.Size.X / 8.0f, opts.Size.Y / 16.0f) / 2 - new Vector2(logoSizeX, logoSizeY) / 2;
     }
 
-    public static void Frame(double delta)
+    public static void RenderSingleFrame(double delta)
     {
-        SetViewClear(0, (ClearFlags.Color | ClearFlags.Depth), 0x303030ff, 0, 0);
+        const int logoSizeX = 40;
+        const int logoSizeY = 12;
+
+        var cellCountX = (int)Math.Floor(_rootWindow.FramebufferSize.X / 8.0f);
+        var cellCountY = (int)Math.Floor(_rootWindow.FramebufferSize.Y / 16.0f);
+        // _logoPosition = new Vector2(_rootWindow.FramebufferSize.X, _rootWindow.FramebufferSize.Y) / 2;
+        
+        _logoPosition += _logoVelocity * (float)delta;
+        _logoVelocity = new Vector2(Math.Sign(_logoVelocity.X), Math.Sign(_logoVelocity.Y));
+
+        if (_logoPosition.X + logoSizeX * 8 >= _rootWindow.FramebufferSize.X)
+        {
+            _logoVelocity.X = -1;
+            _logoPosition.X = _rootWindow.FramebufferSize.X - logoSizeX * 8;
+            _logoBumpCount++;
+        }
+        if (_logoPosition.X < 0)
+        {
+            _logoVelocity.X = 1;
+            _logoPosition.X = 0;
+            _logoBumpCount++;
+        }
+
+        if (_logoPosition.Y + logoSizeY * 16 >= _rootWindow.FramebufferSize.Y)
+        {
+            _logoVelocity.Y = -1;
+            _logoPosition.Y = _rootWindow.FramebufferSize.Y - logoSizeY * 16;
+            _logoBumpCount++;
+        }
+        if (_logoPosition.Y < 0)
+        {
+            _logoVelocity.Y = 1;
+            _logoPosition.Y = 0;
+            _logoBumpCount++;
+        }
+
+        _logoVelocity = new Vector2(_logoVelocity.X * 143, _logoVelocity.Y * 93) * (1 + _logoAcceleration * _logoBumpCount);
+        
         SetViewRect(0, 0, 0,
             _rootWindow.FramebufferSize.X,
             _rootWindow.FramebufferSize.Y);
-        touch(0);
-        frame(false);
+        
+        Touch(0);
+        
+        DebugTextClear();
+        SetViewClear(0, (ClearFlags.Color | ClearFlags.Depth), 0x303030ff, 0, 0);
+
+        DebugTextImage(
+            (int)Math.Round(_logoPosition.X / 8),
+            (int)Math.Round(_logoPosition.Y / 16),
+            logoSizeX,
+            logoSizeY,
+            Logo.Bytes,
+            160
+        );
+        
+        DebugTextWrite(1, 1, DebugColor.White, DebugColor.Blue, "Hello world!");
+        DebugTextWrite(1, 2, DebugColor.White, DebugColor.Cyan, "This is BGFX debug text that do be debugging");
+        DebugTextWrite(1, 5, _rootWindow.FramebufferSize.X + " " + _rootWindow.FramebufferSize.Y);
+        DebugTextWrite(1, 6, cellCountX + " " + cellCountY);
+        DebugTextWrite(1, 7, Math.Round(_logoPosition.X) + " " + Math.Round(_logoPosition.Y));
+        DebugTextWrite(1, 8, "Bump count: " + _logoBumpCount + " " + "Speed multiplier: " + (1 + _logoAcceleration * _logoBumpCount));
+        
+        Frame(false);
     }
     
     public static void Resize()
     {
-        var w = (uint)_rootWindow.FramebufferSize.X; 
-        var h = (uint)_rootWindow.FramebufferSize.Y;
+        var width = _rootWindow.FramebufferSize.X; 
+        var height = _rootWindow.FramebufferSize.Y;
 
-        if (w == 0 || h == 0)
+        if (width == 0 || height == 0)
             return;
 
-        bgfx.reset(w, h, (uint)bgfx.ResetFlags.Vsync, bgfx.TextureFormat.Count);
-        bgfx.set_view_rect(0, 0, 0, (ushort)w, (ushort)h);
+        Reset(width, height, ResetFlags.Vsync, TextureFormat.Count);
+        SetViewRect(0, 0, 0, width, height);
     }
     
     public static void Shutdown()
     {
-        bgfx.frame(false);
-        bgfx.shutdown();
+        frame(false);
+        shutdown();
     }
 }
