@@ -1,0 +1,12 @@
+﻿<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Editor Dev" type="RunDotNetWatch" factoryName="RunDotNetWatch">
+    <option name="exePath" value="$PROJECT_DIR$/Engine.Editor/bin/Debug/net9.0/Engine.Editor.exe" />
+    <option name="programParameters" value="" />
+    <option name="projectFilePath" value="$PROJECT_DIR$/Engine.Editor/Engine.Editor.csproj" />
+    <option name="projectTfm" value="net9.0" />
+    <option name="restartOnRudeEditEditor" value="true" />
+    <option name="watchParameters" value="" />
+    <option name="workingDirectory" value="$PROJECT_DIR$/Engine.Editor/bin/Debug/net9.0" />
+    <method v="2" />
+  </configuration>
+</component>
