@@ -1,5 +1,7 @@
 ﻿using System.Drawing;
 using System.Numerics;
+using Engine.Worlds;
+using Silk.NET.Maths;
 using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 using Silk.NET.Windowing;
 
@@ -37,7 +39,7 @@ public unsafe class BgfxCore
         _logoPosition = new Vector2(opts.Size.X / 8.0f, opts.Size.Y / 16.0f) / 2 - new Vector2(logoSizeX, logoSizeY) / 2;
     }
 
-    public static void RenderSingleFrame(double delta)
+    public static void RenderSingleFrame(double delta, World world)
     {
         const int logoSizeX = 40;
         const int logoSizeY = 12;
@@ -105,7 +107,7 @@ public unsafe class BgfxCore
         Frame(false);
     }
     
-    public static void Resize()
+    public static void Resize(Vector2D<int> size)
     {
         var width = _rootWindow.FramebufferSize.X; 
         var height = _rootWindow.FramebufferSize.Y;

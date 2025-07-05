@@ -1,0 +1,11 @@
+V:\Taiga6\CustomEngine\Engine.World\bin\Debug\net9.0\Engine.World.deps.json
+V:\Taiga6\CustomEngine\Engine.World\bin\Debug\net9.0\Engine.World.dll
+V:\Taiga6\CustomEngine\Engine.World\bin\Debug\net9.0\Engine.World.pdb
+V:\Taiga6\CustomEngine\Engine.World\obj\Debug\net9.0\Engine.World.GeneratedMSBuildEditorConfig.editorconfig
+V:\Taiga6\CustomEngine\Engine.World\obj\Debug\net9.0\Engine.World.AssemblyInfoInputs.cache
+V:\Taiga6\CustomEngine\Engine.World\obj\Debug\net9.0\Engine.World.AssemblyInfo.cs
+V:\Taiga6\CustomEngine\Engine.World\obj\Debug\net9.0\Engine.World.csproj.CoreCompileInputs.cache
+V:\Taiga6\CustomEngine\Engine.World\obj\Debug\net9.0\Engine.World.dll
+V:\Taiga6\CustomEngine\Engine.World\obj\Debug\net9.0\refint\Engine.World.dll
+V:\Taiga6\CustomEngine\Engine.World\obj\Debug\net9.0\Engine.World.pdb
+V:\Taiga6\CustomEngine\Engine.World\obj\Debug\net9.0\ref\Engine.World.dll

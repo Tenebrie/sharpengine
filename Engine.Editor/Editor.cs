@@ -1,4 +1,5 @@
 ﻿using Engine.Rendering.Bgfx;
+using Engine.Worlds;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
 
@@ -14,9 +15,12 @@ internal class Editor
             Size = new Vector2D<int>(1920, 1080),
             API = new GraphicsAPI(ContextAPI.None, new APIVersion()),
         };
+
+        var editorWorld = new World();
+
         var window = Window.Create(opts);
-        window.Render += BgfxCore.RenderSingleFrame;
-        window.Resize  += s => BgfxCore.Resize();
+        window.Render += (delta) => BgfxCore.RenderSingleFrame(delta, editorWorld);
+        window.Resize  += BgfxCore.Resize;
         window.Load += () => BgfxCore.Init(window, opts);
         window.Closing += BgfxCore.Shutdown;
 

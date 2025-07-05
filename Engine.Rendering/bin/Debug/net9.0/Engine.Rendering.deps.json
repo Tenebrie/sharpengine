@@ -9,6 +9,7 @@
       "Engine.Rendering/1.0.0": {
         "dependencies": {
           "Engine.Codegen": "1.0.0",
+          "Engine.World": "1.0.0",
           "JetBrains.Annotations": "2024.3.0",
           "Silk.NET.Windowing": "2.22.0"
         },
@@ -287,6 +288,14 @@
             "fileVersion": "1.0.0.0"
           }
         }
+      },
+      "Engine.World/1.0.0": {
+        "runtime": {
+          "Engine.World.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
       }
     }
   },
@@ -444,6 +453,11 @@
       "hashPath": "ultz.native.glfw.3.4.0.nupkg.sha512"
     },
     "Engine.Codegen/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Engine.World/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

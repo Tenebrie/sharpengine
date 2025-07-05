@@ -9,3 +9,4 @@ V:\Taiga6\CustomEngine\Engine.Core\obj\Debug\net9.0\Engine.Core.dll
 V:\Taiga6\CustomEngine\Engine.Core\obj\Debug\net9.0\refint\Engine.Core.dll
 V:\Taiga6\CustomEngine\Engine.Core\obj\Debug\net9.0\Engine.Core.pdb
 V:\Taiga6\CustomEngine\Engine.Core\obj\Debug\net9.0\ref\Engine.Core.dll
+V:\Taiga6\CustomEngine\Engine.Core\obj\Debug\net9.0\Engine.Core.csproj.AssemblyReference.cache

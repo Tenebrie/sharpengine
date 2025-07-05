@@ -62,3 +62,5 @@ V:\Taiga6\CustomEngine\Engine.Editor\bin\Debug\net9.0\zh-Hans\Microsoft.CodeAnal
 V:\Taiga6\CustomEngine\Engine.Editor\bin\Debug\net9.0\zh-Hant\Microsoft.CodeAnalysis.CSharp.resources.dll
 V:\Taiga6\CustomEngine\Engine.Editor\bin\Debug\net9.0\Engine.Codegen.dll
 V:\Taiga6\CustomEngine\Engine.Editor\bin\Debug\net9.0\Engine.Codegen.pdb
+V:\Taiga6\CustomEngine\Engine.Editor\bin\Debug\net9.0\Engine.World.dll
+V:\Taiga6\CustomEngine\Engine.Editor\bin\Debug\net9.0\Engine.World.pdb

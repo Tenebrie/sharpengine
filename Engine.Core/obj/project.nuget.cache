@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "5yk15iZJl28=",
+  "dgSpecHash": "yrBOMSn8uHo=",
   "success": true,
   "projectFilePath": "V:\\Taiga6\\CustomEngine\\Engine.Core\\Engine.Core.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\Maija\\.nuget\\packages\\silk.net.maths\\2.22.0\\silk.net.maths.2.22.0.nupkg.sha512"
+  ],
   "logs": []
 }

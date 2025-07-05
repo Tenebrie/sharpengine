@@ -444,6 +444,7 @@
         "framework": ".NETCoreApp,Version=v9.0",
         "dependencies": {
           "Engine.Codegen": "1.0.0",
+          "Engine.Worlds": "1.0.0",
           "JetBrains.Annotations": "2024.3.0",
           "Silk.NET.Windowing": "2.22.0"
         },
@@ -452,6 +453,19 @@
         },
         "runtime": {
           "bin/placeholder/Engine.Rendering.dll": {}
+        }
+      },
+      "Engine.Worlds/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v9.0",
+        "dependencies": {
+          "Silk.NET.Maths": "2.22.0"
+        },
+        "compile": {
+          "bin/placeholder/Engine.Worlds.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Engine.Worlds.dll": {}
         }
       }
     }
@@ -1835,11 +1849,17 @@
       "type": "project",
       "path": "../Engine.Rendering/Engine.Rendering.csproj",
       "msbuildProject": "../Engine.Rendering/Engine.Rendering.csproj"
+    },
+    "Engine.Worlds/1.0.0": {
+      "type": "project",
+      "path": "../Engine.Worlds/Engine.Worlds.csproj",
+      "msbuildProject": "../Engine.Worlds/Engine.Worlds.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net9.0": [
       "Engine.Rendering >= 1.0.0",
+      "Engine.Worlds >= 1.0.0",
       "JetBrains.Annotations >= 2024.3.0",
       "Silk.NET.Windowing >= 2.22.0"
     ]
@@ -1878,6 +1898,9 @@
           "projectReferences": {
             "V:\\Taiga6\\CustomEngine\\Engine.Rendering\\Engine.Rendering.csproj": {
               "projectPath": "V:\\Taiga6\\CustomEngine\\Engine.Rendering\\Engine.Rendering.csproj"
+            },
+            "V:\\Taiga6\\CustomEngine\\Engine.Worlds\\Engine.Worlds.csproj": {
+              "projectPath": "V:\\Taiga6\\CustomEngine\\Engine.Worlds\\Engine.Worlds.csproj"
             }
           }
         }

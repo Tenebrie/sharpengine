@@ -13,3 +13,5 @@ V:\Taiga6\CustomEngine\Engine.Rendering\obj\Debug\net9.0\Engine.Rendering.csproj
 V:\Taiga6\CustomEngine\Engine.Rendering\bin\Debug\net9.0\Engine.Codegen.dll
 V:\Taiga6\CustomEngine\Engine.Rendering\bin\Debug\net9.0\Engine.Codegen.pdb
 V:\Taiga6\CustomEngine\Engine.Rendering\obj\Debug\net9.0\Engine.R.3C4EBD5F.Up2Date
+V:\Taiga6\CustomEngine\Engine.Rendering\bin\Debug\net9.0\Engine.World.dll
+V:\Taiga6\CustomEngine\Engine.Rendering\bin\Debug\net9.0\Engine.World.pdb
