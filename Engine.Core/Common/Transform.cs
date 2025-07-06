@@ -19,8 +19,8 @@ public class Transform
     {
         get
         {
-            Vector s = Scale;
-            Matrix4x4 r = Matrix4x4.Identity * _data;
+            var s = Scale;
+            var r = _data;
             r.Row1 /= s.X;
             r.Row2 /= s.Y;
             r.Row3 /= s.Z;
@@ -28,8 +28,8 @@ public class Transform
         }
         set
         {
-            Vector s = Scale;
-            Matrix4x4 r = MatrixHelpers.FromQuaternion(Quat.Normalize(value));
+            var s = Scale;
+            var r = MatrixHelpers.FromQuaternion(Quat.Normalize(value));
             _data.M11 = r.M11 * s.X; _data.M12 = r.M12 * s.X; _data.M13 = r.M13 * s.X;
             _data.M21 = r.M21 * s.Y; _data.M22 = r.M22 * s.Y; _data.M23 = r.M23 * s.Y;
             _data.M31 = r.M31 * s.Z; _data.M32 = r.M32 * s.Z; _data.M33 = r.M33 * s.Z;

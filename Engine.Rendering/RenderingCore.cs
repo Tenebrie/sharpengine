@@ -46,7 +46,6 @@ public unsafe class BgfxCore
 
         var cellCountX = (int)Math.Floor(_rootWindow.FramebufferSize.X / 8.0f);
         var cellCountY = (int)Math.Floor(_rootWindow.FramebufferSize.Y / 16.0f);
-        // _logoPosition = new Vector2(_rootWindow.FramebufferSize.X, _rootWindow.FramebufferSize.Y) / 2;
         
         _logoPosition += _logoVelocity * (float)delta;
         _logoVelocity = new Vector2(Math.Sign(_logoVelocity.X), Math.Sign(_logoVelocity.Y));

@@ -1,5 +1,6 @@
 ﻿using Engine.Rendering.Bgfx;
 using Engine.Worlds;
+using Game.User;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
 
@@ -16,13 +17,21 @@ internal class Editor
             API = new GraphicsAPI(ContextAPI.None, new APIVersion()),
         };
 
-        var editorWorld = new World();
+        // Load user settings here
+        var userSettings = new UserSettings();
+        
+        var world = (World)Activator.CreateInstance(userSettings.WorldType)!;
 
         var window = Window.Create(opts);
-        window.Render += (delta) => BgfxCore.RenderSingleFrame(delta, editorWorld);
+        window.Render += (delta) => BgfxCore.RenderSingleFrame(delta, world);
         window.Resize  += BgfxCore.Resize;
-        window.Load += () => BgfxCore.Init(window, opts);
+        window.Load += () =>
+        {
+            BgfxCore.Init(window, opts);
+        };
         window.Closing += BgfxCore.Shutdown;
+        
+        WorldRenderLoop.AttachToWindowLoop(world, window);
 
         window.Run();
     }

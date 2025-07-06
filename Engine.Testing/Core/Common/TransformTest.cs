@@ -9,7 +9,7 @@ public class TransformTest(ITestOutputHelper testOutputHelper)
     [Fact]
     public void TranslatesCorrectly()
     {
-        Assert.Equal(new Vector(1, 1, 1), Transform.Identity.Position);
+        Assert.Equal(new Vector(0, 0, 0),   Transform.Identity.Position);
         
         Assert.Equal(new Vector(3, 5, 8),   Transform.FromTranslation(3, 5, 8).Position);
         Assert.Equal(new Vector(3, 5, 8),   Transform.Identity.Translate(3, 5, 8).Position);
