@@ -4,5 +4,5 @@ namespace Game.User;
 
 public class UserSettings
 {
-    public Type WorldType { get; set; } = typeof(UserWorld);
+    public Type BackstageType { get; } = typeof(UserBackstage);
 }

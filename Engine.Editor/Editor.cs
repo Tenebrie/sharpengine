@@ -6,7 +6,7 @@ using Silk.NET.Windowing;
 
 namespace Engine.Editor;
 
-internal class Editor
+internal static class Editor
 {
     private static void Main()
     {
@@ -20,10 +20,10 @@ internal class Editor
         // Load user settings here
         var userSettings = new UserSettings();
         
-        var world = (World)Activator.CreateInstance(userSettings.WorldType)!;
+        var backstage = (Backstage)Activator.CreateInstance(userSettings.BackstageType)!;
 
         var window = Window.Create(opts);
-        window.Render += (delta) => BgfxCore.RenderSingleFrame(delta, world);
+        window.Render += (delta) => BgfxCore.RenderSingleFrame(delta, backstage);
         window.Resize  += BgfxCore.Resize;
         window.Load += () =>
         {
@@ -31,7 +31,7 @@ internal class Editor
         };
         window.Closing += BgfxCore.Shutdown;
         
-        WorldRenderLoop.AttachToWindowLoop(world, window);
+        WorldRenderLoop.AttachToWindowLoop(backstage, window);
 
         window.Run();
     }

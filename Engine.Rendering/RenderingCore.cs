@@ -26,7 +26,6 @@ public unsafe class BgfxCore
         initData.resolution.width = (uint)opts.Size.X;
         initData.resolution.height = (uint)opts.Size.Y;
         initData.resolution.format = TextureFormat.RGBA8;
-        initData.resolution.reset = (uint)ResetFlags.Vsync;
         initData.callback = BgfxDebug.CallbackPtr;
         
         if (!init(&initData))
@@ -38,8 +37,10 @@ public unsafe class BgfxCore
         const int logoSizeY = 12;
         _logoPosition = new Vector2(opts.Size.X / 8.0f, opts.Size.Y / 16.0f) / 2 - new Vector2(logoSizeX, logoSizeY) / 2;
     }
+    
+    private static readonly List<double> FrameTimes = [];
 
-    public static void RenderSingleFrame(double delta, World world)
+    public static void RenderSingleFrame(double delta, Backstage backstage)
     {
         const int logoSizeX = 40;
         const int logoSizeY = 12;
@@ -86,6 +87,13 @@ public unsafe class BgfxCore
         
         DebugTextClear();
         SetViewClear(0, (ClearFlags.Color | ClearFlags.Depth), 0x303030ff, 0, 0);
+        
+        FrameTimes.Add(delta);
+        if (FrameTimes.Count > 100)
+            FrameTimes.RemoveAt(0);
+        var averageFrameTime = FrameTimes.Count > 0 ? FrameTimes.Average() : 0.0;
+        var framerate = 1.0f / averageFrameTime;
+        DebugTextWrite(1, 10, "FPS: " + Math.Round(framerate));
 
         DebugTextImage(
             (int)Math.Round(_logoPosition.X / 8),

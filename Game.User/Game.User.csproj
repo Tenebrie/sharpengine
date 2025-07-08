@@ -8,6 +8,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Engine.Worlds\Engine.Worlds.csproj" />
+    <ProjectReference Include="..\Engine.User.Codegen\Engine.User.Codegen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
   </ItemGroup>
 
 </Project>

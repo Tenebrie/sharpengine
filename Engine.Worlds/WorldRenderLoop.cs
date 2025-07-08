@@ -2,12 +2,12 @@
 
 namespace Engine.Worlds;
 
-public class WorldRenderLoop
+public static class WorldRenderLoop
 {
-    public static void AttachToWindowLoop(World world, IWindow window)
+    public static void AttachToWindowLoop(Backstage backstage, IWindow window)
     {
-        window.Load += world.OnInit;
-        window.Render += world.ProcessLogicFrame;
-        window.Closing += world.OnDestroy;
+        window.Load += backstage.InitializeLifecycle;
+        window.Render += backstage.ProcessLogicFrame;
+        window.Closing += backstage.Free;
     }
 }

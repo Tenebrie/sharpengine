@@ -1,21 +1,47 @@
 ﻿using Engine.Worlds;
+using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
+using JetBrains.Annotations;
 
 namespace Game.User;
 
-public class UserWorld : World
+[MainBackstage]
+public class UserBackstage : Backstage
 {
-    protected override void OnInit()
+    [OnInit]
+    private void OnInit()
     {
-        Units.Add(new UserUnit());
+        var scene = new UserScene();
+        RegisterAtom(scene);
     }
 }
 
-public class UserUnit : Unit
+public class UserScene : Scene
 {
-    protected override void OnUpdate(double deltaTime)
+    [OnInit]
+    private void OnInit()
     {
-        base.OnUpdate(deltaTime);
-        Console.WriteLine("UserUnit is updating with deltaTime: " + deltaTime);
+        var actor = CreateActor<UserActor>();
+        actor.Transform.Position = new Vector(15, 15, 50);
+        Console.WriteLine("UserScene initialized with UserActor.");
+    }
+}
+
+public class UserActor : Actor
+{
+    [OnUpdate]
+    private void OnUpdate(double deltaTime)
+    {
+        if (Transform.Position.X < 30)
+        {
+            Transform.Position += new Vector(10, 0, 0) * deltaTime;
+            Console.WriteLine($"UserActor walked to {Transform.Position}.");
+        }
+
+        if (Transform.Position.X >= 30)
+        {
+            Console.WriteLine($"Destroying UserActor at position {Transform.Position}." + Backstage);
+            QueueFree();
+        }
     }
 }

@@ -14,5 +14,16 @@
   <ItemGroup>
       <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Reference Include="JetBrains.Annotations">
+      <HintPath>..\..\..\Software\JetBrains Rider 2025.1.1\lib\ReSharperHost\JetBrains.Annotations.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Folder Include="Components\" />
+    <Folder Include="Utilities\" />
+  </ItemGroup>
 
 </Project>
