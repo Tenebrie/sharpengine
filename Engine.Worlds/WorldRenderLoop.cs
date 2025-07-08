@@ -1,4 +1,5 @@
-﻿using Silk.NET.Windowing;
+﻿using Engine.Worlds.Entities;
+using Silk.NET.Windowing;
 
 namespace Engine.Worlds;
 
@@ -8,6 +9,6 @@ public static class WorldRenderLoop
     {
         window.Load += backstage.InitializeLifecycle;
         window.Render += backstage.ProcessLogicFrame;
-        window.Closing += backstage.Free;
+        window.Closing += backstage.FreeImmediately;
     }
 }

@@ -4,6 +4,6 @@ namespace Engine.Worlds.Attributes;
 
 [MeansImplicitUse]
 [AttributeUsage(AttributeTargets.Method)]
-public sealed class OnDestroy : Attribute
+public sealed class OnInitAttribute : Attribute
 {
 }

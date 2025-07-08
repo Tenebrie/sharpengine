@@ -35,7 +35,7 @@ public class LifecycleMethodCantBeStatic : DiagnosticSuppressor
                 continue;
 
             if (!method.GetAttributes()
-                    .Any(a => a.AttributeClass?.Name is "OnInit" or "OnUpdate" or "OnDestroy")) continue;
+                    .Any(a => LifecycleAttribute.Includes(a.AttributeClass?.Name))) continue;
             {
                 context.ReportSuppression(
                     Suppression.Create(Rule, diag));

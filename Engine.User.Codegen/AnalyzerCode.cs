@@ -3,6 +3,7 @@
 public enum AnalyzerCode
 {
     MainBackstageAppliedIncorrectly,
+    LifecycleAttributeOnPrivateMethod,
 }
 
 public static class ErrorCodeExtensions

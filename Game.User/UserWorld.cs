@@ -9,17 +9,17 @@ namespace Game.User;
 public class UserBackstage : Backstage
 {
     [OnInit]
-    private void OnInit()
+    protected void OnInit()
     {
         var scene = new UserScene();
-        RegisterAtom(scene);
+        RegisterChild(scene);
     }
 }
 
 public class UserScene : Scene
 {
     [OnInit]
-    private void OnInit()
+    protected void OnInit()
     {
         var actor = CreateActor<UserActor>();
         actor.Transform.Position = new Vector(15, 15, 50);
@@ -30,7 +30,7 @@ public class UserScene : Scene
 public class UserActor : Actor
 {
     [OnUpdate]
-    private void OnUpdate(double deltaTime)
+    protected void OnUpdate(double deltaTime)
     {
         if (Transform.Position.X < 30)
         {

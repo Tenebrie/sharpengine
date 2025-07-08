@@ -1,6 +1,7 @@
 ﻿using System.Drawing;
 using System.Numerics;
 using Engine.Worlds;
+using Engine.Worlds.Entities;
 using Silk.NET.Maths;
 using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 using Silk.NET.Windowing;

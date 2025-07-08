@@ -6,6 +6,6 @@ public class Scene : Atom
 
     public T CreateActor<T>() where T : Actor, new()
     {
-        return RegisterAtom(new T());
+        return RegisterChild(new T());
     }
 }

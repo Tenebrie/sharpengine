@@ -1,5 +1,6 @@
 ﻿using Engine.Rendering.Bgfx;
 using Engine.Worlds;
+using Engine.Worlds.Entities;
 using Game.User;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
