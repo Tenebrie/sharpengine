@@ -1,6 +1,7 @@
 ﻿using Engine.Worlds;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
+using Game.User.Actors;
 using JetBrains.Annotations;
 
 namespace Game.User;
@@ -21,9 +22,11 @@ public class UserScene : Scene
     [OnInit]
     protected void OnInit()
     {
-        var actor = CreateActor<UserActor>();
+        Actor actor = CreateActor<UserActor>();
         actor.Transform.Position = new Vector(15, 15, 50);
-        Console.WriteLine("UserScene initialized with UserActor.");
+        var random = new Random();
+        actor = CreateActor<BouncingLogo>();
+        actor.Transform.Position = new Vector(random.NextDouble() * 800, random.NextDouble() * 600, 0);
     }
 }
 
@@ -32,16 +35,6 @@ public class UserActor : Actor
     [OnUpdate]
     protected void OnUpdate(double deltaTime)
     {
-        if (Transform.Position.X < 30)
-        {
-            Transform.Position += new Vector(10, 0, 0) * deltaTime;
-            Console.WriteLine($"UserActor walked to {Transform.Position}.");
-        }
-
-        if (Transform.Position.X >= 30)
-        {
-            Console.WriteLine($"Destroying UserActor at position {Transform.Position}." + Backstage);
-            QueueFree();
-        }
+        
     }
 }

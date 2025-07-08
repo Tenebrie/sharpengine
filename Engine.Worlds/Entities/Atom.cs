@@ -6,7 +6,7 @@ namespace Engine.Worlds.Entities;
 [SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
 public partial class Atom
 {
-    public Backstage? Backstage { get; internal set; }
+    public Backstage Backstage { get; internal set; } = null!;
     public Atom? Parent { get; internal set; }
     public List<Atom> Children { get; } = [];
     

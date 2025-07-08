@@ -1,6 +1,7 @@
 ﻿using Engine.Worlds.Attributes;
 using Engine.Worlds.Services;
 using Engine.Worlds.Utilities;
+using Silk.NET.Windowing;
 
 namespace Engine.Worlds.Entities;
 
@@ -15,6 +16,9 @@ public class Backstage : Atom
     {
         Backstage = this;
     }
+
+    internal IWindow Window { get; set; } = null!;
+    public IWindow GetWindow() => Window;
     
     public T CreateScene<T>() where T : Scene, new()
     {

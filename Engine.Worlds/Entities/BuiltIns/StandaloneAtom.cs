@@ -2,7 +2,7 @@
 
 // This class is used to create a standalone atom that does not require a backstage.
 // It can be used for testing or other purposes where a backstage is not needed.
-// Note that this atom will not receive any lifecycle events such as initialization or rendering.
+// To submit an OnUpdate event, you can use the `ProcessLogicFrame` method directly.
 public class StandaloneAtom : Atom
 {
     public StandaloneAtom()

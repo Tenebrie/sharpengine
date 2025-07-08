@@ -5,6 +5,7 @@ using Engine.Worlds.Services;
 
 namespace Engine.Worlds.Entities;
 
+[SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 [SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
 public partial class Atom
 {
