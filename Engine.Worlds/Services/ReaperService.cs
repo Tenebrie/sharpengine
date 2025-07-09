@@ -13,9 +13,14 @@ public class ReaperService : Service
     
     public void Reap()
     {
-        foreach (var atom in CondemnedAtoms.Where(a => a.Backstage != null))
+        // ReSharper disable once ForCanBeConvertedToForeach
+        for (var i = 0; i < CondemnedAtoms.Count; i++)
         {
-            atom.FreeImmediately();
+            var atom = CondemnedAtoms[i];
+            if (IsValid(atom))
+            {
+                atom.FreeImmediately();
+            }
         }
         CondemnedAtoms.Clear();
     }

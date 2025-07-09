@@ -2,7 +2,6 @@
 
 namespace Engine.Worlds.Entities;
 
-public abstract class Actor : Atom
+public abstract class Actor : Spatial
 {
-    public Transform Transform { get; } = Transform.Identity;
 }

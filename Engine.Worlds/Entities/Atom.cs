@@ -19,13 +19,15 @@ public partial class Atom
         return atom;
     }
 
-    /**
-     * Proxy methods
-     */
     public T FindService<T>() where T : Service, new()
     {
         if (Backstage == null)
             throw new InvalidOperationException("Atom is not registered in a Backstage.");
         return Backstage.ServiceRegistry.Get<T>();
+    }
+    
+    public static bool IsValid(Atom? atom)
+    {
+        return atom is { IsBeingDestroyed: false } && IsValid(atom.Backstage);
     }
 }

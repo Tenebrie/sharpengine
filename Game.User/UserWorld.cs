@@ -24,9 +24,21 @@ public class UserScene : Scene
     {
         Actor actor = CreateActor<UserActor>();
         actor.Transform.Position = new Vector(15, 15, 50);
-        var random = new Random();
-        actor = CreateActor<BouncingLogo>();
-        actor.Transform.Position = new Vector(random.NextDouble() * 800, random.NextDouble() * 600, 0);
+        for (var x = 0; x < 15; x++)
+        {
+            for (var y = 0; y < 15; y++)
+            {
+                var cube = CreateActor<UnitCube>();
+                cube.Transform.Position = new Vector(x * 2, y * 2 - 8, -10);
+                cube.Transform.Scale = new Vector(0.4f, 0.4f, 0.4f);
+                cube.Transform.Rotation = Quaternion.Identity;
+            }
+        }
+    }
+    
+    [OnUpdate]
+    protected void OnUpdate(double deltaTime)
+    {
     }
 }
 

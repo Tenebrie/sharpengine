@@ -19,6 +19,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Game.User", "Game.User\Game
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.User.Codegen", "Engine.User.Codegen\Engine.User.Codegen.csproj", "{14B9358F-3AB7-457F-A569-B58CC7D1340B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Assets", "Engine.Assets\Engine.Assets.csproj", "{35209674-AA28-4826-AC74-024F8C432108}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -125,6 +127,18 @@ Global
 		{14B9358F-3AB7-457F-A569-B58CC7D1340B}.Release|x64.Build.0 = Release|Any CPU
 		{14B9358F-3AB7-457F-A569-B58CC7D1340B}.Release|x86.ActiveCfg = Release|Any CPU
 		{14B9358F-3AB7-457F-A569-B58CC7D1340B}.Release|x86.Build.0 = Release|Any CPU
+		{35209674-AA28-4826-AC74-024F8C432108}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35209674-AA28-4826-AC74-024F8C432108}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35209674-AA28-4826-AC74-024F8C432108}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{35209674-AA28-4826-AC74-024F8C432108}.Debug|x64.Build.0 = Debug|Any CPU
+		{35209674-AA28-4826-AC74-024F8C432108}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{35209674-AA28-4826-AC74-024F8C432108}.Debug|x86.Build.0 = Debug|Any CPU
+		{35209674-AA28-4826-AC74-024F8C432108}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35209674-AA28-4826-AC74-024F8C432108}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35209674-AA28-4826-AC74-024F8C432108}.Release|x64.ActiveCfg = Release|Any CPU
+		{35209674-AA28-4826-AC74-024F8C432108}.Release|x64.Build.0 = Release|Any CPU
+		{35209674-AA28-4826-AC74-024F8C432108}.Release|x86.ActiveCfg = Release|Any CPU
+		{35209674-AA28-4826-AC74-024F8C432108}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

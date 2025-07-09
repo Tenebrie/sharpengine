@@ -18,6 +18,7 @@ public partial class Atom
     
     internal void InitializeLifecycle()
     {
+        Console.WriteLine("Init");
         var methods = GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         
         var initMethods = methods.Where(method => method.GetCustomAttribute<OnInitAttribute>() != null).ToList();
@@ -31,6 +32,7 @@ public partial class Atom
         var properUpdateMethods = updateMethods.Where(method => method.GetParameters().Length > 0).ToList();
         foreach (var action in simpleUpdateMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action), this, methodInfo)))
         {
+            Console.WriteLine("Adding simple update method: " + action.Method.Name);
             OnUpdateCallback += _ => ((Action)action)();
         }
         foreach (var action in properUpdateMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action<double>), this, methodInfo)))
@@ -73,7 +75,7 @@ public partial class Atom
         if (Parent == null) return;
         
         Parent.Children.Remove(this);
-        Backstage = null;
+        Backstage = null!;
     }
 
     public bool IsBeingDestroyed { get; internal set; }

@@ -1,19 +1,24 @@
-﻿using System.Drawing;
-using System.Numerics;
-using Engine.Worlds;
+﻿using Engine.Rendering.Bgfx;
 using Engine.Worlds.Components;
 using Engine.Worlds.Entities;
 using Silk.NET.Maths;
-using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 using Silk.NET.Windowing;
+using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 
-namespace Engine.Rendering.Bgfx;
+namespace Engine.Rendering;
 
-public unsafe class BgfxCore
+public unsafe class RenderingCore
 {
-    private static IWindow _rootWindow = null!;
-    
-    public static void Init(IWindow window, WindowOptions opts)
+    private IWindow _rootWindow = null!;
+
+    public void ConnectToWindowEvents(Backstage backstage, IWindow window)
+    {
+        window.Render += (delta) => RenderSingleFrame(delta, backstage);
+        window.Resize  += OnResize;
+        window.Closing += OnShutdown;
+    }
+
+    public void OnInit(IWindow window, WindowOptions opts)
     {
         _rootWindow = window;
         BgfxDebug.Hook();
@@ -32,13 +37,10 @@ public unsafe class BgfxCore
         SetViewClear(0, (ClearFlags.Color | ClearFlags.Depth), 0x303030ff, 0, 0);
     }
     
-    private static readonly List<double> FrameTimes = [];
+    private readonly List<double> _frameTimes = [];
 
-    public static void RenderSingleFrame(double delta, Backstage backstage)
+    private void RenderSingleFrame(double delta, Backstage backstage)
     {
-        const int logoSizeX = 40;
-        const int logoSizeY = 12;
-
         SetViewRect(0, 0, 0,
             _rootWindow.FramebufferSize.X,
             _rootWindow.FramebufferSize.Y);
@@ -46,29 +48,32 @@ public unsafe class BgfxCore
         Touch(0);
         
         DebugTextClear();
-        SetViewClear(0, (ClearFlags.Color | ClearFlags.Depth), 0x303030ff, 0, 0);
+        SetViewClear(0, ClearFlags.Color | ClearFlags.Depth, 0x303030ff, 0, 0);
         
-        FrameTimes.Add(delta);
-        if (FrameTimes.Count > 100)
-            FrameTimes.RemoveAt(0);
-        var averageFrameTime = FrameTimes.Count > 0 ? FrameTimes.Average() : 0.0;
+        _frameTimes.Add(delta);
+        if (_frameTimes.Count > 100)
+            _frameTimes.RemoveAt(0);
+        var averageFrameTime = _frameTimes.Count > 0 ? _frameTimes.Average() : 0.0;
         var framerate = 1.0f / averageFrameTime;
-        DebugTextWrite(1, 10, "FPS: " + Math.Round(framerate));
 
         RenderAtomTree(delta, backstage);
         
-        DebugTextWrite(1, 1, DebugColor.White, DebugColor.Blue, "Hello world!");
-        DebugTextWrite(1, 2, DebugColor.White, DebugColor.Cyan, "This is BGFX debug text that do be debugging");
-        DebugTextWrite(1, 5, _rootWindow.FramebufferSize.X + " " + _rootWindow.FramebufferSize.Y);
+        DebugTextWrite(0, 0, DebugColor.White, DebugColor.Blue, "Let there be cube!");
+        DebugTextWrite(0, 1, "FPS: " + Math.Round(framerate));
         
         Frame(false);
     }
     
-    public static void RenderAtomTree(double delta, Atom target, int depth = 0)
+    public void RenderAtomTree(double delta, Atom target, int depth = 0)
     {
         if (target is DebugLogoComponent component)
         {
             RenderDebugLogoComponent(component);
+        }
+
+        if (target is StaticMeshComponent staticMesh)
+        {
+            RenderStaticMeshComponent(staticMesh);
         }
 
         foreach (var child in target.Children)
@@ -77,7 +82,7 @@ public unsafe class BgfxCore
         }
     }
 
-    private static void RenderDebugLogoComponent(DebugLogoComponent logoComponent)
+    private void RenderDebugLogoComponent(DebugLogoComponent logoComponent)
     {
         DebugTextImage(
             (int)Math.Round(logoComponent.Actor.Transform.Position.X / 8),
@@ -88,8 +93,13 @@ public unsafe class BgfxCore
             160
         );
     }
-    
-    public static void Resize(Vector2D<int> size)
+
+    private void RenderStaticMeshComponent(StaticMeshComponent staticMesh)
+    {
+        staticMesh.Mesh.Render(staticMesh.WorldTransform, 0, _rootWindow.FramebufferSize.X, _rootWindow.FramebufferSize.Y, staticMesh.Material);
+    }
+
+    private void OnResize(Vector2D<int> size)
     {
         var width = _rootWindow.FramebufferSize.X; 
         var height = _rootWindow.FramebufferSize.Y;
@@ -100,8 +110,8 @@ public unsafe class BgfxCore
         Reset(width, height, ResetFlags.Vsync, TextureFormat.Count);
         SetViewRect(0, 0, 0, width, height);
     }
-    
-    public static void Shutdown()
+
+    private static void OnShutdown()
     {
         frame(false);
         shutdown();

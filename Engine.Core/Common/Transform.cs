@@ -1,4 +1,8 @@
-﻿namespace Engine.Core.Common;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using Silk.NET.Maths;
+
+namespace Engine.Core.Common;
 
 public class Transform
 {
@@ -93,6 +97,31 @@ public class Transform
         return this;
     }
     
+    public override string ToString()
+    {
+        return $"Transform[Translation: ({_data.M14}, {_data.M24}, {_data.M34}) Rotation: ({_data.M11}, {_data.M22}, {_data.M33})Scale: ({_data.M11}, {_data.M22}, {_data.M33})";
+    }
+
+    public Matrix4x4 ToMatrix()
+    {
+        return _data;
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Span<double> ToSpan()
+    {
+        return MemoryMarshal.CreateSpan(ref Unsafe.As<Matrix4x4, double>(ref _data), 16);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void ToFloatSpan(ref Span<float> span)
+    {
+        ReadOnlySpan<double> src = ToSpan();
+
+        for (var i = 0; i < 16; i++)
+            span[i] = (float)src[i];      // narrowing cast
+    }
+    
     public static Transform Identity => new();
     
     public static Transform FromTranslation(Vector translation) => new (translation, Quat.Identity, Vector.One);
@@ -106,16 +135,6 @@ public class Transform
     public static Transform FromRotationRadians(double pitch, double yaw, double roll) => new (Vector.Zero, QuatUtils.FromRotationRadians(pitch, yaw,  roll), Vector.One);
     public static Transform FromScale(Vector scale) => new (Vector.Zero, Quat.Identity, scale);
     public static Transform FromScale(double x, double y, double z) => new (Vector.Zero, Quat.Identity, new Vector(x, y, z));
-
-    public override string ToString()
-    {
-        return $"Transform[Translation: ({_data.M14}, {_data.M24}, {_data.M34}) Rotation: ({_data.M11}, {_data.M22}, {_data.M33})Scale: ({_data.M11}, {_data.M22}, {_data.M33})";
-    }
-
-    public Matrix4x4 ToMatrix()
-    {
-        return _data;
-    }
     
     public static Transform operator*(Transform child, Transform parent)
     {

@@ -2,7 +2,8 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using static Engine.Codegen.Bgfx.Unsafe.Bgfx; 
+using System.Text;
+using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 using JetBrains.Annotations;
 
 namespace Engine.Rendering.Bgfx;
@@ -10,69 +11,100 @@ namespace Engine.Rendering.Bgfx;
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 public static unsafe class BgfxDebug
 {
-    // Order of the callbacks is important, names are not
     private struct NativeCallbackStruct
     {
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, Fatal, sbyte*, ushort, sbyte*, void>       OnFatal;
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, sbyte*, void*, void>                       OnTrace;
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, void*, void>                               ProfilerBegin;
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, void>                                      ProfilerEnd;
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, void*, Memory*>                            CacheRead;
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, void*, Memory*, void>                      CacheWrite;
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]<Callback*, TextureHandle, uint, uint, void>           ScreenShot;
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl]
+            <Callback*, Fatal, sbyte*, ushort, sbyte*, void>          OnFatal;
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl]
+            <Callback*, sbyte*, ushort, byte*, void*, void>          TraceVargs;
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl] <Callback*, void*, void>    ProfilerBegin;
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl] <Callback*, void>           ProfilerEnd;
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl] <Callback*, void*, Memory*> CacheRead;
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl] <Callback*, void*, Memory*, void> CacheWrite;
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl] <Callback*, TextureHandle, uint, uint, void> ScreenShot;
     }
 
     private struct Callback
     {
-        [UsedImplicitly] public NativeCallbackStruct* VirtualTable;
+        public NativeCallbackStruct* Vtbl;
     }
 
+    // ───── FATAL ────────────────────────────────────────────────────────────
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    private static void FatalCallback(
-        Callback* self, Fatal code,
-        sbyte* file, ushort line,
-        sbyte* msg)
+    private static void FatalCallback(Callback* self, Fatal code,
+                                      sbyte* file, ushort line,
+                                      sbyte* msg)
     {
-        Console.WriteLine($"BGFX FATAL [{code}] " +
-                          $"{Marshal.PtrToStringAnsi((nint)msg)} " +
+        Console.WriteLine($"BGFX FATAL [{code}] {Marshal.PtrToStringAnsi((nint)msg)} " +
                           $"@ {Marshal.PtrToStringAnsi((nint)file)}:{line}");
     }
 
+    // ───── TRACE_VARGS ─────────────────────────────────────────────────────
+    // use CRT's _vsnprintf to expand the va_list bgfx gives us
+    [DllImport("msvcrt", CallingConvention = CallingConvention.Cdecl,
+               EntryPoint = "_vsnprintf")]
+    private static extern int CRT_vsnprintf(byte* dst, uint size,
+                                            byte* fmt, void* arg);
+
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    private static void TraceCallback(
-        Callback* self, sbyte* fmt,
-        void* varargs)
+    private static void TraceCallback(Callback* self,
+                                      sbyte* filePath,
+                                      ushort line,
+                                      byte* fmt,
+                                      void* argList)
     {
-        // Console.WriteLine("[bgfx] " + Marshal.PtrToStringAnsi((nint)fmt));
+        const int bufSize = 50000;
+        Span<byte> buf = stackalloc byte[bufSize];
+
+        var prefixLen = Encoding.ASCII.GetBytes(
+            $"{Marshal.PtrToStringAnsi((nint)filePath)}({line}): ", buf);
+
+        fixed (byte* p = buf)
+        {
+            var len = CRT_vsnprintf(p + prefixLen,
+                                    (uint)(bufSize - prefixLen),
+                                    fmt, argList);
+            if (len < 0) len = 0;           // CRT error? show at least the prefix
+
+            // Console.WriteLine("[bgfx] " + Encoding.ASCII.GetString(buf[..(prefixLen + len)]));
+        }
     }
 
-    private static GCHandle _callbackStructHandle;
-    private static GCHandle _callbackVTableHandle;
+    // ───── book-keeping ────────────────────────────────────────────────────
+    private static GCHandle _cbStructHandle;
+    private static GCHandle _cbVTableHandle;
 
+    /// Pass this to `bgfx_init().callback` **before any other bgfx call**.
     public static nint CallbackPtr { get; private set; }
 
     public static void Hook()
     {
-        var callbackStruct = new Callback();
-        var callbackVTable = new NativeCallbackStruct
+        var cbStruct = new Callback();
+        var cbVTable = new NativeCallbackStruct
         {
-            OnFatal = &FatalCallback,
-            OnTrace = &TraceCallback
+            OnFatal    = &FatalCallback,
+            TraceVargs = &TraceCallback
         };
 
-        // Pin both structs so their addresses never move
-        _callbackStructHandle = GCHandle.Alloc(callbackStruct, GCHandleType.Pinned);
-        _callbackVTableHandle = GCHandle.Alloc(callbackVTable,  GCHandleType.Pinned);
+        _cbStructHandle = GCHandle.Alloc(cbStruct,  GCHandleType.Pinned);
+        _cbVTableHandle = GCHandle.Alloc(cbVTable, GCHandleType.Pinned);
 
-        var callbackPtr = (Callback*)_callbackStructHandle.AddrOfPinnedObject();
-        callbackPtr->VirtualTable = (NativeCallbackStruct*)_callbackVTableHandle.AddrOfPinnedObject();
+        var cbPtr = (Callback*)_cbStructHandle.AddrOfPinnedObject();
+        cbPtr->Vtbl = (NativeCallbackStruct*)_cbVTableHandle.AddrOfPinnedObject();
 
-        CallbackPtr = (nint)(Callback*)_callbackStructHandle.AddrOfPinnedObject();
+        CallbackPtr = (nint)cbPtr;
     }
 
     public static void Unhook()
     {
-        _callbackStructHandle.Free();
-        _callbackVTableHandle.Free();
+        if (_cbStructHandle.IsAllocated) _cbStructHandle.Free();
+        if (_cbVTableHandle.IsAllocated) _cbVTableHandle.Free();
     }
 }

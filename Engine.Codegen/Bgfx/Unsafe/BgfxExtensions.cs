@@ -181,6 +181,27 @@ public static partial class Bgfx
     public static extern void SetViewClear(ushort viewId, ClearFlags flags, uint rgba, float depth, byte stencil);
     
     /// <summary>
+    /// Set render states for draw primitive.
+    /// @remarks
+    ///   1. To set up more complex states use:
+    ///      `BGFX_STATE_ALPHA_REF(_ref)`,
+    ///      `BGFX_STATE_POINT_SIZE(_size)`,
+    ///      `BGFX_STATE_BLEND_FUNC(_src, _dst)`,
+    ///      `BGFX_STATE_BLEND_FUNC_SEPARATE(_srcRGB, _dstRGB, _srcA, _dstA)`,
+    ///      `BGFX_STATE_BLEND_EQUATION(_equation)`,
+    ///      `BGFX_STATE_BLEND_EQUATION_SEPARATE(_equationRGB, _equationA)`
+    ///   2. `BGFX_STATE_BLEND_EQUATION_ADD` is set when no other blend
+    ///      equation is specified.
+    /// </summary>
+    ///
+    /// <param name="flags">State flags. Default state for primitive type is   triangles. See: `BGFX_STATE_DEFAULT`.   - `BGFX_STATE_DEPTH_TEST_*` - Depth test function.   - `BGFX_STATE_BLEND_*` - See remark 1 about BGFX_STATE_BLEND_FUNC.   - `BGFX_STATE_BLEND_EQUATION_*` - See remark 2.   - `BGFX_STATE_CULL_*` - Backface culling mode.   - `BGFX_STATE_WRITE_*` - Enable R, G, B, A or Z write.   - `BGFX_STATE_MSAA` - Enable hardware multisample antialiasing.   - `BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]` - Primitive type.</param>
+    /// <param name="rgba">Sets blend factor used by `BGFX_STATE_BLEND_FACTOR` and   `BGFX_STATE_BLEND_INV_FACTOR` blend modes.</param>
+    /// <see cref="Bgfx" srcline="4219" />
+    ///
+    [DllImport(DllName, EntryPoint="bgfx_set_state", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void SetState(StateFlags flags, uint rgba = 0);
+    
+    /// <summary>
     /// Marks a view as "touched", ensuring that its background is cleared even if nothing is rendered.
     /// </summary>
     /// <param name="viewId">The index of the view to touch.</param>

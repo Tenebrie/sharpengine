@@ -1,5 +1,5 @@
 ﻿<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Editor Dev" type="RunDotNetWatch" factoryName="RunDotNetWatch">
+  <configuration default="false" name="Editor Dev" type="RunDotNetWatch" factoryName="RunDotNetWatch" activateToolWindowBeforeRun="false">
     <option name="exePath" value="$PROJECT_DIR$/Engine.Editor/bin/Debug/net9.0/Engine.Editor.exe" />
     <option name="programParameters" value="" />
     <option name="projectFilePath" value="$PROJECT_DIR$/Engine.Editor/Engine.Editor.csproj" />
