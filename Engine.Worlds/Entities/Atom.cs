@@ -9,13 +9,19 @@ public partial class Atom
     public Backstage Backstage { get; internal set; } = null!;
     public Atom? Parent { get; internal set; }
     public List<Atom> Children { get; } = [];
+
+    internal void Initialize()
+    {
+        InitializeLifecycle();
+        InitializeInput();
+    }
     
-    public T RegisterChild<T>(T atom) where T : Atom, new()
+    public T AdoptChild<T>(T atom) where T : Atom, new()
     {
         Children.Add(atom);
         atom.Parent = this;
         atom.Backstage = Backstage;
-        atom.InitializeLifecycle();
+        atom.Initialize();
         return atom;
     }
 

@@ -22,7 +22,7 @@ public class ServiceRegistry : Atom
             return (T)service;
         }
         
-        service = RegisterChild(new T());
+        service = AdoptChild(new T());
         Services[type] = service;
         return (T)service;
     }

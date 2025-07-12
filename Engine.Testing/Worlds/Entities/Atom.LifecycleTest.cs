@@ -13,7 +13,7 @@ public class AtomLifecycleTest
         var parent = new StandaloneAtom();
         var child = new MockAtom();
         
-        parent.RegisterChild(child);
+        parent.AdoptChild(child);
         
         Assert.Equal(1, child.OnInitCallCount);
     }
@@ -23,7 +23,7 @@ public class AtomLifecycleTest
     {
         var parent = new StandaloneAtom();
         var child = new MockAtom();
-        parent.RegisterChild(child);
+        parent.AdoptChild(child);
         parent.ProcessLogicFrame(3.14);
         
         Assert.Equal(3.14, child.TotalDeltaTime);
@@ -36,7 +36,7 @@ public class AtomLifecycleTest
     {
         var parent = new StandaloneAtom();
         var child = new MockAtom();
-        parent.RegisterChild(child);
+        parent.AdoptChild(child);
         
         List<Atom> destructionOrder = [];
         parent.OnDestroyCallback += () => destructionOrder.Add(parent);
@@ -55,8 +55,8 @@ public class AtomLifecycleTest
         var backstage = new Backstage();
         var parent = new MockAtom();
         var child = new MockAtom();
-        backstage.RegisterChild(parent);
-        parent.RegisterChild(child);
+        backstage.AdoptChild(parent);
+        parent.AdoptChild(child);
         parent.QueueFree();
         
         Assert.Equal(0, parent.OnDestroyCallCount);
@@ -71,8 +71,8 @@ public class AtomLifecycleTest
         var backstage = new Backstage();
         var parent = new MockAtom();
         var child = new MockAtom();
-        backstage.RegisterChild(parent);
-        parent.RegisterChild(child);
+        backstage.AdoptChild(parent);
+        parent.AdoptChild(child);
         parent.QueueFree();
         
         Assert.Single(backstage.FindService<ReaperService>().CondemnedAtoms);

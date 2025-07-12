@@ -1,7 +1,9 @@
-﻿using Engine.Rendering;
+﻿using Engine.Input;
+using Engine.Rendering;
 using Engine.Worlds;
 using Engine.Worlds.Entities;
 using Game.User;
+using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
 
@@ -29,6 +31,18 @@ internal static class Editor
         
         window.Load += () =>
         {
+            var input = window.CreateInput();
+            var inputHandler = new InputHandler();
+            foreach (var inputKeyboard in input.Keyboards)
+            {
+                inputHandler.BindKeyboardEvents(inputKeyboard);
+            }
+            foreach (var inputMouse in input.Mice)
+            {
+                inputHandler.BindMouseEvents(inputMouse);
+            }
+            window.Render += delta => inputHandler.SendKeyboardHeldEvents(delta);
+            
             renderer.OnInit(window, opts);
             
             // Save window state for hot reload

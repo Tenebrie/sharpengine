@@ -12,14 +12,14 @@ public class UnitCube : Actor
     protected void OnInit()
     {
         // TODO: Autowire components using [Component] attribute
-        Mesh = RegisterChild(new StaticMeshComponent());
+        Mesh = AdoptChild(new StaticMeshComponent());
         Mesh.Actor = this;
     }
 
     [OnUpdate]
     protected void OnUpdate(double deltaTime)
     {
-        Transform.Translate(-0.5 * deltaTime, 0, 0);
+        // Transform.Translate(-0.5 * deltaTime, 0, 0);
         Transform.Rotate(3 * deltaTime, 5 * deltaTime, 7 * deltaTime);
     }
 }

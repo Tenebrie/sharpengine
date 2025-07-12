@@ -16,9 +16,8 @@ public partial class Atom
     
     public Action? OnDestroyCallback { get; set; }
     
-    internal void InitializeLifecycle()
+    private void InitializeLifecycle()
     {
-        Console.WriteLine("Init");
         var methods = GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         
         var initMethods = methods.Where(method => method.GetCustomAttribute<OnInitAttribute>() != null).ToList();

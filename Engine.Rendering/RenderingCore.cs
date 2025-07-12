@@ -1,9 +1,11 @@
 ﻿using Engine.Rendering.Bgfx;
 using Engine.Worlds.Components;
 using Engine.Worlds.Entities;
+using Engine.Worlds.Entities.BuiltIns;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
 using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
+using Transform = Engine.Core.Common.Transform;
 
 namespace Engine.Rendering;
 
@@ -14,7 +16,7 @@ public unsafe class RenderingCore
     public void ConnectToWindowEvents(Backstage backstage, IWindow window)
     {
         window.Render += (delta) => RenderSingleFrame(delta, backstage);
-        window.Resize  += OnResize;
+        window.Resize += OnResize;
         window.Closing += OnShutdown;
     }
 
@@ -56,15 +58,32 @@ public unsafe class RenderingCore
         var averageFrameTime = _frameTimes.Count > 0 ? _frameTimes.Average() : 0.0;
         var framerate = 1.0f / averageFrameTime;
 
-        RenderAtomTree(delta, backstage);
+        var camera = FindActiveCamera(backstage);
+        var cameraTransform = camera?.Transform.Negate() ?? new Transform
+        {
+            Position = new Vector(0, 0, 0),
+            Rotation = new Quaternion(0, 0, 0, 1),
+            Scale = new Vector(1, 1, 1)
+        };
+        RenderAtomTree(cameraTransform, backstage);
         
         DebugTextWrite(0, 0, DebugColor.White, DebugColor.Blue, "Let there be cube!");
         DebugTextWrite(0, 1, "FPS: " + Math.Round(framerate));
         
         Frame(false);
     }
-    
-    public void RenderAtomTree(double delta, Atom target, int depth = 0)
+
+    private Camera? FindActiveCamera(Atom target, int depth = 0)
+    {
+        if (target is Camera camera)
+        {
+            return camera;
+        }
+
+        return target.Children.Select(child => FindActiveCamera(child, depth + 1)).OfType<Camera>().FirstOrDefault();
+    }
+
+    private void RenderAtomTree(Transform cameraTransform, Atom target, int depth = 0)
     {
         if (target is DebugLogoComponent component)
         {
@@ -73,12 +92,12 @@ public unsafe class RenderingCore
 
         if (target is StaticMeshComponent staticMesh)
         {
-            RenderStaticMeshComponent(staticMesh);
+            RenderStaticMeshComponent(cameraTransform, staticMesh);
         }
 
         foreach (var child in target.Children)
         {
-            RenderAtomTree(delta, child, depth + 1);
+            RenderAtomTree(cameraTransform, child, depth + 1);
         }
     }
 
@@ -94,9 +113,9 @@ public unsafe class RenderingCore
         );
     }
 
-    private void RenderStaticMeshComponent(StaticMeshComponent staticMesh)
+    private void RenderStaticMeshComponent(Transform cameraTransform, StaticMeshComponent staticMesh)
     {
-        staticMesh.Mesh.Render(staticMesh.WorldTransform, 0, _rootWindow.FramebufferSize.X, _rootWindow.FramebufferSize.Y, staticMesh.Material);
+        staticMesh.Mesh.Render(cameraTransform, staticMesh.WorldTransform, 0, _rootWindow.FramebufferSize.X, _rootWindow.FramebufferSize.Y, staticMesh.Material);
     }
 
     private void OnResize(Vector2D<int> size)

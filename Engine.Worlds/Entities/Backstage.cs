@@ -22,7 +22,7 @@ public class Backstage : Atom
     
     public T CreateScene<T>() where T : Scene, new()
     {
-        return RegisterChild(new T());
+        return AdoptChild(new T());
     }
 
     [OnUpdate]

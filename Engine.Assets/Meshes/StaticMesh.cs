@@ -75,15 +75,12 @@ public sealed class StaticMesh : IDisposable
         }
     }
 
-    public void Render(Transform worldTransform, ushort viewId, float width, float height, Material material)
+    public void Render(Transform cameraTransform, Transform worldTransform, ushort viewId, float width, float height, Material material)
     {
         // Raw view matrix: identity (camera at origin, looking down -Z)
-        float[] viewMatrix = {
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, -4, 1
-        };
+
+        Span<float> viewMatrix = stackalloc float[16];
+        cameraTransform.ToFloatSpan(ref viewMatrix);
 
         // Raw perspective projection matrix (60 deg FOV)
         float fov = 60.0f * MathF.PI / 180.0f;

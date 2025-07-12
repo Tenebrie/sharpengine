@@ -7,7 +7,7 @@ public class StandaloneAtom : Atom
 {
     public StandaloneAtom()
     {
-        InitializeLifecycle();
+        Initialize();
     }
 
     public new void ProcessLogicFrame(double deltaTime)

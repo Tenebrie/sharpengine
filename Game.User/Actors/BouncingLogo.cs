@@ -16,7 +16,7 @@ public class BouncingLogo : Actor
     protected void OnInit()
     {
         // TODO: Autowire components using [Component] attribute
-        DebugLogoComponent = RegisterChild(new DebugLogoComponent());
+        DebugLogoComponent = AdoptChild(new DebugLogoComponent());
         DebugLogoComponent.Actor = this;
         var windowSize = Backstage.GetWindow().Size;
         const float debugCellSizeX = 8;

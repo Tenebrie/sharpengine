@@ -8,7 +8,7 @@ public static class BackstageEventLoop
     public static void ConnectToWindowEvents(Backstage backstage, IWindow window)
     {
         backstage.Window = window;
-        window.Load += backstage.InitializeLifecycle;
+        window.Load += backstage.Initialize;
         window.Render += backstage.ProcessLogicFrame;
         window.Closing += backstage.FreeImmediately;
     }

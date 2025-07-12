@@ -96,6 +96,19 @@ public class Transform
         Scale *= scale;
         return this;
     }
+
+    public Transform Negate()
+    {
+        return new Transform
+        {
+            _data = new Matrix4x4(
+                _data.M11, _data.M12, _data.M13, _data.M14,
+                _data.M21, _data.M22, _data.M23, _data.M24,
+                _data.M31, _data.M32, _data.M33, _data.M34,
+                -_data.M41, -_data.M42, -_data.M43, _data.M44
+            )
+        };
+    }
     
     public override string ToString()
     {

@@ -13,7 +13,7 @@ public class UserBackstage : Backstage
     protected void OnInit()
     {
         var scene = new UserScene();
-        RegisterChild(scene);
+        AdoptChild(scene);
     }
 }
 
@@ -22,6 +22,7 @@ public class UserScene : Scene
     [OnInit]
     protected void OnInit()
     {
+        var camera = CreateActor<MainCamera>();
         Actor actor = CreateActor<UserActor>();
         actor.Transform.Position = new Vector(15, 15, 50);
         for (var x = 0; x < 15; x++)
