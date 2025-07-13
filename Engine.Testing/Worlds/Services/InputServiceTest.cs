@@ -275,6 +275,10 @@ public abstract class InputServiceTest
                 .Add(UserInputActions.Down, Key.Down)
                 .Add(UserInputActions.Left, Key.Left)
                 .Add(UserInputActions.Right, Key.Right)
+                .Add(UserInputActions.Up, Key.W)
+                .Add(UserInputActions.Down, Key.S)
+                .Add(UserInputActions.Left, Key.A)
+                .Add(UserInputActions.Right, Key.D)
                 .Build();
             backstage.Initialize();
             return backstage;
@@ -569,6 +573,31 @@ public abstract class InputServiceTest
             backstage.ProcessLogicFrame(4.2);
             backstage.Keyboard.SendKeyUp(Key.Left);
             backstage.Keyboard.SendKeyUp(Key.Down);
+            Assert.Equal(1, backstage.MultiActionWithVectorCallCount);
+            Assert.Equal(new Vector2(-1.0, -1.0), backstage.MultiActionWithVectorCallSum);
+        }
+        
+        [Fact]
+        private void MultiAction_AllowsAlternativeKeysInContext()
+        {
+            var backstage = SetupBackstage();
+            
+            backstage.Keyboard.SendKeyDown(Key.W);
+            backstage.Keyboard.SendKeyDown(Key.D);
+            backstage.ProcessLogicFrame(4.2);
+            backstage.Keyboard.SendKeyUp(Key.W);
+            backstage.Keyboard.SendKeyUp(Key.D);
+            Assert.Equal(1, backstage.MultiActionWithVectorCallCount);
+            Assert.Equal(new Vector2(1.0, 1.0), backstage.MultiActionWithVectorCallSum);
+            
+            backstage.MultiActionWithVectorCallCount = 0;
+            backstage.MultiActionWithVectorCallSum = Vector2.Zero;
+            
+            backstage.Keyboard.SendKeyDown(Key.A);
+            backstage.Keyboard.SendKeyDown(Key.S);
+            backstage.ProcessLogicFrame(4.2);
+            backstage.Keyboard.SendKeyUp(Key.A);
+            backstage.Keyboard.SendKeyUp(Key.S);
             Assert.Equal(1, backstage.MultiActionWithVectorCallCount);
             Assert.Equal(new Vector2(-1.0, -1.0), backstage.MultiActionWithVectorCallSum);
         }

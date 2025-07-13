@@ -37,7 +37,7 @@ public class InputContext
                 entry.Keys.Add(key);
                 return this;
             }
-            _entries[action] = new InputContextEntry(Convert.ToInt64(action), key);
+            _entries[action] = new InputContextEntry(Convert.ToInt64(action), [key]);
             return this;
         }
 
@@ -45,15 +45,15 @@ public class InputContext
         {
             var dictionaryEntries = _entries.ToDictionary(
                 kvp => Convert.ToInt64(kvp.Key),
-                kvp => new InputContextEntry(Convert.ToInt64(kvp.Key), kvp.Value.Keys.First())
+                kvp => new InputContextEntry(Convert.ToInt64(kvp.Key), kvp.Value.Keys)
             );
             return new InputContext(dictionaryEntries);
         }
     }
 }
 
-public class InputContextEntry(long action, Key key)
+public class InputContextEntry(long action, List<Key> keys)
 {
     public long Action { get; } = action;
-    public List<Key> Keys { get; } = [key];
+    public List<Key> Keys { get; } = keys;
 }
