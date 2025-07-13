@@ -10,6 +10,6 @@ public static class ErrorCodeExtensions
 {
     public static string GetCode(this AnalyzerCode code)
     {
-        return "Custom" + (code + 4000);
+        return "TN" + (code + 4000);
     }
 }

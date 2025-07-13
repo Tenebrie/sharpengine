@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using Engine.Input;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Services;
 
@@ -31,7 +32,6 @@ public partial class Atom
         var properUpdateMethods = updateMethods.Where(method => method.GetParameters().Length > 0).ToList();
         foreach (var action in simpleUpdateMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action), this, methodInfo)))
         {
-            Console.WriteLine("Adding simple update method: " + action.Method.Name);
             OnUpdateCallback += _ => ((Action)action)();
         }
         foreach (var action in properUpdateMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action<double>), this, methodInfo)))
@@ -70,6 +70,9 @@ public partial class Atom
                 throw new InvalidOperationException("Child count did not decrease after FreeImmediately call.");
             childrenCount = Children.Count;
         }
+        
+        InputHandler.ClearSubscriptions(this);
+        
         OnDestroyCallback?.Invoke();
         if (Parent == null) return;
         

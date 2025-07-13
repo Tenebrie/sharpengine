@@ -18,9 +18,14 @@ public static unsafe partial class GarbageFixes
         {
             return new Vector2D<float>(1.0f, 1.0f);
         }
-        var win = (WindowHandle*)window.Native.Glfw;
-        GlfwGetWindowContentScale(win, out var sx, out var sy);
-        return new Vector2D<float>(sx, sy); 
+
+        var win = window.Native?.Glfw;
+        if (win == null)
+        {
+            return new Vector2D<float>(1.0f, 1.0f);
+        }
+        GlfwGetWindowContentScale((WindowHandle*)win, out var sx, out var sy);
+        return new Vector2D<float>(sx, sy);
     }
     
     public static Vector2D<float> GetPrimaryMonitorScale()

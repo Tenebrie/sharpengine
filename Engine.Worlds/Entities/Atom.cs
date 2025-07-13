@@ -12,6 +12,7 @@ public partial class Atom
 
     internal void Initialize()
     {
+        InitializeComponents();
         InitializeLifecycle();
         InitializeInput();
     }

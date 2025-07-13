@@ -33,7 +33,7 @@ public static unsafe class BgfxDebug
 
     private struct Callback
     {
-        public NativeCallbackStruct* Vtbl;
+        [UsedImplicitly] public NativeCallbackStruct* Vtbl;
     }
 
     // ───── FATAL ────────────────────────────────────────────────────────────
@@ -71,6 +71,7 @@ public static unsafe class BgfxDebug
             var len = CRT_vsnprintf(p + prefixLen,
                                     (uint)(bufSize - prefixLen),
                                     fmt, argList);
+            // ReSharper disable once RedundantAssignment
             if (len < 0) len = 0;           // CRT error? show at least the prefix
 
             // Console.WriteLine("[bgfx] " + Encoding.ASCII.GetString(buf[..(prefixLen + len)]));

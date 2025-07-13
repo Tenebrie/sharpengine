@@ -1,10 +1,8 @@
 ﻿using Engine.Core.Common;
-using Silk.NET.Maths;
-using Xunit.Abstractions;
 
 namespace Engine.Testing.Core.Common;
 
-public class VectorExtensionsTest(ITestOutputHelper testOutputHelper)
+public class VectorExtensionsTest()
 {
     [Fact]
     public void NormalizesVector3()

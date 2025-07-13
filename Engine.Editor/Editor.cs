@@ -32,7 +32,7 @@ internal static class Editor
         window.Load += () =>
         {
             var input = window.CreateInput();
-            var inputHandler = new InputHandler();
+            var inputHandler = InputHandler.GetInstance();
             foreach (var inputKeyboard in input.Keyboards)
             {
                 inputHandler.BindKeyboardEvents(inputKeyboard);

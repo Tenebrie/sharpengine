@@ -1,18 +1,10 @@
 ﻿using Engine.Core.Common;
-using Silk.NET.Maths;
 using Xunit.Abstractions;
 
 namespace Engine.Testing.Core.Common;
 
-public class MatrixHelpersTest
+public class MatrixHelpersTest(ITestOutputHelper testOutputHelper)
 {
-    private readonly ITestOutputHelper _testOutputHelper;
-
-    public MatrixHelpersTest(ITestOutputHelper testOutputHelper)
-    {
-        _testOutputHelper = testOutputHelper;
-    }
-
     [Fact]
     public void CreatesValidMatrixFromTranslation()
     {
@@ -54,7 +46,7 @@ public class MatrixHelpersTest
     {
         var rotation = new Rotator(45, 45, 45).ToQuat();
         var matrix = MatrixHelpers.FromQuaternion(rotation);
-        _testOutputHelper.WriteLine(matrix.ToString());
+        testOutputHelper.WriteLine(matrix.ToString());
         
         Assert.Equal(0.8920486638100034, matrix.M11);
         Assert.Equal(-0.06664587581055026, matrix.M12);

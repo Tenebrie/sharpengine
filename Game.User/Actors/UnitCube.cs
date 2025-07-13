@@ -6,16 +6,9 @@ namespace Game.User.Actors;
 
 public class UnitCube : Actor
 {
-    [Component] protected StaticMeshComponent Mesh = null!;
-
-    [OnInit]
-    protected void OnInit()
-    {
-        // TODO: Autowire components using [Component] attribute
-        Mesh = AdoptChild(new StaticMeshComponent());
-        Mesh.Actor = this;
-    }
-
+    [Component]
+    protected StaticMeshComponent Mesh;
+    
     [OnUpdate]
     protected void OnUpdate(double deltaTime)
     {

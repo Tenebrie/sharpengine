@@ -1,6 +1,4 @@
-﻿using Silk.NET.Maths;
-
-namespace Engine.Core.Common;
+﻿namespace Engine.Core.Common;
 
 public static class VectorExtensions
 {

@@ -1,6 +1,4 @@
-﻿using Engine.Worlds;
-
-namespace Game.User;
+﻿namespace Game.User;
 
 public class UserSettings
 {

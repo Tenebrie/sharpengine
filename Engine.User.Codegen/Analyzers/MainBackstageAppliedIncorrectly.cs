@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -16,7 +15,7 @@ public class MainBackstageAppliedIncorrectly : DiagnosticAnalyzer
 
     private static readonly DiagnosticDescriptor Rule = new(
         DiagnosticId,
-        "Invalid usage of [MainBackstage]",
+        "Invalid usage of [MainBackstage]s",
         "[MainBackstage] can only be applied on a Backstage-derived class",
         "Usage",
         DiagnosticSeverity.Error,
@@ -50,7 +49,7 @@ public class MainBackstageAppliedIncorrectly : DiagnosticAnalyzer
 
             // try to look up the Backstage base type
             var backstageType = context.Compilation
-                                       .GetTypeByMetadataName("Engine.Worlds.Backstage");
+                                       .GetTypeByMetadataName("Engine.Worlds.Entities.Backstage");
             if (backstageType == null)
                 continue;
 

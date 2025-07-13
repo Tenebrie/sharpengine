@@ -1,10 +1,9 @@
 ﻿using Engine.Core.Common;
 using Engine.Testing.TestUtilities;
-using Xunit.Abstractions;
 
 namespace Engine.Testing.Core.Common;
 
-public class TransformTest(ITestOutputHelper testOutputHelper)
+public class TransformTest()
 {
     [Fact]
     public void TranslatesCorrectly()

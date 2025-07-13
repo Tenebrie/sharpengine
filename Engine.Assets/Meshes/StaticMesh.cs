@@ -1,7 +1,5 @@
-﻿using System.Numerics;
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using Engine.Assets.Materials;
-using Engine.Codegen.Bgfx.Unsafe;
 using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 using Transform = Engine.Core.Common.Transform;
 

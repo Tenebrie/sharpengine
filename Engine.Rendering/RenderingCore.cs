@@ -73,26 +73,26 @@ public unsafe class RenderingCore
         Frame(false);
     }
 
-    private Camera? FindActiveCamera(Atom target, int depth = 0)
+    private static Camera? FindActiveCamera(Atom target)
     {
         if (target is Camera camera)
         {
             return camera;
         }
 
-        return target.Children.Select(child => FindActiveCamera(child, depth + 1)).OfType<Camera>().FirstOrDefault();
+        return target.Children.Select(FindActiveCamera).OfType<Camera>().FirstOrDefault();
     }
 
     private void RenderAtomTree(Transform cameraTransform, Atom target, int depth = 0)
     {
-        if (target is DebugLogoComponent component)
+        switch (target)
         {
-            RenderDebugLogoComponent(component);
-        }
-
-        if (target is StaticMeshComponent staticMesh)
-        {
-            RenderStaticMeshComponent(cameraTransform, staticMesh);
+            case DebugLogoComponent component:
+                RenderDebugLogoComponent(component);
+                break;
+            case StaticMeshComponent staticMesh:
+                RenderStaticMeshComponent(cameraTransform, staticMesh);
+                break;
         }
 
         foreach (var child in target.Children)
@@ -101,7 +101,7 @@ public unsafe class RenderingCore
         }
     }
 
-    private void RenderDebugLogoComponent(DebugLogoComponent logoComponent)
+    private static void RenderDebugLogoComponent(DebugLogoComponent logoComponent)
     {
         DebugTextImage(
             (int)Math.Round(logoComponent.Actor.Transform.Position.X / 8),

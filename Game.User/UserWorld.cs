@@ -1,8 +1,6 @@
-﻿using Engine.Worlds;
-using Engine.Worlds.Attributes;
+﻿using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 using Game.User.Actors;
-using JetBrains.Annotations;
 
 namespace Game.User;
 
@@ -22,7 +20,7 @@ public class UserScene : Scene
     [OnInit]
     protected void OnInit()
     {
-        var camera = CreateActor<MainCamera>();
+        CreateActor<MainCamera>();
         Actor actor = CreateActor<UserActor>();
         actor.Transform.Position = new Vector(15, 15, 50);
         for (var x = 0; x < 15; x++)

@@ -2,8 +2,6 @@
 using Silk.NET.Windowing;
 using System.Text.Json;
 using Engine.Editor.Windowing;
-using Silk.NET.GLFW;
-using Monitor = Silk.NET.Windowing.Monitor;
 using Timer = System.Timers.Timer;
 
 namespace Engine.Editor;
