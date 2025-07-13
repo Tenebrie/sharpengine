@@ -11,7 +11,8 @@ public class ServiceRegistry : Atom
     [OnInit]
     internal void Init()
     {
-        Services.Add(typeof(ReaperService), FindService<ReaperService>());
+        Services.Add(typeof(ReaperService), GetService<ReaperService>());
+        Services.Add(typeof(ReflectionService), GetService<ReflectionService>());
     }
     
     internal T Get<T>() where T : Service, new()

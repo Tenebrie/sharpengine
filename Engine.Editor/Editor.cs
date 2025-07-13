@@ -2,10 +2,12 @@
 using Engine.Rendering;
 using Engine.Worlds;
 using Engine.Worlds.Entities;
+using Engine.Worlds.Services;
 using Game.User;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
+using InputService = Engine.Worlds.Services.InputService;
 
 namespace Engine.Editor;
 
@@ -32,7 +34,7 @@ internal static class Editor
         window.Load += () =>
         {
             var input = window.CreateInput();
-            var inputHandler = InputHandler.GetInstance();
+            var inputHandler = backstage.GetService<InputService>();
             foreach (var inputKeyboard in input.Keyboards)
             {
                 inputHandler.BindKeyboardEvents(inputKeyboard);
@@ -41,7 +43,6 @@ internal static class Editor
             {
                 inputHandler.BindMouseEvents(inputMouse);
             }
-            window.Render += delta => inputHandler.SendKeyboardHeldEvents(delta);
             
             renderer.OnInit(window, opts);
             

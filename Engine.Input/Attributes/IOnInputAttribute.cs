@@ -6,8 +6,7 @@ public enum InputParamBinding
 {
     None,
     Double,
-    Vector2,
-    Vector3,
+    Vector2
 }
 
 public interface IOnInputAttribute
@@ -17,6 +16,5 @@ public interface IOnInputAttribute
     public Key? ExplicitKey { get; }
     public double X { get; }
     public double Y { get; }
-    public double Z { get; }
     public InputParamBinding BindingParams { get; }
 }

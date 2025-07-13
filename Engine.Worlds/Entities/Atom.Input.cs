@@ -1,9 +1,9 @@
-﻿using System.Linq.Expressions;
-using System.Reflection;
+﻿using System.Reflection;
 using Engine.Input;
 using Engine.Input.Attributes;
 using Engine.Worlds.Services;
 using Silk.NET.Input;
+using InputService = Engine.Input.InputService;
 
 namespace Engine.Worlds.Entities;
 
@@ -12,47 +12,72 @@ public partial class Atom
     private void InitializeInput()
     {
         var methods = GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        var userInputActions = ReflectionService.GetUserInputActionsEnum();
-        if (userInputActions == null)
-        {
-            throw new Exception("UserInputActionsEnum is null");
-        }
+        var userInputActions = Backstage.ServiceRegistry.Get<ReflectionService>().GetUserInputActionsEnum();
         
         var guid = Guid.NewGuid();
-        var onInputAttribute = typeof(OnInputAttribute<>).MakeGenericType(userInputActions);
-        var onInputHeldAttribute = typeof(OnInputHeldAttribute<>).MakeGenericType(userInputActions);
-        var onInputReleasedAttribute = typeof(OnInputReleasedAttribute<>).MakeGenericType(userInputActions);
+        List<MethodInfo> onInputActionMethods;
+        List<MethodInfo> onInputActionHeldMethods;
+        List<MethodInfo> onInputActionReleasedMethods;
+        Type? onInputAttribute = null;
+        Type? onInputHeldAttribute = null;
+        Type? onInputReleasedAttribute = null;
 
-        var onInputActionMethods = methods
-            .Where(m => m.IsDefined(onInputAttribute, inherit: true))
-            .ToList();
-        var onInputActionHeldMethods = methods
-            .Where(m => m.IsDefined(onInputHeldAttribute, inherit: true))
-            .ToList();
-        var onInputActionReleasedMethods = methods
-            .Where(m => m.IsDefined(onInputReleasedAttribute, inherit: true))
-            .ToList();
-        
-        foreach (var method in onInputActionMethods)
+        // No actions defined - process only hardcoded key events.
+        if (userInputActions == null)
         {
-            var attrs = (IOnInputAttribute[])method.GetCustomAttributes(onInputAttribute, inherit: false);
+            onInputActionMethods = methods
+                .Where(m => m.IsDefined(typeof(OnKeyInputAttribute), inherit: true))
+                .ToList();
+            onInputActionHeldMethods = methods
+                .Where(m => m.IsDefined(typeof(OnKeyInputHeldAttribute), inherit: true))
+                .ToList();
+            onInputActionReleasedMethods = methods
+                .Where(m => m.IsDefined(typeof(OnKeyInputReleasedAttribute), inherit: true))
+                .ToList();
+        }
+        // Actions defined - process all.
+        else
+        {
+            onInputAttribute = typeof(OnInputAttribute<>).MakeGenericType(userInputActions);
+            onInputHeldAttribute = typeof(OnInputHeldAttribute<>).MakeGenericType(userInputActions);
+            onInputReleasedAttribute = typeof(OnInputReleasedAttribute<>).MakeGenericType(userInputActions);
+
+            onInputActionMethods = methods
+                .Where(m => m.IsDefined(typeof(OnKeyInputAttribute)) || m.IsDefined(onInputAttribute, inherit: true))
+                .ToList();
+            onInputActionHeldMethods = methods
+                .Where(m => m.IsDefined(typeof(OnKeyInputHeldAttribute)) || m.IsDefined(onInputHeldAttribute, inherit: true))
+                .ToList();
+            onInputActionReleasedMethods = methods
+                .Where(m => m.IsDefined(typeof(OnKeyInputReleasedAttribute)) || m.IsDefined(onInputReleasedAttribute, inherit: true))
+                .ToList();
+        }
+
+        for (var index = 0; index < onInputActionMethods.Count; index++)
+        {
+            var method = onInputActionMethods[index];
+            var groupId = guid + "-" + index;
+            
+            var attrs = (IOnInputAttribute[])method.GetCustomAttributes(typeof(OnKeyInputAttribute), inherit: false);
+            if (onInputAttribute != null)
+                attrs = attrs.Concat((IOnInputAttribute[])method.GetCustomAttributes(onInputAttribute, inherit: false)).ToArray();
+            
             foreach (var attr in attrs)
             {
-                var entry = MakeInputActionHandler(method, attr);
+                var entry = MakeInputActionHandler(method, attr, groupId);
                 if (attr.HasInputAction)
                 {
-                    if (InputHandler.OnInputEvent.TryGetValue(attr.InputActionId, out _))
-                        InputHandler.OnInputEvent[attr.InputActionId] += entry;
-                    else
-                        InputHandler.OnInputEvent[attr.InputActionId] = entry;
+                    if (!InputService.OnInputEvent.ContainsKey(attr.InputActionId))
+                        InputService.OnInputEvent[attr.InputActionId] = [];
+                    InputService.OnInputEvent[attr.InputActionId].Add(entry);
                 }
-
+                
                 var key = attr.ExplicitKey;
                 if (key == null) continue;
-                if (InputHandler.OnKeyboardKeyEvent.TryGetValue((Key)key, out _))
-                    InputHandler.OnKeyboardKeyEvent[(Key)key] += entry;
-                else
-                    InputHandler.OnKeyboardKeyEvent[(Key)key] = entry;
+                
+                if (!InputService.OnKeyboardKeyEvent.ContainsKey((Key)key))
+                    InputService.OnKeyboardKeyEvent[(Key)key] = [];
+                InputService.OnKeyboardKeyEvent[(Key)key].Add(entry);
             }
         }
 
@@ -61,105 +86,138 @@ public partial class Atom
             // Methods within a group are summed and invoked together.
             var groupId = guid + "-" + index;
             var method = onInputActionHeldMethods[index];
-            var attrs = (IOnInputAttribute[])method.GetCustomAttributes(onInputHeldAttribute, inherit: false);
+            
+            var attrs = (IOnInputAttribute[])method.GetCustomAttributes(typeof(OnKeyInputHeldAttribute), inherit: false);
+            if (onInputHeldAttribute != null)
+                attrs = attrs.Concat((IOnInputAttribute[])method.GetCustomAttributes(onInputHeldAttribute, inherit: false)).ToArray();
+            
             foreach (var attr in attrs)
             {
                 var entry = MakeInputHeldActionHandler(method, attr, groupId);
                 if (attr.HasInputAction)
                 {
-                    if (!InputHandler.OnInputHeldEvent.ContainsKey(attr.InputActionId))
-                        InputHandler.OnInputHeldEvent[attr.InputActionId] = [];
-                    InputHandler.OnInputHeldEvent[attr.InputActionId].Add(entry);
+                    if (!InputService.OnInputHeldEvent.ContainsKey(attr.InputActionId))
+                        InputService.OnInputHeldEvent[attr.InputActionId] = [];
+                    InputService.OnInputHeldEvent[attr.InputActionId].Add(entry);
                 }
 
                 var key = attr.ExplicitKey;
                 if (key == null) continue;
                 
-                if (!InputHandler.OnKeyboardKeyHeldEvent.ContainsKey((Key)key))
-                    InputHandler.OnKeyboardKeyHeldEvent[(Key)key] = [];
-                InputHandler.OnKeyboardKeyHeldEvent[(Key)key].Add(entry);
+                if (!InputService.OnKeyboardKeyHeldEvent.ContainsKey((Key)key))
+                    InputService.OnKeyboardKeyHeldEvent[(Key)key] = [];
+                InputService.OnKeyboardKeyHeldEvent[(Key)key].Add(entry);
             }
         }
 
-        foreach (var method in onInputActionReleasedMethods)
+        for (var index = 0; index < onInputActionReleasedMethods.Count; index++)
         {
-            var attrs = (IOnInputAttribute[])method.GetCustomAttributes(onInputReleasedAttribute, inherit: false);
+            var method = onInputActionReleasedMethods[index];
+            var groupId = guid + "-" + index;
+            
+            var attrs = (IOnInputAttribute[])method.GetCustomAttributes(typeof(OnKeyInputReleasedAttribute), inherit: false);
+            if (onInputReleasedAttribute != null)
+                attrs = attrs.Concat((IOnInputAttribute[])method.GetCustomAttributes(onInputReleasedAttribute, inherit: false)).ToArray();
+            
             foreach (var attr in attrs)
             {
-                var entry = MakeInputActionHandler(method, attr);
+                var entry = MakeInputActionHandler(method, attr, groupId);
                 if (attr.HasInputAction)
                 {
-                    if (InputHandler.OnInputReleasedEvent.TryGetValue(attr.InputActionId, out _))
-                        InputHandler.OnInputReleasedEvent[attr.InputActionId] += entry;
-                    else
-                        InputHandler.OnInputReleasedEvent[attr.InputActionId] = entry;
+                    if (!InputService.OnInputReleasedEvent.ContainsKey(attr.InputActionId))
+                        InputService.OnInputReleasedEvent[attr.InputActionId] = [];
+                    InputService.OnInputReleasedEvent[attr.InputActionId].Add(entry);
                 }
-
+                
                 var key = attr.ExplicitKey;
                 if (key == null) continue;
-                if (InputHandler.OnKeyboardKeyReleasedEvent.TryGetValue((Key)key, out _))
-                    InputHandler.OnKeyboardKeyReleasedEvent[(Key)key] += entry;
-                else
-                    InputHandler.OnKeyboardKeyReleasedEvent[(Key)key] = entry;
+                
+                if (!InputService.OnKeyboardKeyReleasedEvent.ContainsKey((Key)key))
+                    InputService.OnKeyboardKeyReleasedEvent[(Key)key] = [];
+                InputService.OnKeyboardKeyReleasedEvent[(Key)key].Add(entry);
             }
         }
     }
     
-    private Action MakeInputActionHandler(MethodInfo method, IOnInputAttribute attr)
+    private BoundHeldAction MakeInputActionHandler(MethodInfo method, IOnInputAttribute attr, string groupId)
     {
-        LambdaExpression innerExpression = attr.BindingParams switch
-        {
-            InputParamBinding.None => () =>
-                ((Action)Delegate.CreateDelegate(typeof(Action), this, method))(),
-            InputParamBinding.Double => () =>
-                ((Action<double>)Delegate.CreateDelegate(typeof(Action<double>), this, method))(attr.X),
-            InputParamBinding.Vector2 => () =>
-                ((Action<Vector2>)Delegate.CreateDelegate(typeof(Action<Vector2>), this, method))(new Vector2(attr.X, attr.Y)),
-            InputParamBinding.Vector3 => () =>
-                ((Action<Vector>)Delegate.CreateDelegate(typeof(Action<Vector>), this, method))(new Vector(attr.X, attr.Y, attr.Z)),
-            _ => throw new Exception("Unable to bind input action with binding params: " + attr.BindingParams)
-        };
-        return (Action)innerExpression.Compile();
-    }
-
-    private BoundHeldAction MakeInputHeldActionHandler(MethodInfo method, IOnInputAttribute attr, string groupId)
-    {
-        BoundHeldAction innerExpression = attr.BindingParams switch
+        var innerExpression = attr.BindingParams switch
         {
             InputParamBinding.None => 
                 new BoundHeldAction(
                     this,
                     groupId,
-                    0.0, 0.0, 0.0,
-                    (delta,_,_,_) =>
-                        ((Action<double>)Delegate.CreateDelegate(typeof(Action<double>), this, method))(delta)
+                    0.0, 0.0,
+                    (_,_,_) =>
+                        ((Action)Delegate.CreateDelegate(typeof(Action), this, method))()
                 ),
             InputParamBinding.Double => 
                 new BoundHeldAction(
                     this,
                     groupId,
-                    attr.X, 0.0, 0.0,
-                    (delta,x,_,_) =>
+                    attr.X, 0.0,
+                    (x,_,_) =>
+                        ((Action<double>)Delegate.CreateDelegate(typeof(Action<double>), this, method))(x)
+                ),
+            InputParamBinding.Vector2 => 
+                new BoundHeldAction(
+                    this,
+                    groupId,
+                    attr.X, attr.Y,
+                    (x,y,_) =>
+                        ((Action<Vector2>)Delegate.CreateDelegate(typeof(Action<Vector2>), this, method))(new Vector2(x, y))
+                ),
+            _ => throw new Exception("Unable to bind input action with binding params: " + attr.BindingParams)
+        };
+        return innerExpression;
+    }
+
+    private BoundHeldAction MakeInputHeldActionHandler(MethodInfo method, IOnInputAttribute attr, string groupId)
+    {
+        var innerExpression = attr.BindingParams switch
+        {
+            InputParamBinding.None => GetInputHeldActionHandlerWithNoParams(method, attr, groupId),
+            InputParamBinding.Double => 
+                new BoundHeldAction(
+                    this,
+                    groupId,
+                    attr.X, 0.0,
+                    (delta,x,_) =>
                         ((Action<double, double>)Delegate.CreateDelegate(typeof(Action<double, double>), this, method))(delta,x)
                 ),
             InputParamBinding.Vector2 => 
                 new BoundHeldAction(
                     this,
                     groupId,
-                    attr.X, attr.Y, 0.0,
-                    (delta,x,y,_) =>
+                    attr.X, attr.Y,
+                    (delta,x,y) =>
                         ((Action<double, Vector2>)Delegate.CreateDelegate(typeof(Action<double, Vector2>), this, method))(delta,new Vector2(x, y))
-                ),
-            InputParamBinding.Vector3 => 
-                new BoundHeldAction(
-                    this,
-                    groupId,
-                    attr.X, attr.Y, 0.0,
-                    (delta,x,y,z) =>
-                        ((Action<double, Vector>)Delegate.CreateDelegate(typeof(Action<double, Vector>), this, method))(delta,new Vector(x,y,z))
                 ),
             _ => throw new Exception("Unable to bind input action with binding params: " + attr.BindingParams)
         };
         return innerExpression;
+    }
+
+    // Special case to differentiate between no params and only deltaTime
+    private BoundHeldAction GetInputHeldActionHandlerWithNoParams(MethodInfo method, IOnInputAttribute attr,
+        string groupId)
+    {
+        if (method.GetParameters().Length == 0)
+        {
+            return new BoundHeldAction(
+                this,
+                groupId,
+                0.0, 0.0,
+                (_,_,_) =>
+                    ((Action)Delegate.CreateDelegate(typeof(Action), this, method))()
+            );
+        }
+        return new BoundHeldAction(
+            this,
+            groupId,
+            0.0, 0.0,
+            (delta,_,_) =>
+                ((Action<double>)Delegate.CreateDelegate(typeof(Action<double>), this, method))(delta)
+        );
     }
 }

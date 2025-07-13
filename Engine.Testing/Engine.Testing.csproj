@@ -10,6 +10,7 @@
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="Moq" Version="4.20.72" />
     <PackageReference Include="xunit" Version="2.9.2" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
@@ -21,6 +22,10 @@
   <ItemGroup>
     <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
     <ProjectReference Include="..\Engine.Worlds\Engine.Worlds.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Input\" />
   </ItemGroup>
 
 </Project>

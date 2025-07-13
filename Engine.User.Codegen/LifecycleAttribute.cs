@@ -6,7 +6,13 @@ public static class LifecycleAttribute
     [
         "OnInit",
         "OnUpdate",
-        "OnDestroy"
+        "OnDestroy",
+        "OnInput",
+        "OnInputHeld",
+        "OnInputReleased",
+        "OnKeyInput",
+        "OnKeyInputHeld",
+        "OnKeyInputReleased",
     ];
     
     private static string[] Get()

@@ -4,15 +4,20 @@ using Engine.Worlds.Entities;
 
 namespace Engine.Worlds.Services;
 
-public abstract class ReflectionService : Service
+public class ReflectionService : Service
 {
-    private static Dictionary<Type, Type?> LookupCache { get; } = new();
-    public static Type? GetUserInputActionsEnum()
+    private Dictionary<Type, Type?> LookupCache { get; } = new();
+    public Type? GetUserInputActionsEnum()
     {
         return GetUserTypeByAttributeCached<InputActionsAttribute>();
     }
 
-    private static Type? GetUserTypeByAttributeCached<T>() where T : Attribute
+    public void SetUserInputActionsEnum<TUserInputActions>() where TUserInputActions : Enum
+    {
+        LookupCache[typeof(InputActionsAttribute)] = typeof(TUserInputActions);
+    }
+
+    private Type? GetUserTypeByAttributeCached<T>() where T : Attribute
     {
         if (LookupCache.TryGetValue(typeof(T), out var type))
             return type;
@@ -21,7 +26,7 @@ public abstract class ReflectionService : Service
         return value;
     }
     
-    private static Type? GetUserTypeByAttribute<T>() where T : Attribute
+    private Type? GetUserTypeByAttribute<T>() where T : Attribute
     {
         var inputActionEnum =
             AppDomain.CurrentDomain              // or Assembly.GetExecutingAssembly(), etc.

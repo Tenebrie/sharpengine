@@ -75,8 +75,8 @@ public class AtomLifecycleTest
         parent.AdoptChild(child);
         parent.QueueFree();
         
-        Assert.Single(backstage.FindService<ReaperService>().CondemnedAtoms);
-        Assert.Equal(parent, backstage.FindService<ReaperService>().CondemnedAtoms[0]);
+        Assert.Single(backstage.GetService<ReaperService>().CondemnedAtoms);
+        Assert.Equal(parent, backstage.GetService<ReaperService>().CondemnedAtoms[0]);
     }
 }
 

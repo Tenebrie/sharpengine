@@ -7,14 +7,12 @@ namespace Engine.Worlds.Entities;
 
 public class Backstage : Atom
 {
-    // internal List<Actor> Actors { get; } = [];
-    // internal List<Scene> Scenes { get; } = [];
-    
     internal ServiceRegistry ServiceRegistry { get; } = new();
     
     public Backstage()
     {
         Backstage = this;
+        ServiceRegistry.Backstage = this;
     }
 
     internal IWindow Window { get; set; } = null!;
@@ -26,9 +24,10 @@ public class Backstage : Atom
     }
 
     [OnUpdate]
-    internal void OnUpdate()
+    internal void OnUpdate(double deltaTime)
     {
         ServiceRegistry.Get<ReaperService>().Reap();
+        ServiceRegistry.Get<InputService>().SendKeyboardHeldEvents(deltaTime);
     }
 
     [OnDestroy]

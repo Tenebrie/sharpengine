@@ -10,23 +10,31 @@ public partial class Atom
     public Atom? Parent { get; internal set; }
     public List<Atom> Children { get; } = [];
 
+    private bool _isInitialized = false;
     internal void Initialize()
     {
         InitializeComponents();
         InitializeLifecycle();
         InitializeInput();
+        InitializeChildren();
+        
+        _isInitialized = true;
     }
     
     public T AdoptChild<T>(T atom) where T : Atom, new()
     {
         Children.Add(atom);
         atom.Parent = this;
-        atom.Backstage = Backstage;
-        atom.Initialize();
+        if (this is Backstage backstage)
+            atom.Backstage = backstage;
+        else
+            atom.Backstage = Backstage;
+        if (_isInitialized)
+            atom.Initialize();
         return atom;
     }
 
-    public T FindService<T>() where T : Service, new()
+    public T GetService<T>() where T : Service, new()
     {
         if (Backstage == null)
             throw new InvalidOperationException("Atom is not registered in a Backstage.");

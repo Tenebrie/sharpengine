@@ -5,7 +5,9 @@ using Engine.Input.Contexts;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 using Engine.Worlds.Entities.BuiltIns;
+using Engine.Worlds.Services;
 using Silk.NET.Input;
+using InputService = Engine.Worlds.Services.InputService;
 
 namespace Game.User.Actors;
 
@@ -37,7 +39,7 @@ public class MainCamera : Camera
             .Add(InputAction.CameraRight,    Key.D)
             .Add(InputAction.CameraRight,    Key.Right)
             .Build();
-        InputHandler.SetInputContext(defaultContext);
+        GetService<InputService>().InputContext = defaultContext;
     }
     
     [OnInput(InputAction.Jump)]
@@ -46,7 +48,7 @@ public class MainCamera : Camera
         Console.WriteLine("Jump action triggered!");
     }
     
-    [OnInput(Key.J)]
+    [OnKeyInput(Key.J)]
     protected void OnHardcodedJump()
     {
         Console.WriteLine("Hardcoded jump action triggered!");

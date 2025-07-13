@@ -3,6 +3,7 @@ using System.Reflection;
 using Engine.Input;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Services;
+using InputService = Engine.Input.InputService;
 
 namespace Engine.Worlds.Entities;
 
@@ -71,7 +72,7 @@ public partial class Atom
             childrenCount = Children.Count;
         }
         
-        InputHandler.ClearSubscriptions(this);
+        InputService.ClearSubscriptions(this);
         
         OnDestroyCallback?.Invoke();
         if (Parent == null) return;
@@ -84,6 +85,6 @@ public partial class Atom
     public void QueueFree()
     {
         IsBeingDestroyed = true;
-        FindService<ReaperService>().Condemn(this);
+        GetService<ReaperService>().Condemn(this);
     }
 }

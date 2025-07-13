@@ -23,6 +23,12 @@ public partial class Atom
         }
     }
     
+    private void InitializeChildren()
+    {
+        foreach (var child in Children)
+            child.Initialize();
+    }
+    
     private static Atom CreateDefaultInstance(Type type)
     {
         if (type is not { IsClass: true })
