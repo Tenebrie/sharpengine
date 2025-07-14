@@ -11,12 +11,10 @@ namespace User.Game.Actors;
 [InputActions]
 public enum InputAction
 {
-    Jump,
     CameraForward,
     CameraBackward,
     CameraLeft,
     CameraRight,
-    Search,
 }
 
 public class MainCamera : Camera
@@ -35,22 +33,9 @@ public class MainCamera : Camera
             .Add(InputAction.CameraLeft, Key.Left)
             .Add(InputAction.CameraRight, Key.D)
             .Add(InputAction.CameraRight, Key.Right)
-            .Add(InputAction.Jump, Key.Space)
             .Build();
         
         GetService<InputService>().InputContext = defaultContext;
-    }
-    
-    [OnInput(InputAction.Jump)]
-    protected void OnJump()
-    {
-        Console.WriteLine("Jump action triggered!");
-    }
-    
-    [OnKeyInput(Key.K)]
-    protected void OnHardcodedJump()
-    {
-        Console.WriteLine("Hardcoded jump action triggered!");
     }
     
     [OnInputHeld(InputAction.CameraForward,  +0.0, +1.0)]

@@ -80,6 +80,10 @@ internal static class Editor
         MainWindow.Run();
     }
 
+    /**
+     * Reloads the guest assembly and its backstage.
+     * In other words, perform the hot reload on the guest assembly (user game).
+     */
     internal static void ReloadGuest()
     {
         GuestAssemblyHost.AssemblyAwaitingReload = false;
