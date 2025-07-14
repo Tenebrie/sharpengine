@@ -1,8 +1,8 @@
 ﻿using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
-using Game.User.Actors;
+using User.Game.Actors;
 
-namespace Game.User;
+namespace User.Game;
 
 [MainBackstage]
 public class UserBackstage : Backstage

@@ -2,7 +2,7 @@
 using Engine.Worlds.Components;
 using Engine.Worlds.Entities;
 
-namespace Game.User.Actors;
+namespace User.Game.Actors;
 
 public class BouncingLogo : Actor
 {

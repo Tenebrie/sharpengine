@@ -13,7 +13,7 @@ namespace Engine.Editor;
 public static class WindowStateManager
 {
     private const string WindowStateFilename = "window_state.json";
-    private const int RecentTimeThresholdMinutes = 1;
+    private const int RecentTimeThresholdMinutes = 30;
     private const int AutosaveIntervalMs = 5000;
     private static readonly JsonSerializerOptions JsonSerializerOptions = new() {WriteIndented = true };
     

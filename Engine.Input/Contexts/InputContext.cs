@@ -1,4 +1,5 @@
-﻿using Silk.NET.Input;
+﻿using Silk.NET.GLFW;
+using Silk.NET.Input;
 
 namespace Engine.Input.Contexts;
 
@@ -19,6 +20,26 @@ public class InputContext
             .ToList();
     }
     
+    // TODO: Test this
+    public InputContext Combine(InputContext other)
+    {
+        var combinedEntries = new Dictionary<long, InputContextEntry>(_entries);
+        
+        foreach (var entry in other._entries)
+        {
+            if (combinedEntries.TryGetValue(entry.Key, out var existingEntry))
+            {
+                existingEntry.Keys.AddRange(entry.Value.Keys);
+            }
+            else
+            {
+                combinedEntries[entry.Key] = entry.Value;
+            }
+        }
+        
+        return new InputContext(combinedEntries);
+    }
+    
     public static InputContext Empty => new(new Dictionary<long, InputContextEntry>());
 
     public static Builder<TInputAction> GetBuilder<TInputAction>() where TInputAction : Enum
@@ -30,7 +51,7 @@ public class InputContext
     {
         private readonly Dictionary<TInputAction, InputContextEntry> _entries = new();
 
-        public Builder<TInputAction> Add(TInputAction action, Key key)
+        public Builder<TInputAction> Add(TInputAction action, Key key, List<KeyModifiers>? modifiers = null)
         {
             if (_entries.TryGetValue(action, out var entry))
             {

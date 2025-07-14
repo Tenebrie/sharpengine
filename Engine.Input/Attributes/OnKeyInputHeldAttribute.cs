@@ -7,7 +7,7 @@ namespace Engine.Input.Attributes;
 [MeansImplicitUse]
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 [SuppressMessage("ReSharper", "IntroduceOptionalParameters.Global")]
-public class OnKeyInputHeldAttribute(Key explicitKey, double x, double y, InputParamBinding bindingParams) : Attribute, IOnInputAttribute
+public class OnKeyInputHeldAttribute(Key explicitKey, double x, double y, InputParamBinding bindingParams) : Attribute, IOnInputHeldAttribute
 {
     public OnKeyInputHeldAttribute(Key explicitKey)
         : this(explicitKey, 0.0, 0.0, InputParamBinding.None) {}

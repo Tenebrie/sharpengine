@@ -8,7 +8,7 @@ namespace Engine.Input.Attributes;
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 [SuppressMessage("ReSharper", "IntroduceOptionalParameters.Global")]
 public class OnInputHeldAttribute<T>(T action, double x, double y, InputParamBinding bindingParams)
-    : Attribute, IOnInputAttribute where T : struct, Enum
+    : Attribute, IOnInputHeldAttribute where T : struct, Enum
 {
     public OnInputHeldAttribute(T action)
         : this(action, 0.0, 0.0, InputParamBinding.None) {}

@@ -15,13 +15,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Worlds", "Engine.Wor
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Testing", "Engine.Testing\Engine.Testing.csproj", "{528B5DA6-7490-41DA-8BC8-48E8FDACD880}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Game.User", "Game.User\Game.User.csproj", "{33B06A87-7C42-4B71-9167-4D1601BF61BD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "User.Game", "User.Game\User.Game.csproj", "{33B06A87-7C42-4B71-9167-4D1601BF61BD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.User.Codegen", "Engine.User.Codegen\Engine.User.Codegen.csproj", "{14B9358F-3AB7-457F-A569-B58CC7D1340B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Assets", "Engine.Assets\Engine.Assets.csproj", "{35209674-AA28-4826-AC74-024F8C432108}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Input", "Engine.Input\Engine.Input.csproj", "{A24103E5-EF8B-44CA-932B-1BBC3B1C2831}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.User.Contracts", "Engine.User.Contracts\Engine.User.Contracts.csproj", "{B24426C3-8D41-4AD6-91F8-E30020D4983B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -153,6 +155,18 @@ Global
 		{A24103E5-EF8B-44CA-932B-1BBC3B1C2831}.Release|x64.Build.0 = Release|Any CPU
 		{A24103E5-EF8B-44CA-932B-1BBC3B1C2831}.Release|x86.ActiveCfg = Release|Any CPU
 		{A24103E5-EF8B-44CA-932B-1BBC3B1C2831}.Release|x86.Build.0 = Release|Any CPU
+		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Debug|x64.Build.0 = Debug|Any CPU
+		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Debug|x86.Build.0 = Debug|Any CPU
+		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Release|x64.ActiveCfg = Release|Any CPU
+		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Release|x64.Build.0 = Release|Any CPU
+		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Release|x86.ActiveCfg = Release|Any CPU
+		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

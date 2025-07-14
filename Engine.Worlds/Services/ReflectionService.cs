@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Runtime.Loader;
 using Engine.Input.Attributes;
 using Engine.Worlds.Entities;
 
@@ -29,9 +30,9 @@ public class ReflectionService : Service
     private Type? GetUserTypeByAttribute<T>() where T : Attribute
     {
         var inputActionEnum =
-            AppDomain.CurrentDomain              // or Assembly.GetExecutingAssembly(), etc.
-                .GetAssemblies()                 // walk every loaded assembly
-                .SelectMany(a => a.GetTypes())   // flatten to all types
+            AppDomain.CurrentDomain
+                .GetAssemblies()
+                .SelectMany(a => a.GetTypes())
                 .FirstOrDefault(t =>
                     t.IsEnum &&
                     t.GetCustomAttribute<T>() != null);

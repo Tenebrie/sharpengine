@@ -8,7 +8,7 @@ namespace Engine.Input.Attributes;
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 [SuppressMessage("ReSharper", "IntroduceOptionalParameters.Global")]
 public class OnKeyInputReleasedAttribute(Key explicitKey, double x, double y, InputParamBinding bindingParams)
-    : Attribute, IOnInputAttribute
+    : Attribute, IOnInputReleasedAttribute
 {
     public OnKeyInputReleasedAttribute(Key explicitKey)
         : this(explicitKey, 0.0, 0.0, InputParamBinding.None) {}

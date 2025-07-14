@@ -1,15 +1,12 @@
 ﻿using Engine.Core.Common;
-using Engine.Input;
 using Engine.Input.Attributes;
 using Engine.Input.Contexts;
 using Engine.Worlds.Attributes;
-using Engine.Worlds.Entities;
 using Engine.Worlds.Entities.BuiltIns;
-using Engine.Worlds.Services;
 using Silk.NET.Input;
 using InputService = Engine.Worlds.Services.InputService;
 
-namespace Game.User.Actors;
+namespace User.Game.Actors;
 
 [InputActions]
 public enum InputAction
@@ -18,27 +15,29 @@ public enum InputAction
     CameraForward,
     CameraBackward,
     CameraLeft,
-    CameraRight
+    CameraRight,
+    Search,
 }
 
 public class MainCamera : Camera
 {
-    private const double MovementSpeed = 3.0;
+    private const double MovementSpeed = 15.0;
     
     [OnInit]
     protected void OnInit()
     {
         var defaultContext = InputContext.GetBuilder<InputAction>()
-            .Add(InputAction.Jump,           Key.Space)
-            .Add(InputAction.CameraForward,  Key.W)
-            .Add(InputAction.CameraForward,  Key.Up)
+            .Add(InputAction.CameraForward, Key.W)
+            .Add(InputAction.CameraForward, Key.Up)
             .Add(InputAction.CameraBackward, Key.S)
             .Add(InputAction.CameraBackward, Key.Down)
-            .Add(InputAction.CameraLeft,     Key.A)
-            .Add(InputAction.CameraLeft,     Key.Left)
-            .Add(InputAction.CameraRight,    Key.D)
-            .Add(InputAction.CameraRight,    Key.Right)
+            .Add(InputAction.CameraLeft, Key.A)
+            .Add(InputAction.CameraLeft, Key.Left)
+            .Add(InputAction.CameraRight, Key.D)
+            .Add(InputAction.CameraRight, Key.Right)
+            .Add(InputAction.Jump, Key.Space)
             .Build();
+        
         GetService<InputService>().InputContext = defaultContext;
     }
     
@@ -48,7 +47,7 @@ public class MainCamera : Camera
         Console.WriteLine("Jump action triggered!");
     }
     
-    [OnKeyInput(Key.J)]
+    [OnKeyInput(Key.K)]
     protected void OnHardcodedJump()
     {
         Console.WriteLine("Hardcoded jump action triggered!");

@@ -4,10 +4,11 @@ using Silk.NET.Input;
 
 namespace Engine.Input;
 
-public class InputService
+public class InputHandler
 {
     private readonly HashSet<Key> _heldKeys = [];
     public InputContext CurrentContext { get; set; } = InputContext.Empty;
+    public List<IKeyboard> KnownKeyboards { get; } = [];
     
     public void BindMouseEvents(IMouse mouse)
     {
@@ -15,57 +16,72 @@ public class InputService
     
     public void BindKeyboardEvents(IKeyboard keyboard)
     {
-        keyboard.KeyDown += (_, key, _) =>
+        if (KnownKeyboards.Contains(keyboard))
+            return;
+        keyboard.KeyDown += OnKeyDown;
+        keyboard.KeyUp += OnKeyUp;
+        KnownKeyboards.Add(keyboard);
+    }
+    
+    public void ClearKeyboardEvents()
+    {
+        foreach (var knownKeyboard in KnownKeyboards)
         {
-            OnKeyboardKeyEvent.TryGetValue(key, out var boundKeyActionList);
-            if (boundKeyActionList != null)
-            {
-                foreach (var boundAction in boundKeyActionList)
-                {
-                    boundAction.Action.Invoke(boundAction.X, boundAction.Y, 0.0f);
-                }
-            }
-            
-            var triggeredActions = CurrentContext.Match(key);
-            triggeredActions.ForEach(triggeredActionId =>
-            {
-                OnInputEvent.TryGetValue(triggeredActionId, out var inputActionList);
-                if (inputActionList == null) return;
-                
-                foreach (var boundAction in inputActionList)
-                {
-                    boundAction.Action.Invoke(boundAction.X, boundAction.Y, 0.0f);
-                }
-            });
-            
-            _heldKeys.Add(key);
-        };
+            knownKeyboard.KeyDown -= OnKeyDown;
+            knownKeyboard.KeyUp -= OnKeyUp;
+        }
+    }
 
-        keyboard.KeyUp += (_, key, _) =>
+    private void OnKeyDown(IKeyboard keyboard, Key key, int num)
+    {
+        OnKeyboardKeyEvent.TryGetValue(key, out var boundKeyActionList);
+        if (boundKeyActionList != null)
         {
-            OnKeyboardKeyReleasedEvent.TryGetValue(key, out var boundKeyActionList);
-            if (boundKeyActionList != null)
+            foreach (var boundAction in boundKeyActionList)
             {
-                foreach (var boundAction in boundKeyActionList)
-                {
-                    boundAction.Action.Invoke(boundAction.X, boundAction.Y, 0.0f);
-                }
+                boundAction.Action.Invoke(boundAction.X, boundAction.Y, 0.0f);
             }
+        }
             
-            var triggeredActions = CurrentContext.Match(key);
-            triggeredActions.ForEach(triggeredActionId =>
-            {
-                OnInputReleasedEvent.TryGetValue(triggeredActionId, out var inputActionList);
-                if (inputActionList == null) return;
+        var triggeredActions = CurrentContext.Match(key);
+        triggeredActions.ForEach(triggeredActionId =>
+        {
+            OnInputEvent.TryGetValue(triggeredActionId, out var inputActionList);
+            if (inputActionList == null) return;
                 
-                foreach (var boundAction in inputActionList)
-                {
-                    boundAction.Action.Invoke(boundAction.X, boundAction.Y, 0.0f);
-                }
-            });
+            foreach (var boundAction in inputActionList)
+            {
+                boundAction.Action.Invoke(boundAction.X, boundAction.Y, 0.0f);
+            }
+        });
             
-            _heldKeys.Remove(key);
-        };
+        _heldKeys.Add(key);
+    }
+
+    private void OnKeyUp(IKeyboard keyboard, Key key, int num)
+    {
+        OnKeyboardKeyReleasedEvent.TryGetValue(key, out var boundKeyActionList);
+        if (boundKeyActionList != null)
+        {
+            foreach (var boundAction in boundKeyActionList)
+            {
+                boundAction.Action.Invoke(boundAction.X, boundAction.Y, 0.0f);
+            }
+        }
+            
+        var triggeredActions = CurrentContext.Match(key);
+        triggeredActions.ForEach(triggeredActionId =>
+        {
+            OnInputReleasedEvent.TryGetValue(triggeredActionId, out var inputActionList);
+            if (inputActionList == null) return;
+                
+            foreach (var boundAction in inputActionList)
+            {
+                boundAction.Action.Invoke(boundAction.X, boundAction.Y, 0.0f);
+            }
+        });
+            
+        _heldKeys.Remove(key);
     }
 
     public void SendKeyboardHeldEvents(double deltaTime)
@@ -111,7 +127,7 @@ public class InputService
         }
     }
 
-    public static void ClearSubscriptions(object owner)
+    public void ClearSubscriptions(object owner)
     {
         Prune(OnInputEvent, owner);
         Prune(OnInputHeldEvent, owner);
@@ -130,12 +146,12 @@ public class InputService
         }
     }
     
-    public static readonly Dictionary<long, List<BoundHeldAction>> OnInputEvent = new();
-    public static readonly Dictionary<long, List<BoundHeldAction>> OnInputHeldEvent = new();
-    public static readonly Dictionary<long, List<BoundHeldAction>> OnInputReleasedEvent = new();
-    public static readonly Dictionary<Key, List<BoundHeldAction>> OnKeyboardKeyEvent = new();
-    public static readonly Dictionary<Key, List<BoundHeldAction>> OnKeyboardKeyHeldEvent = new();
-    public static readonly Dictionary<Key, List<BoundHeldAction>> OnKeyboardKeyReleasedEvent = new();
+    public readonly Dictionary<long, List<BoundHeldAction>> OnInputEvent = new();
+    public readonly Dictionary<long, List<BoundHeldAction>> OnInputHeldEvent = new();
+    public readonly Dictionary<long, List<BoundHeldAction>> OnInputReleasedEvent = new();
+    public readonly Dictionary<Key, List<BoundHeldAction>> OnKeyboardKeyEvent = new();
+    public readonly Dictionary<Key, List<BoundHeldAction>> OnKeyboardKeyHeldEvent = new();
+    public readonly Dictionary<Key, List<BoundHeldAction>> OnKeyboardKeyReleasedEvent = new();
 }
 
 public struct BoundHeldAction(object owner, string groupId, double x, double y, Action<double, double, double> action)

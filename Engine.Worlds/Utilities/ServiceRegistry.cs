@@ -8,13 +8,6 @@ public class ServiceRegistry : Atom
 {
     private Dictionary<Type, Service> Services { get; } = new();
     
-    [OnInit]
-    internal void Init()
-    {
-        Services.Add(typeof(ReaperService), GetService<ReaperService>());
-        Services.Add(typeof(ReflectionService), GetService<ReflectionService>());
-    }
-    
     internal T Get<T>() where T : Service, new()
     {
         var type = typeof(T);

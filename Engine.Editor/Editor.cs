@@ -1,9 +1,10 @@
-﻿using Engine.Input;
+﻿using Engine.Editor.Host;
+using Engine.Editor.HotReload;
 using Engine.Rendering;
+using Engine.User.Contracts;
 using Engine.Worlds;
 using Engine.Worlds.Entities;
-using Engine.Worlds.Services;
-using Game.User;
+using Microsoft.Build.Locator;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
@@ -13,8 +14,16 @@ namespace Engine.Editor;
 
 internal static class Editor
 {
+    private static IWindow MainWindow { get; set; } = null!;
+    private static RenderingCore Renderer { get; set; } = null!;
+    private static IInputContext WindowInputContext { get; set; } = null!;
+    private static HostBackstage HostBackstage { get; set; } = null!;
+    private static GameAssemblyHost GuestAssemblyHost { get; set; } = null!;
+    private static Backstage? GuestBackstage { get; set; }
+    private static IEngineSettings<Backstage>? GuestSettings { get; set; }
     private static void Main()
     {
+        MSBuildLocator.RegisterDefaults();
         var opts = WindowOptions.Default with
         {
             Title = "Custom Engine",
@@ -24,41 +33,95 @@ internal static class Editor
 
         WindowStateManager.TryLoadWindowState(ref opts);
         
-        // TODO: Load userland settings here (or reflections idk)
-        var userSettings = new UserSettings();
-        
-        var window = Window.Create(opts);
-        var backstage = (Backstage)Activator.CreateInstance(userSettings.BackstageType)!;
-        var renderer = new RenderingCore();
-        
-        window.Load += () =>
+        MainWindow = Window.Create(opts);
+        Renderer = new RenderingCore();
+        GuestAssemblyHost = new GameAssemblyHost("User.Game");
+
+        MainWindow.Load += () =>
         {
-            var input = window.CreateInput();
-            var inputHandler = backstage.GetService<InputService>();
-            foreach (var inputKeyboard in input.Keyboards)
-            {
-                inputHandler.BindKeyboardEvents(inputKeyboard);
-            }
-            foreach (var inputMouse in input.Mice)
-            {
-                inputHandler.BindMouseEvents(inputMouse);
-            }
+            // Initialize bgfx
+            Renderer.Initialize(MainWindow, opts);
             
-            renderer.OnInit(window, opts);
+            // Create input context
+            WindowInputContext = MainWindow.CreateInput();
             
             // Save window state for hot reload
-            WindowStateManager.SetupAutosaveHandler(window);
+            WindowStateManager.SetupAutosaveHandler(MainWindow);
+            
+            InitHost();
+            InitGuest();
+        };
+
+        MainWindow.Update += deltaTime =>
+        {
+            if (GuestAssemblyHost.IsCompiling)
+            {
+                // Do nothing
+            }
+            else if (GuestAssemblyHost.IsAssemblyDirty)
+            {
+                GuestAssemblyHost.BuildGuestAsync();
+            }
+            else if (GuestAssemblyHost.AssemblyAwaitingReload)
+            {
+                ReloadGuest();
+            }
+            BackstageEventLoop.ProcessLogicFrame(HostBackstage, deltaTime);
+            if (GuestBackstage != null)
+                BackstageEventLoop.ProcessLogicFrame(GuestBackstage, deltaTime);
         };
         
-        BackstageEventLoop.ConnectToWindowEvents(backstage, window);
-        renderer.ConnectToWindowEvents(backstage, window);
-        
-        window.Closing += () =>
+        MainWindow.Closing += () =>
         {
-            WindowStateManager.SaveWindowState(window);
+            WindowStateManager.SaveWindowState(MainWindow);
             WindowStateManager.Cleanup();
         };
 
-        window.Run();
+        MainWindow.Run();
+    }
+
+    internal static void ReloadGuest()
+    {
+        GuestAssemblyHost.AssemblyAwaitingReload = false;
+        if (GuestBackstage != null)
+        {
+            Renderer.Unregister(GuestBackstage);
+            GuestBackstage.FreeImmediately();
+        }
+        GuestSettings = null;
+        GuestBackstage = null;
+        GuestAssemblyHost.UnloadCurrent();
+        InitGuest();
+    }
+
+    private static void InitHost()
+    {
+        HostBackstage = new HostBackstage();
+        InitBackstage(HostBackstage);
+        HostBackstage.Name = "host-" + Guid.NewGuid();
+    }
+    
+    private static void InitGuest()
+    {
+        GuestSettings = GuestAssemblyHost.Load();
+        GuestBackstage = (Backstage)Activator.CreateInstance(GuestSettings.MainBackstage)!;
+        InitBackstage(GuestBackstage);
+        GuestBackstage.Name = "guest-" + Guid.NewGuid();
+    }
+
+    private static void InitBackstage(Backstage backstage)
+    {
+        var inputHandler = backstage.GetService<InputService>();
+        foreach (var inputKeyboard in WindowInputContext.Keyboards)
+        {
+            inputHandler.BindKeyboardEvents(inputKeyboard);
+        }
+        foreach (var inputMouse in WindowInputContext.Mice)
+        {
+            inputHandler.BindMouseEvents(inputMouse);
+        }
+        
+        BackstageEventLoop.Initialize(backstage, MainWindow);
+        Renderer.Register(backstage);
     }
 }

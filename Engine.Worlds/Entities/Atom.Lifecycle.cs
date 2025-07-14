@@ -3,7 +3,7 @@ using System.Reflection;
 using Engine.Input;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Services;
-using InputService = Engine.Input.InputService;
+using InputService = Engine.Worlds.Services.InputService;
 
 namespace Engine.Worlds.Entities;
 
@@ -72,7 +72,7 @@ public partial class Atom
             childrenCount = Children.Count;
         }
         
-        InputService.ClearSubscriptions(this);
+        GetService<InputService>().ClearSubscriptions(this);
         
         OnDestroyCallback?.Invoke();
         if (Parent == null) return;

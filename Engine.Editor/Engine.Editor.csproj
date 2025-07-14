@@ -13,12 +13,22 @@
     <PackageReference Include="Silk.NET.Input" Version="2.22.0" />
     <PackageReference Include="Silk.NET.Windowing" Version="2.22.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.9.1" />
+    <PackageReference Include="Microsoft.Build" Version="17.14.8" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Build.Framework" Version="17.14.8" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Build.Tasks.Core" Version="17.14.8" ExcludeAssets="runtime" />
+    <PackageReference Include="Microsoft.Build.Utilities.Core" Version="17.14.8" ExcludeAssets="runtime" />
+  </ItemGroup>
   
   <ItemGroup>
     <ProjectReference Include="..\Engine.Input\Engine.Input.csproj" />
     <ProjectReference Include="..\Engine.Rendering\Engine.Rendering.csproj" />
+    <ProjectReference Include="..\Engine.User.Contracts\Engine.User.Contracts.csproj" />
     <ProjectReference Include="..\Engine.Worlds\Engine.Worlds.csproj" />
-    <ProjectReference Include="..\Game.User\Game.User.csproj" />
+    <ProjectReference Include="..\Engine.User.Codegen\Engine.User.Codegen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+<!--    <ProjectReference Include="..\User.Game\User.Game.csproj" />-->
   </ItemGroup>
 
 </Project>

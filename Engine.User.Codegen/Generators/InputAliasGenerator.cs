@@ -52,6 +52,6 @@ public sealed class InputAliasGenerator : IIncrementalGenerator
         return t.Name is "OnInputActionHeld" or "OnInputActionHeldAttribute" &&
                t.IsGenericType &&
                t.TypeArguments[0] is INamedTypeSymbol arg &&
-               arg.ToDisplayString() is "Game.User.Actors.InputAction";
+               arg.ToDisplayString() is "User.Game.Actors.InputAction";
     }
 }

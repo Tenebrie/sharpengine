@@ -7,6 +7,7 @@ namespace Engine.Worlds.Entities;
 
 public class Backstage : Atom
 {
+    public string Name { get; set; } = "Backstage";
     internal ServiceRegistry ServiceRegistry { get; } = new();
     
     public Backstage()
@@ -21,6 +22,12 @@ public class Backstage : Atom
     public T CreateScene<T>() where T : Scene, new()
     {
         return AdoptChild(new T());
+    }
+    
+    [OnInit]
+    internal void OnInit()
+    {
+        AdoptChild(ServiceRegistry);
     }
 
     [OnUpdate]

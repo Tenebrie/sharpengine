@@ -9,7 +9,7 @@ public enum InputParamBinding
     Vector2
 }
 
-public interface IOnInputAttribute
+public interface IOnInputBaseAttribute
 {
     public long InputActionId { get; }
     public bool HasInputAction { get; }
@@ -18,3 +18,7 @@ public interface IOnInputAttribute
     public double Y { get; }
     public InputParamBinding BindingParams { get; }
 }
+
+public interface IOnInputAttribute : IOnInputBaseAttribute;
+public interface IOnInputHeldAttribute : IOnInputBaseAttribute;
+public interface IOnInputReleasedAttribute : IOnInputBaseAttribute;

@@ -12,15 +12,19 @@ namespace Engine.Rendering;
 public unsafe class RenderingCore
 {
     private IWindow _rootWindow = null!;
+    private List<Backstage> _backstages = [];
 
-    public void ConnectToWindowEvents(Backstage backstage, IWindow window)
+    public void Register(Backstage backstage)
     {
-        window.Render += (delta) => RenderSingleFrame(delta, backstage);
-        window.Resize += OnResize;
-        window.Closing += OnShutdown;
+        _backstages.Add(backstage);
+    }
+    
+    public void Unregister(Backstage backstage)
+    {
+        _backstages.Remove(backstage);
     }
 
-    public void OnInit(IWindow window, WindowOptions opts)
+    public void Initialize(IWindow window, WindowOptions opts)
     {
         _rootWindow = window;
         BgfxDebug.Hook();
@@ -37,11 +41,15 @@ public unsafe class RenderingCore
             throw new InvalidOperationException("bgfx init failed");
         SetDebug(DebugFlags.Text);
         SetViewClear(0, (ClearFlags.Color | ClearFlags.Depth), 0x303030ff, 0, 0);
+        
+        window.Render += RenderSingleFrame;
+        window.Resize += OnResize;
+        window.Closing += OnShutdown;
     }
     
     private readonly List<double> _frameTimes = [];
 
-    private void RenderSingleFrame(double delta, Backstage backstage)
+    private void RenderSingleFrame(double delta)
     {
         SetViewRect(0, 0, 0,
             _rootWindow.FramebufferSize.X,
@@ -58,14 +66,17 @@ public unsafe class RenderingCore
         var averageFrameTime = _frameTimes.Count > 0 ? _frameTimes.Average() : 0.0;
         var framerate = 1.0f / averageFrameTime;
 
-        var camera = FindActiveCamera(backstage);
-        var cameraTransform = camera?.Transform.Negate() ?? new Transform
+        foreach (var backstage in _backstages)
         {
-            Position = new Vector(0, 0, 0),
-            Rotation = new Quaternion(0, 0, 0, 1),
-            Scale = new Vector(1, 1, 1)
-        };
-        RenderAtomTree(cameraTransform, backstage);
+            var camera = FindActiveCamera(backstage);
+            var cameraTransform = camera?.Transform.Negate() ?? new Transform
+            {
+                Position = new Vector(0, 0, 0),
+                Rotation = new Quaternion(0, 0, 0, 1),
+                Scale = new Vector(1, 1, 1)
+            };
+            RenderAtomTree(cameraTransform, backstage);
+        }
         
         DebugTextWrite(0, 0, DebugColor.White, DebugColor.Blue, "Let there be cube!");
         DebugTextWrite(0, 1, "FPS: " + Math.Round(framerate));

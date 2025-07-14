@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 
-namespace Engine.Worlds.Attributes;
+namespace Engine.User.Contracts.Attributes;
 
 /**
  * Informative attribute.
@@ -8,4 +8,4 @@ namespace Engine.Worlds.Attributes;
  */
 [MeansImplicitUse]
 [AttributeUsage(AttributeTargets.Class)]
-public sealed class MainBackstageAttribute : Attribute;
+public class EngineSettingsAttribute : Attribute;
