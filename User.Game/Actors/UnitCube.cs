@@ -1,4 +1,6 @@
-﻿using Engine.Worlds.Attributes;
+﻿using Engine.Assets.Materials;
+using Engine.Assets.Meshes;
+using Engine.Worlds.Attributes;
 using Engine.Worlds.Components;
 using Engine.Worlds.Entities;
 
@@ -7,7 +9,23 @@ namespace User.Game.Actors;
 public class UnitCube : Actor
 {
     [Component]
-    protected StaticMeshComponent Mesh;
+    public InstancedActorComponent<UnitCubeInstance> InstanceManager;
+    
+    [OnInit]
+    protected void OnInit()
+    {
+        InstanceManager.Mesh = new StaticMesh();
+        InstanceManager.Material = new UnlitMaterial();
+        InstanceManager.Mesh.LoadUnitCube();
+    }
+}
+
+public class UnitCubeInstance : ActorInstance
+{
+    [OnInit]
+    protected void OnInit()
+    {
+    }
     
     [OnUpdate]
     protected void OnUpdate(double deltaTime)

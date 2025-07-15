@@ -1,5 +1,6 @@
 ﻿using System.Runtime.InteropServices;
 using Engine.Assets.Materials;
+using Engine.Core.Common;
 using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 using Transform = Engine.Core.Common.Transform;
 
@@ -73,43 +74,24 @@ public sealed class StaticMesh : IDisposable
         }
     }
 
-    public void Render(Transform cameraTransform, Transform worldTransform, ushort viewId, float width, float height, Material material)
+    public unsafe void Render(uint instanceCount, Transform[] worldTransforms, ushort viewId, Material material)
     {
-        // Raw view matrix: identity (camera at origin, looking down -Z)
+        var idb = new InstanceDataBuffer();
+        const ushort bytesPerMatrix = 16 * sizeof(float);
+        alloc_instance_data_buffer(&idb, instanceCount, bytesPerMatrix);
 
-        Span<float> viewMatrix = stackalloc float[16];
-        cameraTransform.ToFloatSpan(ref viewMatrix);
-
-        // Raw perspective projection matrix (60 deg FOV)
-        float fov = 60.0f * MathF.PI / 180.0f;
-        float aspect = width / height;
-        float near = 0.1f;
-        float far = 100.0f;
-        float f = 1.0f / MathF.Tan(fov / 2.0f);
-
-        float[] projMatrix = {
-            f / aspect, 0, 0, 0,
-            0, f, 0, 0,
-            0, 0, (far + near) / (near - far), -1,
-            0, 0, (2 * far * near) / (near - far), 0
-        };
-
-        Span<float> modelMatrix = stackalloc float[16];
-        worldTransform.ToFloatSpan(ref modelMatrix);
-
-        // Upload raw matrix data directly
-        unsafe
+        var instanceDataArray = (float*)idb.data;
+        Span<float> mat = stackalloc float[16];
+        for (var i = 0; i < instanceCount; i++)
         {
-            fixed (float* viewPtr = viewMatrix)
-            fixed (float* projPtr = projMatrix)
-            fixed (float* modelPtr = modelMatrix)
+            worldTransforms[i].ToFloatSpan(ref mat);
+            for (var j = 0; j < 16; j++)
             {
-                set_view_transform(viewId, viewPtr, projPtr);
-                set_transform(modelPtr, 1);
+                instanceDataArray[i * 16 + j] = mat[j];
             }
         }
+        set_instance_data_buffer(&idb, 0, instanceCount);
 
-        // -------- Submit draw call -------------------------------------------------
         set_vertex_buffer(0, _vertexBuffer, 0, 8);
         set_index_buffer(_indexBuffer, 0, 36);
         var stateFlags = StateFlags.WriteRgb | StateFlags.WriteA;
@@ -120,6 +102,7 @@ public sealed class StaticMesh : IDisposable
         SetState(stateFlags);
 
         submit(viewId, material.Program, 1, 0);
+
     }
 
     public void Dispose() { destroy_vertex_buffer(_vertexBuffer); destroy_index_buffer(_indexBuffer); }

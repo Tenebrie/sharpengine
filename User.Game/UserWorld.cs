@@ -1,4 +1,5 @@
-﻿using Engine.Worlds.Attributes;
+﻿using Engine.Core.Common;
+using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 using User.Game.Actors;
 
@@ -21,31 +22,19 @@ public class UserScene : Scene
     protected void OnInit()
     {
         CreateActor<MainCamera>();
-        Actor actor = CreateActor<UserActor>();
-        actor.Transform.Position = new Vector(15, 15, 50);
-        for (var x = 0; x < 15; x++)
+        // Actor actor = CreateActor<UserActor>();
+        // actor.Transform.Position = new Vector(15, 15, 50);
+        var cubeManager = CreateActor<UnitCube>();
+        for (var x = 0; x < 50; x++)
         {
-            for (var y = 0; y < 15; y++)
+            for (var y = 0; y < 50; y++)
             {
-                var cube = CreateActor<UnitCube>();
-                cube.Transform.Position = new Vector(x * 2, y * 2 - 8, -10);
-                cube.Transform.Scale = new Vector(0.4f, 0.4f, 0.4f);
-                cube.Transform.Rotation = Quaternion.Identity;
+                var transform = Transform.Identity;
+                transform.Position = new Vector(x * 2, y * 2 - 8, -10);
+                transform.Scale = new Vector(0.4f, 0.4f, 0.4f);
+                transform.Rotation = Quaternion.Identity;
+                cubeManager.InstanceManager.AddInstance(transform);
             }
         }
-    }
-    
-    [OnUpdate]
-    protected void OnUpdate(double deltaTime)
-    {
-    }
-}
-
-public class UserActor : Actor
-{
-    [OnUpdate]
-    protected void OnUpdate(double deltaTime)
-    {
-        
     }
 }

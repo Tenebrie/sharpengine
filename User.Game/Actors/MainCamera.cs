@@ -2,6 +2,7 @@
 using Engine.Input.Attributes;
 using Engine.Input.Contexts;
 using Engine.Worlds.Attributes;
+using Engine.Worlds.Entities;
 using Engine.Worlds.Entities.BuiltIns;
 using Silk.NET.Input;
 using InputService = Engine.Worlds.Services.InputService;
@@ -19,7 +20,7 @@ public enum InputAction
 
 public class MainCamera : Camera
 {
-    private const double MovementSpeed = 15.0;
+    private const double MovementSpeed = 5.0;
     
     [OnInit]
     protected void OnInit()

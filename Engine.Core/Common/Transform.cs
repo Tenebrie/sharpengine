@@ -5,25 +5,25 @@ namespace Engine.Core.Common;
 
 public class Transform
 {
-    private Matrix4x4 _data;
+    protected Matrix4x4 Data;
 
-    public Vector Position
+    public virtual Vector Position
     {
-        get => new(_data.M41, _data.M42, _data.M43);
+        get => new(Data.M41, Data.M42, Data.M43);
         set
         {
-            _data.M41 = value.X;
-            _data.M42 = value.Y;
-            _data.M43 = value.Z;
+            Data.M41 = value.X;
+            Data.M42 = value.Y;
+            Data.M43 = value.Z;
         }
     }
     
-    public Quat Rotation
+    public virtual Quat Rotation
     {
         get
         {
             var s = Scale;
-            var r = _data;
+            var r = Data;
             r.Row1 /= s.X;
             r.Row2 /= s.Y;
             r.Row3 /= s.Z;
@@ -33,34 +33,35 @@ public class Transform
         {
             var s = Scale;
             var r = MatrixHelpers.FromQuaternion(Quat.Normalize(value));
-            _data.M11 = r.M11 * s.X; _data.M12 = r.M12 * s.X; _data.M13 = r.M13 * s.X;
-            _data.M21 = r.M21 * s.Y; _data.M22 = r.M22 * s.Y; _data.M23 = r.M23 * s.Y;
-            _data.M31 = r.M31 * s.Z; _data.M32 = r.M32 * s.Z; _data.M33 = r.M33 * s.Z;
+            Data.M11 = r.M11 * s.X; Data.M12 = r.M12 * s.X; Data.M13 = r.M13 * s.X;
+            Data.M21 = r.M21 * s.Y; Data.M22 = r.M22 * s.Y; Data.M23 = r.M23 * s.Y;
+            Data.M31 = r.M31 * s.Z; Data.M32 = r.M32 * s.Z; Data.M33 = r.M33 * s.Z;
         }
     }
     
-    public Vector Scale
+    public virtual Vector Scale
     {
-        get => new (_data.Row1.Length, _data.Row2.Length, _data.Row3.Length);
+        get => new (Data.Row1.Length, Data.Row2.Length, Data.Row3.Length);
         set
         {
-            _data.Row1.SetLengthIfNotZero(value.X);
-            _data.Row2.SetLengthIfNotZero(value.Y);
-            _data.Row3.SetLengthIfNotZero(value.Z);
+            Data.Row1.SetLengthIfNotZero(value.X);
+            Data.Row2.SetLengthIfNotZero(value.Y);
+            Data.Row3.SetLengthIfNotZero(value.Z);
         }
     }
-    public Transform()
+
+    protected Transform()
     {
-        _data = Matrix4x4.Identity;
+        Data = Matrix4x4.Identity;
     }
-    
-    public Transform(Vector translation, Quat rotation, Vector scale)
+
+    private Transform(Vector translation, Quat rotation, Vector scale)
     {
         var translationMatrix = MatrixHelpers.FromTranslation(translation);
         var rotationMatrix = MatrixHelpers.FromQuaternion(rotation);
         var scaleMatrix = MatrixHelpers.FromScale(scale);
         
-        _data = translationMatrix * rotationMatrix * scaleMatrix;
+        Data = translationMatrix * rotationMatrix * scaleMatrix;
     }
     
     public Transform Translate(double x, double y, double z)
@@ -100,29 +101,29 @@ public class Transform
     {
         return new Transform
         {
-            _data = new Matrix4x4(
-                _data.M11, _data.M12, _data.M13, _data.M14,
-                _data.M21, _data.M22, _data.M23, _data.M24,
-                _data.M31, _data.M32, _data.M33, _data.M34,
-                -_data.M41, -_data.M42, -_data.M43, _data.M44
+            Data = new Matrix4x4(
+                Data.M11, Data.M12, Data.M13, Data.M14,
+                Data.M21, Data.M22, Data.M23, Data.M24,
+                Data.M31, Data.M32, Data.M33, Data.M34,
+                -Data.M41, -Data.M42, -Data.M43, Data.M44
             )
         };
     }
     
     public override string ToString()
     {
-        return $"Transform[Translation: ({_data.M14}, {_data.M24}, {_data.M34}) Rotation: ({_data.M11}, {_data.M22}, {_data.M33})Scale: ({_data.M11}, {_data.M22}, {_data.M33})";
+        return $"Transform[Translation: ({Data.M14}, {Data.M24}, {Data.M34}) Rotation: ({Data.M11}, {Data.M22}, {Data.M33})Scale: ({Data.M11}, {Data.M22}, {Data.M33})";
     }
 
     public Matrix4x4 ToMatrix()
     {
-        return _data;
+        return Data;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public Span<double> ToSpan()
+    private Span<double> ToSpan()
     {
-        return MemoryMarshal.CreateSpan(ref Unsafe.As<Matrix4x4, double>(ref _data), 16);
+        return MemoryMarshal.CreateSpan(ref Unsafe.As<Matrix4x4, double>(ref Data), 16);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -152,7 +153,7 @@ public class Transform
     {
         var result = new Transform
         {
-            _data = child._data * parent._data
+            Data = child.Data * parent.Data
         };
         return result;
     }

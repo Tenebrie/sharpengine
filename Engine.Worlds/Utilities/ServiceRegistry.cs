@@ -20,4 +20,9 @@ public class ServiceRegistry : Atom
         Services[type] = service;
         return (T)service;
     }
+    
+    internal void Preload<T>() where T : Service, new()
+    {
+        _ = Get<T>();
+    }
 }

@@ -1,4 +1,5 @@
-﻿using Engine.Rendering.Bgfx;
+﻿using Engine.Core.Common;
+using Engine.Rendering.Bgfx;
 using Engine.Worlds.Components;
 using Engine.Worlds.Entities;
 using Engine.Worlds.Entities.BuiltIns;
@@ -39,7 +40,7 @@ public unsafe class RenderingCore
         
         if (!init(&initData))
             throw new InvalidOperationException("bgfx init failed");
-        SetDebug(DebugFlags.Text);
+        SetDebug(DebugFlags.Text | DebugFlags.Stats | DebugFlags.Profiler);
         SetViewClear(0, (ClearFlags.Color | ClearFlags.Depth), 0x303030ff, 0, 0);
         
         window.Render += RenderSingleFrame;
@@ -65,23 +66,25 @@ public unsafe class RenderingCore
             _frameTimes.RemoveAt(0);
         var averageFrameTime = _frameTimes.Count > 0 ? _frameTimes.Average() : 0.0;
         var framerate = 1.0f / averageFrameTime;
-
+        
+        // var watch = System.Diagnostics.Stopwatch.StartNew();
         foreach (var backstage in _backstages)
         {
-            var camera = FindActiveCamera(backstage);
-            var cameraTransform = camera?.Transform.Negate() ?? new Transform
-            {
-                Position = new Vector(0, 0, 0),
-                Rotation = new Quaternion(0, 0, 0, 1),
-                Scale = new Vector(1, 1, 1)
-            };
-            RenderAtomTree(cameraTransform, backstage);
+            RenderCamera(0, FindActiveCamera(backstage));
+            RenderAtomTree(backstage);
         }
+        // watch.Stop();
+        // var elapsedMs = watch.ElapsedMilliseconds;
+        // Console.WriteLine("Time taken to render StaticMesh: " + elapsedMs + " ms");
         
         DebugTextWrite(0, 0, DebugColor.White, DebugColor.Blue, "Let there be cube!");
         DebugTextWrite(0, 1, "FPS: " + Math.Round(framerate));
         
+        // watch = System.Diagnostics.Stopwatch.StartNew();
         Frame(false);
+        // watch.Stop();
+        // elapsedMs = watch.ElapsedMilliseconds;
+        // Console.WriteLine("Time taken to render Frame: " + elapsedMs + " ms");
     }
 
     private static Camera? FindActiveCamera(Atom target)
@@ -94,7 +97,23 @@ public unsafe class RenderingCore
         return target.Children.Select(FindActiveCamera).OfType<Camera>().FirstOrDefault();
     }
 
-    private void RenderAtomTree(Transform cameraTransform, Atom target, int depth = 0)
+    private unsafe void RenderCamera(ushort viewId, Camera? camera)
+    {
+        Span<float> viewMatrix = stackalloc float[16];
+        Span<float> projMatrix = stackalloc float[16];
+        var cameraView = camera is null
+            ? CameraView.Default(_rootWindow.FramebufferSize.X, _rootWindow.FramebufferSize.Y, ref viewMatrix,
+                ref projMatrix)
+            : camera.AsCameraView(projMatrix);
+        
+        fixed (float* viewPtr = cameraView.ViewMatrix)
+        fixed (float* projPtr = cameraView.ProjMatrix)
+        {
+            set_view_transform(viewId, viewPtr, projPtr);
+        }
+    }
+
+    private void RenderAtomTree(Atom target)
     {
         switch (target)
         {
@@ -102,13 +121,16 @@ public unsafe class RenderingCore
                 RenderDebugLogoComponent(component);
                 break;
             case StaticMeshComponent staticMesh:
-                RenderStaticMeshComponent(cameraTransform, staticMesh);
+                RenderStaticMeshComponent(staticMesh);
+                break;
+            case IInstancedActorComponent instancedActorManager:
+                RenderInstancedActorComponent(instancedActorManager);
                 break;
         }
 
         foreach (var child in target.Children)
         {
-            RenderAtomTree(cameraTransform, child, depth + 1);
+            RenderAtomTree(child);
         }
     }
 
@@ -124,9 +146,18 @@ public unsafe class RenderingCore
         );
     }
 
-    private void RenderStaticMeshComponent(Transform cameraTransform, StaticMeshComponent staticMesh)
+    private static void RenderStaticMeshComponent(StaticMeshComponent staticMesh)
     {
-        staticMesh.Mesh.Render(cameraTransform, staticMesh.WorldTransform, 0, _rootWindow.FramebufferSize.X, _rootWindow.FramebufferSize.Y, staticMesh.Material);
+        Transform[] worldTransforms = [staticMesh.WorldTransform];
+        staticMesh.Mesh.Render(1, worldTransforms, 0, staticMesh.Material);
+    }
+    
+    private static void RenderInstancedActorComponent(IInstancedActorComponent instancedActorComponent)
+    {
+        var worldTransforms = instancedActorComponent.Instances
+            .Select(actor => actor.WorldTransform)
+            .ToArray();
+        instancedActorComponent.Mesh.Render((uint)worldTransforms.Length, worldTransforms, 0, instancedActorComponent.Material);
     }
 
     private void OnResize(Vector2D<int> size)

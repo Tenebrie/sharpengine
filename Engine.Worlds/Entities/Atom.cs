@@ -11,14 +11,19 @@ public partial class Atom
     public List<Atom> Children { get; } = [];
 
     private bool _isInitialized = false;
+    private bool _isReady = false;
     internal void Initialize()
     {
         InitializeComponents();
         InitializeLifecycle();
         InitializeInput();
-        InitializeChildren();
         
         _isInitialized = true;
+        
+        InitializeChildren();
+        OnInitCallback?.Invoke();
+
+        _isReady = true;
     }
     
     public T AdoptChild<T>(T atom) where T : Atom, new()
@@ -43,6 +48,6 @@ public partial class Atom
     
     public static bool IsValid(Atom? atom)
     {
-        return atom is { IsBeingDestroyed: false } && IsValid(atom.Backstage);
+        return atom is { IsBeingDestroyed: false };
     }
 }

@@ -28,6 +28,7 @@ public class Backstage : Atom
     internal void OnInit()
     {
         AdoptChild(ServiceRegistry);
+        ServiceRegistry.Preload<CacheRevalidationService>();
     }
 
     [OnUpdate]

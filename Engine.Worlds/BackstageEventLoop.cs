@@ -7,8 +7,8 @@ public static class BackstageEventLoop
 {
     public static void Initialize(Backstage backstage, IWindow window)
     {
-        backstage.Initialize();
         backstage.Window = window;
+        backstage.Initialize();
     }
     public static void ProcessLogicFrame(Backstage backstage, double deltaTime)
     {

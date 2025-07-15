@@ -46,8 +46,6 @@ public partial class Atom
         {
             OnDestroyCallback += (Action)action;
         }
-        
-        OnInitCallback?.Invoke();
     }
     
     protected internal void ProcessLogicFrame(double deltaTime)
