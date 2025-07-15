@@ -42,6 +42,7 @@ public unsafe class RenderingCore
             throw new InvalidOperationException("bgfx init failed");
         SetDebug(DebugFlags.Text | DebugFlags.Stats | DebugFlags.Profiler);
         SetViewClear(0, (ClearFlags.Color | ClearFlags.Depth), 0x303030ff, 0, 0);
+        Reset(opts.Size.X, opts.Size.Y, ResetFlags.Vsync | ResetFlags.MsaaX8 , TextureFormat.Count);
         
         window.Render += RenderSingleFrame;
         window.Resize += OnResize;
@@ -168,7 +169,7 @@ public unsafe class RenderingCore
         if (width == 0 || height == 0)
             return;
 
-        Reset(width, height, ResetFlags.Vsync, TextureFormat.Count);
+        Reset(width, height, ResetFlags.Vsync | ResetFlags.MsaaX8, TextureFormat.Count);
         SetViewRect(0, 0, 0, width, height);
     }
 
