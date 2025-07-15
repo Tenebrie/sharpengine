@@ -24,13 +24,19 @@ public class UserScene : Scene
         CreateActor<MainCamera>();
         // Actor actor = CreateActor<UserActor>();
         // actor.Transform.Position = new Vector(15, 15, 50);
+        var dragon = CreateActor<DragonActor>();
+        var scale = 1;
+        dragon.Transform.Rotation = QuatUtils.FromRotation(0, 0, 0);
+        dragon.Transform.Scale = new Vector(scale, scale, scale);
+        dragon.Transform.Position = new Vector(0, 10, -20);
+        
         var cubeManager = CreateActor<UnitCube>();
-        for (var x = 0; x < 50; x++)
+        for (var x = 0; x < 1; x++)
         {
-            for (var y = 0; y < 50; y++)
+            for (var y = 0; y < 1; y++)
             {
                 var transform = Transform.Identity;
-                transform.Position = new Vector(x * 2, y * 2 - 8, -10);
+                transform.Position = new Vector(x * 2, y * 2 - 20, -10);
                 transform.Scale = new Vector(0.4f, 0.4f, 0.4f);
                 transform.Rotation = Quaternion.Identity;
                 cubeManager.InstanceManager.AddInstance(transform);

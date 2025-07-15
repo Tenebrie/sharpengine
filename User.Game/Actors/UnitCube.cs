@@ -1,4 +1,5 @@
-﻿using Engine.Assets.Materials;
+﻿using Engine.Assets.Loaders;
+using Engine.Assets.Materials;
 using Engine.Assets.Meshes;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Components;
@@ -17,6 +18,8 @@ public class UnitCube : Actor
         InstanceManager.Mesh = new StaticMesh();
         InstanceManager.Material = new UnlitMaterial();
         InstanceManager.Mesh.LoadUnitCube();
+        // ObjMeshLoader.LoadObj("bin/decimated_dragon32.obj", out AssetVertex[] vertices, out var indices);
+        // InstanceManager.Mesh.Load(vertices, indices);
     }
 }
 

@@ -60,7 +60,7 @@ public unsafe class RenderingCore
         Touch(0);
         
         DebugTextClear();
-        SetViewClear(0, ClearFlags.Color | ClearFlags.Depth, 0x303030ff, 0, 0);
+        SetViewClear(0, ClearFlags.Color | ClearFlags.Depth, 0x303030ff, 1.0f, 0);
         
         _frameTimes.Add(delta);
         if (_frameTimes.Count > 100)
