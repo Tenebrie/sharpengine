@@ -5,7 +5,7 @@ using Silk.NET.Windowing;
 
 namespace Engine.Worlds.Entities;
 
-public class Backstage : Atom
+public class Backstage : Scene
 {
     public string Name { get; set; } = "Backstage";
     internal ServiceRegistry ServiceRegistry { get; } = new();

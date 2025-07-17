@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Input", "Engine.Inpu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.User.Contracts", "Engine.User.Contracts\Engine.User.Contracts.csproj", "{B24426C3-8D41-4AD6-91F8-E30020D4983B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Editor.Host", "Engine.Editor.Host\Engine.Editor.Host.csproj", "{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -167,6 +169,18 @@ Global
 		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Release|x64.Build.0 = Release|Any CPU
 		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Release|x86.ActiveCfg = Release|Any CPU
 		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Release|x86.Build.0 = Release|Any CPU
+		{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}.Debug|x64.Build.0 = Debug|Any CPU
+		{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}.Debug|x86.Build.0 = Debug|Any CPU
+		{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}.Release|x64.ActiveCfg = Release|Any CPU
+		{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}.Release|x64.Build.0 = Release|Any CPU
+		{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}.Release|x86.ActiveCfg = Release|Any CPU
+		{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

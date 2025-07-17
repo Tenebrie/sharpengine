@@ -1,6 +1,7 @@
 ﻿using System.Buffers;
 using Engine.Core.Common;
 using Engine.Rendering.Bgfx;
+using Engine.User.Contracts;
 using Engine.Worlds.Components;
 using Engine.Worlds.Entities;
 using Silk.NET.Maths;
@@ -10,7 +11,12 @@ using Transform = Engine.Core.Common.Transform;
 
 namespace Engine.Rendering;
 
-public unsafe class RenderingCore
+internal enum ViewId : ushort
+{
+    Main = 0,
+}
+
+public unsafe class RenderingCore : IRendererContract
 {
     private IWindow _rootWindow = null!;
     private List<Backstage> _backstages = [];
@@ -27,7 +33,6 @@ public unsafe class RenderingCore
 
     public void Initialize(IWindow window, WindowOptions opts)
     {
-        _rootWindow = window;
         BgfxDebug.Hook();
         Init initData = default;
         init_ctor(&initData);
@@ -40,13 +45,22 @@ public unsafe class RenderingCore
         
         if (!init(&initData))
             throw new InvalidOperationException("bgfx init failed");
+        HotInitialize(window, opts);
+    }
+
+    private const ResetFlags BgfxResetFlags = ResetFlags.Vsync | ResetFlags.MsaaX8; 
+
+    public void HotInitialize(IWindow window, WindowOptions opts)   
+    {
+        _rootWindow = window;
         SetDebug(DebugFlags.Text | DebugFlags.Stats | DebugFlags.Profiler);
         SetViewClear(0, (ClearFlags.Color | ClearFlags.Depth), 0x303030ff, 0, 0);
-        Reset(opts.Size.X, opts.Size.Y, ResetFlags.Vsync | ResetFlags.MsaaX8 , TextureFormat.Count);
+
+        Reset(opts.Size.X, opts.Size.Y, BgfxResetFlags, TextureFormat.Count);
         
         window.Render += RenderSingleFrame;
         window.Resize += OnResize;
-        window.Closing += OnShutdown;
+        window.Closing += Shutdown;
     }
     
     private readonly List<double> _frameTimes = [];
@@ -68,29 +82,21 @@ public unsafe class RenderingCore
         var averageFrameTime = _frameTimes.Count > 0 ? _frameTimes.Average() : 0.0;
         var framerate = 1.0f / averageFrameTime;
         
-        // var watch = System.Diagnostics.Stopwatch.StartNew();
         foreach (var backstage in _backstages)
         {
             RenderCamera(0, FindActiveCamera(backstage));
             RenderAtomTree(backstage);
         }
-        // watch.Stop();
-        // var elapsedMs = watch.ElapsedMilliseconds;
-        // Console.WriteLine("Time taken to render StaticMesh: " + elapsedMs + " ms");
         
         DebugTextWrite(0, 0, DebugColor.White, DebugColor.Blue, "Let there be cube!");
         DebugTextWrite(0, 1, "FPS: " + Math.Round(framerate));
         
-        // watch = System.Diagnostics.Stopwatch.StartNew();
         Frame(false);
-        // watch.Stop();
-        // elapsedMs = watch.ElapsedMilliseconds;
-        // Console.WriteLine("Time taken to render Frame: " + elapsedMs + " ms");
     }
 
     private static Camera? FindActiveCamera(Atom target)
     {
-        if (target is Camera camera)
+        if (target is Camera { ActiveInEditor: true } camera)
         {
             return camera;
         }
@@ -98,14 +104,12 @@ public unsafe class RenderingCore
         return target.Children.Select(FindActiveCamera).OfType<Camera>().FirstOrDefault();
     }
 
-    private unsafe void RenderCamera(ushort viewId, Camera? camera)
+    private static void RenderCamera(ushort viewId, Camera? camera)
     {
-        Span<float> viewMatrix = stackalloc float[16];
+        if (camera is null)
+            return;
         Span<float> projMatrix = stackalloc float[16];
-        var cameraView = camera is null
-            ? CameraView.Default(_rootWindow.FramebufferSize.X, _rootWindow.FramebufferSize.Y, ref viewMatrix,
-                ref projMatrix)
-            : camera.AsCameraView(projMatrix);
+        var cameraView = camera.AsCameraView(projMatrix);
         
         fixed (float* viewPtr = cameraView.ViewMatrix)
         fixed (float* projPtr = cameraView.ProjMatrix)
@@ -185,8 +189,17 @@ public unsafe class RenderingCore
         SetViewRect(0, 0, 0, width, height);
     }
 
-    private static void OnShutdown()
+    public void DisconnectCallbacks()
     {
+        _rootWindow.Render -= RenderSingleFrame;
+        _rootWindow.Resize -= OnResize;
+        _rootWindow.Closing -= Shutdown; 
+    }
+
+    public void Shutdown() 
+    {
+        DisconnectCallbacks();
+
         frame(false);
         shutdown();
     }

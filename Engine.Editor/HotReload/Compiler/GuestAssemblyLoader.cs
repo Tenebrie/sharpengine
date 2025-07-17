@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using System.Runtime.Loader;
 
-namespace Engine.Editor.HotReload;
+namespace Engine.Editor.HotReload.Compiler;
 
 sealed class GameAssemblyLoadContext : AssemblyLoadContext
 {

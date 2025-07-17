@@ -1,27 +1,26 @@
 ﻿using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
-using Microsoft.Build.Locator;
 using Microsoft.Build.Logging;
 
-namespace Engine.Editor.HotReload;
+namespace Engine.Editor.HotReload.Compiler;
 
-public class GameAssemblyCompiler
+public class GuestAssemblyCompiler
 {
     public bool IsCompiling;
     private readonly Project _project;
-    private GameAssemblyCompiler(string projectPath)
+    private GuestAssemblyCompiler(string projectPath)
     {
         var pc = ProjectCollection.GlobalProjectCollection;
         _project = pc.LoadProject(projectPath);
         _project.SetProperty("BuildProjectReferences", "false");
     }
 
-    private static GameAssemblyCompiler? Instance { get; set; }
-    public static GameAssemblyCompiler GetInstance(string assemblyName)
+    // private static GuestAssemblyCompiler? Instance { get; set; }
+    public static GuestAssemblyCompiler Make(string assemblyName)
     {
         var projectPath = Path.GetFullPath($@"..\..\..\..\{assemblyName}\{assemblyName}.csproj");
-        return Instance ??= new GameAssemblyCompiler(projectPath);
+        return new GuestAssemblyCompiler(projectPath);
     }
 
     private void Compile()

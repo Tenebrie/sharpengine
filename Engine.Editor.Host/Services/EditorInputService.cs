@@ -1,13 +1,11 @@
-﻿using Engine.Core.Common;
-using Engine.Input.Attributes;
+﻿using Engine.Input.Attributes;
 using Engine.Input.Contexts;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
-using Engine.Worlds.Entities.BuiltIns;
+using Engine.Worlds.Services;
 using Silk.NET.Input;
-using InputService = Engine.Worlds.Services.InputService;
 
-namespace User.Game.Actors;
+namespace Engine.Editor.Host.Services;
 
 [InputActions]
 public enum InputAction
@@ -22,11 +20,8 @@ public enum InputAction
     CameraTiltRight,
 }
 
-public class MainCamera : Camera 
+public class EditorInputService : Service
 {
-    private const double MovementSpeed = 5.0;
-    private const double TiltSpeed = 1.0;
-
     [OnInit]
     protected void OnInit()
     {
@@ -46,24 +41,5 @@ public class MainCamera : Camera
             .Build();
         
         GetService<InputService>().InputContext = defaultContext;
-    }
-    
-    [OnInputHeld(InputAction.CameraForward,  +0.0, +1.0)]
-    [OnInputHeld(InputAction.CameraBackward, +0.0, -1.0)]
-    [OnInputHeld(InputAction.CameraLeft,     -1.0, +0.0)]
-    [OnInputHeld(InputAction.CameraRight,    +1.0, +0.0)]
-    protected void OnCameraPan(double deltaTime, Vector2 direction)
-    {
-        var value = new Vector(direction.X, direction.Y, 0).NormalizedCopy();
-        Transform.Translate(value * MovementSpeed * deltaTime);
-    }
-
-    [OnInputHeld(InputAction.CameraTiltForward,  +0.0, +1.0)]
-    [OnInputHeld(InputAction.CameraTiltBackward, +0.0, -1.0)]
-    [OnInputHeld(InputAction.CameraTiltLeft,     -1.0, +0.0)]
-    [OnInputHeld(InputAction.CameraTiltRight,    +1.0, +0.0)]
-    protected void OnCameraTilt(double deltaTime, Vector2 direction) 
-    {
-        Transform.Rotate(direction.Y * TiltSpeed, 0.0, direction.X * TiltSpeed);
     }
 }

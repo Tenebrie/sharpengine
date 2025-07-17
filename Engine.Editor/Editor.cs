@@ -1,7 +1,6 @@
-﻿using Engine.Editor.Host;
-using Engine.Editor.HotReload;
-using Engine.Rendering;
-using Engine.User.Contracts;
+﻿using System.Diagnostics.CodeAnalysis;
+using Engine.Editor.HotReload.Modules;
+using Engine.Editor.HotReload.Modules.Abstract;
 using Engine.Worlds;
 using Engine.Worlds.Entities;
 using Microsoft.Build.Locator;
@@ -15,12 +14,14 @@ namespace Engine.Editor;
 internal static class Editor
 {
     private static IWindow MainWindow { get; set; } = null!;
-    private static RenderingCore Renderer { get; set; } = null!;
     private static IInputContext WindowInputContext { get; set; } = null!;
-    private static HostBackstage HostBackstage { get; set; } = null!;
-    private static GameAssemblyHost GuestAssemblyHost { get; set; } = null!;
-    private static Backstage? GuestBackstage { get; set; }
-    private static IEngineSettings<Backstage>? GuestSettings { get; set; }
+    
+    private static EditorHostAssembly EditorHostAssembly { get; set; } = null!;
+    private static RenderingAssembly RenderingAssembly { get; set; } = null!;
+    private static UserlandAssembly UserlandAssembly { get; set; } = null!;
+    private static List<GuestAssembly> GuestAssemblies { get; set; } = [];
+    
+    [SuppressMessage("ReSharper", "ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator")]
     private static void Main()
     {
         MSBuildLocator.RegisterDefaults();
@@ -32,43 +33,44 @@ internal static class Editor
         };
 
         WindowStateManager.TryLoadWindowState(ref opts);
-        
         MainWindow = Window.Create(opts);
-        Renderer = new RenderingCore();
-        GuestAssemblyHost = new GameAssemblyHost("User.Game");
+        
+        EditorHostAssembly = new EditorHostAssembly();
+        RenderingAssembly = new RenderingAssembly(MainWindow, opts);
+        UserlandAssembly = new UserlandAssembly();
+        
+        GuestAssemblies =
+        [
+            EditorHostAssembly,
+            RenderingAssembly,
+            UserlandAssembly
+        ];
 
         MainWindow.Load += () =>
         {
-            // Initialize bgfx
-            Renderer.Initialize(MainWindow, opts);
-            
             // Create input context
             WindowInputContext = MainWindow.CreateInput();
             
+            // Setup guest assemblies
+            RenderingAssembly.Init();
+            UserlandAssembly.Init();
+            EditorHostAssembly.Init();
+            
+            InitBackstage(EditorHostAssembly.Backstage);
+            InitBackstage(UserlandAssembly.Backstage);
+            
             // Save window state for hot reload
             WindowStateManager.SetupAutosaveHandler(MainWindow);
-            
-            InitHost();
-            InitGuest();
         };
 
         MainWindow.Update += deltaTime =>
         {
-            if (GuestAssemblyHost.IsCompiling)
+            foreach (var guestAssembly in GuestAssemblies)
             {
-                // Do nothing
+                var needsReload = guestAssembly.Update(deltaTime);
+                if (needsReload)
+                    ReloadAssembly(guestAssembly);
             }
-            else if (GuestAssemblyHost.IsAssemblyDirty)
-            {
-                GuestAssemblyHost.BuildGuestAsync();
-            }
-            else if (GuestAssemblyHost.AssemblyAwaitingReload)
-            {
-                ReloadGuest();
-            }
-            BackstageEventLoop.ProcessLogicFrame(HostBackstage, deltaTime);
-            if (GuestBackstage != null)
-                BackstageEventLoop.ProcessLogicFrame(GuestBackstage, deltaTime);
         };
         
         MainWindow.Closing += () =>
@@ -81,40 +83,28 @@ internal static class Editor
     }
 
     /**
-     * Reloads the guest assembly and its backstage.
+     * Reloads the guest assembly and its backstage (if applicable).
      * In other words, perform the hot reload on the guest assembly (user game).
      */
-    internal static void ReloadGuest()
+    private static void ReloadAssembly(GuestAssembly guestAssembly)
     {
-        GuestAssemblyHost.AssemblyAwaitingReload = false;
-        if (GuestBackstage != null)
-        {
-            Renderer.Unregister(GuestBackstage);
-            GuestBackstage.FreeImmediately();
-        }
-        GuestSettings = null;
-        GuestBackstage = null;
-        GuestAssemblyHost.UnloadCurrent();
-        InitGuest();
-    }
-
-    private static void InitHost()
-    {
-        HostBackstage = new HostBackstage();
-        InitBackstage(HostBackstage);
-        HostBackstage.Name = "host-" + Guid.NewGuid();
+        if (guestAssembly.Backstage != null)
+            RenderingAssembly.Unregister(guestAssembly.Backstage);
+        guestAssembly.Reload();
+        if (guestAssembly.Backstage != null)
+            InitBackstage(guestAssembly.Backstage);
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
     }
     
-    private static void InitGuest()
+    private static void InitBackstage(Backstage? backstage)
     {
-        GuestSettings = GuestAssemblyHost.Load();
-        GuestBackstage = (Backstage)Activator.CreateInstance(GuestSettings.MainBackstage)!;
-        InitBackstage(GuestBackstage);
-        GuestBackstage.Name = "guest-" + Guid.NewGuid();
-    }
-
-    private static void InitBackstage(Backstage backstage)
-    {
+        Console.WriteLine("try INIT BACKSTAGE");
+        
+        if (backstage == null)
+            return;
+        
+        Console.WriteLine("INIT BACKSTAGE");
         var inputHandler = backstage.GetService<InputService>();
         foreach (var inputKeyboard in WindowInputContext.Keyboards)
         {
@@ -126,6 +116,6 @@ internal static class Editor
         }
         
         BackstageEventLoop.Initialize(backstage, MainWindow);
-        Renderer.Register(backstage);
+        RenderingAssembly.Register(backstage);
     }
 }

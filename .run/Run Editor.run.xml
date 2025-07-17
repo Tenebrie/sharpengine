@@ -19,8 +19,7 @@
     <option name="PROJECT_KIND" value="DotNetCore" />
     <option name="PROJECT_TFM" value="net9.0" />
     <method v="2">
-      <option name="Build" />
-      <option name="Build" default="false" projectName="User.Game" projectPath="$PROJECT_DIR$/User.Game/User.Game.csproj" />
+      <option name="Build Solution" enabled="true" />
     </method>
   </configuration>
 </component>

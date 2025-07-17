@@ -6,6 +6,8 @@ namespace Engine.Worlds.Entities;
 
 public class Camera : Actor
 {
+    public bool ActiveInEditor { get; protected set; } = false;
+    
     private float[] _projMatrix;
     
     [OnInit]
