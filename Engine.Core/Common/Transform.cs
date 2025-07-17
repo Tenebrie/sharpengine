@@ -157,4 +157,9 @@ public class Transform
         };
         return result;
     }
+    
+    public static void Multiply(in Transform child, in Transform parent, ref Transform result)
+    {
+        result.Data = child.Data * parent.Data;
+    }
 }

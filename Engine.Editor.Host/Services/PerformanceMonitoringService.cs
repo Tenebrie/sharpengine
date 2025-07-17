@@ -1,9 +1,10 @@
-﻿using Engine.Worlds.Attributes;
+﻿using Engine.Core.Profiling;
+using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 
 namespace Engine.Editor.Host.Services;
 
-public class GCMonitoringService : Service
+public class PerformanceMonitoringService : Service
 {
     private int lastGen0 = 0;
     private int lastGen1 = 0;
@@ -22,5 +23,12 @@ public class GCMonitoringService : Service
         lastGen0 = g0;
         lastGen1 = g1;  
         lastGen2 = g2;
+    }
+
+    [OnTimer(Seconds = 3)]
+    protected void OnCheckCPU()
+    {
+        Profiler.GenerateReport();
+        Profiler.Reset();
     }
 }

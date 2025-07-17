@@ -20,15 +20,16 @@ public class UnitCube : Actor
         InstanceManager.Mesh.LoadUnitCube();
         // ObjMeshLoader.LoadObj("bin/decimated_dragon32.obj", out AssetVertex[] vertices, out var indices);
         // InstanceManager.Mesh.Load(vertices, indices);
-    }
+    } 
 }
 
 public class UnitCubeInstance : ActorInstance
 {
-    [OnUpdate]
-    protected void OnUpdate(double deltaTime)
-    {
-        // Transform.Translate(-0.5 * deltaTime, 0, 0);
-        Transform.Rotate(3 * deltaTime, 5 * deltaTime, 7 * deltaTime);
-    }
+    // TODO: Performance fix on large number of ticking instances?
+    // [OnUpdate]
+    // protected void OnUpdate(double deltaTime)
+    // {
+    //     // Transform.Translate(-0.5 * deltaTime, 0, 0);
+    //     // Transform.Rotate(3 * deltaTime, 5 * deltaTime, 7 * deltaTime);
+    // }
 }

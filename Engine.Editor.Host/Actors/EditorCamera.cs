@@ -8,7 +8,7 @@ namespace Engine.Editor.Host.Actors;
 public class EditorCamera : Camera
 {
     private const double MovementSpeed = 7.0;
-    private const double TiltSpeed = 1.0;
+    private const double TiltSpeed = 90.0;
 
     [OnInit]
     protected void OnInit()
@@ -32,6 +32,6 @@ public class EditorCamera : Camera
     [OnInputHeld(InputAction.CameraTiltRight,    +1.0, +0.0)]
     protected void OnCameraTilt(double deltaTime, Vector2 direction) 
     {
-        Transform.Rotate(direction.Y * TiltSpeed, 0.0, direction.X * TiltSpeed);
+        Transform.Rotate(direction.Y * TiltSpeed * deltaTime, 0.0, direction.X * TiltSpeed * deltaTime);
     }
 }

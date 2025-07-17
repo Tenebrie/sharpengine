@@ -1,5 +1,7 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using Engine.Core.Profiling;
 using Engine.Input;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Services;
@@ -53,11 +55,26 @@ public partial class Atom
     {
         if (IsTicking)
         {
+            var selfPf = Profiler.Start();
             OnUpdateCallback?.Invoke(deltaTime);
+            selfPf.StopAndReport(GetType(), ProfilingContext.OnUpdateCallback);
         }
-        
-        var children = Children.ToList(); // Create a copy to avoid modification issues during iteration
-        children.ForEach(child => child.ProcessLogicFrame(deltaTime));
+
+
+        var count = Children.Count;
+        var buffer = ArrayPool<Atom>.Shared.Rent(count);
+        try
+        {
+            for (var i = 0; i < count; i++)
+                buffer[i] = Children[i];
+
+            for (var i = 0; i < count; i++)
+                buffer[i].ProcessLogicFrame(deltaTime);
+        }
+        finally
+        {
+            ArrayPool<Atom>.Shared.Return(buffer, clearArray: false);
+        }
     }
     
     public void FreeImmediately()

@@ -14,26 +14,22 @@ public class ProfileAttribute : Attribute;
 public class ProfileAspect
 {
     [UsedImplicitly]
-    [Advice(Kind.Before)] 
-    public void OnEntry([Argument(Source.Name)] string name) => _sw = Profiler.Start();
-
-    [UsedImplicitly]
-    [Advice(Kind.After)]
-    public void OnExit([Argument(Source.Name)] string name)
+    [Advice(Kind.Around)]
+    public object AroundInvoke(
+        [Argument(Source.Metadata)] MethodBase method,
+        [Argument(Source.Target)] Func<object[], object> target,
+        [Argument(Source.Arguments)] object[] args)
     {
-        if (_sw == null)
-            return;
-        
-        var method = MethodBase.GetCurrentMethod();
-        if (method == null)
-            throw new NullReferenceException("ProfileAttribute: How can MethodBase.GetCurrentMethod() return null?");
-        
-        var declaringType = method.DeclaringType;
-        if (declaringType == null)
-            throw new NullReferenceException("ProfileAttribute: Used on a method with no declaring type?");
-        
-        _sw.StopAndReportMethod(declaringType, method.Name);
-    }
+        // start timing
+        var sw = Profiler.Start();
 
-    [ThreadStatic] private static ProfilingStopwatch? _sw;
+        try
+        {
+            return target(args);
+        }
+        finally
+        {
+            sw.StopAndReportMethod(method.DeclaringType!, method.Name);
+        }
+    }
 }

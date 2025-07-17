@@ -1,4 +1,5 @@
-﻿using Engine.Worlds.Entities;
+﻿using Engine.Core.Profiling;
+using Engine.Worlds.Entities;
 
 namespace Engine.Worlds.Services;
 
@@ -11,6 +12,7 @@ public class ReaperService : Service
         CondemnedAtoms.Add(atom);
     }
     
+    [Profile]
     public void Reap()
     {
         // ReSharper disable once ForCanBeConvertedToForeach

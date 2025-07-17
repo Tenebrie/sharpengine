@@ -3,7 +3,7 @@ using Engine.User.Contracts;
 using Engine.Worlds;
 using Engine.Worlds.Entities;
 
-namespace Engine.Editor.HotReload.Modules;
+namespace Engine.Editor.HotReload;
 
 public class UserlandAssembly(string assemblyName = "User.Game") : GuestAssembly(assemblyName)
 {
@@ -18,6 +18,7 @@ public class UserlandAssembly(string assemblyName = "User.Game") : GuestAssembly
         }
         Settings = (IEngineContract<Backstage>)loadedSettings;
         Backstage = (Backstage)Activator.CreateInstance(Settings.MainBackstage)!;
+        Editor.EditorHostAssembly.NotifyAboutUserBackstage(Backstage);
         Backstage.Name = "guest-" + Guid.NewGuid();
     }
 
@@ -26,5 +27,11 @@ public class UserlandAssembly(string assemblyName = "User.Game") : GuestAssembly
         if (Backstage != null)
             BackstageEventLoop.ProcessLogicFrame(Backstage, deltaTime);
         return base.Update(deltaTime);
+    }
+
+    protected override void Destroy()
+    {
+        Editor.EditorHostAssembly.NotifyAboutUserBackstage(null);
+        base.Destroy();
     }
 }

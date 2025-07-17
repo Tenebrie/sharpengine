@@ -42,4 +42,10 @@ public class EditorInputService : Service
         
         GetService<InputService>().InputContext = defaultContext;
     }
+
+    [OnKeyInput(Key.F3)]
+    protected void OnToggleRendererDebug()
+    {
+        
+    }
 }

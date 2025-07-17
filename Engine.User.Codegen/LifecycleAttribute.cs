@@ -13,6 +13,7 @@ public static class LifecycleAttribute
         "OnKeyInput",
         "OnKeyInputHeld",
         "OnKeyInputReleased",
+        "OnTimer"
     ];
     
     private static string[] Get()

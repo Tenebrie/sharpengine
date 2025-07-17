@@ -1,5 +1,5 @@
 ﻿using System.Buffers;
-using Engine.Core.Common;
+using Engine.Core.Profiling;
 using Engine.Rendering.Bgfx;
 using Engine.User.Contracts;
 using Engine.Worlds.Components;
@@ -41,6 +41,8 @@ public unsafe class RenderingCore : IRendererContract
         initData.resolution.width = (uint)opts.Size.X;
         initData.resolution.height = (uint)opts.Size.Y;
         initData.resolution.format = TextureFormat.RGBA8;
+        initData.resolution.numBackBuffers = 4;
+        initData.resolution.maxFrameLatency = 3;
         initData.callback = BgfxDebug.CallbackPtr;
         
         if (!init(&initData))
@@ -48,15 +50,16 @@ public unsafe class RenderingCore : IRendererContract
         HotInitialize(window, opts);
     }
 
-    private const ResetFlags BgfxResetFlags = ResetFlags.Vsync | ResetFlags.MsaaX8; 
+    private ResetFlags _resetFlags = ResetFlags.MsaaX8;
+    private DebugFlags _debugFlags = DebugFlags.Text | DebugFlags.Stats | DebugFlags.Profiler;
 
-    public void HotInitialize(IWindow window, WindowOptions opts)   
+    public void HotInitialize(IWindow window, WindowOptions opts)
     {
         _rootWindow = window;
-        SetDebug(DebugFlags.Text | DebugFlags.Stats | DebugFlags.Profiler);
+        SetDebug(_debugFlags);
         SetViewClear(0, (ClearFlags.Color | ClearFlags.Depth), 0x303030ff, 0, 0);
 
-        Reset(opts.Size.X, opts.Size.Y, BgfxResetFlags, TextureFormat.Count);
+        Reset(opts.Size.X, opts.Size.Y, _resetFlags, TextureFormat.Count);
         
         window.Render += RenderSingleFrame;
         window.Resize += OnResize;
@@ -65,6 +68,7 @@ public unsafe class RenderingCore : IRendererContract
     
     private readonly List<double> _frameTimes = [];
 
+    [Profile]
     private void RenderSingleFrame(double delta)
     {
         SetViewRect(0, 0, 0,
@@ -100,8 +104,16 @@ public unsafe class RenderingCore : IRendererContract
         {
             return camera;
         }
+        
+        // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator Too many allocations
+        foreach (var child in target.Children)
+        {
+            var foundCamera = FindActiveCamera(child);
+            if (foundCamera != null)
+                return foundCamera;
+        }
 
-        return target.Children.Select(FindActiveCamera).OfType<Camera>().FirstOrDefault();
+        return null;
     }
 
     private static void RenderCamera(ushort viewId, Camera? camera)
@@ -185,8 +197,46 @@ public unsafe class RenderingCore : IRendererContract
         if (width == 0 || height == 0)
             return;
 
-        Reset(width, height, ResetFlags.Vsync | ResetFlags.MsaaX8, TextureFormat.Count);
+        Reset(width, height, _resetFlags, TextureFormat.Count);
         SetViewRect(0, 0, 0, width, height);
+    }
+    
+    public void ToggleResetFlags(ResetFlags flags)
+    {
+        if (flags == ResetFlags.None)
+            return;
+
+        // Toggle flags
+        if ((_resetFlags & flags) == flags)
+        {
+            _resetFlags &= ~flags;
+        }
+        else
+        {
+            _resetFlags |= flags;
+        }
+
+        // Reset the renderer with the new flags
+        Reset(_rootWindow.FramebufferSize.X, _rootWindow.FramebufferSize.Y, _resetFlags, TextureFormat.Count);
+    }
+    
+    public void ToggleDebugFlags(DebugFlags flags)
+    {
+        if (flags == DebugFlags.None)
+            return;
+
+        // Toggle flags
+        if ((_debugFlags & flags) == flags)
+        {
+            _debugFlags &= ~flags;
+        }
+        else
+        {
+            _debugFlags |= flags;
+        }
+
+        // Set the new debug flags
+        SetDebug(_debugFlags);
     }
 
     public void DisconnectCallbacks()
@@ -204,17 +254,3 @@ public unsafe class RenderingCore : IRendererContract
         shutdown();
     }
 }
-
-/**
-// once at start-up
-var fstash   = new FontSystem();                     // FontStashSharp
-var font     = fstash.AddFont("assets/Roboto-Regular.ttf");
-ITexture2D tx = new BgfxTexture2D(fstash.Texture);   // bind atlas as bgfx texture
-// every frame
-var layout = font.LayoutText("Hello, Maya!", 32f);
-foreach (var g in layout)
-    WriteQuad(vertexWriter, g.X, g.Y, g.Width, g.Height,
-              g.U1, g.V1, g.U2, g.V2);              // into a transient VB
-bgfx.setTexture(0, s_tex, tx.Handle);
-bgfx.submit(viewId, program);
-*/

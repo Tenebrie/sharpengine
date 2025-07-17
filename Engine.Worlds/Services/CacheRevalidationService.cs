@@ -13,7 +13,7 @@ public class CacheRevalidationService : Service
     {
         _transformInvalidatedAtoms.Add(atom);
     }
-
+    
     [OnUpdate]
     [SuppressMessage("ReSharper", "ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator")]
     internal void OnUpdate()

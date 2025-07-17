@@ -3,12 +3,12 @@ using Engine.User.Contracts;
 using Engine.Worlds.Entities;
 using Silk.NET.Windowing;
 
-namespace Engine.Editor.HotReload.Modules;
+namespace Engine.Editor.HotReload;
 
 internal class RenderingAssembly(IWindow window, WindowOptions opts, string assemblyName = "Engine.Rendering") : GuestAssembly(assemblyName)
 {
     private bool _isInitialized = false;
-    private IRendererContract? Renderer { get; set; }
+    internal IRendererContract? Renderer { get; set; }
     private readonly List<Backstage> _backstages = [];
 
     public override void Init()
@@ -31,6 +31,7 @@ internal class RenderingAssembly(IWindow window, WindowOptions opts, string asse
         }
         foreach (var backstage in _backstages)
             Renderer.Register(backstage);
+        Editor.EditorHostAssembly.NotifyAboutRenderer(Renderer);
     }
     
     internal void Register(Backstage backstage)
@@ -49,5 +50,6 @@ internal class RenderingAssembly(IWindow window, WindowOptions opts, string asse
     {
         base.Destroy();
         Renderer?.DisconnectCallbacks();
+        Editor.EditorHostAssembly.NotifyAboutRenderer(null);
     }
 }

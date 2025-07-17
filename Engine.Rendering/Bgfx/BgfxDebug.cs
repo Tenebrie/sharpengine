@@ -82,7 +82,6 @@ public static unsafe class BgfxDebug
     private static GCHandle _cbStructHandle;
     private static GCHandle _cbVTableHandle;
 
-    /// Pass this to `bgfx_init().callback` **before any other bgfx call**.
     public static nint CallbackPtr { get; private set; }
 
     public static void Hook()

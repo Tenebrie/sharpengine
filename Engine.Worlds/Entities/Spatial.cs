@@ -18,24 +18,26 @@ public abstract class Spatial : Atom
         Transform = Transform.Identity;
     }
 
-    private Transform? _cachedWorldTransform;
+    private bool _cachedWorldTransformValid = false;
+    private Transform _cachedWorldTransform = Transform.Identity;
     public Transform WorldTransform
     {
         get
         {
-            if (_cachedWorldTransform is not null)
+            if (_cachedWorldTransformValid)
                 return _cachedWorldTransform;
 
             if (Parent is not Spatial parent)
                 return Transform;
             
-            _cachedWorldTransform = Transform * parent.WorldTransform;
+            Transform.Multiply(Transform, parent.WorldTransform, ref _cachedWorldTransform);
+            _cachedWorldTransformValid = true;
             return _cachedWorldTransform;
         }
     }
     
     internal void InvalidateWorldTransform()
     {
-        _cachedWorldTransform = null;
+        _cachedWorldTransformValid = false;
     }
 }

@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Engine.Editor.HotReload;
 using Engine.Editor.HotReload.Modules;
 using Engine.Editor.HotReload.Modules.Abstract;
+using Engine.User.Contracts;
 using Engine.Worlds;
 using Engine.Worlds.Entities;
 using Microsoft.Build.Locator;
@@ -16,9 +18,9 @@ internal static class Editor
     private static IWindow MainWindow { get; set; } = null!;
     private static IInputContext WindowInputContext { get; set; } = null!;
     
-    private static EditorHostAssembly EditorHostAssembly { get; set; } = null!;
-    private static RenderingAssembly RenderingAssembly { get; set; } = null!;
-    private static UserlandAssembly UserlandAssembly { get; set; } = null!;
+    internal static EditorHostAssembly EditorHostAssembly { get; set; } = null!;
+    internal static RenderingAssembly RenderingAssembly { get; set; } = null!;
+    internal static UserlandAssembly UserlandAssembly { get; set; } = null!;
     private static List<GuestAssembly> GuestAssemblies { get; set; } = [];
     
     [SuppressMessage("ReSharper", "ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator")]
@@ -99,12 +101,9 @@ internal static class Editor
     
     private static void InitBackstage(Backstage? backstage)
     {
-        Console.WriteLine("try INIT BACKSTAGE");
-        
         if (backstage == null)
             return;
         
-        Console.WriteLine("INIT BACKSTAGE");
         var inputHandler = backstage.GetService<InputService>();
         foreach (var inputKeyboard in WindowInputContext.Keyboards)
         {
