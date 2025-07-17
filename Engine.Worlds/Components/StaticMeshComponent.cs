@@ -13,8 +13,11 @@ public class StaticMeshComponent : ActorComponent
     [OnInit]
     protected void OnInit()
     {
+        // var stopwatch = new System.Diagnostics.Stopwatch();
         Mesh = new StaticMesh();
         Material = new UnlitMaterial();
+        // stopwatch.Start();
         Mesh.LoadUnitCube();
+        // stopwatch.Stop();
     }
 }

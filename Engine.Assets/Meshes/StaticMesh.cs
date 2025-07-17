@@ -33,6 +33,7 @@ public class StaticMesh : IDisposable
 
     public void Load(AssetVertex[] verts, ushort[] indices)
     {
+        WindingOrder = WindingOrder.Cw;
         var renderVerts = new RenderingVertex[verts.Length];
         for (var i = 0; i < verts.Length; i++)
         {
@@ -103,6 +104,7 @@ public class StaticMesh : IDisposable
             3,2,6,  6,7,3,   // +Y
             4,5,1,  1,0,4    // -Y
         ];
+        WindingOrder = WindingOrder.Ccw;
         
         LoadInternal(verts, indices);
     }

@@ -12,4 +12,9 @@
     <ProjectReference Include="..\Engine.Codegen\Engine.Codegen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Materials\Meshes\" />
+    <Folder Include="Materials\UI\" />
+  </ItemGroup>
+
 </Project>

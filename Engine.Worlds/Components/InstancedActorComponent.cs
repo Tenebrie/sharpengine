@@ -1,6 +1,7 @@
 ﻿using Engine.Assets.Materials;
 using Engine.Assets.Meshes;
 using Engine.Core.Common;
+using Engine.Core.Profiling;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 
@@ -22,6 +23,7 @@ public class InstancedActorComponent<TInstance> : ActorComponent, IInstancedActo
     public Material Material { get; set; }
     public List<ActorInstance> Instances { get; set; } = [];
 
+    [Profile]
     public void AddInstance(Transform instanceTransform)
     {
         var instancedActor = Activator.CreateInstance<TInstance>();

@@ -94,6 +94,9 @@ public static class WindowStateManager
             _lastSavedState.PositionY = state.PositionY;
             _lastSavedState.SizeX = state.SizeX;
             _lastSavedState.SizeY = state.SizeY;
+
+            if (state.SizeX <= 0 || state.SizeY <= 0)
+                return false;
             
             opts = opts with
             {

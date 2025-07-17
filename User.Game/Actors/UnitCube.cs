@@ -25,11 +25,6 @@ public class UnitCube : Actor
 
 public class UnitCubeInstance : ActorInstance
 {
-    [OnInit]
-    protected void OnInit()
-    {
-    }
-    
     [OnUpdate]
     protected void OnUpdate(double deltaTime)
     {

@@ -1,8 +1,8 @@
-﻿using Engine.Core.Common;
+﻿using System.Buffers;
+using Engine.Core.Common;
 using Engine.Rendering.Bgfx;
 using Engine.Worlds.Components;
 using Engine.Worlds.Entities;
-using Engine.Worlds.Entities.BuiltIns;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
 using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
@@ -152,13 +152,25 @@ public unsafe class RenderingCore
         Transform[] worldTransforms = [staticMesh.WorldTransform];
         staticMesh.Mesh.Render(1, worldTransforms, 0, staticMesh.Material);
     }
-    
+
     private static void RenderInstancedActorComponent(IInstancedActorComponent instancedActorComponent)
     {
-        var worldTransforms = instancedActorComponent.Instances
-            .Select(actor => actor.WorldTransform)
-            .ToArray();
-        instancedActorComponent.Mesh.Render((uint)worldTransforms.Length, worldTransforms, 0, instancedActorComponent.Material);
+        var transforms = ArrayPool<Transform>.Shared.Rent(instancedActorComponent.Instances.Count);
+        try
+        {
+            for (var i = 0; i < instancedActorComponent.Instances.Count; i++)
+            {
+                var actor = instancedActorComponent.Instances[i];
+                transforms[i] = actor.WorldTransform;
+            }
+
+            instancedActorComponent.Mesh.Render((uint)instancedActorComponent.Instances.Count, transforms, 0,
+                instancedActorComponent.Material);
+        }
+        finally
+        {
+            ArrayPool<Transform>.Shared.Return(transforms);
+        }
     }
 
     private void OnResize(Vector2D<int> size)
@@ -179,3 +191,17 @@ public unsafe class RenderingCore
         shutdown();
     }
 }
+
+/**
+// once at start-up
+var fstash   = new FontSystem();                     // FontStashSharp
+var font     = fstash.AddFont("assets/Roboto-Regular.ttf");
+ITexture2D tx = new BgfxTexture2D(fstash.Texture);   // bind atlas as bgfx texture
+// every frame
+var layout = font.LayoutText("Hello, Maya!", 32f);
+foreach (var g in layout)
+    WriteQuad(vertexWriter, g.X, g.Y, g.Width, g.Height,
+              g.U1, g.V1, g.U2, g.V2);              // into a transient VB
+bgfx.setTexture(0, s_tex, tx.Handle);
+bgfx.submit(viewId, program);
+*/

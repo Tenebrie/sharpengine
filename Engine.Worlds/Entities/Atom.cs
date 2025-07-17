@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Engine.Core.Profiling;
 
 namespace Engine.Worlds.Entities;
 
@@ -10,18 +11,31 @@ public partial class Atom
     public Atom? Parent { get; internal set; }
     public List<Atom> Children { get; } = [];
 
+    // Whether the atom itself is ready (excluding children).
     private bool _isInitialized = false;
+    // Whether the atom and all its children are ready.
     private bool _isReady = false;
+    
     internal void Initialize()
     {
+        // Initialize the atom internals first. Children will be created, but not adopted until later.
         InitializeComponents();
         InitializeLifecycle();
+        // Timers after lifecycle
+        InitializeTimers();
         InitializeInput();
         
         _isInitialized = true;
         
+        // Adopt and init children.
         InitializeChildren();
-        OnInitCallback?.Invoke();
+
+        if (OnInitCallback != null)
+        {
+            var stopwatch = Profiler.Start();
+            OnInitCallback.Invoke();
+            stopwatch.StopAndReport(GetType(), ProfilingContext.OnInitCallback);
+        }
 
         _isReady = true;
     }
@@ -45,6 +59,9 @@ public partial class Atom
             throw new InvalidOperationException("Atom is not registered in a Backstage.");
         return Backstage.ServiceRegistry.Get<T>();
     }
+
+    // Services don't need explicit registration, but this alias helps with clarity for services that are working passively.
+    public void RegisterService<T>() where T : Service, new() => GetService<T>();
     
     public static bool IsValid(Atom? atom)
     {

@@ -13,7 +13,8 @@ public partial class Atom
 {
     public Action? OnInitCallback { get; set; }
     
-    public bool IsTicking { get; set; }
+    public bool IsTicking => HasOnUpdateCallbacks || HasOnTimerCallbacks;
+    private bool HasOnUpdateCallbacks { get; set; }
     public Action<double>? OnUpdateCallback { get; set; }
     
     public Action? OnDestroyCallback { get; set; }
@@ -33,13 +34,13 @@ public partial class Atom
         var properUpdateMethods = updateMethods.Where(method => method.GetParameters().Length > 0).ToList();
         foreach (var action in simpleUpdateMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action), this, methodInfo)))
         {
-            OnUpdateCallback += _ => ((Action)action)();
+            OnUpdateCallback += DelegateHelpers.AsDoubleCallback((Action)action);
         }
         foreach (var action in properUpdateMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action<double>), this, methodInfo)))
         {
             OnUpdateCallback += (Action<double>)action;
         }
-        IsTicking = updateMethods.Length != 0;
+        HasOnUpdateCallbacks = updateMethods.Length != 0;
 
         var destroyMethods = methods.Where(method => method.GetCustomAttribute<OnDestroyAttribute>() != null).ToList();
         foreach (var action in destroyMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action), this, methodInfo)))
@@ -84,5 +85,29 @@ public partial class Atom
     {
         IsBeingDestroyed = true;
         GetService<ReaperService>().Condemn(this);
+    }
+}
+
+internal static class DelegateHelpers
+{
+    // This static method matches (Action, double) → void.
+    // When we bind the first argument to our Action instance,
+    // it “drops” the double for us.
+    private static void InvokeDropFirst(Action target, double _)
+        => target();
+
+    // Wrap your Action so you get an Action<double> back.
+    internal static Action<double> AsDoubleCallback(Action action)
+    {
+        // cache this MethodInfo somewhere if you do it often
+        var mi = typeof(DelegateHelpers)
+            .GetMethod(nameof(InvokeDropFirst),
+                BindingFlags.NonPublic | BindingFlags.Static);
+
+        return (Action<double>)Delegate.CreateDelegate(
+            typeof(Action<double>),
+            action, // bound to the 'target' param of InvokeDropFirst
+            mi
+        );
     }
 }

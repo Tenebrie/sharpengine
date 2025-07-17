@@ -1,4 +1,5 @@
 ﻿using Engine.Core.Common;
+using Engine.Core.Profiling;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 using User.Game.Actors;
@@ -21,19 +22,16 @@ public class UserScene : Scene
     [OnInit]
     protected void OnInit()
     {
+        var stopwatch = Profiler.Start();
         CreateActor<MainCamera>();
-        // Actor actor = CreateActor<UserActor>();
-        // actor.Transform.Position = new Vector(15, 15, 50);
         var dragon = CreateActor<DragonActor>();
-        var scale = 1;
         dragon.Transform.Rotation = QuatUtils.FromRotation(0, 0, 0);
-        dragon.Transform.Scale = new Vector(scale, scale, scale);
         dragon.Transform.Position = new Vector(0, 10, -20);
         
         var cubeManager = CreateActor<UnitCube>();
-        for (var x = 0; x < 1; x++)
+        for (var x = 0; x < 100; x++)
         {
-            for (var y = 0; y < 1; y++)
+            for (var y = 0; y < 100; y++)
             {
                 var transform = Transform.Identity;
                 transform.Position = new Vector(x * 2, y * 2 - 20, -10);
@@ -42,5 +40,6 @@ public class UserScene : Scene
                 cubeManager.InstanceManager.AddInstance(transform);
             }
         }
+        stopwatch.StopAndReport(this);
     }
 }
