@@ -28,9 +28,9 @@ public class UserScene : Scene
         dragon.Transform.Position = new Vector(0, 10, -20);
         
         var cubeManager = CreateActor<UnitCube>();
-        for (var x = 0; x < 95; x++)
+        for (var x = 0; x < 5; x++)
         {
-            for (var y = 0; y < 15; y++)
+            for (var y = 0; y < 5; y++)
             {
                 var transform = Transform.Identity;
                 transform.Position = new Vector(x * 2, y * 2 - 20, -10);

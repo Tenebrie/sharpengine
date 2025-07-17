@@ -120,8 +120,15 @@ public unsafe class RenderingCore : IRendererContract
     {
         if (camera is null)
             return;
+        Console.WriteLine(camera.WorldTransform.Position);
         Span<float> projMatrix = stackalloc float[16];
         var cameraView = camera.AsCameraView(projMatrix);
+        for (int i = 0; i < 16; i++)
+        {
+            // projMatrix[i] = cameraView.ProjMatrix[i];
+            Console.Write(cameraView.ViewMatrix[i] + ",");
+        }
+        Console.WriteLine(" ");
         
         fixed (float* viewPtr = cameraView.ViewMatrix)
         fixed (float* projPtr = cameraView.ProjMatrix)

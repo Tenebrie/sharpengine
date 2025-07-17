@@ -1,10 +1,12 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Silk.NET.Maths;
 
 namespace Engine.Core.Common;
 
 public class Transform
 {
+    // Row major, translation in last row
     protected Matrix4x4 Data;
 
     public virtual Vector Position
@@ -78,11 +80,57 @@ public class Transform
     public Transform Rotate(double pitch, double yaw, double roll)
     {
         Rotation *= QuatUtils.FromRotation(pitch, yaw, roll);
+        // Console.WriteLine(Position);
+        // Console.WriteLine(Data);
+        // Rotation *= QuatUtils.FromRotation(pitch, yaw, roll);
+        // RotateAround(Position, QuatUtils.FromRotation(pitch, yaw, roll));
+        // var translation = Vector;
+        // var ppp = Position;
+        // var savedPosition = MatrixHelpers.FromTranslation(Position);
+        // Position = new Vector(0, 0, 0);
+        // Rotation = QuatUtils.FromRotation(pitch, yaw, roll) * Rotation;
+        // Position = new Vector(10, 0, 0);
+        // var r = MatrixHelpers.FromQuaternion(QuatUtils.FromRotation(pitch, yaw, roll) * Rotation);
+        // var t = MatrixHelpers.FromTranslation(Position);
+        // Transpose T
+        // var newT = new Matrix4X4<double>(
+        //     t.M11, t.M21, t.M31, t.M41,
+        //     t.M12, t.M22, t.M32, t.M42,
+        //     t.M13, t.M23, t.M33, t.M43,
+        //     t.M14, t.M24, t.M34, t.M44
+        // );
+        
+        // var s = MatrixHelpers.FromScale(Scale);
+        // var r = MatrixHelpers.FromQuaternion(Rotation * QuatUtils.FromRotation(0, 0, 0.01));
+        // Console.WriteLine(QuatUtils.FromRotation(0, 0, 0.01));
+        // Data = newT * r;
+        
+        // Position = ppp;
+        // Console.WriteLine(Data);
         return this;
     }
     public Transform Rotate(Quat rotation)
     {
-        Rotation += rotation;
+        Rotation *= rotation;
+        return this;
+    }
+    
+    public Transform RotateAround(Vector point, Quat rotation)
+    {
+        // 1. Create transformation to move pivot to origin
+        var toOrigin = MatrixHelpers.FromTranslation(point);
+    
+        // 2. Apply rotation
+        var rotMat = MatrixHelpers.FromQuaternion(rotation);
+    
+        // 3. Move back to original position
+        var fromOrigin = MatrixHelpers.FromTranslation(-point);
+    
+        // Compose: T_back * R * T_origin
+        var rotationAroundPoint = fromOrigin * rotMat * toOrigin;
+    
+        // Apply to current transform
+        Data = rotationAroundPoint * Data;
         return this;
     }
 
@@ -99,15 +147,28 @@ public class Transform
 
     public Transform Negate()
     {
-        return new Transform
-        {
-            Data = new Matrix4x4(
-                Data.M11, Data.M12, Data.M13, Data.M14,
-                Data.M21, Data.M22, Data.M23, Data.M24,
-                Data.M31, Data.M32, Data.M33, Data.M34,
-                -Data.M41, -Data.M42, -Data.M43, Data.M44
-            )
-        };
+        var m = Data;
+
+        var inv = new Matrix4x4(
+            m.M11, m.M21, m.M31, 0f,
+            m.M12, m.M22, m.M32, 0f,
+            m.M13, m.M23, m.M33, 0f,
+            0f,    0f,    0f,    1f
+        );
+
+        var tx = m.M41;
+        var ty = m.M42;
+        var tz = m.M43;
+
+        var invX = -(tx * inv.M11 + ty * inv.M21 + tz * inv.M31);
+        var invY = -(tx * inv.M12 + ty * inv.M22 + tz * inv.M32);
+        var invZ = -(tx * inv.M13 + ty * inv.M23 + tz * inv.M33);
+
+        inv.M41 = invX;
+        inv.M42 = invY;
+        inv.M43 = invZ;
+
+        return new Transform { Data = inv };
     }
     
     public override string ToString()
