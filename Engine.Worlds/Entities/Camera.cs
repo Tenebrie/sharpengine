@@ -21,7 +21,7 @@ public class Camera : Actor
         const float near = 0.1f;
         const float far = 100.0f;
         var f = 1.0f / MathF.Tan(fov / 2.0f);
-
+        
         _projMatrix = [
             f / aspect, 0, 0, 0,
             0, f, 0, 0,
@@ -54,9 +54,11 @@ public class Camera : Actor
         _projMatrix[5] = f;
     }
 
+    private Transform _transformInverse = Transform.Identity;
     public CameraView AsCameraView(Span<float> viewMatrix)
     {
-        Transform.Negate().ToFloatSpan(ref viewMatrix);
+        Transform.Inverse(ref _transformInverse);
+        _transformInverse.ToFloatSpan(ref viewMatrix);
         return new CameraView(viewMatrix, _projMatrix.AsSpan());
     }
 }

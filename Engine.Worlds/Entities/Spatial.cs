@@ -6,7 +6,7 @@ namespace Engine.Worlds.Entities;
 
 public abstract class Spatial : Atom
 {
-    private Transform _transform;
+    private Transform _transform = null!;
     public Transform Transform
     {
         get => _transform;
@@ -30,7 +30,7 @@ public abstract class Spatial : Atom
             if (Parent is not Spatial parent)
                 return Transform;
             
-            Transform.Multiply(Transform, parent.WorldTransform, ref _cachedWorldTransform);
+            parent.WorldTransform.Multiply(Transform, ref _cachedWorldTransform);
             _cachedWorldTransformValid = true;
             return _cachedWorldTransform;
         }

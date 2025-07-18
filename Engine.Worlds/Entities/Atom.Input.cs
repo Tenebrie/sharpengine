@@ -113,25 +113,33 @@ public partial class Atom
                 new BoundHeldAction(
                     this,
                     groupId,
-                    0.0, 0.0,
-                    (_,_,_) =>
+                    0.0, 0.0, 0.0,
+                    (_,_,_,_) =>
                         ((Action)Delegate.CreateDelegate(typeof(Action), this, method))()
                 ),
             InputParamBinding.Double => 
                 new BoundHeldAction(
                     this,
                     groupId,
-                    attr.X, 0.0,
-                    (x,_,_) =>
+                    attr.X, 0.0, 0.0,
+                    (x,_,_,_) =>
                         ((Action<double>)Delegate.CreateDelegate(typeof(Action<double>), this, method))(x)
                 ),
             InputParamBinding.Vector2 => 
                 new BoundHeldAction(
                     this,
                     groupId,
-                    attr.X, attr.Y,
-                    (x,y,_) =>
+                    attr.X, attr.Y, 0.0,
+                    (x,y,_,_) =>
                         ((Action<Vector2>)Delegate.CreateDelegate(typeof(Action<Vector2>), this, method))(new Vector2(x, y))
+                ),
+            InputParamBinding.Vector3 =>
+                new BoundHeldAction(
+                    this,
+                    groupId,
+                    attr.X, attr.Y, attr.Z,
+                    (x,y,z,_) =>
+                        ((Action<Vector>)Delegate.CreateDelegate(typeof(Action<Vector>), this, method))(new Vector(x, y, z))
                 ),
             _ => throw new Exception("Unable to bind input action with binding params: " + attr.BindingParams)
         };
@@ -147,17 +155,25 @@ public partial class Atom
                 new BoundHeldAction(
                     this,
                     groupId,
-                    attr.X, 0.0,
-                    (delta,x,_) =>
+                    attr.X, 0.0, 0.0,
+                    (delta,x,_,_) =>
                         ((Action<double, double>)Delegate.CreateDelegate(typeof(Action<double, double>), this, method))(delta,x)
                 ),
             InputParamBinding.Vector2 => 
                 new BoundHeldAction(
                     this,
                     groupId,
-                    attr.X, attr.Y,
-                    (delta,x,y) =>
+                    attr.X, attr.Y, 0.0,
+                    (delta,x,y,_) =>
                         ((Action<double, Vector2>)Delegate.CreateDelegate(typeof(Action<double, Vector2>), this, method))(delta,new Vector2(x, y))
+                ),
+            InputParamBinding.Vector3 => 
+                new BoundHeldAction(
+                    this,
+                    groupId,
+                    attr.X, attr.Y, attr.Z,
+                    (delta,x,y,z) =>
+                        ((Action<double, Vector>)Delegate.CreateDelegate(typeof(Action<double, Vector>), this, method))(delta,new Vector(x, y, z))
                 ),
             _ => throw new Exception("Unable to bind input action with binding params: " + attr.BindingParams)
         };
@@ -172,16 +188,16 @@ public partial class Atom
             return new BoundHeldAction(
                 this,
                 groupId,
-                0.0, 0.0,
-                (_,_,_) =>
+                0.0, 0.0, 0.0,
+                (_,_,_,_) =>
                     ((Action)Delegate.CreateDelegate(typeof(Action), this, method))()
             );
         }
         return new BoundHeldAction(
             this,
             groupId,
-            0.0, 0.0,
-            (delta,_,_) =>
+            0.0, 0.0, 0.0,
+            (delta,_,_,_) =>
                 ((Action<double>)Delegate.CreateDelegate(typeof(Action<double>), this, method))(delta)
         );
     }

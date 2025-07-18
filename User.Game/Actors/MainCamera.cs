@@ -54,7 +54,7 @@ public class MainCamera : Camera
     [OnInputHeld(InputAction.CameraRight,    +1.0, +0.0)]
     protected void OnCameraPan(double deltaTime, Vector2 direction)
     {
-        var value = new Vector(direction.X, direction.Y, 0).NormalizedCopy();
+        var value = new Vector(direction.X, direction.Y, 0).Normalized();
         Transform.Translate(value * MovementSpeed * deltaTime);
     }
 

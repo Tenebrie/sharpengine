@@ -51,13 +51,13 @@ public unsafe class RenderingCore : IRendererContract
     }
 
     private ResetFlags _resetFlags = ResetFlags.MsaaX8;
-    private DebugFlags _debugFlags = DebugFlags.Text | DebugFlags.Stats | DebugFlags.Profiler;
+    private DebugFlags _debugFlags = DebugFlags.Text;
 
     public void HotInitialize(IWindow window, WindowOptions opts)
     {
         _rootWindow = window;
         SetDebug(_debugFlags);
-        SetViewClear(0, (ClearFlags.Color | ClearFlags.Depth), 0x303030ff, 0, 0);
+        SetViewClear(0, ClearFlags.Color | ClearFlags.Depth, 0x303030ff, 0, 0);
 
         Reset(opts.Size.X, opts.Size.Y, _resetFlags, TextureFormat.Count);
         
@@ -120,15 +120,8 @@ public unsafe class RenderingCore : IRendererContract
     {
         if (camera is null)
             return;
-        Console.WriteLine(camera.WorldTransform.Position);
         Span<float> projMatrix = stackalloc float[16];
         var cameraView = camera.AsCameraView(projMatrix);
-        for (int i = 0; i < 16; i++)
-        {
-            // projMatrix[i] = cameraView.ProjMatrix[i];
-            Console.Write(cameraView.ViewMatrix[i] + ",");
-        }
-        Console.WriteLine(" ");
         
         fixed (float* viewPtr = cameraView.ViewMatrix)
         fixed (float* projPtr = cameraView.ProjMatrix)

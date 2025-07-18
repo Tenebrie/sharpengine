@@ -7,7 +7,7 @@ public class VectorExtensionsTest()
     [Fact]
     public void NormalizesVector3()
     {
-        var vector = new Vector(2, 2, 2).NormalizedCopy();
+        var vector = new Vector(2, 2, 2).Normalized();
         Assert.Equal(1, vector.Length);
         Assert.Equal(0.57735026918962584, vector.X);
         Assert.Equal(0.57735026918962584, vector.Y);
@@ -16,7 +16,7 @@ public class VectorExtensionsTest()
     [Fact]
     public void NormalizesVector4()
     {
-        var vector = new Vector4(2, 2, 2, 2).NormalizedCopy();
+        var vector = new Vector4(2, 2, 2, 2).Normalized();
         Assert.Equal(1, vector.Length);
         Assert.Equal(0.5, vector.X);
         Assert.Equal(0.5, vector.Y);

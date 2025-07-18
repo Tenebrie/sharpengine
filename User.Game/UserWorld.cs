@@ -24,8 +24,8 @@ public class UserScene : Scene
     {
         CreateActor<MainCamera>();
         var dragon = CreateActor<DragonActor>();
-        dragon.Transform.Rotation = QuatUtils.FromRotation(0, 0, 0);
-        dragon.Transform.Position = new Vector(0, 10, -20);
+        dragon.Transform.Rotation = QuatUtils.FromRotation(90, 0, 0);
+        dragon.Transform.Position = new Vector(0, 0, 0);
         
         var cubeManager = CreateActor<UnitCube>();
         for (var x = 0; x < 5; x++)

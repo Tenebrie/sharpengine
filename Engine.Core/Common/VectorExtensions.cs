@@ -1,4 +1,5 @@
-﻿namespace Engine.Core.Common;
+﻿// ReSharper disable ConvertIfStatementToReturnStatement
+namespace Engine.Core.Common;
 
 public static class VectorExtensions
 {
@@ -10,12 +11,20 @@ public static class VectorExtensions
     {
         return vector.SetLengthIfNotZero(1);
     }
-    public static Vector NormalizedCopy(this Vector vector)
+    public static Vector Normalized(this Vector vector)
     {
+        // Already normalized
+        if (vector.LengthSquared - 1 < double.Epsilon)
+            return vector;
+        
         return vector.SetLengthIfNotZero(1);
     }
-    public static Vector4 NormalizedCopy(this Vector4 vector)
+    public static Vector4 Normalized(this Vector4 vector)
     {
+        // Already normalized
+        if (vector.LengthSquared - 1 < double.Epsilon)
+            return vector;
+        
         return vector.SetLengthIfNotZero(1);
     }
     public static Vector SetLengthIfNotZero(this ref Vector vector, double length)

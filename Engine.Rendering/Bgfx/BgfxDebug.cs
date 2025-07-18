@@ -74,7 +74,7 @@ public static unsafe class BgfxDebug
             // ReSharper disable once RedundantAssignment
             if (len < 0) len = 0;           // CRT error? show at least the prefix
 
-            Console.WriteLine("[bgfx] " + Encoding.ASCII.GetString(buf[..(prefixLen + len)]));
+            // Console.WriteLine("[bgfx] " + Encoding.ASCII.GetString(buf[..(prefixLen + len)]));
         }
     }
 

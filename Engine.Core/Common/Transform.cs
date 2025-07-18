@@ -51,6 +51,23 @@ public class Transform
             Data.Row3.SetLengthIfNotZero(value.Z);
         }
     }
+    
+    public Basis Basis
+    {
+        get => new()
+        {
+            XAxis = new Vector(Data.M11, Data.M12, Data.M13),
+            YAxis = new Vector(Data.M21, Data.M22, Data.M23),
+            ZAxis = new Vector(Data.M31, Data.M32, Data.M33)
+        };
+        set
+        {
+            var scale = Scale;
+            Data.M11 = value.XAxis.X * scale.X; Data.M12 = value.XAxis.Y * scale.X; Data.M13 = value.XAxis.Z * scale.X;
+            Data.M21 = value.YAxis.X * scale.Y; Data.M22 = value.YAxis.Y * scale.Y; Data.M23 = value.YAxis.Z * scale.Y;
+            Data.M31 = value.ZAxis.X * scale.Z; Data.M32 = value.ZAxis.Y * scale.Z; Data.M33 = value.ZAxis.Z * scale.Z;
+        }
+    }
 
     protected Transform()
     {
@@ -80,33 +97,6 @@ public class Transform
     public Transform Rotate(double pitch, double yaw, double roll)
     {
         Rotation *= QuatUtils.FromRotation(pitch, yaw, roll);
-        // Console.WriteLine(Position);
-        // Console.WriteLine(Data);
-        // Rotation *= QuatUtils.FromRotation(pitch, yaw, roll);
-        // RotateAround(Position, QuatUtils.FromRotation(pitch, yaw, roll));
-        // var translation = Vector;
-        // var ppp = Position;
-        // var savedPosition = MatrixHelpers.FromTranslation(Position);
-        // Position = new Vector(0, 0, 0);
-        // Rotation = QuatUtils.FromRotation(pitch, yaw, roll) * Rotation;
-        // Position = new Vector(10, 0, 0);
-        // var r = MatrixHelpers.FromQuaternion(QuatUtils.FromRotation(pitch, yaw, roll) * Rotation);
-        // var t = MatrixHelpers.FromTranslation(Position);
-        // Transpose T
-        // var newT = new Matrix4X4<double>(
-        //     t.M11, t.M21, t.M31, t.M41,
-        //     t.M12, t.M22, t.M32, t.M42,
-        //     t.M13, t.M23, t.M33, t.M43,
-        //     t.M14, t.M24, t.M34, t.M44
-        // );
-        
-        // var s = MatrixHelpers.FromScale(Scale);
-        // var r = MatrixHelpers.FromQuaternion(Rotation * QuatUtils.FromRotation(0, 0, 0.01));
-        // Console.WriteLine(QuatUtils.FromRotation(0, 0, 0.01));
-        // Data = newT * r;
-        
-        // Position = ppp;
-        // Console.WriteLine(Data);
         return this;
     }
     public Transform Rotate(Quat rotation)
@@ -115,22 +105,20 @@ public class Transform
         return this;
     }
     
-    public Transform RotateAround(Vector point, Quat rotation)
+    public Transform RotateAroundGlobal(Vector axis, double angle)
     {
-        // 1. Create transformation to move pivot to origin
-        var toOrigin = MatrixHelpers.FromTranslation(point);
+        var rotation = Quat.CreateFromAxisAngle(axis, double.DegreesToRadians(angle));
+        Rotation *= rotation;
+        return this;
+    }
     
-        // 2. Apply rotation
-        var rotMat = MatrixHelpers.FromQuaternion(rotation);
+    public Transform RotateAroundLocal(Vector axis, double angle)
+    {
+        var worldAxis = Basis.TransformVector(axis.Normalized());
+        var rotation = Quat.CreateFromAxisAngle(worldAxis, double.DegreesToRadians(angle));
     
-        // 3. Move back to original position
-        var fromOrigin = MatrixHelpers.FromTranslation(-point);
-    
-        // Compose: T_back * R * T_origin
-        var rotationAroundPoint = fromOrigin * rotMat * toOrigin;
-    
-        // Apply to current transform
-        Data = rotationAroundPoint * Data;
+        // Apply the rotation
+        Rotation *= rotation;
         return this;
     }
 
@@ -145,7 +133,14 @@ public class Transform
         return this;
     }
 
-    public Transform Negate()
+    public Transform Inverse()
+    {
+        var newTransform = new Transform();
+        Inverse(ref newTransform);
+        return newTransform;
+    }
+    
+    public void Inverse(ref Transform inverse)
     {
         var m = Data;
 
@@ -168,7 +163,7 @@ public class Transform
         inv.M42 = invY;
         inv.M43 = invZ;
 
-        return new Transform { Data = inv };
+        inverse.Data = inv;
     }
     
     public override string ToString()
@@ -219,8 +214,8 @@ public class Transform
         return result;
     }
     
-    public static void Multiply(in Transform child, in Transform parent, ref Transform result)
+    public void Multiply(in Transform child, ref Transform result)
     {
-        result.Data = child.Data * parent.Data;
+        result.Data = child.Data * Data;
     }
 }

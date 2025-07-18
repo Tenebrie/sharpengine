@@ -18,14 +18,6 @@ public class HostBackstage : Backstage, IEditorHostContract
         RegisterService<EditorInputService>();
         RegisterService<PerformanceMonitoringService>();
     }
-    
-    [OnKeyInput(Key.F3)]
-    protected void OnReload()
-    {
-        // TODO: Reimplement this
-        // Editor.ReloadGuest();
-        Renderer?.ToggleDebugFlags(Bgfx.DebugFlags.Stats | Bgfx.DebugFlags.Profiler);
-    }
 
     public required IEditorContract Editor { get; set; }
     public Backstage? UserBackstage { get; set; }
