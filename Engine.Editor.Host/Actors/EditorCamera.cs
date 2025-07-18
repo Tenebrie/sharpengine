@@ -36,7 +36,6 @@ public class EditorCamera : Camera
     [OnInput(InputAction.CameraRotateYaw,   +0.0, +1.0)]
     protected void OnCameraRotate(Vector2 direction)
     {
-        Console.WriteLine(direction);
         _pitch += direction.X * RotationSpeed;
         _yaw += direction.Y * RotationSpeed;
         Transform.Rotation = Transform.Identity

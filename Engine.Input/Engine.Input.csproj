@@ -10,9 +10,5 @@
     <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
     <PackageReference Include="Silk.NET.Input" Version="2.22.0" />
   </ItemGroup>
-  
-  <ItemGroup>
-    <Folder Include="Devices\" />
-  </ItemGroup>
 
 </Project>

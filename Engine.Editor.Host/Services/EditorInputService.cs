@@ -49,8 +49,8 @@ public class EditorInputService : Service
             .Add(InputAction.CameraLeft, Key.Left)
             .Add(InputAction.CameraRight, Key.D)
             .Add(InputAction.CameraRight, Key.Right)
-            .Add(InputAction.CameraRotatePitch, MouseAxis.MoveY)
             .Add(InputAction.CameraRotateYaw, MouseAxis.MoveX)
+            .Add(InputAction.CameraRotatePitch, MouseAxis.MoveY)
             .Build();
         
         RecalculateActiveContext();

@@ -28,7 +28,7 @@ public class PerformanceMonitoringService : Service
     [OnTimer(Seconds = 3)]
     protected void OnCheckCPU()
     {
-        Profiler.GenerateReport();
+        // Profiler.GenerateReport();
         Profiler.Reset();
     }
 }
