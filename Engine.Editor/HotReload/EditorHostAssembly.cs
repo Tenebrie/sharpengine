@@ -49,5 +49,8 @@ public class EditorHostAssembly(string assemblyName = "Engine.Editor.Host") : Gu
 
 public class EditorControls : IEditorContract
 {
-    
+    public void ReloadUserGame()
+    {
+        Editor.ReloadAssembly(Editor.UserlandAssembly);
+    }
 }

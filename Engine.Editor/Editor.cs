@@ -88,7 +88,7 @@ internal static class Editor
      * Reloads the guest assembly and its backstage (if applicable).
      * In other words, perform the hot reload on the guest assembly (user game).
      */
-    private static void ReloadAssembly(GuestAssembly guestAssembly)
+    internal static void ReloadAssembly(GuestAssembly guestAssembly)
     {
         if (guestAssembly.Backstage != null)
             RenderingAssembly.Unregister(guestAssembly.Backstage);

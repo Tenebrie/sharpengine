@@ -22,10 +22,14 @@ public class UserScene : Scene
     [OnInit]
     protected void OnInit()
     {
+        var terrain = CreateActor<GameTerrain>();
+        terrain.Transform.Position = new Vector(0, -10, 0);
+        var scale = 250.0;
+        terrain.Transform.Scale = new Vector(scale, 250.0, scale);
         CreateActor<MainCamera>();
         var dragon = CreateActor<DragonActor>();
         dragon.Transform.Rotation = QuatUtils.FromRotation(90, 0, 0);
-        dragon.Transform.Position = new Vector(0, 0, 0);
+        dragon.Transform.Position = new Vector(25, 0, 0);
         
         var cubeManager = CreateActor<UnitCube>();
         for (var x = 0; x < 5; x++)

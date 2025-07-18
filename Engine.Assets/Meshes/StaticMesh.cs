@@ -108,7 +108,7 @@ public class StaticMesh : IDisposable
         
         LoadInternal(verts, indices);
     }
-
+    
     public unsafe void Render(uint instanceCount, Transform[] worldTransforms, ushort viewId, Material material)
     {
         var idb = new InstanceDataBuffer();

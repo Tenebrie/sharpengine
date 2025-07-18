@@ -7,7 +7,7 @@ namespace Engine.Editor.Host.Actors;
 
 public class EditorCamera : Camera
 {
-    private const double MovementSpeed = 7.0;
+    private const double MovementSpeed = 50.0;
     private const double RotationSpeed = 0.12;
     
     private double _pitch = 0.0;

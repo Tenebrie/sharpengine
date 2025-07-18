@@ -140,6 +140,9 @@ public unsafe class RenderingCore : IRendererContract
             case StaticMeshComponent staticMesh:
                 RenderStaticMeshComponent(staticMesh);
                 break;
+            case TerrainMeshComponent staticMesh:
+                RenderTerrainMeshComponent(staticMesh);
+                break;
             case IInstancedActorComponent instancedActorManager:
                 RenderInstancedActorComponent(instancedActorManager);
                 break;
@@ -164,6 +167,12 @@ public unsafe class RenderingCore : IRendererContract
     }
 
     private static void RenderStaticMeshComponent(StaticMeshComponent staticMesh)
+    {
+        Transform[] worldTransforms = [staticMesh.WorldTransform];
+        staticMesh.Mesh.Render(1, worldTransforms, 0, staticMesh.Material);
+    }
+    
+    private static void RenderTerrainMeshComponent(TerrainMeshComponent staticMesh)
     {
         Transform[] worldTransforms = [staticMesh.WorldTransform];
         staticMesh.Mesh.Render(1, worldTransforms, 0, staticMesh.Material);

@@ -2,5 +2,5 @@
 
 public interface IEditorContract
 {
-    
+    public void ReloadUserGame();
 }

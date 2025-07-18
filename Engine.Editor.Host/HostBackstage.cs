@@ -19,6 +19,12 @@ public class HostBackstage : Backstage, IEditorHostContract
         RegisterService<PerformanceMonitoringService>();
     }
 
+    [OnKeyInput(Key.F5)]
+    protected void OnReload()
+    {
+        Editor.ReloadUserGame();
+    }
+
     public required IEditorContract Editor { get; set; }
     public Backstage? UserBackstage { get; set; }
     public IRendererContract? Renderer { get; set; }

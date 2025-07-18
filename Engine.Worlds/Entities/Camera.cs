@@ -19,7 +19,7 @@ public class Camera : Actor
         const float fov = 60.0f * MathF.PI / 180.0f;
         var aspect = Backstage.Window.FramebufferSize.X / (float)Backstage.Window.FramebufferSize.Y;
         const float near = 0.1f;
-        const float far = 100.0f;
+        const float far = 10000.0f;
         var f = 1.0f / MathF.Tan(fov / 2.0f);
         
         _projMatrix = [
