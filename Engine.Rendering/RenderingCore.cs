@@ -24,6 +24,8 @@ public unsafe class RenderingCore : IRendererContract
     internal List<Backstage> Backstages = [];
     internal LogRenderer LogRenderer = null!;
 
+    internal UniformHandle TextureDiffuse;
+
     public void Register(Backstage backstage)
     {
         Backstages.Add(backstage);

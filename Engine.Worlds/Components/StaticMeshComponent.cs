@@ -1,4 +1,5 @@
 ﻿using Engine.Assets.Materials;
+using Engine.Assets.Materials.Meshes.HonseTerrain;
 using Engine.Assets.Meshes;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
@@ -14,7 +15,6 @@ public class StaticMeshComponent : ActorComponent
     protected void OnInit()
     {
         Mesh = new StaticMesh();
-        Material = new UnlitMaterial();
-        // Mesh.LoadUnitCube();
+        Material = new HonseTerrainMaterial();
     }
 }

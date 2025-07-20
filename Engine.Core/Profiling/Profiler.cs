@@ -75,7 +75,7 @@ public class Profiler
             contextDictionary[context] = profilerEntry;
         }
         profilerEntry.RecordDuration(stopwatch.Stopwatch.Elapsed.Microseconds);
-        Logger.Debug(ownerType.Name + " - " + context + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
+        // Logger.Debug(ownerType.Name + " - " + context + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
         _pool.Return(stopwatch);
     }
     
@@ -92,7 +92,7 @@ public class Profiler
             contextDictionary[methodName] = profilerEntry;
         }
         profilerEntry.RecordDuration(stopwatch.Stopwatch.Elapsed.Microseconds);
-        Logger.Debug(ownerType.Name + " - " + methodName + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
+        // Logger.Debug(ownerType.Name + " - " + methodName + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
         _pool.Return(stopwatch);
     }
 }

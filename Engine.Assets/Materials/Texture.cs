@@ -1,6 +1,6 @@
 ﻿using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
+
 using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 
 namespace Engine.Assets.Materials;
@@ -21,8 +21,8 @@ public sealed class Texture : IDisposable
         {
             fixed (byte* ptr = data)
             {
-                var mem = make_ref(ptr, (uint)data.Length);
-                Handle = create_texture_2d(width, height, hasMips, 1, TextureFormat.RGBA8, 0, mem);
+                var mem = copy(ptr, (uint)data.Length);
+                Handle = create_texture_2d(width, height, hasMips, 1, TextureFormat.RGBA8, (ulong)TextureFlags.None, mem);
                 IsValid = Handle.Valid;
             }
         }

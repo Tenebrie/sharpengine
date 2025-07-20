@@ -8,9 +8,10 @@ using Transform = Engine.Core.Common.Transform;
 namespace Engine.Assets.Meshes;
 
 [StructLayout(LayoutKind.Sequential, Pack = 1)]
-public readonly struct RenderingVertex(float x, float y, float z, uint color, Vector3 normal)
+public readonly struct RenderingVertex(float x, float y, float z, Vector2 uv, uint color, Vector3 normal)
 {
     public readonly float X = x, Y = y, Z = z;
+    public readonly Vector2 Uv = uv;
     public readonly uint Color = color;
     public readonly Vector3 Normal = normal;
 }
@@ -47,7 +48,7 @@ public class StaticMesh : IDisposable
                         | (b << 16)
                         | (g <<  8)
                         |  r;
-            renderVerts[i] = new RenderingVertex(v.Position.X, v.Position.Y, v.Position.Z, color, Vector3.One);
+            renderVerts[i] = new RenderingVertex(v.Position.X, v.Position.Y, v.Position.Z, v.TexCoord, color, Vector3.One);
         }
 
         LoadInternal(renderVerts, indices);
@@ -62,6 +63,7 @@ public class StaticMesh : IDisposable
         {
             vertex_layout_begin(layout, get_renderer_type());
             vertex_layout_add(layout, Attrib.Position, 3, AttribType.Float, true, false);
+            vertex_layout_add(layout, Attrib.TexCoord0, 2, AttribType.Float, true, false);
             vertex_layout_add(layout, Attrib.Color0, 4, AttribType.Uint8, true, true);
             vertex_layout_add(layout, Attrib.Normal, 3, AttribType.Float, true, false);
             vertex_layout_end(layout);
@@ -84,14 +86,14 @@ public class StaticMesh : IDisposable
     {
         RenderingVertex[] verts =
         [
-            new(-1, -1, -1, 0xff0000ff, Vector3.One), // red
-            new( 1, -1, -1, 0xff00ff00, Vector3.One), // green
-            new( 1,  1, -1, 0xffffff00, Vector3.One), // yellow
-            new(-1,  1, -1, 0xffff0000, Vector3.One), // blue
-            new(-1, -1,  1, 0xff00ffff, Vector3.One), // cyan
-            new( 1, -1,  1, 0xffff00ff, Vector3.One), // magenta
-            new( 1,  1,  1, 0xffffffff, Vector3.One), // white
-            new(-1,  1,  1, 0xff808080, Vector3.One)  // gray
+            new(-1, -1, -1, Vector2.Zero,0xff0000ff, Vector3.One), // red
+            new( 1, -1, -1, Vector2.One, 0xff00ff00, Vector3.One), // green
+            new( 1,  1, -1, Vector2.One, 0xffffff00, Vector3.One), // yellow
+            new(-1,  1, -1, Vector2.One, 0xffff0000, Vector3.One), // blue
+            new(-1, -1,  1, Vector2.One, 0xff00ffff, Vector3.One), // cyan
+            new( 1, -1,  1, Vector2.One, 0xffff00ff, Vector3.One), // magenta
+            new( 1,  1,  1, Vector2.One, 0xffffffff, Vector3.One), // white
+            new(-1,  1,  1, Vector2.One, 0xff808080, Vector3.One)  // gray
         ];
 
         // 12 triangles (36 indices)
@@ -135,7 +137,8 @@ public class StaticMesh : IDisposable
         else
             stateFlags |= StateFlags.CullCw;
         SetState(stateFlags);
-
+        
+        material.BindTexture();
         submit(viewId, material.Program, 1, 0);
 
     }

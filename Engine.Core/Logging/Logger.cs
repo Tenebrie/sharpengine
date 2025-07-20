@@ -40,12 +40,12 @@ public static class Logger
     {
         var str = message.ToString()!;
         Logs[level].Write(str, level);
+        Console.WriteLine(str, exception);
         
         if (level < _logLevel)
             return;
 
         RecentLog.Write(str, level);
-        Console.WriteLine(str, exception);
     }
 
     [SuppressMessage("ReSharper", "CollectionNeverUpdated.Local")]

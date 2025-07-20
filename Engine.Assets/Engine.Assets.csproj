@@ -13,7 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Materials\Meshes\" />
     <Folder Include="Materials\UI\" />
   </ItemGroup>
 

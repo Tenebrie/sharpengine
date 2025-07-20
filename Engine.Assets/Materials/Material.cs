@@ -4,27 +4,53 @@ namespace Engine.Assets.Materials;
 
 public class Material
 {
-    public ProgramHandle Program { get; protected set; }
-    protected ShaderHandle FragShader;
-    protected ShaderHandle VertShader;
+    // Shaders
+    public ProgramHandle Program { get; }
 
-    protected static unsafe ShaderHandle LoadShader(string path)
+    // Textures
+    protected Texture? Texture;
+    public UniformHandle DiffuseTextureHandle = create_uniform("s_diffuse", UniformType.Sampler, 1);
+
+    protected Material(string shaderPath)
     {
-        // Read the whole compiled .bin file.
+        var vertShader = LoadShader("bin/" + shaderPath + ".vert.bin");
+        var fragShader = LoadShader("bin/" + shaderPath + ".frag.bin");
+        Program = CreateProgram(vertShader, fragShader);
+    }
+    
+    public void LoadTexture(string texturePath)
+    {
+        Texture?.Dispose();
+        Texture = Texture.Load(texturePath);
+    } 
+
+    public void BindTexture()
+    {
+        if (Texture == null)
+            return;
+        
+        set_texture(0, DiffuseTextureHandle, Texture.Handle, uint.MaxValue);
+    }
+
+    private static unsafe ShaderHandle LoadShader(string path)
+    {
+        // Path to compiled binary.
         var data = File.ReadAllBytes(path);
         fixed (byte* ptr = data)
         {
-            // bgfx has a convenience overload: Copy(byte[]) returns a bgfx::Memory*.
-            var mem = copy(ptr, (uint)data.Length);                  // allocates & copies in one call
-
-            // Create the shader; bgfx takes ownership of 'mem' immediately.
+            var mem = copy(ptr, (uint)data.Length);
             var sh = create_shader(mem);
-
-            // Sanity-check: in bgfx handles, index 0xFFFF means "invalid".
             if (sh.idx == ushort.MaxValue)
                 throw new InvalidOperationException($"Shader '{path}' failed to load.");
-
             return sh;
         }
+    }
+
+    private static ProgramHandle CreateProgram(ShaderHandle vert, ShaderHandle frag, bool destroyShaders = true)
+    {
+        var program = create_program(vert, frag, destroyShaders);
+        if (program.idx == ushort.MaxValue)
+            throw new InvalidOperationException("Program creation failed.");
+        return program;
     }
 }

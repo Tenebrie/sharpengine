@@ -14,7 +14,7 @@ public static class BackstageEventLoop
             backstage.Initialize();
         } catch (Exception e)
         {
-            Logger.Error("Failed to initialize backstage: {0}", e);
+            Logger.Error("Failed to initialize backstage", e);
         }
     }
     public static void ProcessLogicFrame(Backstage backstage, double deltaTime)

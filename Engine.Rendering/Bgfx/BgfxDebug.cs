@@ -6,6 +6,38 @@ using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 
 namespace Engine.Rendering.Bgfx;
 
+internal static unsafe class Native
+{
+    // ---------- vsnprintf ----------
+    [DllImport("msvcrt", CallingConvention = CallingConvention.Cdecl,
+        EntryPoint = "vsnprintf", ExactSpelling = true)]
+    private static extern int vsnprintf_win(
+        byte* str, /*size_t*/ UIntPtr size, sbyte* fmt, void* ap);
+
+    [DllImport("libc", CallingConvention = CallingConvention.Cdecl,
+        EntryPoint = "vsnprintf", ExactSpelling = true)]
+    private static extern int vsnprintf_unix(
+        byte* str, UIntPtr size, sbyte* fmt, void* ap);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int vsnprintf(byte* str, UIntPtr size, sbyte* fmt, void* ap)
+        => RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? vsnprintf_win(str, size, fmt, ap)
+            : vsnprintf_unix(str, size, fmt, ap);
+
+    // ---------- _vscprintf (Windows‑only helper to get length) ----------
+    [DllImport("msvcrt", CallingConvention = CallingConvention.Cdecl,
+        EntryPoint = "_vscprintf", ExactSpelling = true)]
+    private static extern int vscprintf_win(sbyte* fmt, void* ap);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal static int vscprintf(sbyte* fmt, void* ap)
+        => RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? vscprintf_win(fmt, ap)
+            // POSIX: vsnprintf(NULL,0,...) gives required length
+            : vsnprintf_unix(null, UIntPtr.Zero, fmt, ap);
+}
+
 public static unsafe class BgfxCallbacks
 {
     // === Native function pointer struct (matches bgfx_callback_vtbl_t) ===
@@ -109,16 +141,45 @@ public static unsafe class BgfxCallbacks
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    private static void TraceVargsFn(void* self, sbyte* file, ushort line, sbyte* fmt, void* args)
+    private static unsafe void TraceVargsFn(
+        void*  self,
+        sbyte* file, ushort line,
+        sbyte* fmt,  void*  args)
     {
-        // Minimal: just print format string. (You can add vsnprintf expansion later.)
-        var f = Marshal.PtrToStringAnsi((nint)file) ?? "";
-        var format = Marshal.PtrToStringAnsi((nint)fmt) ?? "";
-        
-        Logger.Debug($"[bgfx] {f}({line}): {format}");
+        // (1) File name
+        var fileStr = Marshal.PtrToStringAnsi((nint)file) ?? "<bgfx>";
+
+        // (2) How long will the fully‑formatted string be?
+        var len = Native.vscprintf(fmt, args);
+        if (len < 0) { Logger.Warn("[bgfx] vsnprintf failed"); return; }
+
+        const int kCap = 16 * 1024;
+        len = Math.Min(len, kCap);
+
+        // (3) Format into a stack buffer (fast path) or heap buffer if huge
+        if (len <= 512)
+        {
+            var buf = stackalloc byte[len + 1];
+            Native.vsnprintf(buf, (UIntPtr)(len + 1), fmt, args);
+            var msg = Marshal.PtrToStringAnsi((nint)buf) ?? "<fmt‑fail>";
+
+            // (4) Ship it to your logger
+            Logger.Debug($"[bgfx] {fileStr}({line}): {msg}");
+        }
+        else
+        {
+            var buf = (byte*)Marshal.AllocHGlobal(len + 1);
+            Native.vsnprintf(buf, (UIntPtr)(len + 1), fmt, args);
+            var msg = Marshal.PtrToStringAnsi((nint)buf) ?? "<fmt‑fail>";
+
+            Marshal.FreeHGlobal((nint)buf);
+
+            // (4) Ship it to your logger
+            Logger.Debug($"[bgfx] {fileStr}({line}): {msg}");
+        }
     }
 
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void ProfilerBeginFn(void* self, sbyte* name, uint abgr, sbyte* file, ushort line) { }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
