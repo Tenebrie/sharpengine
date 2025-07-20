@@ -1,5 +1,4 @@
 ﻿using Engine.Core.Extensions;
-using Engine.Core.Logging;
 using Engine.Core.Makers;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
@@ -22,6 +21,8 @@ public class PlayerCharacter : Actor
     [OnInputHeld(InputAction.MoveRight,    +0.0, +1.0)]
     protected void OnMove(double deltaTime, Vector2 direction)
     {
+        if (direction.LengthSquared == 0)
+            return;
         var value = new Vector(direction.Y, 0, -direction.X).Normalized();
         var forwardVector = Axis.Forward;
         var dotProduct = value.Dot(forwardVector);

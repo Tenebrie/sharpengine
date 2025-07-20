@@ -1,0 +1,2 @@
+This folder represents the root of the built project, storing all the non-generated assets/binaries. These should all be copied to the working directory of the running project.
+For editor builds, it is "Engine.Editor/bin/Debug/net9.0" or thereabouts.
