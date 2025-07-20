@@ -1,4 +1,5 @@
-﻿using Microsoft.Build.Evaluation;
+﻿using Engine.Core.Logging;
+using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Logging;
@@ -7,10 +8,12 @@ namespace Engine.Editor.HotReload.Compiler;
 
 public class GuestAssemblyCompiler
 {
+    private readonly string _assemblyName;
     public bool IsCompiling = false;
     private readonly Project _project;
-    private GuestAssemblyCompiler(string projectPath)
+    private GuestAssemblyCompiler(string assemblyName, string projectPath)
     {
+        _assemblyName = assemblyName;
         var pc = ProjectCollection.GlobalProjectCollection;
         _project = pc.LoadProject(projectPath);
         _project.SetProperty("BuildProjectReferences", "false");
@@ -20,7 +23,7 @@ public class GuestAssemblyCompiler
     public static GuestAssemblyCompiler Make(string assemblyName)
     {
         var projectPath = Path.GetFullPath($@"..\..\..\..\{assemblyName}\{assemblyName}.csproj");
-        return new GuestAssemblyCompiler(projectPath);
+        return new GuestAssemblyCompiler(assemblyName, projectPath);
     }
 
     private void Compile()
@@ -31,20 +34,30 @@ public class GuestAssemblyCompiler
         };
         
         var request = new BuildRequestData(
-            _project.CreateProjectInstance(),    // snapshot of Project at current state
-            ["Build"] // targets: Build, Clean, Rebuild, etc.
+            _project.CreateProjectInstance(),
+            ["Build"]
         );
         
         var result = BuildManager.DefaultBuildManager.Build(buildParams, request);
 
-        Console.WriteLine(result.OverallResult == BuildResultCode.Success
+        if (result.OverallResult == BuildResultCode.Failure)
+        {
+            Logger.ShowPersistent("FailedToCompile",
+                "Unable to hot reload assembly, some changes require restarting the editor.");
+        }
+        else
+        {
+            Logger.ClearPersistent("FailedToCompile");
+        }
+
+        Logger.Debug(result.OverallResult == BuildResultCode.Success
             ? "In-process build succeeded"
             : "Build failed!");
     }
 
     public Task CompileAsync(Action onSuccess)
     {
-        Console.WriteLine("Starting compilation...");
+        Logger.Info("Starting hot reload for assembly " + _assemblyName);
         IsCompiling = true;
         return Task.Run(() =>
         {
@@ -54,9 +67,8 @@ public class GuestAssemblyCompiler
                 onSuccess.Invoke();
                 IsCompiling = false;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                Console.WriteLine(e);
                 IsCompiling = false;
                 throw;
             }

@@ -1,4 +1,5 @@
-﻿using Engine.Core.Profiling;
+﻿using Engine.Core.Logging;
+using Engine.Core.Profiling;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 
@@ -21,7 +22,7 @@ public class PerformanceMonitoringService : Service
         var g2 = GC.CollectionCount(2);
 
         if (LoggingEnabled)
-            Console.WriteLine($"GC/f  g0:{g0 - _lastGen0}  g1:{g1 - _lastGen1}  g2:{g2 - _lastGen2}");
+            Logger.Debug($"GC/f  g0:{g0 - _lastGen0}  g1:{g1 - _lastGen1}  g2:{g2 - _lastGen2}");
  
         _lastGen0 = g0;
         _lastGen1 = g1;  

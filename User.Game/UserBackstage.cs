@@ -26,14 +26,13 @@ public class UserScene : Scene
     {
         RegisterService<UserInputService>();
         
-        var terrain = CreateActor<GameTerrain>();
-        terrain.Transform.Position = new Vector(0, -10, 0);
-        var scale = 250.0;
-        terrain.Transform.Scale = new Vector(scale, 250.0, scale);
-        var dragon = CreateActor<PlayerCharacter>();
-        
-        dragon.DragonMeshComponent.MeshComponent.Transform.Rotation = QuatMakers.FromRotation(90, 0, 0);
-        dragon.DragonMeshComponent.Transform.Position = new Vector(0, 0, 0);
+        // var terrain = CreateActor<GameTerrain>();
+        // terrain.Transform.Position = new Vector(0, -10, 0);
+        // var scale = 250.0;
+        // terrain.Transform.Scale = new Vector(scale, 250.0, scale);
+        var player = CreateActor<PlayerCharacter>();
+        var cameraFollower = CreateActor<PlayerCameraFollower>();
+        cameraFollower.PlayerCharacter = player;
         
         var cubeManager = CreateActor<UnitCube>();
         for (var x = 0; x < 5; x++)

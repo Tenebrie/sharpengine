@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Engine.Core.Enum;
+using Engine.Core.Logging;
 using Engine.Editor.HotReload;
 using Engine.Editor.HotReload.Abstract;
 using Engine.Worlds;
@@ -63,6 +64,8 @@ internal static class Editor
             
             // Save window state for hot reload
             WindowStateManager.SetupAutosaveHandler(MainWindow);
+            
+            Logger.Info("Engine startup complete.");
         };
 
         MainWindow.Update += deltaTime =>

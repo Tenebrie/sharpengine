@@ -61,12 +61,6 @@ public class EditorInputService : Service
         RecalculateActiveContext();
     }
 
-    [OnKeyInput(Key.F3)]
-    protected void OnToggleRendererDebug()
-    {
-        HostBackstage.Renderer?.ToggleDebugFlags(Bgfx.DebugFlags.Stats | Bgfx.DebugFlags.Profiler);
-    }
-
     [OnKeyInput(Key.F5)]
     protected void OnToggleGameplayContext()
     {

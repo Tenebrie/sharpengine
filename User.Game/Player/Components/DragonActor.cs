@@ -1,5 +1,7 @@
 ﻿using Engine.Assets.Loaders;
 using Engine.Assets.Materials;
+using Engine.Core.Logging;
+using Engine.Core.Makers;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Components;
 using Engine.Worlds.Entities;
@@ -16,6 +18,13 @@ public class DragonMesh : Actor
         ObjMeshLoader.LoadObj("bin/decimated_dragon32.obj", out var vertices, out var indices);
         MeshComponent.Mesh.Load(vertices, indices);
         MeshComponent.Material = new UnlitMaterial();
+        
+        MeshComponent.Transform.Rotation = QuatMakers.FromRotation(90, 0, 0);
     }
 
+    [OnUpdate]
+    protected void OnUpdate(double deltaTime)
+    {
+        // Logger.Info("test");
+    }
 }

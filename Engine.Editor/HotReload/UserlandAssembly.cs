@@ -7,6 +7,8 @@ namespace Engine.Editor.HotReload;
 
 public class UserlandAssembly(string assemblyName = "User.Game") : GuestAssembly(assemblyName)
 {
+    private double _updatesPausedFor = 0.0;
+    
     public override void Init()
     {
         base.Init();
@@ -25,8 +27,25 @@ public class UserlandAssembly(string assemblyName = "User.Game") : GuestAssembly
 
     public override bool Update(double deltaTime)
     {
-        if (Backstage != null)
+        if (_updatesPausedFor > 0.0)
+        {
+            _updatesPausedFor -= deltaTime;
+            return base.Update(deltaTime);
+        }
+
+        if (Backstage == null)
+            return base.Update(deltaTime);
+        
+        try
+        {
             BackstageEventLoop.ProcessLogicFrame(Backstage, deltaTime);
+        } catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error during Backstage update: {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
+            _updatesPausedFor = 3.0;
+            return false;
+        }
         return base.Update(deltaTime);
     }
 

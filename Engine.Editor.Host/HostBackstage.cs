@@ -13,6 +13,7 @@ public class HostBackstage : Backstage, IEditorHostContract
     {
         CreateActor<EditorCamera>();
         RegisterService<EditorInputService>();
+        RegisterService<EditorLoggingService>();
         RegisterService<PerformanceMonitoringService>();
     }
 

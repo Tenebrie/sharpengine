@@ -1,4 +1,5 @@
 ﻿using Engine.Core.Enum;
+using Engine.Core.Logging;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Services;
 using Engine.Worlds.Utilities;
@@ -49,11 +50,5 @@ public class Backstage : Scene
     {
         ServiceRegistry.Get<ReaperService>().Reap();
         ServiceRegistry.Get<InputService>().SendKeyboardHeldEvents(deltaTime);
-    }
-
-    [OnDestroy]
-    internal void OnDestroy()
-    {
-        Console.WriteLine("Destroying Backstage and its services.");
     }
 }

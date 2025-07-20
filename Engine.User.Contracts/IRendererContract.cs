@@ -13,6 +13,7 @@ public interface IRendererContract
     public void HotInitialize(IWindow window, WindowOptions opts);
     public void ToggleResetFlags(Bgfx.ResetFlags flags);
     public void ToggleDebugFlags(Bgfx.DebugFlags flags);
+    public void ToggleLogRendering();
     public void DisconnectCallbacks();
     public void Shutdown();
     public void SetGameplayContext(GameplayContext context);

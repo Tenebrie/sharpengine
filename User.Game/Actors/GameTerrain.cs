@@ -1,4 +1,5 @@
-﻿using Engine.Worlds.Attributes;
+﻿using Engine.Core.Logging;
+using Engine.Worlds.Attributes;
 using Engine.Worlds.Components;
 using Engine.Worlds.Entities;
 
@@ -11,6 +12,6 @@ public class GameTerrain : Actor
     [OnInit]
     protected void OnInit()
     {
-        Console.WriteLine("OnInit");
+        Logger.Info("OnInit");
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Engine.Core.Logging;
 using Microsoft.Extensions.ObjectPool;
 
 namespace Engine.Core.Profiling;
@@ -29,28 +30,28 @@ public class Profiler
     
     public static void GenerateReport()
     {
-        Console.WriteLine("Profiler Report:");
+        Logger.Debug("Profiler Report:");
         foreach (var (ownerType, contextDictionary) in Instance._lifecycleEntries)
         {
-            Console.WriteLine($"Owner Type: {ownerType.Name}");
+            Logger.Debug($"Owner Type: {ownerType.Name}");
             foreach (var (context, profilerEntry) in contextDictionary)
             {
                 var averageDuration = $"Average: {profilerEntry.Average()} ms";
                 var totalDuration = $"Total: {profilerEntry.Total()} ms ({profilerEntry.Total() / 30.0}%)";
                 var callCount = $"Calls: {profilerEntry.Count()}";
-                Console.WriteLine($"  Context: {context}, {averageDuration}, {totalDuration}, {callCount}");
+                Logger.Debug($"  Context: {context}, {averageDuration}, {totalDuration}, {callCount}");
             }
         }
         
         foreach (var (ownerType, methodDictionary) in Instance._methodEntries)
         {
-            Console.WriteLine($"Owner Type: {ownerType.Name}");
+            Logger.Debug($"Owner Type: {ownerType.Name}");
             foreach (var (methodName, profilerEntry) in methodDictionary)
             {
                 var averageDuration = $"Average: {profilerEntry.Average()} ms";
                 var totalDuration = $"Total: {profilerEntry.Total()} ms ({profilerEntry.Total() / 30.0}%)";
                 var callCount = $"Calls: {profilerEntry.Count()}";
-                Console.WriteLine($"  Method: {methodName}, {averageDuration}, {totalDuration}, {callCount}");
+                Logger.Debug($"  Method: {methodName}, {averageDuration}, {totalDuration}, {callCount}");
             }
         }
     }
@@ -74,7 +75,7 @@ public class Profiler
             contextDictionary[context] = profilerEntry;
         }
         profilerEntry.RecordDuration(stopwatch.Stopwatch.Elapsed.Microseconds);
-        // Console.WriteLine(ownerType.Name + " - " + context + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
+        Logger.Debug(ownerType.Name + " - " + context + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
         _pool.Return(stopwatch);
     }
     
@@ -91,7 +92,7 @@ public class Profiler
             contextDictionary[methodName] = profilerEntry;
         }
         profilerEntry.RecordDuration(stopwatch.Stopwatch.Elapsed.Microseconds);
-        // Console.WriteLine(ownerType.Name + " - " + methodName + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
+        Logger.Debug(ownerType.Name + " - " + methodName + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
         _pool.Return(stopwatch);
     }
 }

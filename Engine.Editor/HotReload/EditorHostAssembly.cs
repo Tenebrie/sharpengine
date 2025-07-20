@@ -1,4 +1,5 @@
 ﻿using Engine.Core.Enum;
+using Engine.Core.Logging;
 using Engine.Editor.HotReload.Abstract;
 using Engine.User.Contracts;
 using Engine.Worlds;
@@ -8,13 +9,15 @@ namespace Engine.Editor.HotReload;
 
 public class EditorHostAssembly(string assemblyName = "Engine.Editor.Host") : GuestAssembly(assemblyName)
 {
+    private double _updatesPausedFor = 0.0;
+    
     public override void Init()
     {
         base.Init();
         var loadedSettings = Host.Load<IBaseEngineContract>();
         if (loadedSettings == null)
         {
-            Console.Error.WriteLine("Failed to load EditorHost assembly settings.");
+            Logger.Error("Failed to load EditorHost assembly settings.");
             return;
         }
         Settings = (IEngineContract<Backstage>)loadedSettings;
@@ -31,8 +34,25 @@ public class EditorHostAssembly(string assemblyName = "Engine.Editor.Host") : Gu
 
     public override bool Update(double deltaTime)
     {
-        if (Backstage != null)
+        if (_updatesPausedFor > 0.0)
+        {
+            _updatesPausedFor -= deltaTime;
+            return base.Update(deltaTime);
+        }
+
+        if (Backstage == null)
+            return base.Update(deltaTime);
+        
+        try
+        {
             BackstageEventLoop.ProcessLogicFrame(Backstage, deltaTime);
+        } catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error during Backstage update: {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
+            _updatesPausedFor = 3.0;
+            return false;
+        }
         return base.Update(deltaTime);
     }
     

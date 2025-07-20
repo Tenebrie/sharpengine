@@ -1,4 +1,5 @@
-﻿using Engine.Editor.HotReload.Compiler;
+﻿using Engine.Core.Logging;
+using Engine.Editor.HotReload.Compiler;
 using Engine.User.Contracts;
 using Engine.Worlds.Entities;
 
@@ -8,10 +9,10 @@ public abstract class GuestAssembly(string assemblyName)
 {
     internal string AssemblyName = assemblyName;
     internal GuestAssemblyHost Host { get; } = new(assemblyName);
-
+    
     internal Backstage? Backstage { get; set; }
     internal IEngineContract<Backstage>? Settings { get; set; }
-
+    
     public virtual void Init() {}
 
     public virtual bool Update(double deltaTime)

@@ -65,6 +65,7 @@ public partial class Atom
         {
             var selfPf = Profiler.Start();
             OnUpdateCallback?.Invoke(deltaTime);
+
             selfPf.StopAndReport(GetType(), ProfilingContext.OnUpdateCallback);
         }
 

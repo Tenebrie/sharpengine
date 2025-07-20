@@ -52,4 +52,23 @@ public static class VectorExtensions
         vector.W *= factor;
         return vector;
     }
+    
+    public static double Dot(this Vector a, Vector b)
+    {
+        return a.X * b.X + a.Y * b.Y + a.Z * b.Z;
+    }
+
+    public static double Dot(this Vector4 a, Vector4 b)
+    {
+        return a.X * b.X + a.Y * b.Y + a.Z * b.Z + a.W * b.W;
+    }
+
+    public static Vector Cross(this Vector a, Vector b)
+    {
+        return new Vector(
+            a.Y * b.Z - a.Z * b.Y,
+            a.Z * b.X - a.X * b.Z,
+            a.X * b.Y - a.Y * b.X
+        );
+    }
 }

@@ -2,6 +2,7 @@
 using Engine.Core.Enum;
 using Engine.Core.Profiling;
 using Engine.Rendering.Bgfx;
+using Engine.Rendering.Renderers;
 using Engine.User.Contracts;
 using Engine.Worlds.Components;
 using Engine.Worlds.Entities;
@@ -19,17 +20,18 @@ internal enum ViewId : ushort
 
 public unsafe class RenderingCore : IRendererContract
 {
-    private IWindow _rootWindow = null!;
-    private List<Backstage> _backstages = [];
+    internal IWindow RootWindow = null!;
+    internal List<Backstage> Backstages = [];
+    internal LogRenderer LogRenderer = null!;
 
     public void Register(Backstage backstage)
     {
-        _backstages.Add(backstage);
+        Backstages.Add(backstage);
     }
     
     public void Unregister(Backstage backstage)
     {
-        _backstages.Remove(backstage);
+        Backstages.Remove(backstage);
     }
 
     public void Initialize(IWindow window, WindowOptions opts)
@@ -48,6 +50,7 @@ public unsafe class RenderingCore : IRendererContract
         
         if (!init(&initData))
             throw new InvalidOperationException("bgfx init failed");
+        
         HotInitialize(window, opts);
     }
 
@@ -56,18 +59,18 @@ public unsafe class RenderingCore : IRendererContract
 
     public void HotInitialize(IWindow window, WindowOptions opts)
     {
-        _rootWindow = window;
+        RootWindow = window;
         SetDebug(_debugFlags);
         SetViewClear(0, ClearFlags.Color | ClearFlags.Depth, 0x303030ff, 0, 0);
 
         Reset(opts.Size.X, opts.Size.Y, _resetFlags, TextureFormat.Count);
         
+        LogRenderer = new LogRenderer(this);
+        
         window.Render += RenderSingleFrame;
         window.Resize += OnResize;
         window.Closing += Shutdown;
     }
-    
-    private readonly List<double> _frameTimes = [];
 
     static RenderingCore()
     {
@@ -75,37 +78,26 @@ public unsafe class RenderingCore : IRendererContract
     }
 
     [Profile]
-    private void RenderSingleFrame(double delta)
+    private void RenderSingleFrame(double deltaTime)
     {
         SetViewRect(0, 0, 0,
-            _rootWindow.FramebufferSize.X,
-            _rootWindow.FramebufferSize.Y);
+            RootWindow.FramebufferSize.X,
+            RootWindow.FramebufferSize.Y);
         
         Touch(0);
         
         DebugTextClear();
         SetViewClear(0, ClearFlags.Color | ClearFlags.Depth, 0x303030ff, 1.0f, 0);
         
-        _frameTimes.Add(delta);
-        if (_frameTimes.Count > 100)
-            _frameTimes.RemoveAt(0);
-        var averageFrameTime = _frameTimes.Count > 0 ? _frameTimes.Average() : 0.0;
-        var framerate = 1.0f / averageFrameTime;
+        LogRenderer.RenderFrame(deltaTime);
         
-        foreach (var backstage in _backstages)
+        foreach (var backstage in Backstages)
         {
             RenderCamera(0, FindActiveCamera(backstage));
             RenderAtomTree(backstage);
         }
         
-        DebugTextWrite(0, 0, DebugColor.White, DebugColor.Blue, "Let there be cube!");
-        DebugTextWrite(0, 1, "FPS: " + Math.Round(framerate));
-        
         Frame(false);
-        // var st = get_stats();
-        // double cpuMs = (st->cpuTimeEnd - st->cpuTimeBegin) * 1000.0 / st->cpuTimerFreq;
-        // double gpuMs = (st->gpuTimeEnd - st->gpuTimeBegin) * 1000.0 / st->gpuTimerFreq;
-        // Console.WriteLine($"cpu {cpuMs:0.000}  gpu ${gpuMs:0.000} draws {st->numDraw}  pso {st->numPrograms}  waitR {st->waitRender}");
     }
 
     private Camera? FindActiveCamera(Atom target)
@@ -197,8 +189,8 @@ public unsafe class RenderingCore : IRendererContract
 
     private void OnResize(Vector2D<int> size)
     {
-        var width = _rootWindow.FramebufferSize.X; 
-        var height = _rootWindow.FramebufferSize.Y;
+        var width = RootWindow.FramebufferSize.X; 
+        var height = RootWindow.FramebufferSize.Y;
 
         if (width == 0 || height == 0)
             return;
@@ -223,7 +215,7 @@ public unsafe class RenderingCore : IRendererContract
         }
 
         // Reset the renderer with the new flags
-        Reset(_rootWindow.FramebufferSize.X, _rootWindow.FramebufferSize.Y, _resetFlags, TextureFormat.Count);
+        Reset(RootWindow.FramebufferSize.X, RootWindow.FramebufferSize.Y, _resetFlags, TextureFormat.Count);
     }
     
     public void ToggleDebugFlags(DebugFlags flags)
@@ -245,6 +237,8 @@ public unsafe class RenderingCore : IRendererContract
         SetDebug(_debugFlags);
     }
 
+    public void ToggleLogRendering() => LogRenderer.OnToggleMode(); 
+
     private GameplayContext GameplayContext { get; set; } = GameplayContext.Editor;
     public void SetGameplayContext(GameplayContext context)
     {
@@ -253,9 +247,9 @@ public unsafe class RenderingCore : IRendererContract
 
     public void DisconnectCallbacks()
     {
-        _rootWindow.Render -= RenderSingleFrame;
-        _rootWindow.Resize -= OnResize;
-        _rootWindow.Closing -= Shutdown; 
+        RootWindow.Render -= RenderSingleFrame;
+        RootWindow.Resize -= OnResize;
+        RootWindow.Closing -= Shutdown; 
     }
 
     public void Shutdown() 

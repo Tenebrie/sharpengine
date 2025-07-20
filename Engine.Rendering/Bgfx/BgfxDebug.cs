@@ -1,5 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Engine.Core.Logging;
 using JetBrains.Annotations;
 using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 
@@ -98,12 +99,12 @@ public static unsafe class BgfxCallbacks
 
     // === Callback implementations ===
 
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void FatalFn(void* self, Fatal code, sbyte* file, ushort line, sbyte* msg)
     {
-        string f = Marshal.PtrToStringAnsi((nint)file) ?? "<null>";
-        string m = Marshal.PtrToStringAnsi((nint)msg)  ?? "<null>";
-        Console.WriteLine($"[bgfx fatal] {code} @ {f}:{line} : {m}");
+        var f = Marshal.PtrToStringAnsi((nint)file) ?? "<null>";
+        var m = Marshal.PtrToStringAnsi((nint)msg)  ?? "<null>";
+        Logger.Fatal($"[bgfx fatal] {code} @ {f}:{line} : {m}");
         // You can throw or Environment.FailFast here if desired.
     }
 
@@ -114,9 +115,7 @@ public static unsafe class BgfxCallbacks
         var f = Marshal.PtrToStringAnsi((nint)file) ?? "";
         var format = Marshal.PtrToStringAnsi((nint)fmt) ?? "";
         
-        // TODO: Add a better toggle.
-        if (Math.Abs(1.0) < 2)
-            Console.WriteLine($"[bgfx] {f}({line}): {format}");
+        Logger.Debug($"[bgfx] {f}({line}): {format}");
     }
 
     [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]

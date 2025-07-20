@@ -1,4 +1,6 @@
 ﻿
+using Engine.Core.Logging;
+
 namespace Engine.Editor.HotReload.Compiler;
 
 internal sealed class GuestAssemblyHost(string assemblyName)
@@ -33,7 +35,7 @@ internal sealed class GuestAssemblyHost(string assemblyName)
     
     private void StartWatching()
     {
-        Console.WriteLine("Watching for changes in: " + _srcPath);
+        Logger.Debug("Watching for changes in: " + _srcPath);
         _watcher = new FileSystemWatcher(
                 _srcPath,
                 "*.cs")
@@ -50,7 +52,7 @@ internal sealed class GuestAssemblyHost(string assemblyName)
     private void OnSourceChanged(object sender, FileSystemEventArgs e)
     {
         IsAssemblyDirty = true;
-        Console.WriteLine("Source file changed: " + e.FullPath);
+        Logger.Debug("Source file changed: " + e.FullPath);
     }
     
     public void BuildGuestAsync()
@@ -60,7 +62,6 @@ internal sealed class GuestAssemblyHost(string assemblyName)
         _compiler.CompileAsync(() =>
         {
             AssemblyAwaitingReload = true;
-            
         });
     }
 
