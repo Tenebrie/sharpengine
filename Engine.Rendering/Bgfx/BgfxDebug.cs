@@ -1,110 +1,151 @@
-﻿#pragma warning disable 649
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
-using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 using JetBrains.Annotations;
+using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 
 namespace Engine.Rendering.Bgfx;
 
-[SuppressMessage("ReSharper", "UnusedMember.Global")]
-public static unsafe class BgfxDebug
+public static unsafe class BgfxCallbacks
 {
-    private struct NativeCallbackStruct
+    // === Native function pointer struct (matches bgfx_callback_vtbl_t) ===
+    private struct BgfxCallbackVTable
     {
-        [UsedImplicitly]
-        public delegate* unmanaged[Cdecl]
-            <Callback*, Fatal, sbyte*, ushort, sbyte*, void>          OnFatal;
-        [UsedImplicitly]
-        public delegate* unmanaged[Cdecl]
-            <Callback*, sbyte*, ushort, byte*, void*, void>          TraceVargs;
-        [UsedImplicitly]
-        public delegate* unmanaged[Cdecl] <Callback*, void*, void>    ProfilerBegin;
-        [UsedImplicitly]
-        public delegate* unmanaged[Cdecl] <Callback*, void>           ProfilerEnd;
-        [UsedImplicitly]
-        public delegate* unmanaged[Cdecl] <Callback*, void*, Memory*> CacheRead;
-        [UsedImplicitly]
-        public delegate* unmanaged[Cdecl] <Callback*, void*, Memory*, void> CacheWrite;
-        [UsedImplicitly]
-        public delegate* unmanaged[Cdecl] <Callback*, TextureHandle, uint, uint, void> ScreenShot;
+        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+            <void*, Fatal, sbyte*, ushort, sbyte*, void> Fatal;
+
+        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+            <void*, sbyte*, ushort, sbyte*, void*, void> TraceVargs;
+
+        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+            <void*, sbyte*, uint, sbyte*, ushort, void> ProfilerBegin;
+
+        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+            <void*, void> ProfilerEnd;
+
+        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+            <void*, ulong, uint> CacheReadSize;
+
+        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+            <void*, ulong, void*, uint, byte> CacheRead;      // returns byte (bool)
+
+        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+            <void*, ulong, void*, uint, void> CacheWrite;
+
+        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+            <void*, sbyte*, uint, uint, uint, void*, uint, byte, void> ScreenShot;
+
+        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+            <void*, uint, uint, uint, TextureFormat, byte, void> CaptureBegin;
+
+        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+            <void*, void> CaptureEnd;
+
+        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+            <void*, void*, uint, void> CaptureFrame;
     }
 
-    private struct Callback
+    // Interface object (bgfx_callback_interface) is just a pointer to vtbl:
+    private struct BgfxCallbackInterface
     {
-        [UsedImplicitly] public NativeCallbackStruct* Vtbl;
+        [UsedImplicitly] public BgfxCallbackVTable* Vtbl;
     }
 
-    // ───── FATAL ────────────────────────────────────────────────────────────
-    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    private static void FatalCallback(Callback* self, Fatal code,
-                                      sbyte* file, ushort line,
-                                      sbyte* msg)
+    private static GCHandle _vtblHandle;
+    private static GCHandle _ifaceHandle;
+
+    public static IntPtr InterfacePtr { get; private set; } = IntPtr.Zero;
+
+    public static void Install()
     {
-        Console.WriteLine($"BGFX FATAL [{code}] {Marshal.PtrToStringAnsi((nint)msg)} " +
-                          $"@ {Marshal.PtrToStringAnsi((nint)file)}:{line}");
-    }
+        if (InterfacePtr != IntPtr.Zero)
+            return;
 
-    // ───── TRACE_VARGS ─────────────────────────────────────────────────────
-    // use CRT's _vsnprintf to expand the va_list bgfx gives us
-    [DllImport("msvcrt", CallingConvention = CallingConvention.Cdecl,
-               EntryPoint = "_vsnprintf")]
-    private static extern int CRT_vsnprintf(byte* dst, uint size,
-                                            byte* fmt, void* arg);
-
-    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
-    private static void TraceCallback(Callback* self,
-                                      sbyte* filePath,
-                                      ushort line,
-                                      byte* fmt,
-                                      void* argList)
-    {
-        const int bufSize = 50000;
-        Span<byte> buf = stackalloc byte[bufSize];
-
-        var prefixLen = Encoding.ASCII.GetBytes(
-            $"{Marshal.PtrToStringAnsi((nint)filePath)}({line}): ", buf);
-
-        fixed (byte* p = buf)
+        // Allocate managed structs (will pin them)
+        var vtbl = new BgfxCallbackVTable
         {
-            var len = CRT_vsnprintf(p + prefixLen,
-                                    (uint)(bufSize - prefixLen),
-                                    fmt, argList);
-            // ReSharper disable once RedundantAssignment
-            if (len < 0) len = 0;           // CRT error? show at least the prefix
-
-            // Console.WriteLine("[bgfx] " + Encoding.ASCII.GetString(buf[..(prefixLen + len)]));
-        }
-    }
-
-    // ───── book-keeping ────────────────────────────────────────────────────
-    private static GCHandle _cbStructHandle;
-    private static GCHandle _cbVTableHandle;
-
-    public static nint CallbackPtr { get; private set; }
-
-    public static void Hook()
-    {
-        var cbStruct = new Callback();
-        var cbVTable = new NativeCallbackStruct
-        {
-            OnFatal    = &FatalCallback,
-            TraceVargs = &TraceCallback
+            Fatal           = &FatalFn,
+            TraceVargs     = &TraceVargsFn,
+            ProfilerBegin  = &ProfilerBeginFn,
+            ProfilerEnd    = &ProfilerEndFn,
+            CacheReadSize = &CacheReadSizeFn,
+            CacheRead      = &CacheReadFn,
+            CacheWrite     = &CacheWriteFn,
+            ScreenShot     = &ScreenShotFn,
+            CaptureBegin   = &CaptureBeginFn,
+            CaptureEnd     = &CaptureEndFn,
+            CaptureFrame   = &CaptureFrameFn
         };
 
-        _cbStructHandle = GCHandle.Alloc(cbStruct,  GCHandleType.Pinned);
-        _cbVTableHandle = GCHandle.Alloc(cbVTable, GCHandleType.Pinned);
+        var iface = new BgfxCallbackInterface
+        {
+            Vtbl = (BgfxCallbackVTable*)
+                GCHandle.Alloc(vtbl, GCHandleType.Pinned).AddrOfPinnedObject()
+        };
 
-        var cbPtr = (Callback*)_cbStructHandle.AddrOfPinnedObject();
-        cbPtr->Vtbl = (NativeCallbackStruct*)_cbVTableHandle.AddrOfPinnedObject();
+        _vtblHandle  = GCHandle.Alloc(vtbl,  GCHandleType.Pinned);
+        _ifaceHandle = GCHandle.Alloc(iface, GCHandleType.Pinned);
 
-        CallbackPtr = (nint)cbPtr;
+        InterfacePtr = _ifaceHandle.AddrOfPinnedObject();
     }
 
-    public static void Unhook()
+    public static void Uninstall()
     {
-        if (_cbStructHandle.IsAllocated) _cbStructHandle.Free();
-        if (_cbVTableHandle.IsAllocated) _cbVTableHandle.Free();
+        // Call only *after* bgfx_shutdown.
+        if (_ifaceHandle.IsAllocated) _ifaceHandle.Free();
+        if (_vtblHandle.IsAllocated)  _vtblHandle.Free();
+        InterfacePtr = IntPtr.Zero;
     }
+
+    // === Callback implementations ===
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void FatalFn(void* self, Fatal code, sbyte* file, ushort line, sbyte* msg)
+    {
+        string f = Marshal.PtrToStringAnsi((nint)file) ?? "<null>";
+        string m = Marshal.PtrToStringAnsi((nint)msg)  ?? "<null>";
+        Console.WriteLine($"[bgfx fatal] {code} @ {f}:{line} : {m}");
+        // You can throw or Environment.FailFast here if desired.
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void TraceVargsFn(void* self, sbyte* file, ushort line, sbyte* fmt, void* args)
+    {
+        // Minimal: just print format string. (You can add vsnprintf expansion later.)
+        var f = Marshal.PtrToStringAnsi((nint)file) ?? "";
+        var format = Marshal.PtrToStringAnsi((nint)fmt) ?? "";
+        
+        // TODO: Add a better toggle.
+        if (Math.Abs(1.0) < 2)
+            Console.WriteLine($"[bgfx] {f}({line}): {format}");
+    }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void ProfilerBeginFn(void* self, sbyte* name, uint abgr, sbyte* file, ushort line) { }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void ProfilerEndFn(void* self) { }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static uint CacheReadSizeFn(void* self, ulong id) => 0;
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static byte CacheReadFn(void* self, ulong id, void* data, uint size) => 0; // 0 = false
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void CacheWriteFn(void* self, ulong id, void* data, uint size) { }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void ScreenShotFn(void* self, sbyte* filePath,
+        uint w, uint h, uint pitch,
+        void* data, uint size, byte yflip) { }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void CaptureBeginFn(void* self, uint w, uint h, uint pitch,
+        TextureFormat format, byte yflip) { }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void CaptureEndFn(void* self) { }
+
+    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    private static void CaptureFrameFn(void* self, void* data, uint size) { }
 }

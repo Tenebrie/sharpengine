@@ -1,4 +1,4 @@
-﻿using Engine.Editor.HotReload.Modules.Abstract;
+﻿using Engine.Editor.HotReload.Abstract;
 using Engine.User.Contracts;
 using Engine.Worlds;
 using Engine.Worlds.Entities;
@@ -20,6 +20,7 @@ public class UserlandAssembly(string assemblyName = "User.Game") : GuestAssembly
         Backstage = (Backstage)Activator.CreateInstance(Settings.MainBackstage)!;
         Editor.EditorHostAssembly.NotifyAboutUserBackstage(Backstage);
         Backstage.Name = "guest-" + Guid.NewGuid();
+        Backstage.GameplayContext = Editor.GameplayContext;
     }
 
     public override bool Update(double deltaTime)

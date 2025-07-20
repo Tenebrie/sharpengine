@@ -1,4 +1,5 @@
 ﻿using Engine.Codegen.Bgfx.Unsafe;
+using Engine.Core.Enum;
 using Engine.Worlds.Entities;
 using Silk.NET.Windowing;
 
@@ -14,4 +15,5 @@ public interface IRendererContract
     public void ToggleDebugFlags(Bgfx.DebugFlags flags);
     public void DisconnectCallbacks();
     public void Shutdown();
+    public void SetGameplayContext(GameplayContext context);
 }

@@ -114,7 +114,7 @@ public partial class InputHandler
     /// Process OnKeyHeld and OnInputHeld events for all currently held keys.
     /// </summary>
     /// <returns>List of triggered input actions (by long representation of the bound enum)</returns>
-    private void SendHeldKeyboardEvents(double deltaTime, List<KeyModifiers> modifiers, ref Dictionary<string, List<BoundHeldAction>> triggeredHandlers)
+    private void SendHeldKeyboardEvents(List<KeyModifiers> modifiers, ref Dictionary<string, List<BoundHeldAction>> triggeredHandlers)
     {
         foreach (var heldKey in _heldKeys)
         {

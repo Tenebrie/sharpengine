@@ -1,4 +1,5 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using JetBrains.Annotations;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Engine.User.Codegen.Generators;
@@ -43,6 +44,7 @@ public sealed class InputAliasGenerator : IIncrementalGenerator
             });
     }
 
+    [UsedImplicitly]
     private static bool? GetInfo(GeneratorSyntaxContext cx)
     {
         if (cx.Node is not AttributeSyntax attr ||

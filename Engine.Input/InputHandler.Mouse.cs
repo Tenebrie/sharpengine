@@ -1,6 +1,5 @@
 ﻿using Silk.NET.GLFW;
 using Silk.NET.Input;
-using Silk.NET.Maths;
 using MouseButton = Silk.NET.Input.MouseButton;
 
 namespace Engine.Input;
@@ -19,6 +18,38 @@ public partial class InputHandler
     
     private readonly HashSet<MouseButton> _heldMouseButtons = [];
     private Vector2 _lastMousePosition = Vector2.Zero;
+
+    public Vector2 GetMousePosition()
+    {
+        if (KnownMice.Count == 0)
+            return Vector2.Zero;
+        
+        return new Vector2(KnownMice[0].Position.X, KnownMice[0].Position.Y);
+    }
+    public void SetMousePosition(Vector2 position)
+    {
+        _lastMousePosition = position;
+        foreach (var knownMouse in KnownMice)
+        {
+            knownMouse.Position = new System.Numerics.Vector2((float)position.X, (float)position.Y);
+        }
+    }
+
+    public void SetMouseCursor(StandardCursor cursor)
+    {
+        foreach (var knownMouse in KnownMice)
+        {
+            knownMouse.Cursor.StandardCursor = cursor;
+        }
+    }
+    
+    public void SetMouseCursorMode(CursorMode mode)
+    {
+        foreach (var knownMouse in KnownMice)
+        {
+            knownMouse.Cursor.CursorMode = mode;
+        }
+    }
     
     public void BindMouseEvents(IMouse mouse)
     {
@@ -53,6 +84,7 @@ public partial class InputHandler
     {
         var deltaX = position.X - _lastMousePosition.X;
         var deltaY = position.Y - _lastMousePosition.Y;
+        _lastMousePosition = new Vector2(position.X, position.Y);
         var modifiers = GetModifiers();
         var triggeredActions = CurrentContext.Match(MouseAxis.MoveX, modifiers);
         triggeredActions.ForEach(triggeredActionId =>
@@ -77,7 +109,6 @@ public partial class InputHandler
                 boundAction.Action.Invoke(deltaY * boundAction.X, deltaY * boundAction.Y, deltaY * boundAction.Z, 0.0f);
             }
         });
-        _lastMousePosition = new Vector2(position.X, position.Y);
     }
     
     private void OnMouseScroll(IMouse mouse, ScrollWheel delta)

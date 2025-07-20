@@ -1,5 +1,4 @@
-﻿// ReSharper disable ConvertIfStatementToReturnStatement
-namespace Engine.Core.Common;
+﻿namespace Engine.Core.Extensions;
 
 public static class VectorExtensions
 {

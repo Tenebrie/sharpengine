@@ -1,4 +1,5 @@
-﻿using Engine.Editor.HotReload.Modules.Abstract;
+﻿using Engine.Core.Enum;
+using Engine.Editor.HotReload.Abstract;
 using Engine.User.Contracts;
 using Engine.Worlds;
 using Engine.Worlds.Entities;
@@ -25,6 +26,7 @@ public class EditorHostAssembly(string assemblyName = "Engine.Editor.Host") : Gu
         if (Editor.UserlandAssembly.Backstage is not null)
             backstageContract.UserBackstage = Editor.UserlandAssembly.Backstage;
         Backstage.Name = "host-" + Guid.NewGuid();
+        Backstage.GameplayContext = Editor.GameplayContext;
     }
 
     public override bool Update(double deltaTime)
@@ -52,5 +54,16 @@ public class EditorControls : IEditorContract
     public void ReloadUserGame()
     {
         Editor.ReloadAssembly(Editor.UserlandAssembly);
+    }
+
+    public void SetGameplayContext(GameplayContext context)
+    {
+        Editor.GameplayContext = context;
+        if (Editor.UserlandAssembly.Backstage is not null)
+            Editor.UserlandAssembly.Backstage.GameplayContext = context;
+        if (Editor.EditorHostAssembly.Backstage is not null)
+            Editor.EditorHostAssembly.Backstage.GameplayContext = context;
+        if (Editor.RenderingAssembly.Renderer is not null)
+            Editor.RenderingAssembly.Renderer.SetGameplayContext(context);
     }
 }

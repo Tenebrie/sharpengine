@@ -1,8 +1,10 @@
 ﻿using Engine.Core.Common;
-using Engine.Core.Profiling;
+using Engine.Core.Makers;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 using User.Game.Actors;
+using User.Game.Player;
+using User.Game.Services;
 
 namespace User.Game;
 
@@ -22,14 +24,16 @@ public class UserScene : Scene
     [OnInit]
     protected void OnInit()
     {
+        RegisterService<UserInputService>();
+        
         var terrain = CreateActor<GameTerrain>();
         terrain.Transform.Position = new Vector(0, -10, 0);
         var scale = 250.0;
         terrain.Transform.Scale = new Vector(scale, 250.0, scale);
-        CreateActor<MainCamera>();
-        var dragon = CreateActor<DragonActor>();
-        dragon.Transform.Rotation = QuatUtils.FromRotation(90, 0, 0);
-        dragon.Transform.Position = new Vector(25, 0, 0);
+        var dragon = CreateActor<PlayerCharacter>();
+        
+        dragon.DragonMeshComponent.MeshComponent.Transform.Rotation = QuatMakers.FromRotation(90, 0, 0);
+        dragon.DragonMeshComponent.Transform.Position = new Vector(0, 0, 0);
         
         var cubeManager = CreateActor<UnitCube>();
         for (var x = 0; x < 5; x++)

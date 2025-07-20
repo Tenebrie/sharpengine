@@ -1,8 +1,8 @@
 ﻿using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using Engine.Core.Attributes;
 using Engine.Core.Profiling;
-using Engine.Input;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Services;
 using InputService = Engine.Worlds.Services.InputService;
@@ -20,6 +20,8 @@ public partial class Atom
     public Action<double>? OnUpdateCallback { get; set; }
     
     public Action? OnDestroyCallback { get; set; }
+    
+    public Action? OnGameplayContextChangedCallback { get; set; }
     
     private void InitializeLifecycle()
     {
@@ -49,6 +51,12 @@ public partial class Atom
         {
             OnDestroyCallback += (Action)action;
         }
+        
+        var gameplayContextMethods = methods.Where(method => method.GetCustomAttribute<OnGameplayContextChangedAttribute>() != null).ToList();
+        foreach (var action in gameplayContextMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action), this, methodInfo)))
+        {
+            OnGameplayContextChangedCallback += (Action)action;
+        }
     }
     
     protected internal void ProcessLogicFrame(double deltaTime)
@@ -70,6 +78,26 @@ public partial class Atom
 
             for (var i = 0; i < count; i++)
                 buffer[i].ProcessLogicFrame(deltaTime);
+        }
+        finally
+        {
+            ArrayPool<Atom>.Shared.Return(buffer, clearArray: false);
+        }
+    }
+    
+    protected internal void ProcessGameplayContextChanged()
+    {
+        OnGameplayContextChangedCallback?.Invoke();
+        
+        var count = Children.Count;
+        var buffer = ArrayPool<Atom>.Shared.Rent(count);
+        try
+        {
+            for (var i = 0; i < count; i++)
+                buffer[i] = Children[i];
+
+            for (var i = 0; i < count; i++)
+                buffer[i].ProcessGameplayContextChanged();
         }
         finally
         {
@@ -124,7 +152,7 @@ internal static class DelegateHelpers
         return (Action<double>)Delegate.CreateDelegate(
             typeof(Action<double>),
             action, // bound to the 'target' param of InvokeDropFirst
-            mi
+            mi!
         );
     }
 }

@@ -1,7 +1,17 @@
-﻿namespace Engine.Core.Common;
+﻿namespace Engine.Core.Makers;
 
-public static class QuatHelpers
+public static class QuatMakers
 {
+    public static Quat FromRotation(double pitch, double yaw, double roll)
+    {
+        return Quat.CreateFromYawPitchRoll(double.DegreesToRadians(yaw), double.DegreesToRadians(pitch), double.DegreesToRadians(roll));
+    }
+
+    public static Quat FromRotationRadians(double pitch, double yaw, double roll)
+    {
+        return Quat.CreateFromYawPitchRoll(yaw, pitch, roll);
+    }
+    
     public static Quat FromRowMatrix(in Matrix4x4 m)
     {
         double trace = m.M11 + m.M22 + m.M33;

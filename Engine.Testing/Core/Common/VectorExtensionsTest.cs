@@ -1,8 +1,8 @@
-﻿using Engine.Core.Common;
+﻿using Engine.Core.Extensions;
 
 namespace Engine.Testing.Core.Common;
 
-public class VectorExtensionsTest()
+public class VectorExtensionsTest
 {
     [Fact]
     public void NormalizesVector3()

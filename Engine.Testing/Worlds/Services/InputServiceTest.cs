@@ -23,7 +23,7 @@ public abstract class InputServiceTest
             return backstage;
         }
         
-        internal class InputBackstage : StandaloneBackstage
+        internal class InputBackstage() : StandaloneBackstage(skipInit: true)
         {
             public required MockKeyboard Keyboard;
             
@@ -284,7 +284,7 @@ public abstract class InputServiceTest
             return backstage;
         }
         
-        internal class InputBackstage : StandaloneBackstage
+        internal class InputBackstage() : StandaloneBackstage(skipInit: true)
         {
             public required MockKeyboard Keyboard;
             

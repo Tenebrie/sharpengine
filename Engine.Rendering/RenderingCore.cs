@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using Engine.Core.Enum;
 using Engine.Core.Profiling;
 using Engine.Rendering.Bgfx;
 using Engine.User.Contracts;
@@ -33,17 +34,17 @@ public unsafe class RenderingCore : IRendererContract
 
     public void Initialize(IWindow window, WindowOptions opts)
     {
-        BgfxDebug.Hook();
+        BgfxCallbacks.Install();
         Init initData = default;
         init_ctor(&initData);
-        initData.type = RendererType.Count;
+        initData.type = RendererType.Direct3D12;
         initData.platformData.nwh = (void*)window.Native!.Win32!.Value.Hwnd;
         initData.resolution.width = (uint)opts.Size.X;
         initData.resolution.height = (uint)opts.Size.Y;
         initData.resolution.format = TextureFormat.RGBA8;
         initData.resolution.numBackBuffers = 4;
         initData.resolution.maxFrameLatency = 3;
-        initData.callback = BgfxDebug.CallbackPtr;
+        initData.callback = BgfxCallbacks.InterfacePtr;
         
         if (!init(&initData))
             throw new InvalidOperationException("bgfx init failed");
@@ -67,6 +68,11 @@ public unsafe class RenderingCore : IRendererContract
     }
     
     private readonly List<double> _frameTimes = [];
+
+    static RenderingCore()
+    {
+        SingleComponentTransforms = new Transform[1];
+    }
 
     [Profile]
     private void RenderSingleFrame(double delta)
@@ -96,16 +102,20 @@ public unsafe class RenderingCore : IRendererContract
         DebugTextWrite(0, 1, "FPS: " + Math.Round(framerate));
         
         Frame(false);
+        // var st = get_stats();
+        // double cpuMs = (st->cpuTimeEnd - st->cpuTimeBegin) * 1000.0 / st->cpuTimerFreq;
+        // double gpuMs = (st->gpuTimeEnd - st->gpuTimeBegin) * 1000.0 / st->gpuTimerFreq;
+        // Console.WriteLine($"cpu {cpuMs:0.000}  gpu ${gpuMs:0.000} draws {st->numDraw}  pso {st->numPrograms}  waitR {st->waitRender}");
     }
 
-    private static Camera? FindActiveCamera(Atom target)
+    private Camera? FindActiveCamera(Atom target)
     {
-        if (target is Camera { ActiveInEditor: true } camera)
+        if (target is Camera camera
+            && ((camera.IsEditorCamera && GameplayContext == GameplayContext.Editor) || (!camera.IsEditorCamera && GameplayContext != GameplayContext.Editor)))
         {
             return camera;
         }
         
-        // ReSharper disable once ForeachCanBeConvertedToQueryUsingAnotherGetEnumerator Too many allocations
         foreach (var child in target.Children)
         {
             var foundCamera = FindActiveCamera(child);
@@ -120,6 +130,7 @@ public unsafe class RenderingCore : IRendererContract
     {
         if (camera is null)
             return;
+        
         Span<float> projMatrix = stackalloc float[16];
         var cameraView = camera.AsCameraView(projMatrix);
         
@@ -134,9 +145,6 @@ public unsafe class RenderingCore : IRendererContract
     {
         switch (target)
         {
-            case DebugLogoComponent component:
-                RenderDebugLogoComponent(component);
-                break;
             case StaticMeshComponent staticMesh:
                 RenderStaticMeshComponent(staticMesh);
                 break;
@@ -154,28 +162,17 @@ public unsafe class RenderingCore : IRendererContract
         }
     }
 
-    private static void RenderDebugLogoComponent(DebugLogoComponent logoComponent)
-    {
-        DebugTextImage(
-            (int)Math.Round(logoComponent.Actor.Transform.Position.X / 8),
-            (int)Math.Round(logoComponent.Actor.Transform.Position.Y / 16),
-            DebugLogoComponent.LogoSizeX,
-            DebugLogoComponent.LogoSizeY,
-            Logo.Bytes,
-            160
-        );
-    }
-
+    [ThreadStatic] private static readonly Transform[] SingleComponentTransforms;
     private static void RenderStaticMeshComponent(StaticMeshComponent staticMesh)
     {
-        Transform[] worldTransforms = [staticMesh.WorldTransform];
-        staticMesh.Mesh.Render(1, worldTransforms, 0, staticMesh.Material);
+        SingleComponentTransforms[0] = staticMesh.WorldTransform;
+        staticMesh.Mesh.Render(1, SingleComponentTransforms, 0, staticMesh.Material);
     }
     
     private static void RenderTerrainMeshComponent(TerrainMeshComponent staticMesh)
     {
-        Transform[] worldTransforms = [staticMesh.WorldTransform];
-        staticMesh.Mesh.Render(1, worldTransforms, 0, staticMesh.Material);
+        SingleComponentTransforms[0] = staticMesh.WorldTransform;
+        staticMesh.Mesh.Render(1, SingleComponentTransforms, 0, staticMesh.Material);
     }
 
     private static void RenderInstancedActorComponent(IInstancedActorComponent instancedActorComponent)
@@ -246,6 +243,12 @@ public unsafe class RenderingCore : IRendererContract
 
         // Set the new debug flags
         SetDebug(_debugFlags);
+    }
+
+    private GameplayContext GameplayContext { get; set; } = GameplayContext.Editor;
+    public void SetGameplayContext(GameplayContext context)
+    {
+        GameplayContext = context;
     }
 
     public void DisconnectCallbacks()

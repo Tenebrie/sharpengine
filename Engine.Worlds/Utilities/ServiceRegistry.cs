@@ -1,6 +1,4 @@
-﻿using Engine.Worlds.Attributes;
-using Engine.Worlds.Entities;
-using Engine.Worlds.Services;
+﻿using Engine.Worlds.Entities;
 
 namespace Engine.Worlds.Utilities;
 

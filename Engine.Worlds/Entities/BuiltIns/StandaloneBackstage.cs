@@ -4,6 +4,13 @@
 // It can be used primarily for testing.
 public class StandaloneBackstage : Backstage
 {
+    public StandaloneBackstage(bool skipInit = false)
+    {
+        if (!skipInit)
+        {
+            Initialize();
+        }
+    }
     public new void Initialize() => base.Initialize();
     public new void ProcessLogicFrame(double deltaTime) => base.ProcessLogicFrame(deltaTime);
 }

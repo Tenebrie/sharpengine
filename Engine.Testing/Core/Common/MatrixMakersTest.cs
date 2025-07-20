@@ -1,14 +1,15 @@
 ﻿using Engine.Core.Common;
+using Engine.Core.Makers;
 using Xunit.Abstractions;
 
 namespace Engine.Testing.Core.Common;
 
-public class MatrixHelpersTest(ITestOutputHelper testOutputHelper)
+public class MatrixMakersTest(ITestOutputHelper testOutputHelper)
 {
     [Fact]
     public void CreatesValidMatrixFromTranslation()
     {
-        var matrix = MatrixHelpers.FromTranslation(10, 20, 30);
+        var matrix = MatrixMakers.FromTranslation(10, 20, 30);
         Assert.Equal(10, matrix.M41);
         Assert.Equal(20, matrix.M42);
         Assert.Equal(30, matrix.M43);
@@ -18,7 +19,7 @@ public class MatrixHelpersTest(ITestOutputHelper testOutputHelper)
     public void CreatesValidMatrixFromIdentityQuaternion()
     {
         var quaternion = Quat.Identity;
-        var matrix = MatrixHelpers.FromQuaternion(quaternion);
+        var matrix = MatrixMakers.FromQuaternion(quaternion);
         
         Assert.Equal(1, matrix.M11);
         Assert.Equal(0, matrix.M12);
@@ -45,7 +46,7 @@ public class MatrixHelpersTest(ITestOutputHelper testOutputHelper)
     public void CreatesValidMatrixFromQuaternion()
     {
         var rotation = new Rotator(45, 45, 45).ToQuat();
-        var matrix = MatrixHelpers.FromQuaternion(rotation);
+        var matrix = MatrixMakers.FromQuaternion(rotation);
         testOutputHelper.WriteLine(matrix.ToString());
         
         Assert.Equal(0.8920486638100034, matrix.M11);
@@ -72,7 +73,7 @@ public class MatrixHelpersTest(ITestOutputHelper testOutputHelper)
     [Fact]
     public void CreatesValidMatrixFromScale()
     {
-        var matrix = MatrixHelpers.FromScale(10, 20, 30);
+        var matrix = MatrixMakers.FromScale(10, 20, 30);
         Assert.Equal(10, matrix.M11);
         Assert.Equal(20, matrix.M22);
         Assert.Equal(30, matrix.M33);

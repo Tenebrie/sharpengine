@@ -2,7 +2,7 @@ $input a_position, a_color0, i_data0, i_data1, i_data2, i_data3
 $output v_color0
 
 #include <bgfx_shader.sh>
-#include <common.sh>   // for mtxFromCols()
+#include <common.sh>
 
 // Permutation table for Perlin noise
 vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -87,7 +87,7 @@ void main()
     // Reconstruct 4×4 model matrix from four vec4 instance‐attributes.
     mat4 model = mtxFromCols(i_data0, i_data1, i_data2, i_data3);
         
-    vec3 posWithNoise = a_position + vec3(0, perlinNoise(a_position) * 2.0, 0);
+    vec3 posWithNoise = a_position + vec3(0, perlinNoise(a_position) * 0.2, 0);
 
     // Transform vertex
     vec4 worldPos   = mul(model, vec4(posWithNoise, 1.0) );

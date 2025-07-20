@@ -10,7 +10,7 @@ public class AtomLifecycleTest
     [Fact]
     public void AtomLifecycleTest_PassesOnInitToChildren()
     {
-        var parent = new StandaloneAtom();
+        var parent = new StandaloneBackstage();
         var child = new MockAtom();
         
         parent.AdoptChild(child);
@@ -21,7 +21,7 @@ public class AtomLifecycleTest
     [Fact]
     public void AtomLifecycleTest_PassesOnUpdateToChildren()
     {
-        var parent = new StandaloneAtom();
+        var parent = new StandaloneBackstage();
         var child = new MockAtom();
         parent.AdoptChild(child);
         parent.ProcessLogicFrame(3.14);
@@ -34,7 +34,7 @@ public class AtomLifecycleTest
     [Fact]
     public void AtomLifecycleTest_PassesOnDestroyToChildren()
     {
-        var parent = new StandaloneAtom();
+        var parent = new StandaloneBackstage();
         var child = new MockAtom();
         parent.AdoptChild(child);
         

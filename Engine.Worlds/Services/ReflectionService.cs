@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using System.Runtime.Loader;
 using Engine.Input.Attributes;
 using Engine.Worlds.Entities;
 

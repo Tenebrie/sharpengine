@@ -1,4 +1,5 @@
-﻿using Engine.Worlds.Attributes;
+﻿using Engine.Core.Enum;
+using Engine.Worlds.Attributes;
 using Engine.Worlds.Services;
 using Engine.Worlds.Utilities;
 using Silk.NET.Windowing;
@@ -8,6 +9,18 @@ namespace Engine.Worlds.Entities;
 public class Backstage : Scene
 {
     public string Name { get; set; } = "Backstage";
+
+    private GameplayContext _gameplayContext = GameplayContext.Editor;
+    public GameplayContext GameplayContext
+    {
+        get => _gameplayContext;
+        set
+        {
+            _gameplayContext = value;
+            ProcessGameplayContextChanged();
+        }
+    }
+    
     internal ServiceRegistry ServiceRegistry { get; } = new();
     
     public Backstage()

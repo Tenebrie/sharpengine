@@ -6,7 +6,7 @@ namespace Engine.Worlds.Entities;
 
 public class Camera : Actor
 {
-    public bool ActiveInEditor { get; protected set; } = false;
+    public bool IsEditorCamera { get; protected set; } = false;
     
     private float[] _projMatrix;
     
@@ -57,7 +57,7 @@ public class Camera : Actor
     private Transform _transformInverse = Transform.Identity;
     public CameraView AsCameraView(Span<float> viewMatrix)
     {
-        Transform.Inverse(ref _transformInverse);
+        WorldTransform.InverseWithoutScale(ref _transformInverse);
         _transformInverse.ToFloatSpan(ref viewMatrix);
         return new CameraView(viewMatrix, _projMatrix.AsSpan());
     }

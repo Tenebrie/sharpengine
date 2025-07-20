@@ -13,7 +13,7 @@ public partial class InputHandler
     public void SendHeldInputEvents(double deltaTime)
     {
         var modifiers = GetModifiers();
-        SendHeldKeyboardEvents(deltaTime, modifiers, ref _triggeredHandlers);
+        SendHeldKeyboardEvents(modifiers, ref _triggeredHandlers);
         SendHeldMouseButtonEvents(modifiers, ref _triggeredHandlers);
         
         foreach (var handler in _triggeredHandlers.Values)

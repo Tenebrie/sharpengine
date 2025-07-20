@@ -1,5 +1,4 @@
 ﻿using Engine.Core.Common;
-using Engine.Worlds.Attributes;
 using Engine.Worlds.Primitives;
 
 namespace Engine.Worlds.Entities;

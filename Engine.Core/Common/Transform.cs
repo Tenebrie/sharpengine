@@ -1,6 +1,7 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Silk.NET.Maths;
+using Engine.Core.Extensions;
+using Engine.Core.Makers;
 
 namespace Engine.Core.Common;
 
@@ -29,12 +30,12 @@ public class Transform
             r.Row1 /= s.X;
             r.Row2 /= s.Y;
             r.Row3 /= s.Z;
-            return QuatHelpers.FromRowMatrix(r);
+            return QuatMakers.FromRowMatrix(r);
         }
         set
         {
             var s = Scale;
-            var r = MatrixHelpers.FromQuaternion(Quat.Normalize(value));
+            var r = MatrixMakers.FromQuaternion(Quat.Normalize(value));
             Data.M11 = r.M11 * s.X; Data.M12 = r.M12 * s.X; Data.M13 = r.M13 * s.X;
             Data.M21 = r.M21 * s.Y; Data.M22 = r.M22 * s.Y; Data.M23 = r.M23 * s.Y;
             Data.M31 = r.M31 * s.Z; Data.M32 = r.M32 * s.Z; Data.M33 = r.M33 * s.Z;
@@ -76,19 +77,29 @@ public class Transform
 
     private Transform(Vector translation, Quat rotation, Vector scale)
     {
-        var translationMatrix = MatrixHelpers.FromTranslation(translation);
-        var rotationMatrix = MatrixHelpers.FromQuaternion(rotation);
-        var scaleMatrix = MatrixHelpers.FromScale(scale);
+        var translationMatrix = MatrixMakers.FromTranslation(translation);
+        var rotationMatrix = MatrixMakers.FromQuaternion(rotation);
+        var scaleMatrix = MatrixMakers.FromScale(scale);
         
         Data = translationMatrix * rotationMatrix * scaleMatrix;
     }
     
-    public Transform Translate(double x, double y, double z)
+    public Transform TranslateLocal(double x, double y, double z)
+    {
+        Position += Basis.TransformVector(new Vector(x, y, z));
+        return this;
+    }
+    public Transform TranslateLocal(Vector translation)
+    {
+        Position += Basis.TransformVector(translation);
+        return this;
+    }
+    public Transform TranslateGlobal(double x, double y, double z)
     {
         Position += new Vector(x, y, z);
         return this;
     }
-    public Transform Translate(Vector translation)
+    public Transform TranslateGlobal(Vector translation)
     {
         Position += translation;
         return this;
@@ -96,7 +107,7 @@ public class Transform
 
     public Transform Rotate(double pitch, double yaw, double roll)
     {
-        Rotation *= QuatUtils.FromRotation(pitch, yaw, roll);
+        Rotation *= QuatMakers.FromRotation(pitch, yaw, roll);
         return this;
     }
     public Transform Rotate(Quat rotation)
@@ -143,6 +154,58 @@ public class Transform
     public void Inverse(ref Transform inverse)
     {
         var m = Data;
+    
+        // Calculate the determinants for the 3x3 submatrices
+        var det1 = m.M22 * m.M33 - m.M23 * m.M32;
+        var det2 = m.M21 * m.M33 - m.M23 * m.M31;
+        var det3 = m.M21 * m.M32 - m.M22 * m.M31;
+        var det4 = m.M12 * m.M33 - m.M13 * m.M32;
+        var det5 = m.M11 * m.M33 - m.M13 * m.M31;
+        var det6 = m.M11 * m.M32 - m.M12 * m.M31;
+        var det7 = m.M12 * m.M23 - m.M13 * m.M22;
+        var det8 = m.M11 * m.M23 - m.M13 * m.M21;
+        var det9 = m.M11 * m.M22 - m.M12 * m.M21;
+    
+        // Calculate the determinant of the 3x3 matrix
+        var determinant = m.M11 * det1 - m.M12 * det2 + m.M13 * det3;
+    
+        if (Math.Abs(determinant) < double.Epsilon)
+        {
+            // Matrix is singular, can't invert
+            inverse = Identity;
+            return;
+        }
+    
+        var invDet = 1.0f / determinant;
+    
+        // Calculate the adjugate matrix and multiply by 1/determinant
+        var inv = new Matrix4x4(
+            invDet * det1, -invDet * det4, invDet * det7, 0f,
+            -invDet * det2, invDet * det5, -invDet * det8, 0f,
+            invDet * det3, -invDet * det6, invDet * det9, 0f,
+            0f, 0f, 0f, 1f
+        );
+    
+        // Calculate the inverse translation
+        var tx = m.M41;
+        var ty = m.M42;
+        var tz = m.M43;
+    
+        var invX = -(tx * inv.M11 + ty * inv.M21 + tz * inv.M31);
+        var invY = -(tx * inv.M12 + ty * inv.M22 + tz * inv.M32);
+        var invZ = -(tx * inv.M13 + ty * inv.M23 + tz * inv.M33);
+    
+        inv.M41 = invX;
+        inv.M42 = invY;
+        inv.M43 = invZ;
+    
+        inverse.Data = inv;
+    }
+    
+    // Camera doesn't need scale, so we can skip it
+    public void InverseWithoutScale(ref Transform inverse)
+    {
+        var m = Data;
 
         var inv = new Matrix4x4(
             m.M11, m.M21, m.M31, 0f,
@@ -168,7 +231,13 @@ public class Transform
     
     public override string ToString()
     {
-        return $"Transform[Translation: ({Data.M14}, {Data.M24}, {Data.M34}) Rotation: ({Data.M11}, {Data.M22}, {Data.M33})Scale: ({Data.M11}, {Data.M22}, {Data.M33})";
+        var rotation = Rotation;
+        var scale = Scale;
+        return $"Transform [" +
+               $"Translation: ({Data.M41}, {Data.M42}, {Data.M43}), " +
+               $"Rotation: ({rotation.X}, {rotation.Y}, {rotation.Z}, {rotation.W}), " +
+               $"Scale: ({scale.X}, {scale.Y}, {scale.Z})" +
+               $"]";
     }
 
     public Matrix4x4 ToMatrix()
@@ -199,9 +268,9 @@ public class Transform
 
     public static Transform FromRotation(double pitch, double yaw, double roll)
     {
-        return new Transform(Vector.Zero, QuatUtils.FromRotation(pitch, yaw, roll), Vector.One);
+        return new Transform(Vector.Zero, QuatMakers.FromRotation(pitch, yaw, roll), Vector.One);
     }
-    public static Transform FromRotationRadians(double pitch, double yaw, double roll) => new (Vector.Zero, QuatUtils.FromRotationRadians(pitch, yaw,  roll), Vector.One);
+    public static Transform FromRotationRadians(double pitch, double yaw, double roll) => new (Vector.Zero, QuatMakers.FromRotationRadians(pitch, yaw,  roll), Vector.One);
     public static Transform FromScale(Vector scale) => new (Vector.Zero, Quat.Identity, scale);
     public static Transform FromScale(double x, double y, double z) => new (Vector.Zero, Quat.Identity, new Vector(x, y, z));
     

@@ -1,5 +1,4 @@
-﻿using System.Buffers;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.Extensions.ObjectPool;
 
 namespace Engine.Core.Profiling;

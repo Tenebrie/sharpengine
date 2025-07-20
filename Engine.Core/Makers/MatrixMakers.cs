@@ -1,8 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace Engine.Core.Common;
+namespace Engine.Core.Makers;
 
-public static class MatrixHelpers
+public static class MatrixMakers
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Matrix4x4 FromTranslation(Vector t) => FromTranslation(t.X, t.Y, t.Z);

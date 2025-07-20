@@ -6,9 +6,11 @@ namespace Engine.Editor.Host.Services;
 
 public class PerformanceMonitoringService : Service
 {
-    private int lastGen0 = 0;
-    private int lastGen1 = 0;
-    private int lastGen2 = 0; 
+    private const bool LoggingEnabled = 1 < 2;
+
+    private int _lastGen0 = 0;
+    private int _lastGen1 = 0;
+    private int _lastGen2 = 0; 
 
     [OnTimer(Seconds = 1)]
     protected void OnCheckGC()   
@@ -18,11 +20,12 @@ public class PerformanceMonitoringService : Service
         var g1 = GC.CollectionCount(1);
         var g2 = GC.CollectionCount(2);
 
-        // Console.WriteLine($"GC/f  g0:{g0 - lastGen0}  g1:{g1 - lastGen1}  g2:{g2 - lastGen2}");
+        if (LoggingEnabled)
+            Console.WriteLine($"GC/f  g0:{g0 - _lastGen0}  g1:{g1 - _lastGen1}  g2:{g2 - _lastGen2}");
  
-        lastGen0 = g0;
-        lastGen1 = g1;  
-        lastGen2 = g2;
+        _lastGen0 = g0;
+        _lastGen1 = g1;  
+        _lastGen2 = g2;
     }
 
     [OnTimer(Seconds = 3)]

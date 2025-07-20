@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Engine.Core.Common;
-using Engine.Worlds.Attributes;
+﻿using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 
 namespace Engine.Worlds.Services;
@@ -15,7 +13,6 @@ public class CacheRevalidationService : Service
     }
     
     [OnUpdate]
-    [SuppressMessage("ReSharper", "ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator")]
     internal void OnUpdate()
     {
         foreach (var atom in _transformInvalidatedAtoms)

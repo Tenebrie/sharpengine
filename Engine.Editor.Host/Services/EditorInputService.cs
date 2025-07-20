@@ -1,4 +1,5 @@
 ﻿using Engine.Codegen.Bgfx.Unsafe;
+using Engine.Core.Enum;
 using Engine.Input;
 using Engine.Input.Attributes;
 using Engine.Input.Contexts;
@@ -24,10 +25,13 @@ public enum InputAction
     CameraRight,
     CameraRotatePitch,
     CameraRotateYaw,
+    CameraSpeedWheel,
 }
 
 public class EditorInputService : Service
 {
+    private HostBackstage HostBackstage => (HostBackstage)Backstage;
+    
     private InputContext _baseContext = null!;
     private InputContext _cameraControlContext = null!;
     
@@ -51,29 +55,59 @@ public class EditorInputService : Service
             .Add(InputAction.CameraRight, Key.Right)
             .Add(InputAction.CameraRotateYaw, MouseAxis.MoveX)
             .Add(InputAction.CameraRotatePitch, MouseAxis.MoveY)
+            .Add(InputAction.CameraSpeedWheel, MouseAxis.WheelY)
             .Build();
         
         RecalculateActiveContext();
     }
 
+    [OnKeyInput(Key.F3)]
+    protected void OnToggleRendererDebug()
+    {
+        HostBackstage.Renderer?.ToggleDebugFlags(Bgfx.DebugFlags.Stats | Bgfx.DebugFlags.Profiler);
+    }
+
+    [OnKeyInput(Key.F5)]
+    protected void OnToggleGameplayContext()
+    {
+        switch (HostBackstage.GameplayContext)
+        {
+            case GameplayContext.Editor:
+                HostBackstage.Editor.SetGameplayContext(GameplayContext.EmbeddedPlay);
+                break;
+            case GameplayContext.EmbeddedPlay:
+                HostBackstage.Editor.SetGameplayContext(GameplayContext.Editor);
+                break;
+            case GameplayContext.StandalonePlay:
+            default:
+                break;
+        }
+
+        RecalculateActiveContext();
+    }
+    
+    [OnKeyInput(Key.F11)]
+    protected void OnReload()
+    {
+        HostBackstage.Editor.ReloadUserGame();
+    }
+    
     [OnInput(InputAction.HoldToControlCamera)]
     [OnInputReleased(InputAction.HoldToControlCamera)]
     protected void RecalculateActiveContext()
     {
+        if (HostBackstage.GameplayContext != GameplayContext.Editor)
+        {
+            GetService<InputService>().InputContext = InputContext.Empty;
+            return;
+        }
+        
         var activeContext = InputContext.From(_baseContext);
-        Console.WriteLine(GetService<InputService>().IsInputHeld(InputAction.HoldToControlCamera));
         if (GetService<InputService>().IsInputHeld(InputAction.HoldToControlCamera))
         {
             activeContext = activeContext.Combine(_cameraControlContext);
         }
         
         GetService<InputService>().InputContext = activeContext;
-    }
-
-    [OnKeyInput(Key.F3)]
-    protected void OnToggleRendererDebug()
-    {
-        var backstage = (HostBackstage)Backstage;
-        backstage.Renderer?.ToggleDebugFlags(Bgfx.DebugFlags.Stats | Bgfx.DebugFlags.Profiler);
     }
 }

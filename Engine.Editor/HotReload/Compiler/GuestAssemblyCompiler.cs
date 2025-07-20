@@ -7,7 +7,7 @@ namespace Engine.Editor.HotReload.Compiler;
 
 public class GuestAssemblyCompiler
 {
-    public bool IsCompiling;
+    public bool IsCompiling = false;
     private readonly Project _project;
     private GuestAssemblyCompiler(string projectPath)
     {

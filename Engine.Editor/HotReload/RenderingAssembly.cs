@@ -1,4 +1,4 @@
-﻿using Engine.Editor.HotReload.Modules.Abstract;
+﻿using Engine.Editor.HotReload.Abstract;
 using Engine.User.Contracts;
 using Engine.Worlds.Entities;
 using Silk.NET.Windowing;

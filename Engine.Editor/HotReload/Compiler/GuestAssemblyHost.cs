@@ -1,9 +1,5 @@
-﻿using Engine.User.Contracts;
-using Engine.Worlds.Entities;
-
+﻿
 namespace Engine.Editor.HotReload.Compiler;
-
-using EngineSettings = IEngineContract<Backstage>;
 
 internal sealed class GuestAssemblyHost(string assemblyName)
 {

@@ -1,4 +1,5 @@
-﻿using Xunit.Sdk;
+﻿using Engine.Core.Extensions;
+using Xunit.Sdk;
 
 namespace Engine.Testing.TestUtilities;
 
@@ -17,7 +18,14 @@ public static class QuatAssert
         Quat actual,
         double epsilon = 1e-6)
     {
-        var errors = new List<string>();
+        var angleDiff = expected.AngleTo(actual);
+        if (angleDiff < epsilon)
+            return;
+        
+        var errors = new List<string>
+        {
+            $"Angle difference: expected {0}, got {angleDiff:F8}"
+        };
 
         if (Math.Abs(expected.X - actual.X) > epsilon)
             errors.Add($"X: expected {expected.X:F8}, got {actual.X:F8} (Δ={Math.Abs(expected.X - actual.X):F8})");

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Engine.Core.Profiling;
+using JetBrains.Annotations;
 
 namespace Engine.Worlds.Entities;
 
@@ -10,11 +11,11 @@ public partial class Atom
     public Backstage Backstage { get; internal set; } = null!;
     public Atom? Parent { get; internal set; }
     public List<Atom> Children { get; } = [];
-
+    
     // Whether the atom itself is ready (excluding children).
     private bool _isInitialized = false;
     // Whether the atom and all its children are ready.
-    private bool _isReady = false;
+    [UsedImplicitly] private bool _isReady = false;
     
     internal void Initialize()
     {

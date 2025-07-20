@@ -2,7 +2,7 @@
 using Engine.User.Contracts;
 using Engine.Worlds.Entities;
 
-namespace Engine.Editor.HotReload.Modules.Abstract;
+namespace Engine.Editor.HotReload.Abstract;
 
 public abstract class GuestAssembly(string assemblyName)
 {

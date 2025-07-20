@@ -1,11 +1,8 @@
-﻿using Engine.Codegen.Bgfx.Unsafe;
-using Engine.Editor.Host.Actors;
+﻿using Engine.Editor.Host.Actors;
 using Engine.Editor.Host.Services;
-using Engine.Input.Attributes;
 using Engine.User.Contracts;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
-using Silk.NET.Input;
 
 namespace Engine.Editor.Host;
 
@@ -17,12 +14,6 @@ public class HostBackstage : Backstage, IEditorHostContract
         CreateActor<EditorCamera>();
         RegisterService<EditorInputService>();
         RegisterService<PerformanceMonitoringService>();
-    }
-
-    [OnKeyInput(Key.F5)]
-    protected void OnReload()
-    {
-        Editor.ReloadUserGame();
     }
 
     public required IEditorContract Editor { get; set; }

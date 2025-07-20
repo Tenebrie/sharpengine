@@ -2,7 +2,6 @@
 using Engine.Assets.Meshes;
 using Engine.Core.Common;
 using Engine.Core.Profiling;
-using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 
 namespace Engine.Worlds.Components;

@@ -1,8 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Engine.Core.Enum;
 using Engine.Editor.HotReload;
-using Engine.Editor.HotReload.Modules;
-using Engine.Editor.HotReload.Modules.Abstract;
-using Engine.User.Contracts;
+using Engine.Editor.HotReload.Abstract;
 using Engine.Worlds;
 using Engine.Worlds.Entities;
 using Microsoft.Build.Locator;
@@ -17,6 +16,7 @@ internal static class Editor
 {
     private static IWindow MainWindow { get; set; } = null!;
     private static IInputContext WindowInputContext { get; set; } = null!;
+    internal static GameplayContext GameplayContext { get; set; } = GameplayContext.Editor;
     
     internal static EditorHostAssembly EditorHostAssembly { get; set; } = null!;
     internal static RenderingAssembly RenderingAssembly { get; set; } = null!;
