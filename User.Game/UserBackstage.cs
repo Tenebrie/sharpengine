@@ -36,6 +36,8 @@ public class UserScene : Scene
 
         var honseTerrain = CreateActor<HonseTerrain>();
         honseTerrain.Transform.Position = new Vector(0, -3.25, 0);
+        var scale = 30;
+        honseTerrain.Transform.Scale = new Vector(scale, scale, scale);
         
         var cubeManager = CreateActor<UnitCube>();
         for (var x = 0; x < 5; x++)
