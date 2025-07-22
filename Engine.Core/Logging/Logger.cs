@@ -24,23 +24,34 @@ public static class Logger
     public static void ReadPersistent(out List<string> log) => PersistentLog.ReadAll(out log);
     
     public static void Debug(object message) => Write(message, null, LogLevel.Debug);
+    public static void DebugNoNewline(object message) => Write(message, null, LogLevel.Debug, skipNewline: true);
     public static void Debug(object message, Exception e) => Write(message, e, LogLevel.Debug);
+    public static void Debug(string format, params object[] args) => Write(string.Format(format, args), null, LogLevel.Debug);
     public static void Info(object message) => Write(message, null, LogLevel.Info);
     public static void Info(object message, Exception e) => Write(message, e, LogLevel.Info);
+    public static void InfoF(string format, params object[] args) => Write(string.Format(format, args), null, LogLevel.Info);
     public static void Warn(object message) => Write(message, null, LogLevel.Warn);
     public static void Warn(object message, Exception e) => Write(message, e, LogLevel.Warn);
+    public static void WarnF(string format, params object[] args) => Write(string.Format(format, args), null, LogLevel.Warn);
     public static void Error(object message) => Write(message, null, LogLevel.Error);
     public static void Error(object message, Exception e) => Write(message, e, LogLevel.Error);
+    public static void ErrorF(string format, params object[] args) => Write(string.Format(format, args), null, LogLevel.Error);
     public static void Fatal(object message) => Write(message, null, LogLevel.Fatal);
     public static void Fatal(object message, Exception e) => Write(message, e, LogLevel.Fatal);
+    public static void FatalF(string format, params object[] args) => Write(string.Format(format, args), null, LogLevel.Fatal);
     public static void ShowPersistent(object key, object? message) => PersistentLog.Write(key, message);
+    public static void ShowPersistentF(object key, string format, params object[] args) => PersistentLog.Write(key, string.Format(format, args));
     public static void ClearPersistent(object key) => PersistentLog.Clear(key);
     
-    private static void Write(object message, Exception? exception, LogLevel level)
+    private static void Write(object message, Exception? exception, LogLevel level, bool skipNewline = false)
     {
         var str = message.ToString()!;
         Logs[level].Write(str, level);
-        Console.WriteLine(str, exception);
+        if (skipNewline)
+            Console.Write(str, exception);
+        else
+            Console.WriteLine(str, exception);
+        Console.Write(exception);
         
         if (level < _logLevel)
             return;

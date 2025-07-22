@@ -56,7 +56,7 @@ public unsafe class RenderingCore : IRendererContract
         HotInitialize(window, opts);
     }
 
-    private ResetFlags _resetFlags = ResetFlags.MsaaX8;
+    private ResetFlags _resetFlags = ResetFlags.MsaaX8 | ResetFlags.Maxanisotropy;
     private DebugFlags _debugFlags = DebugFlags.Text;
 
     public void HotInitialize(IWindow window, WindowOptions opts)

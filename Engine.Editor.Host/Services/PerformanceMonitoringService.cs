@@ -7,8 +7,6 @@ namespace Engine.Editor.Host.Services;
 
 public class PerformanceMonitoringService : Service
 {
-    private const bool LoggingEnabled = 1 < 2;
-
     private int _lastGen0 = 0;
     private int _lastGen1 = 0;
     private int _lastGen2 = 0; 
@@ -21,11 +19,11 @@ public class PerformanceMonitoringService : Service
         var g1 = GC.CollectionCount(1);
         var g2 = GC.CollectionCount(2);
 
-        if (LoggingEnabled)
-            Logger.Debug($"GC/f  g0:{g0 - _lastGen0}  g1:{g1 - _lastGen1}  g2:{g2 - _lastGen2}");
+        if (g0 - _lastGen0 > 0 || g1 - _lastGen1 > 0 || g2 - _lastGen2 > 0)
+            Logger.Debug($"GC Report:  g0: {g0 - _lastGen0}  g1: {g1 - _lastGen1}  g2: {g2 - _lastGen2}");
  
         _lastGen0 = g0;
-        _lastGen1 = g1;  
+        _lastGen1 = g1;
         _lastGen2 = g2;
     }
 

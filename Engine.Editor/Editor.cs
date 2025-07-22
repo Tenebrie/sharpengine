@@ -10,6 +10,7 @@ using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
 using InputService = Engine.Worlds.Services.InputService;
+using KillSwitch = Engine.Core.Errors.KillSwitch;
 
 namespace Engine.Editor;
 
@@ -19,9 +20,9 @@ internal static class Editor
     private static IInputContext WindowInputContext { get; set; } = null!;
     internal static GameplayContext GameplayContext { get; set; } = GameplayContext.Editor;
     
-    internal static EditorHostAssembly EditorHostAssembly { get; set; } = null!;
-    internal static RenderingAssembly RenderingAssembly { get; set; } = null!;
-    internal static UserlandAssembly UserlandAssembly { get; set; } = null!;
+    internal static EditorHostAssembly EditorHostAssembly { get; private set; } = null!;
+    internal static RenderingAssembly RenderingAssembly { get; private set; } = null!;
+    internal static UserlandAssembly UserlandAssembly { get; private set; } = null!;
     private static List<GuestAssembly> GuestAssemblies { get; set; } = [];
     
     [SuppressMessage("ReSharper", "ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator")]
@@ -34,6 +35,7 @@ internal static class Editor
             Size = new Vector2D<int>(1920, 1080),
             API = new GraphicsAPI(ContextAPI.None, new APIVersion())
         };
+        KillSwitch.InstallAvKiller();
 
         WindowStateManager.TryLoadWindowState(ref opts);
         MainWindow = Window.Create(opts);

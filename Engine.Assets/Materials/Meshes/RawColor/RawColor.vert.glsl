@@ -14,6 +14,6 @@ void main()
     gl_Position     = mul(u_modelViewProj, worldPos);
 
     // Pass through vertex color
-    v_color0        = a_color0;
+    v_color0 = a_color0;
     v_uv0 = a_texcoord0;
 }

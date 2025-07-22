@@ -41,7 +41,7 @@ function Write-Section {
 function Write-Result {
     param([string]$Src,[string]$Dst,[bool]$Ok,[int]$Pad)
     $srcPad = $Src.PadRight($Pad)
-    $flag   = if ($Ok) { '[OK] '  } else { '[!!]' }
+    $flag   = if ($Ok) { '[OK]'  } else { '[!!]' }
     $color  = if ($Ok) { 'Green' } else { 'Red'  }
     Write-Host $flag -ForegroundColor $color -NoNewline
     Write-Host " $srcPad -> $Dst"
@@ -63,8 +63,12 @@ function Invoke-CompileShaders {
 
         $stderr  = & $SC -f $_.FullName -o $outPath --type $Type @commonParams 2>&1
         $ok      = ($LASTEXITCODE -eq 0)
-        if (-not $ok) { $Errors += $stderr }
+        $errors += $stderr
         Write-Result $rel ($outPath.Substring($OUTPUT_BASE.Length+1)) $ok $pad
+        if (-not $ok)
+        {
+            $Errors | ForEach-Object { Write-Host $_ -ForegroundColor Yellow }
+        }
         $count++
     }
     return $count

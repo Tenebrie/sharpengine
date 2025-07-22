@@ -29,5 +29,9 @@
     <ProjectReference Include="..\Engine.User.Codegen\Engine.User.Codegen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
 <!--    <ProjectReference Include="..\User.Game\User.Game.csproj" />-->
   </ItemGroup>
+  
+  <ItemGroup>
+    <Folder Include="Utilities\" />
+  </ItemGroup>
 
 </Project>

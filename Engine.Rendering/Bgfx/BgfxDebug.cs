@@ -1,24 +1,27 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Engine.Core.Errors;
 using Engine.Core.Logging;
 using JetBrains.Annotations;
 using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
+// ReSharper disable InconsistentNaming
 
 namespace Engine.Rendering.Bgfx;
 
-internal static unsafe class Native
+internal static unsafe partial class Native
 {
     // ---------- vsnprintf ----------
-    [DllImport("msvcrt", CallingConvention = CallingConvention.Cdecl,
-        EntryPoint = "vsnprintf", ExactSpelling = true)]
-    private static extern int vsnprintf_win(
+    [LibraryImport("msvcrt", EntryPoint = "vsnprintf")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    private static partial int vsnprintf_win(
         byte* str, /*size_t*/ UIntPtr size, sbyte* fmt, void* ap);
 
-    [DllImport("libc", CallingConvention = CallingConvention.Cdecl,
-        EntryPoint = "vsnprintf", ExactSpelling = true)]
-    private static extern int vsnprintf_unix(
+    [LibraryImport("libc", EntryPoint = "vsnprintf")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    private static partial int vsnprintf_unix(
         byte* str, UIntPtr size, sbyte* fmt, void* ap);
-
+    
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int vsnprintf(byte* str, UIntPtr size, sbyte* fmt, void* ap)
         => RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
@@ -26,9 +29,9 @@ internal static unsafe class Native
             : vsnprintf_unix(str, size, fmt, ap);
 
     // ---------- _vscprintf (Windows‑only helper to get length) ----------
-    [DllImport("msvcrt", CallingConvention = CallingConvention.Cdecl,
-        EntryPoint = "_vscprintf", ExactSpelling = true)]
-    private static extern int vscprintf_win(sbyte* fmt, void* ap);
+    [LibraryImport("msvcrt", EntryPoint = "_vscprintf")]
+    [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
+    private static partial int vscprintf_win(sbyte* fmt, void* ap);
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int vscprintf(sbyte* fmt, void* ap)
@@ -136,12 +139,13 @@ public static unsafe class BgfxCallbacks
     {
         var f = Marshal.PtrToStringAnsi((nint)file) ?? "<null>";
         var m = Marshal.PtrToStringAnsi((nint)msg)  ?? "<null>";
-        Logger.Fatal($"[bgfx fatal] {code} @ {f}:{line} : {m}");
-        // You can throw or Environment.FailFast here if desired.
+        Logger.Fatal($"BGFX Fatal {code} @ {f}:{line} : {m}");
+        Logger.Fatal("BGFX Fatal errors are unrecoverable. Goodbye.");
+        KillSwitch.ForceKillProcess(0);
     }
 
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
-    private static unsafe void TraceVargsFn(
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
+    private static void TraceVargsFn(
         void*  self,
         sbyte* file, ushort line,
         sbyte* fmt,  void*  args)
@@ -156,15 +160,15 @@ public static unsafe class BgfxCallbacks
         const int kCap = 16 * 1024;
         len = Math.Min(len, kCap);
 
-        // (3) Format into a stack buffer (fast path) or heap buffer if huge
+        // (3) Format
         if (len <= 512)
         {
             var buf = stackalloc byte[len + 1];
             Native.vsnprintf(buf, (UIntPtr)(len + 1), fmt, args);
             var msg = Marshal.PtrToStringAnsi((nint)buf) ?? "<fmt‑fail>";
 
-            // (4) Ship it to your logger
-            Logger.Debug($"[bgfx] {fileStr}({line}): {msg}");
+            Logger.DebugNoNewline($"{msg}");
+            // Logger.DebugNoNewline($"[bgfx] {fileStr}({line}): {msg}");
         }
         else
         {
@@ -174,38 +178,38 @@ public static unsafe class BgfxCallbacks
 
             Marshal.FreeHGlobal((nint)buf);
 
-            // (4) Ship it to your logger
-            Logger.Debug($"[bgfx] {fileStr}({line}): {msg}");
+            Logger.DebugNoNewline($"{msg}");
+            // Logger.DebugNoNewline($"[bgfx] {fileStr}({line}): {msg}");
         }
     }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void ProfilerBeginFn(void* self, sbyte* name, uint abgr, sbyte* file, ushort line) { }
 
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void ProfilerEndFn(void* self) { }
 
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static uint CacheReadSizeFn(void* self, ulong id) => 0;
 
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static byte CacheReadFn(void* self, ulong id, void* data, uint size) => 0; // 0 = false
 
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void CacheWriteFn(void* self, ulong id, void* data, uint size) { }
 
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void ScreenShotFn(void* self, sbyte* filePath,
         uint w, uint h, uint pitch,
         void* data, uint size, byte yflip) { }
 
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void CaptureBeginFn(void* self, uint w, uint h, uint pitch,
         TextureFormat format, byte yflip) { }
 
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void CaptureEndFn(void* self) { }
 
-    [UnmanagedCallersOnly(CallConvs = new[] { typeof(CallConvCdecl) })]
+    [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void CaptureFrameFn(void* self, void* data, uint size) { }
 }

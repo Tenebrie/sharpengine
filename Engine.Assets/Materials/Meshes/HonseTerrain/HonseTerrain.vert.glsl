@@ -10,10 +10,9 @@ void main()
     mat4 model = mtxFromCols(i_data0, i_data1, i_data2, i_data3);
 
     // Transform vertex
-    vec4 worldPos   = mul(model, vec4(a_position, 1.0) );
-    gl_Position     = mul(u_modelViewProj, worldPos);
+    vec4 worldPos = mul(model, vec4(a_position, 1.0) );
+    gl_Position = mul(u_modelViewProj, worldPos);
 
-    // Pass through vertex color
-    v_color0        = a_color0;
+    v_color0 = a_color0;
     v_uv0 = a_texcoord0;
 }

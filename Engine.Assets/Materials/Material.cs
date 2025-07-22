@@ -22,14 +22,14 @@ public class Material
     {
         Texture?.Dispose();
         Texture = Texture.Load(texturePath);
-    } 
+    }
 
     public void BindTexture()
     {
         if (Texture == null)
             return;
         
-        set_texture(0, DiffuseTextureHandle, Texture.Handle, uint.MaxValue);
+        set_texture(0, DiffuseTextureHandle, Texture.Handle, (uint)(SamplerFlags.MinAnisotropic | SamplerFlags.MagAnisotropic));
     }
 
     private static unsafe ShaderHandle LoadShader(string path)
