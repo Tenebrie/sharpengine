@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using Engine.Core.Logging;
+﻿using Engine.Core.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -10,13 +9,13 @@ namespace Engine.Assets.Materials;
 
 public sealed class Texture : IDisposable
 {
-    public bool IsValid = false;
-    public TextureHandle Handle { get; private set; }
+    private readonly bool _isValid = false;
+    public TextureHandle Handle { get; }
     public int Width { get; private set; }
     public int Height { get; private set; }
 
-    public List<Image<Rgba32>> MipLevels;
-    public IResampler Sampler = KnownResamplers.Lanczos3;
+    private readonly List<Image<Rgba32>> _mipLevels;
+    private readonly IResampler _sampler = KnownResamplers.Lanczos3;
 
     private Texture(byte[] data, ushort width, ushort height, bool generateMips = false)
     {
@@ -24,7 +23,7 @@ public sealed class Texture : IDisposable
         Height = height;
         
         CalculateSize(width, height, generateMips, out var totalLevels);
-        MipLevels = new List<Image<Rgba32>>(totalLevels) { Image.LoadPixelData<Rgba32>(data, width, height) };
+        _mipLevels = new List<Image<Rgba32>>(totalLevels) { Image.LoadPixelData<Rgba32>(data, width, height) };
 
         unsafe
         {
@@ -33,20 +32,20 @@ public sealed class Texture : IDisposable
                 var mem = copy(ptr, (uint)data.Length);
                 Handle = create_texture_2d(width, height, generateMips, 1, TextureFormat.RGBA8, (ulong)TextureFlags.None, null);
                 update_texture_2d(Handle, 0, 0, 0,0, width, height, mem, ushort.MaxValue);
-                IsValid = Handle.Valid;
+                _isValid = Handle.Valid;
             }
         }
+
         if (generateMips)
-            GenerateMips(width, height);
+            Task.Run(() => GenerateMips(width, height));
     }
     
-    private static uint CalculateSize(ushort width, ushort height, bool generateMips, out int totalLevels)
+    private static void CalculateSize(ushort width, ushort height, bool generateMips, out int totalLevels)
     {
         totalLevels = 1;
-        var baseSize = (uint)(width * height * 4); 
-        
+
         if (!generateMips)
-            return baseSize;
+            return;
         
         var mipWidth = width / 2;
         var mipHeight = height / 2;
@@ -54,12 +53,9 @@ public sealed class Texture : IDisposable
         while (mipWidth > 0 && mipHeight > 0)
         {
             totalLevels += 1;
-            baseSize += (uint)(mipWidth * mipHeight * 4);
             mipWidth /= 2;
             mipHeight /= 2;
         }
-
-        return baseSize;
     }
 
     private void GenerateMips(ushort width, ushort height)
@@ -87,13 +83,13 @@ public sealed class Texture : IDisposable
         var length = width * height * 4;
         
         Console.WriteLine(level);
-        var mipmap = MipLevels[0].Clone(ctx => ctx.Resize(
+        var mipmap = _mipLevels[0].Clone(ctx => ctx.Resize(
             size: new Size(width, height),
-            sampler: Sampler,
+            sampler: _sampler,
             compand: true
         ));
 
-        MipLevels.Add(mipmap);
+        _mipLevels.Add(mipmap);
         mipmap.CopyPixelDataTo(data);
         mipmap.Save($"proper-mip-{level}.png");
 
@@ -106,7 +102,7 @@ public sealed class Texture : IDisposable
     
     public void Dispose()
     {
-        if (!IsValid || !Handle.Valid)
+        if (!_isValid || !Handle.Valid)
             return;
         
         destroy_texture(Handle);
@@ -115,8 +111,6 @@ public sealed class Texture : IDisposable
     public static Texture Load(string path)
     {
         using var image = Image.Load<Rgba32>(path);
-        // Flip Y to match OpenGL expectations
-        // image.Mutate(x => x.Flip(FlipMode.Vertical));
                 
         var textureData = new byte[image.Width * image.Height * 4];
         image.CopyPixelDataTo(textureData);

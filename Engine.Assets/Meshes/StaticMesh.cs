@@ -24,6 +24,8 @@ public enum WindingOrder
 
 public class StaticMesh : IDisposable
 {
+    public bool IsValid { get; private set; } = false;
+    
     private WindingOrder WindingOrder { get; set; } = WindingOrder.Cw;
 
     private int _vertexCount;
@@ -39,7 +41,7 @@ public class StaticMesh : IDisposable
         for (var i = 0; i < verts.Length; i++)
         {
             var v = verts[i];
-            const uint a = 0xFF;                                   // full alpha
+            const uint a = 0xFF;                                // full alpha
             var r = (uint)(v.VertexColor.X * 255) & 0xFF;   // Red
             var g = (uint)(v.VertexColor.Y * 255) & 0xFF;   // Green
             var b = (uint)(v.VertexColor.Z * 255) & 0xFF;   // Blue
@@ -80,6 +82,8 @@ public class StaticMesh : IDisposable
                 _indexBuffer = create_index_buffer(copy(ptr, byteSize), 0);
             }
         }
+
+        IsValid = true;
     }
 
     public void LoadUnitCube()

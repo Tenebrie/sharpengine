@@ -33,7 +33,8 @@ internal static class Editor
         {
             Title = "Custom Engine",
             Size = new Vector2D<int>(1920, 1080),
-            API = new GraphicsAPI(ContextAPI.None, new APIVersion())
+            API = new GraphicsAPI(ContextAPI.None, new APIVersion()),
+            VSync = true
         };
         KillSwitch.InstallAvKiller();
 

@@ -48,7 +48,7 @@ public class EditorHostAssembly(string assemblyName = "Engine.Editor.Host") : Gu
             BackstageEventLoop.ProcessLogicFrame(Backstage, deltaTime);
         } catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error during Backstage update: {ex.Message}");
+            Logger.Error($"Error during OnUpdate: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
             _updatesPausedFor = 3.0;
             return false;

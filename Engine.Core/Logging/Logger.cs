@@ -27,6 +27,9 @@ public static class Logger
     public static void DebugNoNewline(object message) => Write(message, null, LogLevel.Debug, skipNewline: true);
     public static void Debug(object message, Exception e) => Write(message, e, LogLevel.Debug);
     public static void Debug(string format, params object[] args) => Write(string.Format(format, args), null, LogLevel.Debug);
+    public static void Log(object message) => Write(message, null, LogLevel.Log);
+    public static void Log(object message, Exception e) => Write(message, e, LogLevel.Log);
+    public static void LogF(string format, params object[] args) => Write(string.Format(format, args), null, LogLevel.Log);
     public static void Info(object message) => Write(message, null, LogLevel.Info);
     public static void Info(object message, Exception e) => Write(message, e, LogLevel.Info);
     public static void InfoF(string format, params object[] args) => Write(string.Format(format, args), null, LogLevel.Info);
@@ -154,5 +157,6 @@ public enum LogLevel
     Info,
     Warn,
     Error,
-    Fatal
+    Fatal,
+    Log
 }

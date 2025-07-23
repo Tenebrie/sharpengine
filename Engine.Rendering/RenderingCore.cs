@@ -21,10 +21,8 @@ internal enum ViewId : ushort
 public unsafe class RenderingCore : IRendererContract
 {
     internal IWindow RootWindow = null!;
-    internal List<Backstage> Backstages = [];
+    internal readonly List<Backstage> Backstages = [];
     internal LogRenderer LogRenderer = null!;
-
-    internal UniformHandle TextureDiffuse;
 
     public void Register(Backstage backstage)
     {
@@ -46,7 +44,8 @@ public unsafe class RenderingCore : IRendererContract
         initData.resolution.width = (uint)opts.Size.X;
         initData.resolution.height = (uint)opts.Size.Y;
         initData.resolution.format = TextureFormat.RGBA8;
-        initData.resolution.numBackBuffers = 4;
+        initData.resolution.reset = (uint)ResetFlags.Vsync;
+        initData.resolution.numBackBuffers = 2;
         initData.resolution.maxFrameLatency = 3;
         initData.callback = BgfxCallbacks.InterfacePtr;
         
@@ -56,7 +55,7 @@ public unsafe class RenderingCore : IRendererContract
         HotInitialize(window, opts);
     }
 
-    private ResetFlags _resetFlags = ResetFlags.MsaaX8 | ResetFlags.Maxanisotropy;
+    private ResetFlags _resetFlags = ResetFlags.MsaaX8 | ResetFlags.Maxanisotropy | ResetFlags.Vsync;
     private DebugFlags _debugFlags = DebugFlags.Text;
 
     public void HotInitialize(IWindow window, WindowOptions opts)
@@ -159,18 +158,24 @@ public unsafe class RenderingCore : IRendererContract
     [ThreadStatic] private static readonly Transform[] SingleComponentTransforms;
     private static void RenderStaticMeshComponent(StaticMeshComponent staticMesh)
     {
+        if (!staticMesh.Mesh.IsValid)
+            return;
         SingleComponentTransforms[0] = staticMesh.WorldTransform;
         staticMesh.Mesh.Render(1, SingleComponentTransforms, 0, staticMesh.Material);
     }
     
     private static void RenderTerrainMeshComponent(TerrainMeshComponent staticMesh)
     {
+        if (!staticMesh.Mesh.IsValid)
+            return;
         SingleComponentTransforms[0] = staticMesh.WorldTransform;
         staticMesh.Mesh.Render(1, SingleComponentTransforms, 0, staticMesh.Material);
     }
 
     private static void RenderInstancedActorComponent(IInstancedActorComponent instancedActorComponent)
     {
+        if (!instancedActorComponent.Mesh.IsValid)
+            return;
         var transforms = ArrayPool<Transform>.Shared.Rent(instancedActorComponent.Instances.Count);
         try
         {

@@ -95,6 +95,7 @@ public class LogRenderer(RenderingCore parent): Renderer(parent)
             LogLevel.Warn => DebugColor.Yellow,
             LogLevel.Error => DebugColor.Red,
             LogLevel.Fatal => DebugColor.Red,
+            LogLevel.Log => DebugColor.LightCyan,
             _ => DebugColor.White
         };
         DebugTextWrite(0, messageCount, DebugColor.Black, color, message);

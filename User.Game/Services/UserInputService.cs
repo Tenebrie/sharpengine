@@ -18,15 +18,12 @@ public enum InputAction
     MoveLeft,
     MoveRight,
     Jump,
-    CameraRotatePitch,
-    CameraRotateYaw,
-    HoldToControlCamera
+    Shoot
 }
 
 public class UserInputService : Service
 {
     private InputContext _baseContext;
-    private InputContext _playerControlContext;
     
     [OnInit]
     protected void OnInit()
@@ -41,21 +38,13 @@ public class UserInputService : Service
             .Add(InputAction.MoveRight, Key.D)
             .Add(InputAction.MoveRight, Key.Right)
             .Add(InputAction.Jump, Key.Space)
-            .Add(InputAction.HoldToControlCamera, MouseButton.Right)
-            .Build();
-        
-        _playerControlContext = InputContext.GetBuilder<InputAction>()
-            .Add(InputAction.CameraRotateYaw, MouseAxis.MoveX)
-            .Add(InputAction.CameraRotatePitch, MouseAxis.MoveY)
-            .Add(InputAction.HoldToControlCamera, MouseButton.Right)
+            .Add(InputAction.Shoot, MouseButton.Left)
             .Build();
         
         RecalculateActiveContext();
     }
     
     [OnGameplayContextChanged]
-    [OnInput(InputAction.HoldToControlCamera)]
-    [OnInputReleased(InputAction.HoldToControlCamera)]
     protected void RecalculateActiveContext()
     {
         if (Backstage.GameplayContext == GameplayContext.Editor)
@@ -65,11 +54,6 @@ public class UserInputService : Service
         }
         
         var activeContext = InputContext.From(_baseContext);
-        if (GetService<InputService>().IsInputHeld(InputAction.HoldToControlCamera))
-        {
-            activeContext = activeContext.Combine(_playerControlContext);
-        }
-        
         GetService<InputService>().InputContext = activeContext;
     }
 }

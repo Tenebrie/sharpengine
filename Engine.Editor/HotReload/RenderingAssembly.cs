@@ -29,6 +29,7 @@ internal class RenderingAssembly(IWindow window, WindowOptions opts, string asse
             Renderer.Initialize(window, opts);
             _isInitialized = true;
         }
+        Renderer.SetGameplayContext(Editor.GameplayContext);
         foreach (var backstage in _backstages)
             Renderer.Register(backstage);
         Editor.EditorHostAssembly.NotifyAboutRenderer(Renderer);

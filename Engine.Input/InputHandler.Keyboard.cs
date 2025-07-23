@@ -1,4 +1,5 @@
-﻿using Silk.NET.GLFW;
+﻿using Engine.Core.Logging;
+using Silk.NET.GLFW;
 using Silk.NET.Input;
 
 namespace Engine.Input;
@@ -67,7 +68,13 @@ public partial class InputHandler
         {
             foreach (var boundAction in boundKeyActionList)
             {
-                boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
+                try
+                {
+                    boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
+                } catch (Exception e)
+                {
+                    Logger.Error("Error in OnKeyInput: " + e.Message, e);
+                }
             }
         }
             
@@ -79,7 +86,14 @@ public partial class InputHandler
                 
             foreach (var boundAction in inputActionList)
             {
-                boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
+                try
+                {
+                    boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error("Error in OnInput: " + e.Message, e);
+                }
             }
         });
     }
@@ -93,7 +107,14 @@ public partial class InputHandler
         {
             foreach (var boundAction in boundKeyActionList)
             {
-                boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
+                try 
+                {
+                    boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error("Error in OnKeyReleased: " + e.Message, e);
+                }
             }
         }
             
@@ -105,7 +126,14 @@ public partial class InputHandler
                 
             foreach (var boundAction in inputActionList)
             {
-                boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
+                try 
+                {
+                    boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error("Error in OnInputReleased: " + e.Message, e);
+                }
             }
         });
     }

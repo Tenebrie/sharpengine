@@ -29,6 +29,18 @@ public partial class Atom
             child.Initialize();
     }
     
+    public T? GetParent<T>() where T : Atom
+    {
+        var parent = Parent;
+        while (parent != null)
+        {
+            if (parent is T t)
+                return t;
+            parent = parent.Parent;
+        }
+        return null;
+    }
+    
     private static Atom CreateDefaultInstance(Type type)
     {
         if (type is not { IsClass: true })

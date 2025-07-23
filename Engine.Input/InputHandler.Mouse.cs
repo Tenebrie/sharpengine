@@ -1,4 +1,5 @@
-﻿using Silk.NET.GLFW;
+﻿using Engine.Core.Logging;
+using Silk.NET.GLFW;
 using Silk.NET.Input;
 using MouseButton = Silk.NET.Input.MouseButton;
 
@@ -94,7 +95,14 @@ public partial class InputHandler
                 
             foreach (var boundAction in inputActionList)
             {
-                boundAction.Action.Invoke(deltaX * boundAction.X, deltaX * boundAction.Y, deltaX * boundAction.Z, 0.0f);
+                try 
+                {
+                    boundAction.Action.Invoke(deltaX * boundAction.X, deltaX * boundAction.Y, deltaX * boundAction.Z, 0.0f);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"Error in OnInput: {e.Message}", e);
+                }
             }
         });
         
@@ -106,7 +114,14 @@ public partial class InputHandler
                 
             foreach (var boundAction in inputActionList)
             {
-                boundAction.Action.Invoke(deltaY * boundAction.X, deltaY * boundAction.Y, deltaY * boundAction.Z, 0.0f);
+                try 
+                {
+                    boundAction.Action.Invoke(deltaY * boundAction.X, deltaY * boundAction.Y, deltaY * boundAction.Z, 0.0f);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"Error in OnInput: {e.Message}", e);
+                }
             }
         });
     }
@@ -122,7 +137,14 @@ public partial class InputHandler
                 
             foreach (var boundAction in inputActionList)
             {
-                boundAction.Action.Invoke(delta.X * boundAction.X, delta.X * boundAction.Y, delta.X * boundAction.Z, 0.0f);
+                try 
+                {
+                    boundAction.Action.Invoke(delta.X * boundAction.X, delta.X * boundAction.Y, delta.X * boundAction.Z, 0.0f);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"Error in OnInput: {e.Message}", e);
+                }
             }
         });
         
@@ -134,7 +156,14 @@ public partial class InputHandler
                 
             foreach (var boundAction in inputActionList)
             {
-                boundAction.Action.Invoke(delta.Y * boundAction.X, delta.Y * boundAction.Y, delta.Y * boundAction.Z, 0.0f);
+                try 
+                {
+                    boundAction.Action.Invoke(delta.Y * boundAction.X, delta.Y * boundAction.Y, delta.Y * boundAction.Z, 0.0f);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"Error in OnInput: {e.Message}", e);
+                }
             }
         });
     }
@@ -151,7 +180,14 @@ public partial class InputHandler
                 
             foreach (var boundAction in inputActionList)
             {
-                boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
+                try 
+                {
+                    boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"Error in OnInput: {e.Message}", e);
+                }
             }
         });
     }
@@ -168,7 +204,14 @@ public partial class InputHandler
                 
             foreach (var boundAction in inputActionList)
             {
-                boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
+                try 
+                {
+                    boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"Error in OnInputReleased: {e.Message}", e);
+                }
             }
         });
     }

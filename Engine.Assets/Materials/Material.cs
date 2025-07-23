@@ -13,8 +13,8 @@ public class Material
 
     protected Material(string shaderPath)
     {
-        var vertShader = LoadShader("bin/" + shaderPath + ".vert.bin");
-        var fragShader = LoadShader("bin/" + shaderPath + ".frag.bin");
+        var vertShader = LoadShader("Compiled/Shaders/" + shaderPath + ".vert.bin");
+        var fragShader = LoadShader("Compiled/Shaders/" + shaderPath + ".frag.bin");
         Program = CreateProgram(vertShader, fragShader);
     }
     

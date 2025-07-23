@@ -1,4 +1,5 @@
-﻿using Engine.Input.Contexts;
+﻿using Engine.Core.Logging;
+using Engine.Input.Contexts;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
 
@@ -25,7 +26,14 @@ public partial class InputHandler
                 parameterSum.Y += action.Y;
                 parameterSum.Z += action.Z;
             }
-            handler[0].Action(deltaTime, parameterSum.X, parameterSum.Y, parameterSum.Z);
+            try 
+            {
+                handler[0].Action(deltaTime, parameterSum.X, parameterSum.Y, parameterSum.Z);
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"Error in OnInputHeld: {e.Message}", e);
+            }
         }
         _triggeredHandlers.Clear();
     }
