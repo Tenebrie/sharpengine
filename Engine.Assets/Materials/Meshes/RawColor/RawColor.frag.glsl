@@ -7,5 +7,4 @@ SAMPLER2D(s_diffuse, 0);
 void main()
 {
     gl_FragColor = v_color0;
-    // gl_FragColor = texture2D(s_diffuse, v_uv0);
 }
