@@ -66,6 +66,6 @@ public partial class Atom
     
     public static bool IsValid(Atom? atom)
     {
-        return atom is { IsBeingDestroyed: false };
+        return atom is { IsBeingDestroyed: false, Backstage: not null };
     }
 }

@@ -103,8 +103,8 @@ public class LogRenderer(RenderingCore parent): Renderer(parent)
     
     private void RenderFramerate()
     {
-        DebugTextWrite(Core.RootWindow.FramebufferSize.X / 8 - 9, 0, "FPS: " + _framerate);
-        DebugTextWrite(Core.RootWindow.FramebufferSize.X / 8 - 12, 1, "1% Low: " + _onePercentLow);
+        DebugTextWrite(Core.FramebufferSize.X / 8 - 9, 0, "FPS: " + _framerate);
+        DebugTextWrite(Core.FramebufferSize.X / 8 - 12, 1, "1%% Low: " + _onePercentLow);
     }
  
     private void UpdateFramerate(double deltaTime)

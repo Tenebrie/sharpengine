@@ -5,7 +5,7 @@ using Silk.NET.Windowing;
 
 namespace Engine.Editor.HotReload;
 
-internal class RenderingAssembly(IWindow window, WindowOptions opts, string assemblyName = "Engine.Rendering") : GuestAssembly(assemblyName)
+internal class RenderingAssembly(IWindow window, string assemblyName = "Engine.Rendering") : GuestAssembly(assemblyName)
 {
     private bool _isInitialized = false;
     internal IRendererContract? Renderer { get; set; }
@@ -22,11 +22,11 @@ internal class RenderingAssembly(IWindow window, WindowOptions opts, string asse
         }
         if (_isInitialized)
         {
-            Renderer.HotInitialize(window, opts);
+            Renderer.HotInitialize(window);
         }
         else
         {
-            Renderer.Initialize(window, opts);
+            Renderer.Initialize(window);
             _isInitialized = true;
         }
         Renderer.SetGameplayContext(Editor.GameplayContext);

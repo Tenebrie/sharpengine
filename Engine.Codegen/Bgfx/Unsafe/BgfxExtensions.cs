@@ -25,6 +25,12 @@ public static partial class Bgfx
 		Yellow        = 14,
 		White         = 15
 	}
+	
+	public enum ViewId : ushort
+	{
+		World = 0,
+		DebugText = 1,
+	}
 
 	internal static byte PackDebugColor(DebugColor bgColor, DebugColor fgColor)
 	{
@@ -99,13 +105,13 @@ public static partial class Bgfx
 	/// <param name="format">`printf` style format.</param>
 	/// <param name="args">Printf arguments.</param>
 	/// 
-	public static void DebugTextPrintf(int x, int y, DebugColor bgColor, DebugColor fgColor, [MarshalAs(UnmanagedType.LPStr)] string format, [MarshalAs(UnmanagedType.LPStr)] string args)
+	public static void DebugTextPrintf(int x, int y, DebugColor bgColor, DebugColor fgColor, string format, string args)
 	{
-		dbg_text_printf((ushort)x, (ushort)y, PackDebugColor(bgColor, fgColor), format, args);
+		dbg_text_printf((ushort)x, (ushort)y, PackDebugColor(bgColor, fgColor), string.Format(format, args));
 	}
 	
 	public static void DebugTextWrite(int x, int y, string message) {
-		dbg_text_printf((ushort)x, (ushort)y, PackDebugColor(DebugColor.Black, DebugColor.White), "%s", message);
+		dbg_text_printf((ushort)x, (ushort)y, PackDebugColor(DebugColor.Black, DebugColor.White), message);
 	}
 	
 	/// <summary>
@@ -117,7 +123,7 @@ public static partial class Bgfx
 	/// <param name="bgColor">The background color of the text.</param>
 	/// <param name="message">The message to write.</param>
 	public static void DebugTextWrite(int x, int y, DebugColor bgColor, DebugColor fgColor, string message) {
-		dbg_text_printf((ushort)x, (ushort)y, PackDebugColor(bgColor, fgColor), "%s", message);
+		dbg_text_printf((ushort)x, (ushort)y, PackDebugColor(bgColor, fgColor), message);
 	}
 
 	/// <summary>
@@ -161,11 +167,11 @@ public static partial class Bgfx
     /// <param name="height">Height of view port region.</param>
     /// <see cref="Bgfx" srcline="3486" />
     ///
-    public static void SetViewRect(ushort viewId, int x, int y, int width, int height)
+    public static void SetViewRect(ViewId viewId, int x, int y, int width, int height)
     {
-        set_view_rect(viewId, (ushort)x, (ushort)y, (ushort)width, (ushort)height);
+        set_view_rect((ushort)viewId, (ushort)x, (ushort)y, (ushort)width, (ushort)height);
     }
-    
+
     /// <summary>
     /// Set view clear flags.
     /// </summary>
@@ -177,8 +183,10 @@ public static partial class Bgfx
     /// <param name="stencil">Stencil clear value.</param>
     /// <see cref="Bgfx" srcline="3525" />
     ///
-    [DllImport(DllName, EntryPoint="bgfx_set_view_clear", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void SetViewClear(ushort viewId, ClearFlags flags, uint rgba, float depth, byte stencil);
+    public static void SetViewClear(ViewId viewId, ClearFlags flags, uint rgba, float depth, byte stencil)
+    {
+	    set_view_clear((ushort)viewId, (uint)flags, rgba, depth, stencil);
+    }
     
     /// <summary>
     /// Set render states for draw primitive.
@@ -207,7 +215,7 @@ public static partial class Bgfx
     /// <param name="viewId">The index of the view to touch.</param>
     /// <returns>The number of draw calls.</returns>
     /// <see cref="Bgfx" srcline="4492" />
-    public static void Touch(ushort viewId) {
-	    touch(viewId);
+    public static void Touch(ViewId viewId) {
+	    touch((ushort)viewId);
     }
 }

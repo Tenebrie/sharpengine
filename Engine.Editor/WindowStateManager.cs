@@ -46,14 +46,14 @@ public static class WindowStateManager
         
         if (window.Monitor == null)
             return;
+        
 
         if (_isDirty)
         {
-            var contentScale = GarbageFixes.GetWindowContentScale(window);
             var windowScale = GarbageFixes.GetPrimaryMonitorScale();
             var scaledSize = new Vector2D<int>(
-                (int)(window.Size.X / contentScale.X * windowScale.X),
-                (int)(window.Size.Y / contentScale.Y * windowScale.Y)
+                (int)(window.FramebufferSize.X / windowScale.X),
+                (int)(window.FramebufferSize.Y / windowScale.Y)
             );
             
             _lastSavedState.PositionX = window.Position.X;

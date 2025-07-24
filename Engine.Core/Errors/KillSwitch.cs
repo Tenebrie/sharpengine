@@ -45,7 +45,7 @@ public static class KillSwitch
             if (code != 0xC0000005)
                 return 0;
 
-            Console.WriteLine("Encountered unrecoverable error. Code: 0x{0:X8}", code);
+            Console.Error.WriteLine("Encountered unrecoverable error. Code: 0x{0:X8}", code);
             ForceKillProcess(1);
         }
 
