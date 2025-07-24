@@ -5,10 +5,14 @@ using System.Runtime.InteropServices;
 namespace Engine.Core.Errors;
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
-public static partial class KillSwitch
+public static class KillSwitch
 {
+#if WINDOWS
     [LibraryImport("kernel32.dll")]
     private static partial void AddVectoredExceptionHandler(uint first, VectoredHandler handler);
+#else
+    private static void AddVectoredExceptionHandler(uint first, VectoredHandler handler) {}
+#endif
 
     [StructLayout(LayoutKind.Sequential)]
     private struct EXCEPTION_POINTERS

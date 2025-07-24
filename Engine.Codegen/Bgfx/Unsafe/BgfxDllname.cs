@@ -6,9 +6,9 @@ namespace Engine.Codegen.Bgfx.Unsafe
     public static partial class Bgfx
     {
 #if DEBUG
-       const string DllName = "bgfx_debug.dll";
+       const string DllName = "bgfx_debug";
 #else
-       const string DllName = "bgfx.dll";
+       const string DllName = "bgfx";
 #endif
     }
 }

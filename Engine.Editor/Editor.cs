@@ -54,6 +54,7 @@ internal static class Editor
 
         MainWindow.Load += () =>
         {
+            Console.WriteLine("Load...");
             // Create input context
             WindowInputContext = MainWindow.CreateInput();
             
@@ -73,6 +74,7 @@ internal static class Editor
 
         MainWindow.Update += deltaTime =>
         {
+            Console.WriteLine("Rendering update...");
             foreach (var guestAssembly in GuestAssemblies)
             {
                 var needsReload = guestAssembly.Update(deltaTime);

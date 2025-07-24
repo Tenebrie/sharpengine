@@ -8,10 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
-    <ProjectReference Include="..\Engine.Codegen\Engine.Codegen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
-    <ProjectReference Include="..\Engine.User.Contracts\Engine.User.Contracts.csproj" />
-    <ProjectReference Include="..\Engine.Worlds\Engine.Worlds.csproj" />
+    <ProjectReference Include="../Engine.Core/Engine.Core.csproj" />
+    <ProjectReference Include="../Engine.Codegen/Engine.Codegen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+    <ProjectReference Include="../Engine.User.Contracts/Engine.User.Contracts.csproj" />
+    <ProjectReference Include="../Engine.Worlds/Engine.Worlds.csproj" />
   </ItemGroup>
 
   <ItemGroup>

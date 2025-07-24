@@ -1,4 +1,5 @@
 ﻿using System.Buffers;
+using System.Runtime.InteropServices;
 using Engine.Core.Enum;
 using Engine.Core.Profiling;
 using Engine.Rendering.Bgfx;
@@ -16,6 +17,67 @@ namespace Engine.Rendering;
 internal enum ViewId : ushort
 {
     Main = 0,
+}
+
+static class ObjCRuntime
+{
+    const string LIBOBJC = "/usr/lib/libobjc.A.dylib";
+    const string LIBQUARTZ = "/System/Library/Frameworks/QuartzCore.framework/QuartzCore";
+
+    [DllImport(LIBOBJC)]
+    public static extern IntPtr objc_getClass(string name);
+
+    [DllImport(LIBOBJC)]
+    public static extern IntPtr sel_registerName(string selName);
+
+    // NOTE: The signature of objc_msgSend is varargs; we pick the overload we need
+    [DllImport(LIBOBJC, EntryPoint = "objc_msgSend")]
+    public static extern IntPtr objc_msgSend_IntPtr(IntPtr receiver, IntPtr selector);
+
+    [DllImport(LIBOBJC, EntryPoint = "objc_msgSend")]
+    public static extern void objc_msgSend_bool(IntPtr receiver, IntPtr selector, bool arg);
+
+    [DllImport(LIBOBJC, EntryPoint = "objc_msgSend")]
+    public static extern void objc_msgSend_SetLayer(IntPtr receiver, IntPtr selector, IntPtr layer);
+
+    [DllImport(LIBQUARTZ)]
+    public static extern IntPtr CAMetalLayer_class();  // We'll use this to get the CAMetalLayer class
+
+    [DllImport(LIBOBJC)]
+    public static extern IntPtr objc_msgSend_alloc_init(IntPtr cls, IntPtr initSel);
+}
+
+static class MetalViewSetup
+{
+    // selectors we’ll need:
+    static readonly IntPtr sel_contentView    = ObjCRuntime.sel_registerName("contentView");
+    static readonly IntPtr sel_wantsLayer     = ObjCRuntime.sel_registerName("setWantsLayer:");
+    static readonly IntPtr sel_setLayer       = ObjCRuntime.sel_registerName("setLayer:");
+    static readonly IntPtr sel_alloc          = ObjCRuntime.sel_registerName("alloc");
+    static readonly IntPtr sel_init           = ObjCRuntime.sel_registerName("init");
+
+    public static IntPtr GetContentView(IntPtr nsWindow)
+    {
+        return ObjCRuntime.objc_msgSend_IntPtr(nsWindow, sel_contentView);
+    }
+
+    public static void EnableLayerBacking(IntPtr nsView)
+    {
+        ObjCRuntime.objc_msgSend_bool(nsView, sel_wantsLayer, true);
+    }
+
+    public static IntPtr CreateMetalLayer()
+    {
+        // CAMetalLayer is in QuartzCore, but objc_getClass will find it
+        var cls = ObjCRuntime.objc_getClass("CAMetalLayer");
+        var alloc = ObjCRuntime.objc_msgSend_IntPtr(cls, sel_alloc);
+        return ObjCRuntime.objc_msgSend_IntPtr(alloc, sel_init);
+    }
+
+    public static void AttachLayer(IntPtr nsView, IntPtr metalLayer)
+    {
+        ObjCRuntime.objc_msgSend_SetLayer(nsView, sel_setLayer, metalLayer);
+    }
 }
 
 public unsafe class RenderingCore : IRendererContract
@@ -39,8 +101,26 @@ public unsafe class RenderingCore : IRendererContract
         BgfxCallbacks.Install();
         Init initData = default;
         init_ctor(&initData);
-        initData.type = RendererType.Direct3D12;
-        initData.platformData.nwh = (void*)window.Native!.Win32!.Value.Hwnd;
+        if (OperatingSystem.IsWindows())
+        {
+            initData.type = RendererType.Direct3D11;
+            initData.platformData.nwh = (void*)window.Native!.Win32!.Value.Hwnd;
+        }
+        else if (OperatingSystem.IsMacOS())
+        {
+            initData.type = RendererType.Metal;
+            var cocoaWindowPtr = window.Native!.Cocoa!.Value;  // NSWindow*
+            var viewPtr = MetalViewSetup.GetContentView(cocoaWindowPtr);
+            MetalViewSetup.EnableLayerBacking(viewPtr);
+            var metalLayer = MetalViewSetup.CreateMetalLayer();
+            MetalViewSetup.AttachLayer(viewPtr, metalLayer);
+            initData.platformData.nwh = metalLayer.ToPointer();
+        }
+        else
+        {
+            throw new NotSupportedException("Unsupported platform for bgfx initialization.");
+        }
+
         initData.resolution.width = (uint)opts.Size.X;
         initData.resolution.height = (uint)opts.Size.Y;
         initData.resolution.format = TextureFormat.RGBA8;
