@@ -82,7 +82,6 @@ public sealed class Texture : IDisposable
         var data = new byte[width * height * 4];
         var length = width * height * 4;
         
-        Console.WriteLine(level);
         var mipmap = _mipLevels[0].Clone(ctx => ctx.Resize(
             size: new Size(width, height),
             sampler: _sampler,

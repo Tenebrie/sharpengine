@@ -19,7 +19,7 @@ public class PerformanceMonitoringService : Service
         var g1 = GC.CollectionCount(1);
         var g2 = GC.CollectionCount(2);
 
-        if (g0 - _lastGen0 > 0 || g1 - _lastGen1 > 0 || g2 - _lastGen2 > 0)
+        if (g0 - _lastGen0 > 1 || g1 - _lastGen1 > 1 || g2 - _lastGen2 > 1)
             Logger.Debug($"GC Report:  g0: {g0 - _lastGen0}  g1: {g1 - _lastGen1}  g2: {g2 - _lastGen2}");
  
         _lastGen0 = g0;

@@ -80,7 +80,6 @@ public class EditorInputService : Service
 
         RecalculateActiveContext();
     }
-    
     [OnKeyInput(Key.F11)]
     protected void OnReload()
     {

@@ -36,13 +36,15 @@ internal static class Editor
             API = new GraphicsAPI(ContextAPI.None, new APIVersion()),
             VSync = true
         };
+        if (OperatingSystem.IsMacOS())
+            opts.Size /= 2;
         KillSwitch.InstallAvKiller();
 
         WindowStateManager.TryLoadWindowState(ref opts);
         MainWindow = Window.Create(opts);
         
         EditorHostAssembly = new EditorHostAssembly();
-        RenderingAssembly = new RenderingAssembly(MainWindow, opts);
+        RenderingAssembly = new RenderingAssembly(MainWindow);
         UserlandAssembly = new UserlandAssembly();
         
         GuestAssemblies =
@@ -54,6 +56,11 @@ internal static class Editor
 
         MainWindow.Load += () =>
         {
+            var contentScale = MainWindow.FramebufferSize / MainWindow.Size;
+            float scaleX = (float)contentScale.X;
+            float scaleY = (float)contentScale.Y;
+    
+            Logger.Log($"Content scale: {scaleX}x{scaleY}");
             // Create input context
             WindowInputContext = MainWindow.CreateInput();
             

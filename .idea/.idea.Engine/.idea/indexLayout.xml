@@ -4,6 +4,8 @@
     <attachedFolders>
       <Path>Dependencies</Path>
       <Path>ProjectRoot</Path>
+      <Path>ProjectRoot-MacOS</Path>
+      <Path>ProjectRoot-Windows</Path>
       <Path>Scripts</Path>
     </attachedFolders>
     <explicitIncludes />

@@ -22,7 +22,7 @@ public class GuestAssemblyCompiler
     // private static GuestAssemblyCompiler? Instance { get; set; }
     public static GuestAssemblyCompiler Make(string assemblyName)
     {
-        var projectPath = Path.GetFullPath($@"..\..\..\..\{assemblyName}\{assemblyName}.csproj");
+        var projectPath = Path.GetFullPath($@"../../../../{assemblyName}/{assemblyName}.csproj");
         return new GuestAssemblyCompiler(assemblyName, projectPath);
     }
 

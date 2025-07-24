@@ -1,5 +1,6 @@
 ﻿using Engine.Core.Common;
 using Engine.Core.Extensions;
+using Engine.Core.Makers;
 using Engine.Editor.Host.Services;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
@@ -22,6 +23,12 @@ public class EditorCamera : Camera
     protected void OnInit()
     {
         IsEditorCamera = true; 
+        Transform.Position = new Vector(0.0, 50.0, 50.0);
+        _pitch = 45;
+        Transform.Rotation = Transform.Identity
+            .RotateAroundGlobal(Axis.Yaw, _yaw)
+            .RotateAroundLocal(Axis.Pitch, _pitch)
+            .Rotation;
     }
     
     [OnInputHeld(InputAction.CameraUp,       +0.0, +0.0, +1.0)]

@@ -48,6 +48,8 @@ public class ClaimedTransform : Transform
 
     private void InvalidateCache()
     {
+        if (_owner == null || !Atom.IsValid(_owner))
+            return;
         _owner?.InvalidateWorldTransform();
         _owner?.GetService<CacheRevalidationService>().InvalidateTransform(_owner);
     }

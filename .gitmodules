@@ -1,0 +1,12 @@
+[submodule "Submodules/bgfx"]
+	path = Submodules/bgfx
+	url = https://github.com/bkaradzic/bgfx
+        ignore = all
+[submodule "Submodules/bx"]
+	path = Submodules/bx
+	url = https://github.com/bkaradzic/bx
+        ignore = all
+[submodule "Submodules/bimg"]
+	path = Submodules/bimg
+	url = https://github.com/bkaradzic/bimg
+        ignore = all

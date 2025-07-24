@@ -9,8 +9,8 @@ public interface IRendererContract
 {
     public void Register(Backstage backstage);
     public void Unregister(Backstage backstage);
-    public void Initialize(IWindow window, WindowOptions opts);
-    public void HotInitialize(IWindow window, WindowOptions opts);
+    public void Initialize(IWindow window);
+    public void HotInitialize(IWindow window);
     public void ToggleResetFlags(Bgfx.ResetFlags flags);
     public void ToggleDebugFlags(Bgfx.DebugFlags flags);
     public void ToggleLogRendering();

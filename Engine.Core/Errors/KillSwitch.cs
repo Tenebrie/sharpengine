@@ -5,10 +5,14 @@ using System.Runtime.InteropServices;
 namespace Engine.Core.Errors;
 
 [SuppressMessage("ReSharper", "InconsistentNaming")]
-public static partial class KillSwitch
+public static class KillSwitch
 {
+#if WINDOWS
     [LibraryImport("kernel32.dll")]
     private static partial void AddVectoredExceptionHandler(uint first, VectoredHandler handler);
+#else
+    private static void AddVectoredExceptionHandler(uint first, VectoredHandler handler) {}
+#endif
 
     [StructLayout(LayoutKind.Sequential)]
     private struct EXCEPTION_POINTERS
@@ -41,7 +45,7 @@ public static partial class KillSwitch
             if (code != 0xC0000005)
                 return 0;
 
-            Console.WriteLine("Encountered unrecoverable error. Code: 0x{0:X8}", code);
+            Console.Error.WriteLine("Encountered unrecoverable error. Code: 0x{0:X8}", code);
             ForceKillProcess(1);
         }
 
