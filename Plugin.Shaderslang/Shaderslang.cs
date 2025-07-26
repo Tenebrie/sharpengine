@@ -12,9 +12,6 @@ internal abstract class Program
 {
     private static async Task Main(string[] args)
     {
-        Console.Error.WriteLine("Starting");
-        // build the language server
-        
         var server = await LanguageServer.From(options => options
             .WithInput(Console.OpenStandardInput())
             .WithOutput(Console.OpenStandardOutput())
@@ -34,8 +31,7 @@ internal abstract class Program
             .WithHandler<TextDocumentSyncHandler>()
             .WithHandler<DocumentColorHandler>()
         );
-
-        Console.Error.WriteLine("Waiting");
+        
         await server.WaitForExit;
     }
     

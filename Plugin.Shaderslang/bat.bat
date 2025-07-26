@@ -1,6 +1,6 @@
 @echo off
 REM build with detailed log
-dotnet build "%~dp0Plugin.Shaderslang.csproj" -v:detailed > "%~dp0build.log" 2>&1
+dotnet build "%~dp0Plugin.Shaderslang.csproj"
 if errorlevel 1 (
   echo Build failed, see build.log
   exit /b 1

@@ -47,7 +47,6 @@ internal class TextDocumentSyncHandler(BufferManager bufferManager) : ITextDocum
     TextDocumentChangeRegistrationOptions IRegistration<TextDocumentChangeRegistrationOptions, TextSynchronizationCapability>
         .GetRegistrationOptions(TextSynchronizationCapability capability, ClientCapabilities clientCapabilities)
     {
-        Console.Error.WriteLine($"FUNCTION A");
         return new TextDocumentChangeRegistrationOptions
         {
             DocumentSelector = TextDocumentSelector.ForLanguage("shaderslang"),

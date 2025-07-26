@@ -11,13 +11,10 @@ public class DocumentColorHandler : IDocumentColorHandler
     public DocumentColorHandler(BufferManager bufferManager)
     {
         _bufferManager = bufferManager;
-        Console.Error.WriteLine("SyntaxHighlightHandler");
     }
     
     public Task<Container<ColorInformation>?> Handle(DocumentColorParams request, CancellationToken cancellationToken)
     {
-        Console.Error.WriteLine("HANDLER CALLED 2");
-        
         var colors = new List<ColorInformation>();
         colors.Add(new ColorInformation()
         {
@@ -32,8 +29,6 @@ public class DocumentColorHandler : IDocumentColorHandler
                 Start = new Position(0, 0)
             }
         });
-        
-        Console.Error.WriteLine("HANDLER CALLED 3333");
         
         return Task.FromResult(new Container<ColorInformation>(colors));
     }

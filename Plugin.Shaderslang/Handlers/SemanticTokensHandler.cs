@@ -68,7 +68,6 @@ public class SemanticTokensHandler(BufferManager bufferManager) : ISemanticToken
         
         var tokenizer = new LexicalTokenizer();
         var rawTokens = tokenizer.Tokenize(source);
-        Console.Error.WriteLine("Starting semantic tokens!");
         var syntaxTokenizer = new SemanticTokenizer();
         var semanticTokens = syntaxTokenizer.Retokenize(rawTokens);
 
@@ -76,23 +75,8 @@ public class SemanticTokensHandler(BufferManager bufferManager) : ISemanticToken
 
         var lastChar = 0;
         var lastLine = 0;
-        foreach (var rawToken in rawTokens)
-        {
-            Console.Error.WriteLine($"raw: {rawToken}");
-        }
         foreach (var token in semanticTokens)
         {
-            Console.Error.WriteLine($"Token: {token}");
-            // SemanticTokenType? tokenType = null;
-            // if (rawToken.Type == LexicalTokenType.Keyword)
-            //     tokenType = SemanticTokenType.Keyword;
-            // else if (rawToken.Type == LexicalTokenType.Identifier)
-            //     tokenType = SemanticTokenType.Enum;
-            // else if (rawToken.Type == LexicalTokenType.NumericValue)
-            //     tokenType = SemanticTokenType.Number;
-            // else if (rawToken.Type == LexicalTokenType.Comment)
-            //     tokenType = SemanticTokenType.Comment;
-            
             AddToken(token.LinePosition, token.CharPosition, token.Length, token.Value, token.Type);
         }
         
@@ -118,11 +102,6 @@ public class SemanticTokensHandler(BufferManager bufferManager) : ISemanticToken
             lastLine = line;
         }
         
-        // foreach (var semanticToken in tokens)
-        // {
-            // Console.Error.WriteLine("- " + semanticToken);
-        // }
-
         return new OmniSharp.Extensions.LanguageServer.Protocol.Models.SemanticTokens { Data = SemanticTokensToData(tokens) };
     }
 

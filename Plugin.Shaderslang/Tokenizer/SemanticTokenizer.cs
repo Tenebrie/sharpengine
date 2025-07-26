@@ -22,6 +22,8 @@ public enum GrammaticRuleType : ulong
 {
     CommaSeparatedList = 0UL,
     FunctionInvocation = 1UL << 0,
+    VariableAssignment = 1UL << 1,
+    StandaloneValue = 1UL << 2,
     Optional = 1UL << 63,
 }
 
@@ -86,7 +88,17 @@ public class GrammaticRule
 
     private static readonly Dictionary<GrammaticRuleType, List<GrammaticRule>> Vocabulary = new()
     {
-        { GrammaticRuleType.CommaSeparatedList, 
+        { GrammaticRuleType.StandaloneValue,
+            [
+                Make(LexicalTokenType.Identifier)
+                    .Assign(SemanticTokenType.Enum),
+                Make(LexicalTokenType.Keyword)
+                    .Assign(SemanticTokenType.Keyword),
+                Make(LexicalTokenType.NumericValue)
+                    .Assign(SemanticTokenType.Number),
+            ]
+        },
+        { GrammaticRuleType.CommaSeparatedList,
             [
                 Make(GrammaticRuleType.FunctionInvocation)
                     .AddRequired(LexicalTokenType.Comma)
@@ -123,6 +135,19 @@ public class GrammaticRule
                     .AddOptional(GrammaticRuleType.CommaSeparatedList)
                     .AddRequired(LexicalTokenType.ParenthesisClose)
             ]
+        },
+        {
+            GrammaticRuleType.VariableAssignment,
+            [
+                Make(LexicalTokenType.Identifier)
+                    .Assign(SemanticTokenType.Variable)
+                    .AddRequired(LexicalTokenType.Equals)
+                    .AddRequired(GrammaticRuleType.FunctionInvocation),
+                Make(LexicalTokenType.Identifier)
+                    .Assign(SemanticTokenType.Variable)
+                    .AddRequired(LexicalTokenType.Equals)
+                    .AddRequired(GrammaticRuleType.StandaloneValue),
+            ]
         }
     };
 
@@ -153,7 +178,8 @@ public class GrammaticRule
             {
                 iteratorPos += 1;
                 tokensProcessed += 1;
-                results.Add(new SemanticToken(OutputType, token.Length, token.Value, token.LinePosition, token.CharPosition));
+                if (index == 0)
+                    results.Add(new SemanticToken(OutputType, token.Length, token.Value, token.LinePosition, token.CharPosition));
                 continue;
             }
 
@@ -172,7 +198,8 @@ public class GrammaticRule
             {
                 iteratorPos += 1;
                 tokensProcessed += 1;
-                results.Add(new SemanticToken(SemanticTokenType.Keyword, token.Length, token.Value, token.LinePosition, token.CharPosition));
+                if (index == 0)
+                    results.Add(new SemanticToken(SemanticTokenType.Keyword, token.Length, token.Value, token.LinePosition, token.CharPosition));
                 continue;
             }
 
@@ -264,8 +291,9 @@ public class SemanticTokenizer
             (SemanticTokenType.Variable,    [LexicalTokenType.Keyword, LexicalTokenType.Identifier, LexicalTokenType.Equals]),
             (SemanticTokenType.Variable,    [LexicalTokenType.Identifier, LexicalTokenType.Identifier, LexicalTokenType.Equals]),
             // Variable assignment
-            (SemanticTokenType.Variable,    [LexicalTokenType.Identifier, LexicalTokenType.Equals, GrammaticRuleType.FunctionInvocation]),
-            (SemanticTokenType.Variable,    [LexicalTokenType.Identifier, LexicalTokenType.Equals, LexicalTokenType.Identifier]),
+            // (SemanticTokenType.Variable,    [LexicalTokenType.Identifier, LexicalTokenType.Equals, GrammaticRuleType.FunctionInvocation]),
+            // (SemanticTokenType.Variable,    [LexicalTokenType.Identifier, LexicalTokenType.Equals, LexicalTokenType.Identifier]),
+            (SemanticTokenType.Variable, [GrammaticRuleType.VariableAssignment])
         ];
 
         var rules = new List<(SemanticTokenType, GrammaticRule)>();
@@ -301,7 +329,6 @@ public class SemanticTokenizer
         var position = 0;
         while (position < tokens.Count)
         {
-            Console.Error.WriteLine("Position: " + position);
             var token = tokens[position];
             
             if (token.Type is LexicalTokenType.LineBreak or LexicalTokenType.ScopeOpen or LexicalTokenType.ScopeClose or LexicalTokenType.SemiColon)
@@ -323,7 +350,6 @@ public class SemanticTokenizer
             List<string> errors = [];
             foreach (var rule in matchingRules)
             {
-                Console.Error.WriteLine("Processing token " + token + " with rule " + rule.Item1);
                 var isMatch = rule.Item2.Match(tokens, position, out var tokensProcessed, out var newResults, out var newErrors);
                 foreach (var newError in newErrors)
                 {
@@ -340,7 +366,6 @@ public class SemanticTokenizer
                     }
                 }
                 position += tokensProcessed;
-                Console.Error.WriteLine(token);
                 matchFound = true;
                 break;
             }
@@ -359,7 +384,6 @@ public class SemanticTokenizer
             }
         }
 
-        Console.Error.WriteLine("Output tokens:" + output.Count);
         return output;
     }
 }

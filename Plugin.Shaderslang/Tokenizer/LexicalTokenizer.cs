@@ -38,7 +38,6 @@ public class LexicalTokenizer
 {
     public List<LexicalToken> Tokenize(string source)
     {
-        Console.Error.WriteLine("Starting tokenizer");
         List<LexicalToken> tokenizerTokens = [];
         
         var position = 0;
@@ -128,7 +127,6 @@ public class LexicalTokenizer
             }
             if (whitespaceRegex.Match(nextChar.ToString()).Success && currentToken.Length == 0)
             {
-                Console.Error.WriteLine("String is whitespace: '" + nextChar + "'");
                 // Ignore whitespaces in general
                 continue;
             }
@@ -180,7 +178,6 @@ public class LexicalTokenizer
             currentToken += nextChar;
         }
         
-        Console.Error.WriteLine("Finished tokenizer");
         foreach (var tokenizerToken in tokenizerTokens)
         {
             Console.Error.WriteLine("- " + tokenizerToken);
