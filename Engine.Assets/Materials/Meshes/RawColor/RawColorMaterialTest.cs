@@ -14,7 +14,6 @@ public class RawColorMaterialTest() : InlineMaterial
 {
     public override string FragmentShader()
     {
-        /*language=glsl*/
         return """
            $input v_color0, v_uv0
 

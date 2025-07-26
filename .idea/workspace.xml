@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="c15d838d-3666-4cfd-b04c-fd683172dacc" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/.idea.Engine/.idea/LanguageServersSettings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/CustomEngine.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Engine.Assets/Materials/Meshes/RawColor/RawColor.slang" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugin.Shaderslang/BufferManager.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugin.Shaderslang/DocumentColorHandler.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugin.Shaderslang/DocumentSyncHandler.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugin.Shaderslang/SemanticTokensHandler.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.Engine/.idea/dictionaries/project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Engine/.idea/dictionaries/project.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.Engine/.idea/indexLayout.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Engine/.idea/indexLayout.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine.Assets/Materials/Meshes/RawColor/RawColorMaterialTest.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Engine.Assets/Materials/Meshes/RawColor/RawColorMaterialTest.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine.sln" beforeDir="false" afterPath="$PROJECT_DIR$/Engine.sln" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Engine.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/Engine.sln.DotSettings.user" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 2
+}]]></component>
+  <component name="ProjectId" id="30Kz4aN3cd6D2UNv051mCuWRnj2" />
+  <component name="ProjectViewState">
+    <option name="autoscrollFromSource" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "V:/Taiga6/CustomEngine"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="c15d838d-3666-4cfd-b04c-fd683172dacc" name="Changes" comment="" />
+      <created>1753390861471</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1753390861471</updated>
+    </task>
+    <servers />
+  </component>
+</project>
