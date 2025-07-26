@@ -1,16 +1,17 @@
 ﻿using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using Plugin.Shaderslang.Enums;
 
 namespace Plugin.Shaderslang;
 
 public class DocumentColorHandler : IDocumentColorHandler
 {
-    private readonly BufferManager _bufferManager;
+    private readonly DocumentManager _documentManager;
     
-    public DocumentColorHandler(BufferManager bufferManager)
+    public DocumentColorHandler(DocumentManager documentManager)
     {
-        _bufferManager = bufferManager;
+        _documentManager = documentManager;
     }
     
     public Task<Container<ColorInformation>?> Handle(DocumentColorParams request, CancellationToken cancellationToken)
@@ -38,7 +39,7 @@ public class DocumentColorHandler : IDocumentColorHandler
     {
         return new DocumentColorRegistrationOptions
         {
-            DocumentSelector = TextDocumentSelector.ForLanguage("shaderslang"),
+            DocumentSelector = TextDocumentSelector.ForLanguage(nameof(LanguageSyntax.Shaderslang)),
         };
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace Plugin.Shaderslang.Tokenizer;
+namespace Plugin.Shaderslang.Parser;
 
 public enum LexicalTokenType
 {

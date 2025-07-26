@@ -5,7 +5,7 @@ using OmniSharp.Extensions.LanguageServer.Protocol;
 
 namespace Plugin.Shaderslang;
 
-public class BufferManager
+public class DocumentManager
 {
     private readonly ConcurrentDictionary<DocumentUri, string> _buffers = new();
 

@@ -2,13 +2,15 @@
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
-using Plugin.Shaderslang.Tokenizer;
+using Plugin.Shaderslang.Enums;
+using Plugin.Shaderslang.Parser;
 
-namespace Plugin.Shaderslang.Handlers.SemanticTokens;
+namespace Plugin.Shaderslang.Handlers;
 
-public class SemanticTokensHandler(BufferManager bufferManager) : ISemanticTokensFullHandler
+public class SemanticTokensHandler(DocumentManager documentManager) : ISemanticTokensFullHandler
 {
-    private BufferManager BufferManager { get; } = bufferManager;
+    private DocumentManager DocumentManager { get; } = documentManager;
+    private ShaderlangParser Parser = new();
 
     private static List<SemanticTokenType> SupportedTokens =>
     [
@@ -27,7 +29,7 @@ public class SemanticTokensHandler(BufferManager bufferManager) : ISemanticToken
     {
         return new SemanticTokensRegistrationOptions
         {
-            DocumentSelector = TextDocumentSelector.ForLanguage("shaderslang"),
+            DocumentSelector = TextDocumentSelector.ForLanguage(nameof(LanguageSyntax.Shaderslang)),
             Legend = new SemanticTokensLegend
             {
                 TokenTypes = SupportedTokens,
@@ -42,36 +44,22 @@ public class SemanticTokensHandler(BufferManager bufferManager) : ISemanticToken
         };
     }
     
-    class SemanticToken
+    public async Task<SemanticTokens?> Handle(SemanticTokensParams request, CancellationToken cancellationToken)
     {
-        public int DeltaLine { get; set; }
-        public int DeltaChar { get; set; }
-        public int Length { get; set; }
-        public string Value { get; set; }
-        public SemanticTokenType Type { get; set; }
-        public SemanticTokenModifier? Modifiers { get; set; } // modifiers bit mask
-        
-        public override string ToString()
-        {
-            return $"{Type} at {DeltaLine}:{DeltaChar} length {Length} {Value}";
-        }
-    }
-    
-    public async Task<OmniSharp.Extensions.LanguageServer.Protocol.Models.SemanticTokens?> Handle(SemanticTokensParams request, CancellationToken cancellationToken)
-    {
-        var source = BufferManager.GetBuffer(request.TextDocument.Uri.Path);
+        var source = DocumentManager.GetBuffer(request.TextDocument.Uri.Path);
         if (source is null)
         {
             await Console.Error.WriteLineAsync($"No source found for {request.TextDocument.Uri.Path}");
             return null;
         }
         
-        var tokenizer = new LexicalTokenizer();
-        var rawTokens = tokenizer.Tokenize(source);
-        var syntaxTokenizer = new SemanticTokenizer();
-        var semanticTokens = syntaxTokenizer.Retokenize(rawTokens);
+        var semanticTokens = ShaderlangParser.ParseDocument(source, out var errors);
+        return new SemanticTokens { Data = SemanticTokensToData(semanticTokens) };
+    }
 
-        List<SemanticToken> tokens = [];
+    private static ImmutableArray<int> SemanticTokensToData(List<SemanticToken> semanticTokens)
+    {
+        List<OutputToken> outputTokens = [];
 
         var lastChar = 0;
         var lastLine = 0;
@@ -82,14 +70,12 @@ public class SemanticTokensHandler(BufferManager bufferManager) : ISemanticToken
         
         void AddToken(int line, int ch, int length, string value, SemanticTokenType type)
         {
-            // compute line delta
-            int dLine = line - lastLine;
-            // if same line, subtract last absolute char; otherwise, ch is from column 0
-            int dChar = dLine == 0 
+            var dLine = line - lastLine;
+            var dChar = dLine == 0 
                 ? ch - lastChar 
                 : ch;
             
-            tokens.Add(new SemanticToken
+            outputTokens.Add(new OutputToken
             {
                 DeltaLine      = dLine,
                 DeltaChar      = dChar,
@@ -102,13 +88,8 @@ public class SemanticTokensHandler(BufferManager bufferManager) : ISemanticToken
             lastLine = line;
         }
         
-        return new OmniSharp.Extensions.LanguageServer.Protocol.Models.SemanticTokens { Data = SemanticTokensToData(tokens) };
-    }
-
-    private static ImmutableArray<int> SemanticTokensToData(List<SemanticToken> tokens)
-    {
         var data = new List<int>();
-        foreach (var semanticToken in tokens)
+        foreach (var semanticToken in outputTokens)
         {
             // LSP semantic‐tokens uses deltas:
             data.Add(semanticToken.DeltaLine);
@@ -120,5 +101,20 @@ public class SemanticTokensHandler(BufferManager bufferManager) : ISemanticToken
         }
 
         return [..data];
+    }
+    
+    private class OutputToken
+    {
+        public required int DeltaLine { get; init; }
+        public required int DeltaChar { get; init; }
+        public required int Length { get; init; }
+        public required string Value { get; init; }
+        public SemanticTokenType Type { get; init; }
+        public SemanticTokenModifier? Modifiers { get; set; } // modifiers bit mask
+        
+        public override string ToString()
+        {
+            return $"{Type} at {DeltaLine}:{DeltaChar} length {Length} {Value}";
+        }
     }
 }

@@ -4,7 +4,8 @@ using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Server;
-using Plugin.Shaderslang.Handlers.SemanticTokens;
+using Plugin.Shaderslang.Enums;
+using Plugin.Shaderslang.Handlers;
 
 namespace Plugin.Shaderslang;
 
@@ -37,6 +38,6 @@ internal abstract class Program
     
     static void ConfigureServices(IServiceCollection services)
     {
-        services.AddSingleton<BufferManager>();
+        services.AddSingleton<DocumentManager>();
     }
 }

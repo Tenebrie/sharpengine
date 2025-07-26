@@ -3,45 +3,53 @@ using OmniSharp.Extensions.LanguageServer.Protocol;
 using OmniSharp.Extensions.LanguageServer.Protocol.Client.Capabilities;
 using OmniSharp.Extensions.LanguageServer.Protocol.Document;
 using OmniSharp.Extensions.LanguageServer.Protocol.Models;
+using OmniSharp.Extensions.LanguageServer.Protocol.Server;
 using OmniSharp.Extensions.LanguageServer.Protocol.Server.Capabilities;
+using Plugin.Shaderslang.Enums;
+using Plugin.Shaderslang.Handlers;
 
 namespace Plugin.Shaderslang;
 
-internal class TextDocumentSyncHandler(BufferManager bufferManager) : ITextDocumentSyncHandler
+internal class TextDocumentSyncHandler(ILanguageServerFacade facade, DocumentManager documentManager) : ITextDocumentSyncHandler
 {
-    private BufferManager BufferManager { get; } = bufferManager;
+    private readonly ErrorReporter _errorReporter = new(facade);
+    private DocumentManager DocumentManager { get; } = documentManager;
+
+    public TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri) => new(uri, nameof(LanguageSyntax.Shaderslang));
     
-    private readonly TextDocumentSyncKind _kind = TextDocumentSyncKind.Full;
-    private readonly ITextDocumentRegistrationOptions _registrationOptions = new TextDocumentOpenRegistrationOptions();
-
-    public TextDocumentChangeRegistrationOptions ChangeRegistrationOptions =>
-        new()
-        {
-            DocumentSelector = TextDocumentSelector.ForLanguage("shaderslang"),
-            SyncKind = _kind,
-        };
-
-    public Task<Unit> Handle(DidOpenTextDocumentParams request, CancellationToken token)
+    // =========================================================================================================================
+    // Open handler
+    // =========================================================================================================================
+    Task<Unit> IRequestHandler<DidOpenTextDocumentParams, Unit>.Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken)
     {
-        Console.Error.WriteLine($"LanguageId: {request.TextDocument.LanguageId}");
         Console.Error.WriteLine($"Opened: {request.TextDocument.Uri}");
+        var document = DocumentManager.LoadBuffer(request.TextDocument.Uri);
+        _errorReporter.ReportErrors(request.TextDocument.Uri, document);
         return Unit.Task;
     }
 
-    public TextDocumentAttributes GetTextDocumentAttributes(DocumentUri uri)
-        => new TextDocumentAttributes(uri, "shaderslang");
-
-    public Task<Unit> Handle(DidChangeTextDocumentParams request, 
-        CancellationToken token)
+    TextDocumentOpenRegistrationOptions IRegistration<TextDocumentOpenRegistrationOptions, TextSynchronizationCapability>.GetRegistrationOptions(TextSynchronizationCapability capability,
+        ClientCapabilities clientCapabilities)
     {
-        Console.Error.WriteLine($"Changed: {request.TextDocument.Uri}");
-        return Unit.Task;
+        return new TextDocumentOpenRegistrationOptions
+        {
+            DocumentSelector = TextDocumentSelector.ForLanguage(nameof(LanguageSyntax.Shaderslang))
+        };
     }
 
+    // =========================================================================================================================
+    // Change handler
+    // =========================================================================================================================
     Task<Unit> IRequestHandler<DidChangeTextDocumentParams, Unit>.Handle(DidChangeTextDocumentParams request, CancellationToken cancellationToken)
     {
-        bufferManager.LoadBuffer(request.TextDocument.Uri);
-        return Handle(request, cancellationToken);
+        Console.Error.WriteLine($"Changed: {request.TextDocument.Uri}");
+        foreach (var change in request.ContentChanges)
+        {
+            DocumentManager.UpdateBuffer(request.TextDocument.Uri, change.Text);
+        }
+        var document = DocumentManager.GetBuffer(request.TextDocument.Uri)!;
+        _errorReporter.ReportErrors(request.TextDocument.Uri, document);
+        return Unit.Task;
     }
 
     TextDocumentChangeRegistrationOptions IRegistration<TextDocumentChangeRegistrationOptions, TextSynchronizationCapability>
@@ -49,58 +57,48 @@ internal class TextDocumentSyncHandler(BufferManager bufferManager) : ITextDocum
     {
         return new TextDocumentChangeRegistrationOptions
         {
-            DocumentSelector = TextDocumentSelector.ForLanguage("shaderslang"),
-            SyncKind = _kind,
+            DocumentSelector = TextDocumentSelector.ForLanguage(nameof(LanguageSyntax.Shaderslang)),
+            SyncKind = TextDocumentSyncKind.Full,
         };
     }
-
-    Task<Unit> IRequestHandler<DidOpenTextDocumentParams, Unit>.Handle(DidOpenTextDocumentParams request, CancellationToken cancellationToken)
-    {
-        bufferManager.LoadBuffer(request.TextDocument.Uri);
-        return Handle(request, cancellationToken);
-    }
-
-    TextDocumentOpenRegistrationOptions IRegistration<TextDocumentOpenRegistrationOptions, TextSynchronizationCapability>.GetRegistrationOptions(TextSynchronizationCapability capability,
-        ClientCapabilities clientCapabilities)
-    {
-        Console.Error.WriteLine("GetRegistrationOptions called for DidOpenTextDocumentParams");
-        return new TextDocumentOpenRegistrationOptions
-        {
-            DocumentSelector = TextDocumentSelector.ForLanguage("shaderslang")
-        };
-    }
-
-    public Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken)
-    {
-        Console.Error.WriteLine($"Closed: {request.TextDocument.Uri}");
-        return Unit.Task;
-    }
-
-    TextDocumentCloseRegistrationOptions IRegistration<TextDocumentCloseRegistrationOptions, TextSynchronizationCapability>.GetRegistrationOptions(TextSynchronizationCapability capability,
-        ClientCapabilities clientCapabilities)
-    {
-        Console.Error.WriteLine("GetRegistrationOptions called for DidCloseTextDocumentParams");
-        return new TextDocumentCloseRegistrationOptions
-        {
-            DocumentSelector = TextDocumentSelector.ForLanguage("shaderslang")
-        };
-    }
-
+    
+    // =========================================================================================================================
+    // Save handler
+    // =========================================================================================================================
     public Task<Unit> Handle(DidSaveTextDocumentParams request, CancellationToken cancellationToken)
     {
-        bufferManager.LoadBuffer(request.TextDocument.Uri);
         Console.Error.WriteLine($"Saved: {request.TextDocument.Uri}");
+        var document = DocumentManager.LoadBuffer(request.TextDocument.Uri);
+        _errorReporter.ReportErrors(request.TextDocument.Uri, document);
         return Task.FromResult(Unit.Value);
     }
 
     TextDocumentSaveRegistrationOptions IRegistration<TextDocumentSaveRegistrationOptions, TextSynchronizationCapability>.GetRegistrationOptions(TextSynchronizationCapability capability,
         ClientCapabilities clientCapabilities)
     {
-        Console.Error.WriteLine("Save registration options requested");
         return new TextDocumentSaveRegistrationOptions()
         {
-            DocumentSelector = TextDocumentSelector.ForLanguage("shaderslang"),
+            DocumentSelector = TextDocumentSelector.ForLanguage(nameof(LanguageSyntax.Shaderslang)),
             IncludeText = true
+        };
+    }
+    
+    // =========================================================================================================================
+    // Close handler
+    // =========================================================================================================================
+    public Task<Unit> Handle(DidCloseTextDocumentParams request, CancellationToken cancellationToken)
+    {
+        Console.Error.WriteLine($"Closed: {request.TextDocument.Uri}");
+        _errorReporter.ClearErrors(request.TextDocument.Uri);
+        return Unit.Task;
+    }
+
+    TextDocumentCloseRegistrationOptions IRegistration<TextDocumentCloseRegistrationOptions, TextSynchronizationCapability>.GetRegistrationOptions(TextSynchronizationCapability capability,
+        ClientCapabilities clientCapabilities)
+    {
+        return new TextDocumentCloseRegistrationOptions
+        {
+            DocumentSelector = TextDocumentSelector.ForLanguage(nameof(LanguageSyntax.Shaderslang))
         };
     }
 }
