@@ -178,10 +178,10 @@ public class LexicalTokenizer
             currentToken += nextChar;
         }
         
-        foreach (var tokenizerToken in tokenizerTokens)
-        {
-            Console.Error.WriteLine("- " + tokenizerToken);
-        }
+        // foreach (var tokenizerToken in tokenizerTokens)
+        // {
+        //     Console.Error.WriteLine("- " + tokenizerToken);
+        // }
         return tokenizerTokens;
     }
 }
