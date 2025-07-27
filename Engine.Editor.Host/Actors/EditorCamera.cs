@@ -1,5 +1,6 @@
 ﻿using Engine.Core.Common;
 using Engine.Core.Extensions;
+using Engine.Core.Logging;
 using Engine.Core.Makers;
 using Engine.Editor.Host.Services;
 using Engine.Worlds.Attributes;
@@ -14,7 +15,7 @@ public class EditorCamera : Camera
 {
     private int _movementSpeedIncrement = 10;
     private double _movementSpeed = 50.0;
-    private const double RotationSpeed = 0.12;
+    private const double RotationSpeed = 250;
     
     private double _pitch = 0.0;
     private double _yaw = 0.0;
@@ -48,8 +49,9 @@ public class EditorCamera : Camera
     [OnInput(InputAction.CameraRotateYaw,   +0.0, +1.0)]
     protected void OnCameraRotate(Vector2 direction)
     {
-        _pitch += direction.X * RotationSpeed;
-        _yaw += direction.Y * RotationSpeed;
+        var screenSize = Backstage.GetWindow().Size;
+        _pitch += direction.X / screenSize.X * RotationSpeed;
+        _yaw += direction.Y / screenSize.X * RotationSpeed;
         Transform.Rotation = Transform.Identity
             .RotateAroundGlobal(Axis.Yaw, _yaw)
             .RotateAroundLocal(Axis.Pitch, _pitch)

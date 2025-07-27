@@ -33,6 +33,9 @@ public class UserScene : Scene
         var player = CreateActor<PlayerCharacter>();
         var cameraFollower = CreateActor<PlayerCameraFollower>();
         cameraFollower.PlayerCharacter = player;
+        
+        var basicEnemy = CreateActor<BasicEnemy>();
+        basicEnemy.Transform.Position = new Vector(0, 0, -20);
 
         var honseTerrain = CreateActor<HonseTerrain>();
         honseTerrain.Transform.Position = new Vector(0, -3.25, 0);
