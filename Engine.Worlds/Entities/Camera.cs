@@ -1,5 +1,7 @@
-﻿using Engine.Core.Common;
+﻿using Engine.Assets.Meshes;
+using Engine.Core.Common;
 using Engine.Worlds.Attributes;
+using Engine.Worlds.Components;
 using Silk.NET.Maths;
 
 namespace Engine.Worlds.Entities;
@@ -64,14 +66,15 @@ public class Camera : Actor
         return new CameraView(viewMatrix, projectionMatrixSpan);
     }
     
-    struct Plane { public Vector3 Normal; public double D; }
+    public struct Plane { public Vector3 Normal; public double D; }
 
-    Plane[] ExtractFrustumPlanes()
+    private Plane[] _planes = new Plane[6];
+    public Plane[] UpdateFrustumPlanes()
     {
         // var vp = Matrix4x4.Multiply(view, proj);
         var vp = Matrix.Identity;
-        WorldTransform.Multiply(_projMatrix, ref vp);
-        Plane[] planes = new Plane[6];
+        _transformInverse.MultiplyReverse(_projMatrix, ref vp);
+        var planes = new Plane[6];
 
         // left  = row4 + row1
         planes[0].Normal.X = vp.M14 + vp.M11;
@@ -110,14 +113,47 @@ public class Camera : Actor
         planes[5].D        = vp.M44 - vp.M43;
 
         // normalize all planes
-        for (int i = 0; i < 6; i++)
+        for (var i = 0; i < 6; i++)
         {
             var n = planes[i].Normal;
-            double length = n.Length;
+            var length = n.Length;
+            
             planes[i].Normal /= length;
             planes[i].D      /= length;
         }
+        
+        _planes = planes;
+        return _planes;
+    }
+    
+    private Transform _instanceWorldTransform = Transform.Identity;
+    public bool SphereInFrustum(BoundingSphereComponent sphere, Transform? instanceTransform)
+    {
+        // No instance => use the sphere's transform directly
+        if (instanceTransform == null)
+        {
+            foreach (var p in _planes)
+            {
+                if (p.Normal.DotProduct(sphere.WorldTransform.Position) + p.D < -sphere.WorldTransform.Scale.X)
+                {
+                    return false;
+                }
+            }
 
-        return planes;
+            return true;
+        }
+        
+        // Instance transform provided, multiply it with the sphere's transform
+        instanceTransform.Multiply(sphere.WorldTransform, ref _instanceWorldTransform);
+        
+        foreach (var p in _planes)
+        {
+            if (p.Normal.DotProduct(_instanceWorldTransform.Position) + p.D < -_instanceWorldTransform.Scale.X)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

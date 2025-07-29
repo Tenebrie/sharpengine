@@ -67,7 +67,7 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
      */
     
     public readonly double Length => Math.Sqrt(LengthSquared);
-    public readonly double LengthSquared => Dot(this);
+    public readonly double LengthSquared => DotProduct(this);
     public readonly double DistanceTo(Vector4 other) => Math.Sqrt(DistanceSquaredTo(other));
     public readonly double DistanceSquaredTo(Vector4 other)
     {
@@ -78,7 +78,7 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
         return dx*dx + dy*dy + dz*dz + dw*dw;
     }
 
-    public readonly double Dot(Vector4 other)
+    public readonly double DotProduct(Vector4 other)
     {
         if (!(Avx.IsSupported && Sse3.IsSupported))
             return X * other.X + Y * other.Y + Z * other.Z + W * other.W;

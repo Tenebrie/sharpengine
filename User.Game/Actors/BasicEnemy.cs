@@ -18,6 +18,7 @@ public class BasicEnemy : Actor
     {
         Mesh.Material = new HonseTerrainMaterial();
         Mesh.Mesh = PlaneMesh.Create();
+        Mesh.BoundingSphere.Generate(PlaneMesh.CreateVerts());
         Mesh.Material.LoadTexture("Assets/Textures/godot.png");
         Transform.RotateAroundLocal(Vector3.Pitch, -90);
         Transform.Rescale(3, 3, 3);

@@ -15,6 +15,7 @@ public class StaticMeshComponent : ActorComponent, IRenderable
 {
     public StaticMesh Mesh;
     public Material Material;
+    [Component] public BoundingSphereComponent BoundingSphere;
 
     [OnInit]
     protected void OnInit()
@@ -23,11 +24,15 @@ public class StaticMeshComponent : ActorComponent, IRenderable
         Material = new HonseTerrainMaterial();
     }
     
+    public bool IsOnScreen { get; set; }
+    public void PerformCulling(Camera activeCamera) => IsOnScreen = activeCamera.SphereInFrustum(BoundingSphere, null);
+    
     private Transform[] _singleComponentTransforms = new Transform[1];
     public void Render()
     {
         _singleComponentTransforms[0] = WorldTransform;
         Mesh.Render(1, ref _singleComponentTransforms, 0, Material);
-        Mesh.BoundingSphere.Render(1, ref _singleComponentTransforms, 0, WireframeMaterial.Instance);
+        _singleComponentTransforms[0] = BoundingSphere.WorldTransform;
+        BoundingSphere.Mesh.Render(1, ref _singleComponentTransforms, 0, WireframeMaterial.Instance);
     }
 }

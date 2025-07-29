@@ -45,4 +45,25 @@ public static class PlaneMesh
         mesh.Load(verts, indices);
         return mesh;
     }
+    
+    public static AssetVertex[] CreateVerts(float width = 1f, float height = 1f, int segmentsX = 1, int segmentsY = 1)
+    {
+        var verts = new AssetVertex[(segmentsX + 1) * (segmentsY + 1)];
+
+        for (int y = 0; y <= segmentsY; y++)
+        {
+            for (int x = 0; x <= segmentsX; x++)
+            {
+                var u = (float)x / segmentsX;
+                var v = (float)y / segmentsY;
+                verts[y * (segmentsX + 1) + x] = new AssetVertex
+                {
+                    Position = new Vector3(x * width / segmentsX - width / 2, 0, y * height / segmentsY - height / 2),
+                    TexCoord = new Vector2(u, v)
+                };
+            }
+        }
+
+        return verts;
+    }
 }

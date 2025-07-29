@@ -18,8 +18,6 @@ public enum WindingOrder
 
 public class StaticMesh : IDisposable
 {
-    public readonly BoundingSphere BoundingSphere = new();
-    
     public bool IsValid { get; private set; } = false;
     
     private WindingOrder WindingOrder { get; set; } = WindingOrder.Cw;
@@ -39,7 +37,6 @@ public class StaticMesh : IDisposable
         }
 
         LoadInternal(renderVerts, indices);
-        BoundingSphere.Load(verts);
     }
     
     private void LoadInternal(RenderingVertex[] verts, ushort[] indices)

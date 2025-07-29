@@ -17,6 +17,7 @@ public class BasicProjectile : Actor
     {
         ObjMeshLoader.LoadObj("Assets/Meshes/projectile-sword.obj", out var vertices, out var indices);
         MeshComponent.Mesh.Load(vertices, indices);
+        MeshComponent.BoundingSphere.Generate(vertices);
         MeshComponent.Material = new AlliedProjectile();
         MeshComponent.Transform.Rotation = QuatMakers.FromRotation(0, -90, 0);
     }

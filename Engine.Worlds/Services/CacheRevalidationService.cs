@@ -1,5 +1,6 @@
 ﻿using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
+using Engine.Worlds.Interfaces;
 
 namespace Engine.Worlds.Services;
 

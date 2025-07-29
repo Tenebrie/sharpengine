@@ -1,4 +1,5 @@
 ﻿using Engine.Core.Enum;
+using Engine.Core.Logging;
 using Engine.Core.Profiling;
 using Engine.Rendering.Bgfx;
 using Engine.Rendering.Platforms;
@@ -101,11 +102,34 @@ public unsafe class RenderingCore : IRendererContract
             FramebufferSize.Y);
         SetViewClear(ViewId.World, ClearFlags.Color | ClearFlags.Depth, 0x303030ff, 1.0f, 0);
         Touch(ViewId.World);
+        
+        Camera? activeCamera = null;
+        foreach (var backstage in _backstages)
+        {
+            if (activeCamera != null)
+                continue;
+            activeCamera = FindActiveCamera(backstage);
+            RenderCamera(ViewId.World, activeCamera);
+        }
+        
+        if (activeCamera == null)
+        {
+            Logger.Error("No active camera found for rendering.");
+            return;
+        }
+        
+        List<IRenderable> atomsToRender = [];
+        List<IRenderable> culledAtoms = [];
+        activeCamera.UpdateFrustumPlanes();
     
         foreach (var backstage in _backstages)
         {
-            RenderCamera(ViewId.World, FindActiveCamera(backstage));
-            RenderAtomTree(backstage);
+            CollectAtomsToRender(ref atomsToRender, backstage);
+            FrustumCulling(activeCamera, ref atomsToRender, ref culledAtoms);
+            RenderAtomTree(culledAtoms);
+            
+            atomsToRender.Clear();
+            culledAtoms.Clear();
         }
     
         Frame(false);
@@ -143,15 +167,36 @@ public unsafe class RenderingCore : IRendererContract
             set_view_transform((ushort)viewId, viewPtr, projPtr);
         }
     }
-
-    private void RenderAtomTree(Atom target)
+    
+    private void CollectAtomsToRender(ref List<IRenderable> entitiesToRender, Atom target)
     {
         if (target is IRenderable renderable)
-            renderable.Render();
+        {
+            entitiesToRender.Add(renderable);
+        }
 
         foreach (var child in target.Children)
         {
-            RenderAtomTree(child);
+            CollectAtomsToRender(ref entitiesToRender, child);
+        }
+    }
+    
+    private void FrustumCulling(Camera activeCamera, ref List<IRenderable> atomsToRender, ref List<IRenderable> culledAtoms)
+    {
+        foreach (var atom in atomsToRender)
+        {
+            atom.PerformCulling(activeCamera);
+            if (atom.IsOnScreen)
+                culledAtoms.Add(atom);
+        }
+    }
+
+
+    private void RenderAtomTree(List<IRenderable> atomsToRender)
+    {
+        foreach (var renderable in atomsToRender)
+        {
+            renderable.Render();
         }
     }
 

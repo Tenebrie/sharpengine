@@ -60,12 +60,12 @@ public struct Vector3(double x, double y, double z)
     }
     
     public double Length => Math.Sqrt(LengthSquared);
-    public double LengthSquared => Dot(this);
+    public double LengthSquared => DotProduct(this);
     public readonly double DistanceTo(Vector3 other) => Math.Sqrt(Promote().DistanceSquaredTo(other));
     public readonly double DistanceSquaredTo(Vector3 other) => Promote().DistanceSquaredTo(other);
 
-    public readonly double Dot(Vector3 other) => Promote().Dot(other);
-    public Vector3 Cross(Vector3 b) => new(
+    public readonly double DotProduct(Vector3 other) => Promote().DotProduct(other);
+    public Vector3 CrossProduct(Vector3 b) => new(
         Y * b.Z - Z * b.Y,
         Z * b.X - X * b.Z,
         X * b.Y - Y * b.X

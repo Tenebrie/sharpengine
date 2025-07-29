@@ -286,4 +286,8 @@ public class Transform
     {
         result = child * Data;
     }
+    public void MultiplyReverse(in Matrix child, ref Matrix result)
+    {
+        result = Data * child;
+    }
 }

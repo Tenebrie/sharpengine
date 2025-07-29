@@ -18,6 +18,7 @@ public class DragonMesh : Actor
         ObjMeshLoader.LoadObj("Assets/Meshes/decimated_dragon32.obj", out var vertices, out var indices);
         MeshComponent.Mesh.Load(vertices, indices);
         MeshComponent.Material = new RawColorMaterial();
+        MeshComponent.BoundingSphere.Generate(vertices);
         
         MeshComponent.Transform.Rotation = QuatMakers.FromRotation(90, 0, 0);
     }

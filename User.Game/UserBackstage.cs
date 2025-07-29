@@ -47,8 +47,8 @@ public class UserScene : Scene
         {
             for (var y = 0; y < 5; y++)
             {  
-                var transform = Transform.Identity; 
-                transform.Position = new Vector3(x * 2, y * 2 - 20, -10);
+                var transform = Transform.Identity;
+                transform.Position = new Vector3(x * 2, y * 2 + 20, -10);
                 transform.Scale = new Vector3(0.4f, 0.4f, 0.4f);
                 transform.Rotation = Quaternion.Identity;
                 cubeManager.InstanceManager.AddInstance(transform);

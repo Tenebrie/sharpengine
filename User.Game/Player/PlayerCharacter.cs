@@ -31,8 +31,8 @@ public class PlayerCharacter : Actor
         var mousePos = GetService<InputService>().GetMousePosition();
         var window = Backstage.GetWindow().FramebufferSize;
         var value = new Vector3(mousePos.X - window.X / 2.0, 0, mousePos.Y - window.Y / 2.0).NormalizeInPlace();
-        var dotProduct = value.Dot(forwardVector);
-        var crossProduct = value.Cross(forwardVector);
+        var dotProduct = value.DotProduct(forwardVector);
+        var crossProduct = value.CrossProduct(forwardVector);
         var difference = Math.Atan2(crossProduct.Y, dotProduct);
         projectile.Transform.Rotation = QuatMakers.FromRotationRadians(0, difference, 0);
 
@@ -50,8 +50,8 @@ public class PlayerCharacter : Actor
         
         var value = new Vector3(direction.Y, 0, -direction.X).NormalizeInPlace();
         var forwardVector = Vector3.Forward;
-        var dotProduct = value.Dot(forwardVector);
-        var crossProduct = value.Cross(forwardVector);
+        var dotProduct = value.DotProduct(forwardVector);
+        var crossProduct = value.CrossProduct(forwardVector);
         var difference = Math.Atan2(crossProduct.Y, dotProduct);
         Transform.TranslateGlobal(value * MovementSpeed * deltaTime);
         Transform.Rotation = QuatMakers.FromRotationRadians(0, difference, 0);

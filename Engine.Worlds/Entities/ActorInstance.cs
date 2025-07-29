@@ -2,4 +2,5 @@
 
 public class ActorInstance : Actor
 {
+    public bool IsOnScreen { get; set; }
 }

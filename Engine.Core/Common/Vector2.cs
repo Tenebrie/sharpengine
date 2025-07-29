@@ -55,11 +55,11 @@ public struct Vector2(double x, double y)
     }
     
     public double Length => Math.Sqrt(LengthSquared);
-    public double LengthSquared => Dot(this);
+    public double LengthSquared => DotProduct(this);
     public double DistanceTo(Vector2 other) => Math.Sqrt(Promote().DistanceSquaredTo(other));
     public double DistanceSquaredTo(Vector2 other) => Promote().DistanceSquaredTo(other);
 
-    public double Dot(Vector2 other) => Promote().Dot(other);
+    public double DotProduct(Vector2 other) => Promote().DotProduct(other);
     public Vector2 NormalizedCopy() => Promote().NormalizedCopy();
     public Vector2 NormalizeInPlace() => Promote().NormalizeInPlace();
     public Vector2 SetLengthIfNotZero(double length)

@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Compute\" />
     <Folder Include="Materials\UI\" />
     <AdditionalFiles Include="Materials\Meshes\**\*.vert.glsl" />
     <AdditionalFiles Include="Materials\Meshes\**\*.frag.glsl" />

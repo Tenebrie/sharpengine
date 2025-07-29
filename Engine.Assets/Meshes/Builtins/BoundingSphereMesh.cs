@@ -1,6 +1,5 @@
 ﻿using System.Drawing;
 using System.Runtime.InteropServices;
-using Engine.Assets.Loaders;
 using Engine.Assets.Materials;
 using Engine.Core.Common;
 using Engine.Core.Extensions;
@@ -8,74 +7,27 @@ using Engine.Core.Logging;
 using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 using Transform = Engine.Core.Common.Transform;
 
-namespace Engine.Assets.Meshes;
+namespace Engine.Assets.Meshes.Builtins;
 
-public class BoundingSphere
+public class BoundingSphereMesh
 {
-    public bool IsValid { get; private set; } = false;
-    private Vector3 Position { get; set; }
-    private double Radius { get; set; }
+    public static BoundingSphereMesh Instance { get; } = new();
     
-    public void Load(AssetVertex[] verts)
-    {
-        if (verts.Length < 3)
-        {
-            // Not enough vertices to form a sphere
-            Position = Vector3.Zero;
-            Radius = 0.01f;
-            return;
-        }
-
-        try
-        {
-            CalculateRittersBoundingSphere(verts);
-        } catch (Exception ex)
-        {
-            Logger.Error("Failed to calculate bounding sphere: " + ex.Message);
-            Position = Vector3.Zero;
-            Radius = 0.01f;
-            return;
-        }
-
-        // Logger.InfoF("Bounding sphere calculated: Position = {0}, Radius = {1}", Position, Radius);
-        PrepareRendering();
-    }
-
-    private void CalculateRittersBoundingSphere(AssetVertex[] verts)
-    {
-        var p0 = verts[0].Position;
-        var p1 = verts.OrderByDescending(v => v.Position.DistanceSquaredTo(p0)).First().Position;
-        var p2 = verts.OrderByDescending(v => v.Position.DistanceSquaredTo(p1)).First().Position;
-        var center = (p1 + p2) * 0.5;
-        var radius = p1.DistanceTo(p2) * 0.5;
-
-        foreach (var v in verts)
-        {
-            var d = v.Position.DistanceTo(center);
-            if (!(d > radius))
-                continue;
-            
-            var newRadius = (radius + d) * 0.5;
-            var direction = (v.Position - center) / d;
-            center += direction * (newRadius - radius);
-            radius = newRadius;
-        }
+    private bool IsValid { get; set; } = false;
         
-        Position = center;
-        Radius   = radius;
-        IsValid  = true;
-    }
-    
     private VertexBuffer _vertexBuffer;
     private IndexBuffer _indexBuffer;
     private VertexLayout _layout;
-
-    private void PrepareRendering()
+    
+    public void Load()
     {
+        if (IsValid)
+            return;
+        
         List<RenderingVertex> verts = [];
         List<int> indices = [];
 
-        const int segmentCount = 32;
+        const int segmentCount = 64;
         for (var i = 0; i < segmentCount; i++)
         {
             var angle = i * Math.PI * 2 / segmentCount;
@@ -108,7 +60,7 @@ public class BoundingSphere
         _indexBuffer = CreateIndexBuffer(ref indicesArray);
         IsValid = true;
     }
-
+    
     public unsafe void Render(uint instanceCount, ref Transform[] worldTransforms, ushort viewId, Material material)
     {
         if (!IsValid)
@@ -124,11 +76,11 @@ public class BoundingSphere
         Span<float> mat = stackalloc float[16];
         for (var i = 0; i < instanceCount; i++)
         {
-            var t = Transform.Copy(worldTransforms[i]);
-            t.TranslateLocal(Position);
-            t.Rotation = Quat.Identity;
-            t.Rescale(Radius);
-            t.ToFloatSpan(ref mat);
+            // var t = Transform.Copy(worldTransforms[i]);
+            // t.TranslateLocal(Position);
+            // t.Rotation = Quat.Identity;
+            // t.Rescale(Radius);
+            worldTransforms[i].ToFloatSpan(ref mat);
             for (var j = 0; j < 16; j++)
             {
                 instanceDataArray[i * 16 + j] = mat[j];
