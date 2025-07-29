@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
@@ -6,6 +7,7 @@ using System.Runtime.Intrinsics.X86;
 namespace Engine.Core.Common;
 
 [StructLayout(LayoutKind.Explicit)]
+[SuppressMessage("ReSharper", "UnusedMember.Global")]
 public struct Vector4(double x, double y, double z, double w) : IEquatable<Vector4>
 {
     [FieldOffset(00)] public double X = x;

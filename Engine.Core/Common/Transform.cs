@@ -251,6 +251,8 @@ public class Transform
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void ToFloatSpan(ref Span<float> span) => Data.ToFloatSpan(ref span);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe void ToFloatSpan(float* array, int offset) => Data.ToFloatSpan(array, offset);
     
     public static Transform Identity => new();
     public static Transform Copy(Transform instance) => new() { Data = instance.Data };

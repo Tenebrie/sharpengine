@@ -19,6 +19,7 @@ public class LogRenderer(RenderingCore parent): Renderer(parent)
 {
     private LoggingMode _mode = LoggingMode.Recent;
     private readonly List<double> _frameTimes = [];
+    private double _frameTimeAccumulator = 0.0;
     private int _framerate = 0;
     private int _onePercentLow = 0;
 
@@ -109,12 +110,13 @@ public class LogRenderer(RenderingCore parent): Renderer(parent)
  
     private void UpdateFramerate(double deltaTime)
     {
+        _frameTimeAccumulator += deltaTime;
         _frameTimes.Add(deltaTime);
-        if (_frameTimes.Count < 100)
+        if (_frameTimeAccumulator < 0.1)
             return;
         
         var averageFrameTime = _frameTimes.Count > 0 ? _frameTimes.Average() : 0.0;
-        var framerate = 1.0f / averageFrameTime;
+        var framerate = 1.0 / averageFrameTime;
         
         var onePercentCount = Math.Max(1, (int)Math.Ceiling(_frameTimes.Count * 0.01));
         var slowestFrames = _frameTimes.OrderByDescending(x => x).Take(onePercentCount).ToList();
@@ -124,5 +126,6 @@ public class LogRenderer(RenderingCore parent): Renderer(parent)
         _framerate = (int)Math.Round(framerate);
         _onePercentLow = (int)Math.Round(onePercentLow);
         _frameTimes.Clear();
+        _frameTimeAccumulator = 0.0;
     }
 }

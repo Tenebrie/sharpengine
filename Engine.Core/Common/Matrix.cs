@@ -1,10 +1,12 @@
-﻿using System.Runtime.CompilerServices;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
-using Silk.NET.Maths;
 
 namespace Engine.Core.Common;
 
+[SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
+[SuppressMessage("ReSharper", "UnusedMember.Global")]
 public struct Matrix : IEquatable<Matrix>
 {
     public static Matrix Identity => new
@@ -185,6 +187,15 @@ public struct Matrix : IEquatable<Matrix>
 
         for (var i = 0; i < 16; i++)
             span[i] = (float)src[i];
+    }
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public unsafe void ToFloatSpan(float* array, int offset)
+    {
+        ReadOnlySpan<double> src = ToSpan();
+
+        for (var i = 0; i < 16; i++)
+            array[i + offset] = (float)src[i];
     }
 
     public Vector4 this[int i] => i switch

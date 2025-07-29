@@ -81,9 +81,9 @@ public class BoundingSphere
             var angle = i * Math.PI * 2 / segmentCount;
             var x = (float)Math.Cos(angle);
             var y = (float)Math.Sin(angle);
-            verts.Add(new RenderingVertex(x, 0, y, Color.LightGreen.ToAbgr()));
-            verts.Add(new RenderingVertex(x, y, 0, Color.DeepSkyBlue.ToAbgr()));
-            verts.Add(new RenderingVertex(0, x, y, Color.LightCoral.ToAbgr()));
+            verts.Add(new RenderingVertex(new Vector3(x, 0, y), Color.LightGreen));
+            verts.Add(new RenderingVertex(new Vector3(x, y, 0), Color.DeepSkyBlue));
+            verts.Add(new RenderingVertex(new Vector3(0, x, y), Color.LightCoral));
 
             var next = (i + 1) % segmentCount;
 
@@ -144,9 +144,9 @@ public class BoundingSphere
     }
     
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    private readonly struct RenderingVertex(float x, float y, float z, uint color)
+    private readonly struct RenderingVertex(Vector3 position, Color color)
     {
-        public readonly float X = x, Y = y, Z = z;
-        public readonly uint Color = color;
+        public readonly Vector3Float Position = position.Downgrade();
+        public readonly uint Color = color.ToAbgr();
     }
 }

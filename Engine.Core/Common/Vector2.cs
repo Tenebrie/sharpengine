@@ -1,11 +1,15 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.X86;
 
 namespace Engine.Core.Common;
 
 [StructLayout(LayoutKind.Explicit)]
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
+[SuppressMessage("ReSharper", "UnusedMember.Local")]
+[SuppressMessage("ReSharper", "UnusedMember.Global")]
 public struct Vector2(double x, double y)
 {
     [FieldOffset(00)] public double X = x;
@@ -37,13 +41,23 @@ public struct Vector2(double x, double y)
     
     public Vector3 ToVector3() => Unsafe.As<Vector2, Vector3>(ref this);
     public Vector4 ToVector4() => Unsafe.As<Vector2, Vector4>(ref this);
+    private readonly Vector256<double> ToAccelerated() => Unsafe.As<Vector2, Vector256<double>>(ref Unsafe.AsRef(in this));
+    private static Vector2 FromAccelerated(Vector256<double> vector) => Unsafe.As<Vector256<double>, Vector2>(ref vector);
 
     private Vector4 Promote() => ToVector4();
+    public Vector2Float Downgrade()
+    {
+        if (!Avx.IsSupported)
+            return new Vector2Float((float)X, (float)Y);
+        
+        var f128 = Avx.ConvertToVector128Single(ToAccelerated());
+        return new Vector2Float(f128.GetElement(0), f128.GetElement(1));
+    }
     
     public double Length => Math.Sqrt(LengthSquared);
     public double LengthSquared => Dot(this);
     public double DistanceTo(Vector2 other) => Math.Sqrt(Promote().DistanceSquaredTo(other));
-    public double DistanceSquaredTo(Vector2 other) => Promote().Dot(other);
+    public double DistanceSquaredTo(Vector2 other) => Promote().DistanceSquaredTo(other);
 
     public double Dot(Vector2 other) => Promote().Dot(other);
     public Vector2 NormalizedCopy() => Promote().NormalizedCopy();

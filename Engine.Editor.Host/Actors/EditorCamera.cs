@@ -54,6 +54,9 @@ public class EditorCamera : Camera
             .Rotation;
         GetService<InputService>().SetMousePosition(_savedMousePosition);
     }
+
+    [OnInit]
+    protected void SetInitialCamera() => OnChangeCameraSpeed(0.0);
     
     [OnInput(InputAction.CameraSpeedWheel, 1.0)]
     protected void OnChangeCameraSpeed(double value)
