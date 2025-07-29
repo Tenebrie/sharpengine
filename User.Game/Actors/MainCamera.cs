@@ -1,4 +1,5 @@
-﻿using Engine.Worlds.Attributes;
+﻿using Engine.Core.Common;
+using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 
 namespace User.Game.Actors;
@@ -10,7 +11,7 @@ public class MainCamera : ActorComponent
     [OnInit]
     protected void OnInit()
     {
-        Camera.Transform.Position = new Vector(0, -30, 0);
+        Camera.Transform.Position = new Vector3(0, -30, 0);
     }
 }
 

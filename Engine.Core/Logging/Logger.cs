@@ -71,6 +71,7 @@ public static class Logger
         private int _logLength = 0;
         private readonly List<LogEntry> _log;
         private readonly List<Tuple<string, LogLevel>> _orderedLog;
+        private DateTime _lastRead = DateTime.MinValue;
 
         public LogStream(int capacity)
         {
@@ -101,6 +102,12 @@ public static class Logger
         
         internal void ReadAll(out List<Tuple<string, LogLevel>> orderedLog, bool skipNonRecent = false)
         {
+            if (DateTime.Now - _lastRead < TimeSpan.FromSeconds(0.15))
+            {
+                orderedLog = _orderedLog;
+                return;
+            }
+            
             _orderedLog.Clear();
             for (var i = 0; i < _logLength; i++)
             {
@@ -112,6 +119,7 @@ public static class Logger
                 _orderedLog.Add(new Tuple<string, LogLevel>(formattedEntry, entry.Level));
             }
 
+            _lastRead = DateTime.Now;
             _orderedLog.Reverse();
             orderedLog = _orderedLog;
         }

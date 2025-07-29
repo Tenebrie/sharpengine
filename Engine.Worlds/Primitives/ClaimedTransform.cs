@@ -14,7 +14,7 @@ public class ClaimedTransform : Transform
         Data = baseTransform.ToMatrix();
     }
 
-    public override Vector Position
+    public override Vector3 Position
     {
         get => base.Position;
         set
@@ -34,7 +34,7 @@ public class ClaimedTransform : Transform
         }
     }
     
-    public override Vector Scale
+    public override Vector3 Scale
     {
         get => base.Scale;
         set

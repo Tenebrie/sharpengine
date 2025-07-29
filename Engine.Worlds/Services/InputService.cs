@@ -1,9 +1,9 @@
-﻿using Engine.Input;
+﻿using Engine.Core.Common;
+using Engine.Input;
 using Engine.Input.Contexts;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 using Silk.NET.Input;
-using Silk.NET.Maths;
 
 namespace Engine.Worlds.Services;
 
@@ -35,7 +35,6 @@ public class InputService : Service
     public void ClearSubscriptions(Atom owner) => _inputHandler.ClearSubscriptions(owner);
     
     public Vector2 GetMousePosition() => _inputHandler.GetMousePosition();
-    public void SetMousePosition(Vector2D<int> position) => _inputHandler.SetMousePosition(new Vector2(position.X, position.Y));
     public void SetMousePosition(Vector2 position) => _inputHandler.SetMousePosition(position);
     public void SetMouseCursor(StandardCursor cursor) => _inputHandler.SetMouseCursor(cursor);
     public void SetMouseCursorMode(CursorMode mode) => _inputHandler.SetMouseCursorMode(mode);

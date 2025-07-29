@@ -37,6 +37,61 @@ public static partial class Bgfx
 		return (byte)(((byte)bgColor << 4) | (byte)fgColor);
 	}
 	
+	// /// <summary>
+	// /// Start VertexLayout.
+	// /// </summary>
+	// ///
+	// /// <param name="_rendererType">Renderer backend type. See: `bgfx::RendererType`</param>
+	// /// <see cref="Bgfx" srcline="2370" />
+	// [DllImport(DllName, EntryPoint="bgfx_vertex_layout_begin", CallingConvention = CallingConvention.Cdecl)]
+	// public static extern unsafe VertexLayout* vertex_layout_begin(VertexLayout* _this, RendererType _rendererType);
+	//
+	// /// <summary>
+	// /// Add attribute to VertexLayout.
+	// /// @remarks Must be called between begin/end.
+	// /// </summary>
+	// ///
+	// /// <param name="_attrib">Attribute semantics. See: `bgfx::Attrib`</param>
+	// /// <param name="_num">Number of elements 1, 2, 3 or 4.</param>
+	// /// <param name="_type">Element type.</param>
+	// /// <param name="_normalized">When using fixed point AttribType (f.e. Uint8) value will be normalized for vertex shader usage. When normalized is set to true, AttribType::Uint8 value in range 0-255 will be in range 0.0-1.0 in vertex shader.</param>
+	// /// <param name="_asInt">Packaging rule for vertexPack, vertexUnpack, and vertexConvert for AttribType::Uint8 and AttribType::Int16. Unpacking code must be implemented inside vertex shader.</param>
+	// /// <see cref="Bgfx" srcline="2384" />
+	// [DllImport(DllName, EntryPoint="bgfx_vertex_layout_add", CallingConvention = CallingConvention.Cdecl)]
+	// public static extern unsafe VertexLayout* vertex_layout_add(VertexLayout* _this, Attrib _attrib, byte _num, AttribType _type, bool _normalized, bool _asInt);
+	//
+	// /// <summary>
+	// /// End VertexLayout.
+	// /// </summary>
+	// /// <see cref="Bgfx" srcline="2413" />
+	// public static unsafe void vertex_layout_end(VertexLayout* _this)
+	// {
+	// 	
+	// }
+
+	public struct VertexLayoutAttribute(Attrib attribute, int num, AttribType type, bool normalized, bool asInt)
+	{
+		public readonly Attrib Attribute = attribute;
+		public readonly int Num = num;
+		public readonly AttribType Type = type;
+		public readonly bool Normalized = normalized;
+		public readonly bool AsInt = asInt;
+	}
+
+	public static unsafe void CreateVertexLayout(ref VertexLayout layout, VertexLayoutAttribute[] attribute)
+	{
+		layout = new VertexLayout();
+		fixed (VertexLayout* lPtr = &layout)
+		{
+			vertex_layout_begin(lPtr, get_renderer_type());
+			foreach (var attr in attribute)
+			{
+				vertex_layout_add(lPtr, attr.Attribute, (byte)attr.Num, attr.Type, attr.Normalized, attr.AsInt);
+			}
+			vertex_layout_end(lPtr);
+		}
+	}
+	
     /// <summary>
     /// Reset graphic settings and back-buffer size.
     /// @attention This call doesn’t change the window size, it just resizes
@@ -45,7 +100,7 @@ public static partial class Bgfx
     ///
     /// <param name="width">Back-buffer width.</param>
     /// <param name="height">Back-buffer height.</param>
-    /// <param name="flags">See: `BGFX_RESET_*` for more info.   - `BGFX_RESET_NONE` - No reset flags.   - `BGFX_RESET_FULLSCREEN` - Not supported yet.   - `BGFX_RESET_MSAA_X[2/4/8/16]` - Enable 2, 4, 8 or 16 x MSAA.   - `BGFX_RESET_VSYNC` - Enable V-Sync.   - `BGFX_RESET_MAXANISOTROPY` - Turn on/off max anisotropy.   - `BGFX_RESET_CAPTURE` - Begin screen capture.   - `BGFX_RESET_FLUSH_AFTER_RENDER` - Flush rendering after submitting to GPU.   - `BGFX_RESET_FLIP_AFTER_RENDER` - This flag  specifies where flip     occurs. Default behaviour is that flip occurs before rendering new     frame. This flag only has effect when `BGFX_CONFIG_MULTITHREADED=0`.   - `BGFX_RESET_SRGB_BACKBUFFER` - Enable sRGB back-buffer.</param>
+    /// <param name="flags">See <see cref="ResetFlags" />.</param>
     /// <param name="format">Texture format. See: `TextureFormat::Enum`.</param>
     /// <see cref="Bgfx" srcline="2588" />
     ///
@@ -88,7 +143,6 @@ public static partial class Bgfx
     ///
     /// <param name="bgColor">Background color.</param>
     /// <param name="smallFont">Default 8x16 or 8x8 font.</param>
-    ///
     public static void DebugTextClear(DebugColor bgColor, bool smallFont)
     {
 	    dbg_text_clear(PackDebugColor(bgColor, DebugColor.Black), smallFont);
@@ -104,7 +158,6 @@ public static partial class Bgfx
 	/// <param name="bgColor">The background color of the text.</param>
 	/// <param name="format">`printf` style format.</param>
 	/// <param name="args">Printf arguments.</param>
-	/// 
 	public static void DebugTextPrintf(int x, int y, DebugColor bgColor, DebugColor fgColor, string format, string args)
 	{
 		dbg_text_printf((ushort)x, (ushort)y, PackDebugColor(bgColor, fgColor), string.Format(format, args));
@@ -136,7 +189,6 @@ public static partial class Bgfx
 	/// <param name="fgColor">Foreground color.</param>
 	/// <param name="format">`printf` style format.</param>
 	/// <param name="argList">Variable arguments list for format string.</param>
-	///
 	public static void DebugTextVprintf(int x, int y, DebugColor bgColor, DebugColor fgColor, [MarshalAs(UnmanagedType.LPStr)] string format, IntPtr argList)
 	{
 		dbg_text_vprintf((ushort)x, (ushort)y, PackDebugColor(bgColor, fgColor), format, argList);
@@ -155,7 +207,64 @@ public static partial class Bgfx
 		fixed (byte* ptr = data)
 			dbg_text_image((ushort)x, (ushort)y, (ushort)width, (ushort)height, (void*)new IntPtr(ptr), (ushort)pitch);
 	}
-    
+
+	/// <summary>
+	/// Create static index buffer.
+	/// </summary>
+	///
+	/// <param name="indices">Array of indices to create an index buffer out of.</param>
+	/// <param name="flags">Buffer creation flags. See <see cref="BufferFlags" />.</param>
+	/// <see cref="Bgfx" srcline="2716" />
+	public static unsafe IndexBuffer CreateIndexBuffer(ref ushort[] indices, BufferFlags flags = BufferFlags.None)
+	{
+		fixed (ushort* ptr = indices)
+		{
+			var byteSize = (uint)indices.Length * sizeof(ushort);
+			var handle = create_index_buffer(copy(ptr, byteSize), 0);
+			return new IndexBuffer
+			{
+				Handle = handle,
+				Count = indices.Length
+			};
+		}
+	}
+	
+	public struct IndexBuffer
+	{
+		public IndexBufferHandle Handle;
+		public int Count;
+	}
+
+	/// <summary>
+	/// Create static vertex buffer.
+	/// </summary>
+	///
+	/// <param name="verts">Array of vertices to create a vertex buffer out of.</param>
+	/// <param name="layout">Vertex layout reference.</param>
+	/// <param name="flags">Buffer creation flags. See <see cref="BufferFlags" />.</param>
+	/// <see cref="Bgfx" srcline="2765" />
+	public static unsafe VertexBuffer CreateVertexBuffer<TVertex>(ref TVertex[] verts, ref VertexLayout layout, BufferFlags flags = BufferFlags.None)
+		where TVertex : unmanaged
+	{
+		fixed (TVertex* vPtr = verts)
+		fixed (VertexLayout* layoutPtr = &layout)
+		{
+			var byteSize = (uint)(verts.Length * sizeof(TVertex));
+			var handle = create_vertex_buffer(copy(vPtr, byteSize), layoutPtr, (ushort)flags);
+			return new VertexBuffer
+			{
+				Handle = handle,
+				Count = verts.Length
+			};
+		}
+	}
+
+	public struct VertexBuffer
+	{
+		public VertexBufferHandle Handle;
+		public int Count;
+	}
+	
     /// <summary>
     /// Set view rectangle. Draw primitive outside view will be clipped.
     /// </summary>
@@ -166,7 +275,6 @@ public static partial class Bgfx
     /// <param name="width">Width of view port region.</param>
     /// <param name="height">Height of view port region.</param>
     /// <see cref="Bgfx" srcline="3486" />
-    ///
     public static void SetViewRect(ViewId viewId, int x, int y, int width, int height)
     {
         set_view_rect((ushort)viewId, (ushort)x, (ushort)y, (ushort)width, (ushort)height);
@@ -182,7 +290,6 @@ public static partial class Bgfx
     /// <param name="depth">Depth clear value.</param>
     /// <param name="stencil">Stencil clear value.</param>
     /// <see cref="Bgfx" srcline="3525" />
-    ///
     public static void SetViewClear(ViewId viewId, ClearFlags flags, uint rgba, float depth, byte stencil)
     {
 	    set_view_clear((ushort)viewId, (uint)flags, rgba, depth, stencil);
@@ -205,9 +312,59 @@ public static partial class Bgfx
     /// <param name="flags">State flags. Default state for primitive type is   triangles. See: `BGFX_STATE_DEFAULT`.   - `BGFX_STATE_DEPTH_TEST_*` - Depth test function.   - `BGFX_STATE_BLEND_*` - See remark 1 about BGFX_STATE_BLEND_FUNC.   - `BGFX_STATE_BLEND_EQUATION_*` - See remark 2.   - `BGFX_STATE_CULL_*` - Backface culling mode.   - `BGFX_STATE_WRITE_*` - Enable R, G, B, A or Z write.   - `BGFX_STATE_MSAA` - Enable hardware multisample antialiasing.   - `BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]` - Primitive type.</param>
     /// <param name="rgba">Sets blend factor used by `BGFX_STATE_BLEND_FACTOR` and   `BGFX_STATE_BLEND_INV_FACTOR` blend modes.</param>
     /// <see cref="Bgfx" srcline="4219" />
-    ///
     [DllImport(DllName, EntryPoint="bgfx_set_state", CallingConvention = CallingConvention.Cdecl)]
     public static extern void SetState(StateFlags flags, uint rgba = 0);
+
+    /// <summary>
+    /// Set index buffer for draw primitive.
+    /// </summary>
+    ///
+    /// <param name="handle">Index buffer.</param>
+    /// <param name="firstIndex">First index to render.</param>
+    /// <param name="numIndices">Number of indices to render.</param>
+    /// <see cref="Bgfx" srcline="4318" />
+    public static void SetIndexBuffer(IndexBufferHandle handle, int firstIndex, int numIndices)
+    {
+	    set_index_buffer(handle, (uint)firstIndex, (uint)numIndices);
+    }
+    
+    public static void SetIndexBuffer(IndexBuffer buffer)
+	{
+	    set_index_buffer(buffer.Handle, 0, (uint)buffer.Count);
+	}
+
+    /// <summary>
+    /// Set vertex buffer for draw primitive.
+    /// </summary>
+    ///
+    /// <param name="handle">Vertex buffer.</param>
+    /// <param name="startVertex">First vertex to render.</param>
+    /// <param name="numVertices">Number of vertices to render.</param>
+    ///
+    /// <see cref="Bgfx" srcline="4352" />
+    public static void SetVertexBuffer(VertexBufferHandle handle, int startVertex, int numVertices)
+    {
+	    set_vertex_buffer(0, handle, (uint)startVertex, (uint)numVertices);
+    }
+    
+    public static void SetVertexBuffer(VertexBuffer buffer)
+    {
+	    set_vertex_buffer(0, buffer.Handle, 0, (uint)buffer.Count);
+    }
+
+    /// <summary>
+    /// Set instance data buffer for draw primitive.
+    /// </summary>
+    ///
+    /// <param name="idb">Transient instance data buffer.</param>
+    /// <param name="start">First instance data.</param>
+    /// <param name="num">Number of data instances.</param>
+    /// 
+    /// <see cref="Bgfx" srcline="4437" />
+    public static unsafe void SetInstanceDataBuffer(InstanceDataBuffer* idb, uint start, uint num)
+    {
+	    set_instance_data_buffer(idb, start, num);
+    }
     
     /// <summary>
     /// Marks a view as "touched", ensuring that its background is cleared even if nothing is rendered.
@@ -215,7 +372,8 @@ public static partial class Bgfx
     /// <param name="viewId">The index of the view to touch.</param>
     /// <returns>The number of draw calls.</returns>
     /// <see cref="Bgfx" srcline="4492" />
-    public static void Touch(ViewId viewId) {
+    public static void Touch(ViewId viewId)
+    {
 	    touch((ushort)viewId);
     }
 }

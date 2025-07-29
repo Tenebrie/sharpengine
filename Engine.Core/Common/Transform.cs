@@ -1,5 +1,4 @@
 ﻿using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using Engine.Core.Extensions;
 using Engine.Core.Makers;
 
@@ -8,9 +7,9 @@ namespace Engine.Core.Common;
 public class Transform
 {
     // Row major, translation in last row
-    protected Matrix4x4 Data;
+    protected Matrix Data;
 
-    public virtual Vector Position
+    public virtual Vector3 Position
     {
         get => new(Data.M41, Data.M42, Data.M43);
         set
@@ -42,7 +41,7 @@ public class Transform
         }
     }
     
-    public virtual Vector Scale
+    public virtual Vector3 Scale
     {
         get => new (Data.Row1.Length, Data.Row2.Length, Data.Row3.Length);
         set
@@ -57,9 +56,9 @@ public class Transform
     {
         get => new()
         {
-            XAxis = new Vector(Data.M11, Data.M12, Data.M13),
-            YAxis = new Vector(Data.M21, Data.M22, Data.M23),
-            ZAxis = new Vector(Data.M31, Data.M32, Data.M33)
+            XAxis = new Vector3(Data.M11, Data.M12, Data.M13),
+            YAxis = new Vector3(Data.M21, Data.M22, Data.M23),
+            ZAxis = new Vector3(Data.M31, Data.M32, Data.M33)
         };
         set
         {
@@ -72,10 +71,10 @@ public class Transform
 
     protected Transform()
     {
-        Data = Matrix4x4.Identity;
+        Data = Matrix.Identity;
     }
 
-    private Transform(Vector translation, Quat rotation, Vector scale)
+    private Transform(Vector3 translation, Quat rotation, Vector3 scale)
     {
         var translationMatrix = MatrixMakers.FromTranslation(translation);
         var rotationMatrix = MatrixMakers.FromQuaternion(rotation);
@@ -86,20 +85,20 @@ public class Transform
     
     public Transform TranslateLocal(double x, double y, double z)
     {
-        Position += Basis.TransformVector(new Vector(x, y, z));
+        Position += Basis.TransformVector(new Vector3(x, y, z));
         return this;
     }
-    public Transform TranslateLocal(Vector translation)
+    public Transform TranslateLocal(Vector3 translation)
     {
         Position += Basis.TransformVector(translation);
         return this;
     }
     public Transform TranslateGlobal(double x, double y, double z)
     {
-        Position += new Vector(x, y, z);
+        Position += new Vector3(x, y, z);
         return this;
     }
-    public Transform TranslateGlobal(Vector translation)
+    public Transform TranslateGlobal(Vector3 translation)
     {
         Position += translation;
         return this;
@@ -116,16 +115,16 @@ public class Transform
         return this;
     }
     
-    public Transform RotateAroundGlobal(Vector axis, double angle)
+    public Transform RotateAroundGlobal(Vector3 axis, double angle)
     {
         var rotation = Quat.CreateFromAxisAngle(axis, double.DegreesToRadians(angle));
         Rotation *= rotation;
         return this;
     }
     
-    public Transform RotateAroundLocal(Vector axis, double angle)
+    public Transform RotateAroundLocal(Vector3 axis, double angle)
     {
-        var worldAxis = Basis.TransformVector(axis.Normalized());
+        var worldAxis = Basis.TransformVector(axis.NormalizedCopy());
         var rotation = Quat.CreateFromAxisAngle(worldAxis, double.DegreesToRadians(angle));
     
         // Apply the rotation
@@ -133,12 +132,17 @@ public class Transform
         return this;
     }
 
-    public Transform Rescale(double x, double y, double z)
+    public Transform Rescale(double scale)
     {
-        Scale *= new Vector(x, y, z);
+        Scale *= new Vector3(scale, scale, scale);
         return this;
     }
-    public Transform Rescale(Vector scale)
+    public Transform Rescale(double x, double y, double z)
+    {
+        Scale *= new Vector3(x, y, z);
+        return this;
+    }
+    public Transform Rescale(Vector3 scale)
     {
         Scale *= scale;
         return this;
@@ -179,7 +183,7 @@ public class Transform
         var invDet = 1.0f / determinant;
     
         // Calculate the adjugate matrix and multiply by 1/determinant
-        var inv = new Matrix4x4(
+        var inv = new Matrix(
             invDet * det1, -invDet * det4, invDet * det7, 0f,
             -invDet * det2, invDet * det5, -invDet * det8, 0f,
             invDet * det3, -invDet * det6, invDet * det9, 0f,
@@ -207,7 +211,7 @@ public class Transform
     {
         var m = Data;
 
-        var inv = new Matrix4x4(
+        var inv = new Matrix(
             m.M11, m.M21, m.M31, 0f,
             m.M12, m.M22, m.M32, 0f,
             m.M13, m.M23, m.M33, 0f,
@@ -240,39 +244,28 @@ public class Transform
                $"]";
     }
 
-    public Matrix4x4 ToMatrix()
+    public Matrix ToMatrix()
     {
         return Data;
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private Span<double> ToSpan()
-    {
-        return MemoryMarshal.CreateSpan(ref Unsafe.As<Matrix4x4, double>(ref Data), 16);
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ToFloatSpan(ref Span<float> span)
-    {
-        ReadOnlySpan<double> src = ToSpan();
-
-        for (var i = 0; i < 16; i++)
-            span[i] = (float)src[i];      // narrowing cast
-    }
+    public void ToFloatSpan(ref Span<float> span) => Data.ToFloatSpan(ref span);
     
     public static Transform Identity => new();
+    public static Transform Copy(Transform instance) => new() { Data = instance.Data };
     
-    public static Transform FromTranslation(Vector translation) => new (translation, Quat.Identity, Vector.One);
-    public static Transform FromTranslation(double x, double y, double z) => new (new Vector(x, y, z), Quat.Identity, Vector.One);
-    public static Transform FromRotation(Quat rotation) => new (Vector.Zero, rotation, Vector.One);
+    public static Transform FromTranslation(Vector3 translation) => new (translation, Quat.Identity, Vector3.One);
+    public static Transform FromTranslation(double x, double y, double z) => new (new Vector3(x, y, z), Quat.Identity, Vector3.One);
+    public static Transform FromRotation(Quat rotation) => new (Vector3.Zero, rotation, Vector3.One);
 
     public static Transform FromRotation(double pitch, double yaw, double roll)
     {
-        return new Transform(Vector.Zero, QuatMakers.FromRotation(pitch, yaw, roll), Vector.One);
+        return new Transform(Vector3.Zero, QuatMakers.FromRotation(pitch, yaw, roll), Vector3.One);
     }
-    public static Transform FromRotationRadians(double pitch, double yaw, double roll) => new (Vector.Zero, QuatMakers.FromRotationRadians(pitch, yaw,  roll), Vector.One);
-    public static Transform FromScale(Vector scale) => new (Vector.Zero, Quat.Identity, scale);
-    public static Transform FromScale(double x, double y, double z) => new (Vector.Zero, Quat.Identity, new Vector(x, y, z));
+    public static Transform FromRotationRadians(double pitch, double yaw, double roll) => new (Vector3.Zero, QuatMakers.FromRotationRadians(pitch, yaw,  roll), Vector3.One);
+    public static Transform FromScale(Vector3 scale) => new (Vector3.Zero, Quat.Identity, scale);
+    public static Transform FromScale(double x, double y, double z) => new (Vector3.Zero, Quat.Identity, new Vector3(x, y, z));
     
     public static Transform operator*(Transform child, Transform parent)
     {
@@ -286,5 +279,9 @@ public class Transform
     public void Multiply(in Transform child, ref Transform result)
     {
         result.Data = child.Data * Data;
+    }
+    public void Multiply(in Matrix child, ref Matrix result)
+    {
+        result = child * Data;
     }
 }

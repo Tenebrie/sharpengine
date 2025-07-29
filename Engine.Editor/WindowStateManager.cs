@@ -1,6 +1,7 @@
 ﻿using Silk.NET.Maths;
 using Silk.NET.Windowing;
 using System.Text.Json;
+using Engine.Core.Logging;
 using Engine.Editor.Windowing;
 using Timer = System.Timers.Timer;
 
@@ -50,12 +51,15 @@ public static class WindowStateManager
 
         if (_isDirty)
         {
-            var windowScale = GarbageFixes.GetPrimaryMonitorScale();
+            var windowScale = window.Monitor?.Index == 0 ? Vector2D<float>.One : GarbageFixes.GetPrimaryMonitorScale();
             var scaledSize = new Vector2D<int>(
-                (int)(window.FramebufferSize.X / windowScale.X),
-                (int)(window.FramebufferSize.Y / windowScale.Y)
+                (int)(window.FramebufferSize.X * windowScale.X),
+                (int)(window.FramebufferSize.Y * windowScale.Y)
             );
             
+            Logger.Info("Saving window state: " +
+                       $"Position=({window.Position.X}, {window.Position.Y}), " +
+                       $"Size=({scaledSize.X}, {scaledSize.Y})");
             _lastSavedState.PositionX = window.Position.X;
             _lastSavedState.PositionY = window.Position.Y;
             _lastSavedState.SizeX = scaledSize.X;
@@ -65,6 +69,7 @@ public static class WindowStateManager
 
         var json = JsonSerializer.Serialize(_lastSavedState, JsonSerializerOptions);
         File.WriteAllText(WindowStateFilePath, json);
+        _isDirty = false;
     }
     
     public static bool TryLoadWindowState(ref WindowOptions opts)

@@ -1,4 +1,5 @@
-﻿using Xunit.Sdk;
+﻿using Engine.Core.Common;
+using Xunit.Sdk;
 
 namespace Engine.Testing.TestUtilities;
 
@@ -13,8 +14,8 @@ public static class VectorAssert
     /// <param name="actual">The vector you actually got.</param>
     /// <param name="epsilon">Maximum allowed absolute difference per component.</param>
     public static void Equal(
-        Vector expected,
-        Vector actual,
+        Vector3 expected,
+        Vector3 actual,
         double epsilon = 1e-6)
     {
         var errors = new List<string>();

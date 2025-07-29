@@ -4,6 +4,8 @@
       <w>backstages</w>
       <w>bgfx</w>
       <w>msvcrt</w>
+      <w>rbga</w>
+      <w>ritters</w>
       <w>shaderslang</w>
       <w>vargs</w>
       <w>vscprintf</w>

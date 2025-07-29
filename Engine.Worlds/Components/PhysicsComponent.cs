@@ -1,4 +1,5 @@
-﻿using Engine.Core.Logging;
+﻿using Engine.Core.Common;
+using Engine.Core.Logging;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 
@@ -6,7 +7,7 @@ namespace Engine.Worlds.Components;
 
 public class PhysicsComponent : ActorComponent
 {
-    public Vector Velocity = Vector.Zero;
+    public Vector3 Velocity = Vector3.Zero;
     
     [OnUpdate]
     protected void OnUpdate(double deltaTime)
@@ -19,7 +20,7 @@ public class PhysicsComponent : ActorComponent
         Actor.Transform.TranslateGlobal(Velocity * deltaTime);
         if (Actor.Transform.Position.Y <= 0)
         {
-            Actor.Transform.Position = new Vector(Actor.Transform.Position.X, 0, Actor.Transform.Position.Z);
+            Actor.Transform.Position = new Vector3(Actor.Transform.Position.X, 0, Actor.Transform.Position.Z);
             Velocity.Y = 0;
         }
     }

@@ -1,22 +1,16 @@
 ﻿using Engine.Assets.Materials;
+using Engine.Assets.Materials.Meshes.Wireframe;
 using Engine.Assets.Meshes;
 using Engine.Core.Common;
 using Engine.Core.Profiling;
 using Engine.Worlds.Entities;
+using Engine.Worlds.Interfaces;
+using JetBrains.Annotations;
 
 namespace Engine.Worlds.Components;
 
-public interface IInstancedActorComponent
-{
-    StaticMesh Mesh { get; set; }
-    Material Material { get; set; }
-    
-    List<ActorInstance> Instances { get; set; }
-    
-    void AddInstance(Transform instanceTransform);
-}
-
-public class InstancedActorComponent<TInstance> : ActorComponent, IInstancedActorComponent where TInstance : ActorInstance, new()
+[UsedImplicitly]
+public class InstancedActorComponent<TInstance> : ActorComponent, IRenderable where TInstance : ActorInstance, new()
 {
     public StaticMesh Mesh { get; set; }
     public Material Material { get; set; }
@@ -29,5 +23,19 @@ public class InstancedActorComponent<TInstance> : ActorComponent, IInstancedActo
         AdoptChild(instancedActor);
         instancedActor.Transform = instanceTransform;
         Instances.Add(instancedActor);
+    }
+
+    private Transform[] _transformPool = [];
+    public void Render()
+    {
+        Array.Resize(ref _transformPool, Instances.Count);
+        for (var i = 0; i < Instances.Count; i++)
+        {
+            var actor = Instances[i];
+            _transformPool[i] = actor.WorldTransform;
+        }
+
+        Mesh.Render((uint)Instances.Count, ref _transformPool, 0, Material);
+        Mesh.BoundingSphere.Render((uint)Instances.Count, ref _transformPool, 0, WireframeMaterial.Instance);
     }
 }

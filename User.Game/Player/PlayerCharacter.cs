@@ -1,4 +1,5 @@
-﻿using Engine.Core.Extensions;
+﻿using Engine.Core.Common;
+using Engine.Core.Extensions;
 using Engine.Core.Logging;
 using Engine.Core.Makers;
 using Engine.Worlds.Attributes;
@@ -8,7 +9,7 @@ using Engine.Worlds.Services;
 using User.Game.Actors;
 using User.Game.Player.Components;
 using User.Game.Services;
-using Axis = Engine.Core.Common.Axis;
+using Vector3 = Engine.Core.Common.Vector3;
 
 namespace User.Game.Player;
 
@@ -26,16 +27,16 @@ public class PlayerCharacter : Actor
         var projectile = CreateActor<BasicProjectile>();
         projectile.Transform.Position = Transform.Position;
         
-        var forwardVector = Axis.Forward;
+        var forwardVector = Vector3.Forward;
         var mousePos = GetService<InputService>().GetMousePosition();
         var window = Backstage.GetWindow().FramebufferSize;
-        var value = new Vector(mousePos.X - window.X / 2.0, 0, mousePos.Y - window.Y / 2.0).Normalized();
+        var value = new Vector3(mousePos.X - window.X / 2.0, 0, mousePos.Y - window.Y / 2.0).NormalizeInPlace();
         var dotProduct = value.Dot(forwardVector);
         var crossProduct = value.Cross(forwardVector);
         var difference = Math.Atan2(crossProduct.Y, dotProduct);
         projectile.Transform.Rotation = QuatMakers.FromRotationRadians(0, difference, 0);
 
-        projectile.PhysicsComponent.Velocity = projectile.Transform.Basis.TransformVector(Axis.Forward) * 100.0;
+        projectile.PhysicsComponent.Velocity = projectile.Transform.Basis.TransformVector(Vector3.Forward) * 100.0;
     }
 
     [OnInputHeld(InputAction.MoveForward,  +1.0, +0.0)]
@@ -47,8 +48,8 @@ public class PlayerCharacter : Actor
         if (direction.LengthSquared == 0)
             return;
         
-        var value = new Vector(direction.Y, 0, -direction.X).Normalized();
-        var forwardVector = Axis.Forward;
+        var value = new Vector3(direction.Y, 0, -direction.X).NormalizeInPlace();
+        var forwardVector = Vector3.Forward;
         var dotProduct = value.Dot(forwardVector);
         var crossProduct = value.Cross(forwardVector);
         var difference = Math.Atan2(crossProduct.Y, dotProduct);

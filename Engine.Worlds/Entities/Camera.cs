@@ -8,7 +8,7 @@ public class Camera : Actor
 {
     public bool IsEditorCamera { get; protected set; } = false;
     
-    private float[] _projMatrix;
+    private Matrix _projMatrix;
     
     [OnInit]
     internal void OnInit()
@@ -22,12 +22,12 @@ public class Camera : Actor
         const float far = 10000.0f;
         var f = 1.0f / MathF.Tan(fov / 2.0f);
         
-        _projMatrix = [
+        _projMatrix = new Matrix(
             f / aspect, 0, 0, 0,
             0, f, 0, 0,
             0, 0, (far + near) / (near - far), -1,
             0, 0, (2 * far * near) / (near - far), 0
-        ];
+        );
         Backstage.Window.Load += OnLoad;
         Backstage.Window.Resize += OnResize;
     }
@@ -50,8 +50,8 @@ public class Camera : Actor
         const float fov = 60.0f * MathF.PI / 180.0f;
         var f = 1.0f / MathF.Tan(fov / 2.0f);
 
-        _projMatrix[0] = f / aspect;
-        _projMatrix[5] = f;
+        _projMatrix.M11 = f / aspect;
+        _projMatrix.M22 = f;
     }
 
     private Transform _transformInverse = Transform.Identity;
@@ -59,6 +59,65 @@ public class Camera : Actor
     {
         WorldTransform.InverseWithoutScale(ref _transformInverse);
         _transformInverse.ToFloatSpan(ref viewMatrix);
-        return new CameraView(viewMatrix, _projMatrix.AsSpan());
+        var projectionMatrixSpan = new float[16].AsSpan();
+        _projMatrix.ToFloatSpan(ref projectionMatrixSpan);
+        return new CameraView(viewMatrix, projectionMatrixSpan);
+    }
+    
+    struct Plane { public Vector3 Normal; public double D; }
+
+    Plane[] ExtractFrustumPlanes()
+    {
+        // var vp = Matrix4x4.Multiply(view, proj);
+        var vp = Matrix.Identity;
+        WorldTransform.Multiply(_projMatrix, ref vp);
+        Plane[] planes = new Plane[6];
+
+        // left  = row4 + row1
+        planes[0].Normal.X = vp.M14 + vp.M11;
+        planes[0].Normal.Y = vp.M24 + vp.M21;
+        planes[0].Normal.Z = vp.M34 + vp.M31;
+        planes[0].D        = vp.M44 + vp.M41;
+
+        // right = row4 - row1
+        planes[1].Normal.X = vp.M14 - vp.M11;
+        planes[1].Normal.Y = vp.M24 - vp.M21;
+        planes[1].Normal.Z = vp.M34 - vp.M31;
+        planes[1].D        = vp.M44 - vp.M41;
+
+        // bottom = row4 + row2
+        planes[2].Normal.X = vp.M14 + vp.M12;
+        planes[2].Normal.Y = vp.M24 + vp.M22;
+        planes[2].Normal.Z = vp.M34 + vp.M32;
+        planes[2].D        = vp.M44 + vp.M42;
+
+        // top    = row4 - row2
+        planes[3].Normal.X = vp.M14 - vp.M12;
+        planes[3].Normal.Y = vp.M24 - vp.M22;
+        planes[3].Normal.Z = vp.M34 - vp.M32;
+        planes[3].D        = vp.M44 - vp.M42;
+
+        // near   = row4 + row3
+        planes[4].Normal.X = vp.M14 + vp.M13;
+        planes[4].Normal.Y = vp.M24 + vp.M23;
+        planes[4].Normal.Z = vp.M34 + vp.M33;
+        planes[4].D        = vp.M44 + vp.M43;
+
+        // far    = row4 - row3
+        planes[5].Normal.X = vp.M14 - vp.M13;
+        planes[5].Normal.Y = vp.M24 - vp.M23;
+        planes[5].Normal.Z = vp.M34 - vp.M33;
+        planes[5].D        = vp.M44 - vp.M43;
+
+        // normalize all planes
+        for (int i = 0; i < 6; i++)
+        {
+            var n = planes[i].Normal;
+            double length = n.Length;
+            planes[i].Normal /= length;
+            planes[i].D      /= length;
+        }
+
+        return planes;
     }
 }

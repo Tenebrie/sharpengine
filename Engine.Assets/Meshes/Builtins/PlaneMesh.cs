@@ -1,5 +1,5 @@
-﻿using System.Numerics;
-using Engine.Assets.Loaders;
+﻿using Engine.Assets.Loaders;
+using Engine.Core.Common;
 
 namespace Engine.Assets.Meshes.Builtins;
 
@@ -20,8 +20,7 @@ public static class PlaneMesh
                 verts[y * (segmentsX + 1) + x] = new AssetVertex
                 {
                     Position = new Vector3(x * width / segmentsX - width / 2, 0, y * height / segmentsY - height / 2),
-                    TexCoord = new Vector2(u, v),
-                    VertexColor = Vector3.One
+                    TexCoord = new Vector2(u, v)
                 };
             }
         }

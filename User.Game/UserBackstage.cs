@@ -35,12 +35,12 @@ public class UserScene : Scene
         cameraFollower.PlayerCharacter = player;
         
         var basicEnemy = CreateActor<BasicEnemy>();
-        basicEnemy.Transform.Position = new Vector(0, 0, -20);
+        basicEnemy.Transform.Position = new Vector3(0, 0, -20);
 
         var honseTerrain = CreateActor<HonseTerrain>();
-        honseTerrain.Transform.Position = new Vector(0, -3.25, 0);
+        honseTerrain.Transform.Position = new Vector3(0, -3.25, 0);
         var scale = 30;
-        honseTerrain.Transform.Scale = new Vector(scale, scale, scale);
+        honseTerrain.Transform.Scale = new Vector3(scale, scale, scale);
         
         var cubeManager = CreateActor<UnitCube>();
         for (var x = 0; x < 5; x++)
@@ -48,8 +48,8 @@ public class UserScene : Scene
             for (var y = 0; y < 5; y++)
             {  
                 var transform = Transform.Identity; 
-                transform.Position = new Vector(x * 2, y * 2 - 20, -10);
-                transform.Scale = new Vector(0.4f, 0.4f, 0.4f);
+                transform.Position = new Vector3(x * 2, y * 2 - 20, -10);
+                transform.Scale = new Vector3(0.4f, 0.4f, 0.4f);
                 transform.Rotation = Quaternion.Identity;
                 cubeManager.InstanceManager.AddInstance(transform);
             }

@@ -1,4 +1,5 @@
-﻿using Engine.Core.Makers;
+﻿using Engine.Core.Common;
+using Engine.Core.Makers;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 using Engine.Worlds.Services;
@@ -15,7 +16,7 @@ public class PlayerCameraFollower : Actor
     [OnInit]
     protected void OnInit()
     {
-        MainCameraComponent.Transform.Position = new Vector(0, 150, 0);
+        MainCameraComponent.Transform.Position = new Vector3(0, 150, 0);
         MainCameraComponent.Transform.Rotation = QuatMakers.FromRotation(75, 0, 0);
 
         GetService<CommunicationService>();

@@ -1,13 +1,18 @@
 ﻿using Engine.Assets.Loaders;
 using Engine.Assets.Materials;
 using Engine.Assets.Materials.Meshes.Terrain;
+using Engine.Assets.Materials.Meshes.Wireframe;
 using Engine.Assets.Meshes;
+using Engine.Core.Common;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
+using Engine.Worlds.Interfaces;
+using JetBrains.Annotations;
 
 namespace Engine.Worlds.Components;
 
-public class TerrainMeshComponent : ActorComponent
+[UsedImplicitly]
+public class TerrainMeshComponent : ActorComponent, IRenderable
 {
     public StaticMesh Mesh;
     public Material Material;
@@ -19,5 +24,13 @@ public class TerrainMeshComponent : ActorComponent
         Material = new TerrainMaterial();
         ObjMeshLoader.LoadObj("Assets/Meshes/terrain-plain.obj", out var vertices, out var indices);
         Mesh.Load(vertices, indices);
+    }
+    
+    private Transform[] _singleComponentTransforms = new Transform[1];
+    public void Render()
+    {
+        _singleComponentTransforms[0] = WorldTransform;
+        Mesh.Render(1, ref _singleComponentTransforms, 0, Material);
+        Mesh.BoundingSphere.Render(1, ref _singleComponentTransforms, 0, WireframeMaterial.Instance);
     }
 }

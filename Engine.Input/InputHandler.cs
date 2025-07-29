@@ -1,4 +1,5 @@
-﻿using Engine.Core.Logging;
+﻿using Engine.Core.Common;
+using Engine.Core.Logging;
 using Engine.Input.Contexts;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
@@ -19,7 +20,7 @@ public partial class InputHandler
         
         foreach (var handler in _triggeredHandlers.Values)
         {
-            var parameterSum = new Vector();
+            var parameterSum = new Vector3();
             foreach (var action in handler)
             {
                 parameterSum.X += action.X;

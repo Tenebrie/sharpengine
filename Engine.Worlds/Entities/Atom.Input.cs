@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using Engine.Core.Common;
 using Engine.Input;
 using Engine.Input.Attributes;
 using Silk.NET.Input;
@@ -139,7 +140,7 @@ public partial class Atom
                     groupId,
                     attr.X, attr.Y, attr.Z,
                     (x,y,z,_) =>
-                        ((Action<Vector>)Delegate.CreateDelegate(typeof(Action<Vector>), this, method))(new Vector(x, y, z))
+                        ((Action<Vector3>)Delegate.CreateDelegate(typeof(Action<Vector3>), this, method))(new Vector3(x, y, z))
                 ),
             _ => throw new Exception("Unable to bind input action with binding params: " + attr.BindingParams)
         };
@@ -173,7 +174,7 @@ public partial class Atom
                     groupId,
                     attr.X, attr.Y, attr.Z,
                     (delta,x,y,z) =>
-                        ((Action<double, Vector>)Delegate.CreateDelegate(typeof(Action<double, Vector>), this, method))(delta,new Vector(x, y, z))
+                        ((Action<double, Vector3>)Delegate.CreateDelegate(typeof(Action<double, Vector3>), this, method))(delta,new Vector3(x, y, z))
                 ),
             _ => throw new Exception("Unable to bind input action with binding params: " + attr.BindingParams)
         };

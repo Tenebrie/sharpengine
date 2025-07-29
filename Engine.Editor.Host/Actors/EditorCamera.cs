@@ -1,13 +1,9 @@
 ﻿using Engine.Core.Common;
-using Engine.Core.Extensions;
-using Engine.Core.Logging;
-using Engine.Core.Makers;
 using Engine.Editor.Host.Services;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 using Engine.Worlds.Services;
 using Silk.NET.Input;
-using Axis = Engine.Core.Common.Axis;
 
 namespace Engine.Editor.Host.Actors;
 
@@ -24,11 +20,11 @@ public class EditorCamera : Camera
     protected void OnInit()
     {
         IsEditorCamera = true; 
-        Transform.Position = new Vector(0.0, 50.0, 50.0);
+        Transform.Position = new Vector3(0.0, 50.0, 50.0);
         _pitch = 45;
         Transform.Rotation = Transform.Identity
-            .RotateAroundGlobal(Axis.Yaw, _yaw)
-            .RotateAroundLocal(Axis.Pitch, _pitch)
+            .RotateAroundGlobal(Vector3.Yaw, _yaw)
+            .RotateAroundLocal(Vector3.Pitch, _pitch)
             .Rotation;
     }
     
@@ -38,10 +34,10 @@ public class EditorCamera : Camera
     [OnInputHeld(InputAction.CameraRight,    +0.0, +1.0, +0.0)]
     [OnInputHeld(InputAction.CameraForward,  +1.0, +0.0, +0.0)]
     [OnInputHeld(InputAction.CameraBackward, -1.0, +0.0, +0.0)]
-    protected void OnCameraPan(double deltaTime, Vector direction)
+    protected void OnCameraPan(double deltaTime, Vector3 direction)
     {
         var value = (Transform.Basis.Forward * direction.X + Transform.Basis.Right * direction.Y + Transform.Basis.Up * direction.Z) * _movementSpeed * deltaTime;
-        value.Normalize();
+        value.NormalizeInPlace();
         Transform.TranslateGlobal(value * _movementSpeed * deltaTime);
     }
 
@@ -53,8 +49,8 @@ public class EditorCamera : Camera
         _pitch += direction.X / screenSize.X * RotationSpeed;
         _yaw += direction.Y / screenSize.X * RotationSpeed;
         Transform.Rotation = Transform.Identity
-            .RotateAroundGlobal(Axis.Yaw, _yaw)
-            .RotateAroundLocal(Axis.Pitch, _pitch)
+            .RotateAroundGlobal(Vector3.Yaw, _yaw)
+            .RotateAroundLocal(Vector3.Pitch, _pitch)
             .Rotation;
         GetService<InputService>().SetMousePosition(_savedMousePosition);
     }

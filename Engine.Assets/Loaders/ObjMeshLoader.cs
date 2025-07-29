@@ -1,14 +1,17 @@
-﻿using System.Globalization;
-using System.Numerics;
+﻿using System.Drawing;
+using System.Globalization;
+using Engine.Core.Common;
 
 namespace Engine.Assets.Loaders
 {
-    public struct AssetVertex
+    public struct AssetVertex(Vector3 position, Vector2 texCoord, Vector3 normal, Color vertexColor)
     {
-        public Vector3 Position;
-        public Vector2 TexCoord;
-        public Vector3 Normal;
-        public Vector3 VertexColor;
+        public Vector3 Position = position;
+        public Vector2 TexCoord = texCoord;
+        public Vector3 Normal = normal;
+        public Color VertexColor = vertexColor;
+
+        public AssetVertex() : this(Vector3.Zero, Vector2.Zero, Vector3.Zero, Color.Aqua) {}
     }
 
     public static class ObjMeshLoader
@@ -117,7 +120,12 @@ namespace Engine.Assets.Loaders
                     Position    = posList[vi],
                     TexCoord    = ti >= 0 ? uvList[ti]   : Vector2.Zero,
                     Normal      = ni >= 0 ? normList[ni] : Vector3.Zero,
-                    VertexColor = colorList[vi],
+                    VertexColor = Color.FromArgb(
+                        255, 
+                        (int)(colorList[vi][0] * 255),
+                        (int)(colorList[vi][1] * 255),
+                        (int)(colorList[vi][2] * 255)
+                    )
                 };
 
                 idx = (ushort)vertList.Count;

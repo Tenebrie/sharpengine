@@ -1,64 +1,18 @@
-﻿using System.Buffers;
-using System.Runtime.InteropServices;
-using Engine.Core.Enum;
+﻿using Engine.Core.Enum;
 using Engine.Core.Profiling;
 using Engine.Rendering.Bgfx;
+using Engine.Rendering.Platforms;
 using Engine.Rendering.Renderers;
 using Engine.User.Contracts;
-using Engine.Worlds.Components;
 using Engine.Worlds.Entities;
+using Engine.Worlds.Interfaces;
 using JetBrains.Annotations;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
 using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
-using Transform = Engine.Core.Common.Transform;
 
 namespace Engine.Rendering;
 
-static class ObjCRuntime
-{
-    private const string LIBOBJC = "/usr/lib/libobjc.A.dylib";
-
-    [DllImport(LIBOBJC, EntryPoint = "sel_registerName")]
-    public static extern IntPtr sel_registerName(string selector);
-
-    [DllImport(LIBOBJC, EntryPoint = "objc_getClass")]
-    public static extern IntPtr objc_getClass(string name);
-
-    // Generic message-send that returns an object pointer (e.g. [CAMetalLayer layer])
-    [DllImport(LIBOBJC, EntryPoint = "objc_msgSend")]
-    public static extern IntPtr objc_msgSend_IntPtr(IntPtr receiver, IntPtr selector);
-
-    // Message‑send for methods that take an object pointer and return void (e.g. setLayer:)
-    [DllImport(LIBOBJC, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend_Void_IntPtr(IntPtr receiver, IntPtr selector, IntPtr arg);
-
-    // Message‑send for methods that take a bool/BOOL and return void (e.g. setWantsLayer:)
-    [DllImport(LIBOBJC, EntryPoint = "objc_msgSend")]
-    public static extern void objc_msgSend_Void_Bool(IntPtr receiver, IntPtr selector, bool arg);
-
-    public static IntPtr GetContentView(IntPtr nsWindowPtr)
-    {
-        var selContentView = sel_registerName("contentView");
-        return objc_msgSend_IntPtr(nsWindowPtr, selContentView);
-    }
-
-    public static IntPtr CreateMetalLayer()
-    {
-        var cls = objc_getClass("CAMetalLayer");
-        var selLayer = sel_registerName("layer");
-        return objc_msgSend_IntPtr(cls, selLayer);
-    }
-
-    public static void AttachLayerToView(IntPtr viewPtr, IntPtr layerPtr)
-    {
-        var selSetLayer    = sel_registerName("setLayer:");
-        var selWantsLayer = sel_registerName("setWantsLayer:");
-
-        objc_msgSend_Void_IntPtr(viewPtr, selSetLayer, layerPtr);
-        objc_msgSend_Void_Bool   (viewPtr, selWantsLayer, true);
-    }
-}
 
 [UsedImplicitly]
 public unsafe class RenderingCore : IRendererContract
@@ -91,25 +45,11 @@ public unsafe class RenderingCore : IRendererContract
         Init initData = default;
         init_ctor(&initData);
         if (OperatingSystem.IsWindows())
-        {
-            initData.type = RendererType.Direct3D11;
-            initData.platformData.nwh = (void*)window.Native!.Win32!.Value.Hwnd;
-        }
+            WindowsRuntime.PrepareInit(ref initData, window);
         else if (OperatingSystem.IsMacOS())
-        {
-            var nsWindow = window.Native?.Cocoa
-                           ?? throw new InvalidOperationException("No Cocoa window!");
-            var contentView = ObjCRuntime.GetContentView(nsWindow);
-            var metalLayer = ObjCRuntime.CreateMetalLayer();
-            ObjCRuntime.AttachLayerToView(contentView, metalLayer);
-            
-            initData.type = RendererType.Metal;
-            initData.platformData.nwh = metalLayer.ToPointer();
-        }
+            MacRuntime.PrepareInit(ref initData, window);
         else
-        {
             throw new NotSupportedException("Unsupported platform for bgfx initialization.");
-        }
 
         initData.resolution.width = (uint)FramebufferSize.X;
         initData.resolution.height = (uint)FramebufferSize.Y;
@@ -148,11 +88,6 @@ public unsafe class RenderingCore : IRendererContract
         window.Render += RenderSingleFrame;
         window.Resize += OnResize;
         window.Closing += Shutdown;
-    }
-
-    static RenderingCore()
-    {
-        SingleComponentTransforms = new Transform[1];
     }
 
     [Profile]
@@ -211,61 +146,12 @@ public unsafe class RenderingCore : IRendererContract
 
     private void RenderAtomTree(Atom target)
     {
-        switch (target)
-        {
-            case StaticMeshComponent staticMesh:
-                RenderStaticMeshComponent(staticMesh);
-                break;
-            case TerrainMeshComponent staticMesh:
-                RenderTerrainMeshComponent(staticMesh);
-                break;
-            case IInstancedActorComponent instancedActorManager:
-                RenderInstancedActorComponent(instancedActorManager);
-                break;
-        }
+        if (target is IRenderable renderable)
+            renderable.Render();
 
         foreach (var child in target.Children)
         {
             RenderAtomTree(child);
-        }
-    }
-
-    [ThreadStatic] private static readonly Transform[] SingleComponentTransforms;
-    private static void RenderStaticMeshComponent(StaticMeshComponent staticMesh)
-    {
-        if (!staticMesh.Mesh.IsValid)
-            return;
-        SingleComponentTransforms[0] = staticMesh.WorldTransform;
-        staticMesh.Mesh.Render(1, SingleComponentTransforms, 0, staticMesh.Material);
-    }
-    
-    private static void RenderTerrainMeshComponent(TerrainMeshComponent staticMesh)
-    {
-        if (!staticMesh.Mesh.IsValid)
-            return;
-        SingleComponentTransforms[0] = staticMesh.WorldTransform;
-        staticMesh.Mesh.Render(1, SingleComponentTransforms, 0, staticMesh.Material);
-    }
-
-    private static void RenderInstancedActorComponent(IInstancedActorComponent instancedActorComponent)
-    {
-        if (!instancedActorComponent.Mesh.IsValid)
-            return;
-        var transforms = ArrayPool<Transform>.Shared.Rent(instancedActorComponent.Instances.Count);
-        try
-        {
-            for (var i = 0; i < instancedActorComponent.Instances.Count; i++)
-            {
-                var actor = instancedActorComponent.Instances[i];
-                transforms[i] = actor.WorldTransform;
-            }
-
-            instancedActorComponent.Mesh.Render((uint)instancedActorComponent.Instances.Count, transforms, 0,
-                instancedActorComponent.Material);
-        }
-        finally
-        {
-            ArrayPool<Transform>.Shared.Return(transforms);
         }
     }
 

@@ -86,4 +86,10 @@ public class EditorControls : IEditorContract
         if (Editor.RenderingAssembly.Renderer is not null)
             Editor.RenderingAssembly.Renderer.SetGameplayContext(context);
     }
+
+    public void SetGameplayTimeScale(double timeScale)
+    {
+        if (Editor.UserlandAssembly.Backstage is not null)
+            Editor.UserlandAssembly.Backstage.TimeScale = timeScale;
+    }
 }

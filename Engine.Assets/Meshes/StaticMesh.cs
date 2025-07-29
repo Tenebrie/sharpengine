@@ -1,20 +1,13 @@
-﻿using System.Numerics;
+﻿using System.Drawing;
 using System.Runtime.InteropServices;
 using Engine.Assets.Loaders;
 using Engine.Assets.Materials;
+using Engine.Core.Common;
+using Engine.Core.Logging;
 using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 using Transform = Engine.Core.Common.Transform;
 
 namespace Engine.Assets.Meshes;
-
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-public readonly struct RenderingVertex(float x, float y, float z, Vector2 uv, uint color, Vector3 normal)
-{
-    public readonly float X = x, Y = y, Z = z;
-    public readonly Vector2 Uv = uv;
-    public readonly uint Color = color;
-    public readonly Vector3 Normal = normal;
-}
 
 public enum WindingOrder
 {
@@ -24,14 +17,14 @@ public enum WindingOrder
 
 public class StaticMesh : IDisposable
 {
+    public readonly BoundingSphere BoundingSphere = new();
+    
     public bool IsValid { get; private set; } = false;
     
     private WindingOrder WindingOrder { get; set; } = WindingOrder.Cw;
 
-    private int _vertexCount;
-    private int _indexCount;
-    private VertexBufferHandle _vertexBuffer;
-    private IndexBufferHandle _indexBuffer;
+    private VertexBuffer _vertexBuffer;
+    private IndexBuffer _indexBuffer;
     private VertexLayout _layout;
 
     public void Load(AssetVertex[] verts, ushort[] indices)
@@ -41,63 +34,52 @@ public class StaticMesh : IDisposable
         for (var i = 0; i < verts.Length; i++)
         {
             var v = verts[i];
-            const uint a = 0xFF;                                // full alpha
-            var r = (uint)(v.VertexColor.X * 255) & 0xFF;   // Red
-            var g = (uint)(v.VertexColor.Y * 255) & 0xFF;   // Green
-            var b = (uint)(v.VertexColor.Z * 255) & 0xFF;   // Blue
+            var a = (uint)v.VertexColor.A & 0xFF;
+            var r = (uint)v.VertexColor.R & 0xFF;
+            var g = (uint)v.VertexColor.G & 0xFF;
+            var b = (uint)v.VertexColor.B & 0xFF;
 
             var color = (a << 24)
                         | (b << 16)
                         | (g <<  8)
                         |  r;
-            renderVerts[i] = new RenderingVertex(v.Position.X, v.Position.Y, v.Position.Z, v.TexCoord, color, Vector3.One);
+            renderVerts[i] = new RenderingVertex(
+                (float)v.Position.X, (float)v.Position.Y, (float)v.Position.Z,
+                new System.Numerics.Vector2((float)v.TexCoord.X, (float)v.TexCoord.Y),
+                color,
+                System.Numerics.Vector3.One);
         }
 
         LoadInternal(renderVerts, indices);
+        BoundingSphere.Load(verts);
     }
     
-    private unsafe void LoadInternal(RenderingVertex[] verts, ushort[] indices)
+    private void LoadInternal(RenderingVertex[] verts, ushort[] indices)
     {
-        _vertexCount = verts.Length;
-        _indexCount = indices.Length;
-        _layout = new VertexLayout();
-        fixed (VertexLayout* layout = &_layout)
-        {
-            vertex_layout_begin(layout, get_renderer_type());
-            vertex_layout_add(layout, Attrib.Position, 3, AttribType.Float, true, false);
-            vertex_layout_add(layout, Attrib.TexCoord0, 2, AttribType.Float, true, false);
-            vertex_layout_add(layout, Attrib.Color0, 4, AttribType.Uint8, true, true);
-            vertex_layout_add(layout, Attrib.Normal, 3, AttribType.Float, true, false);
-            vertex_layout_end(layout);
-
-            fixed (RenderingVertex* vPtr = verts)
-            fixed (VertexLayout* layoutPtr = &_layout)
-            {
-                var byteSize = (uint)(verts.Length * sizeof(RenderingVertex));
-                _vertexBuffer = create_vertex_buffer(copy(vPtr, byteSize), layoutPtr, 0);
-            }
-            fixed (ushort* ptr = indices)
-            {
-                var byteSize = (uint)indices.Length * sizeof(ushort);
-                _indexBuffer = create_index_buffer(copy(ptr, byteSize), 0);
-            }
-        }
+        CreateVertexLayout(ref _layout, [
+            new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
+            new VertexLayoutAttribute(Attrib.TexCoord0, 2, AttribType.Float, true, false),
+            new VertexLayoutAttribute(Attrib.Color0, 4, AttribType.Uint8, true, true),
+            new VertexLayoutAttribute(Attrib.Normal, 3, AttribType.Float, true, false)
+        ]);
+        _vertexBuffer = CreateVertexBuffer(ref verts, ref _layout);
+        _indexBuffer = CreateIndexBuffer(ref indices);
 
         IsValid = true;
     }
 
     public void LoadUnitCube()
     {
-        RenderingVertex[] verts =
+        AssetVertex[] verts =
         [
-            new(-1, -1, -1, Vector2.Zero,0xff0000ff, Vector3.One), // red
-            new( 1, -1, -1, Vector2.One, 0xff00ff00, Vector3.One), // green
-            new( 1,  1, -1, Vector2.One, 0xffffff00, Vector3.One), // yellow
-            new(-1,  1, -1, Vector2.One, 0xffff0000, Vector3.One), // blue
-            new(-1, -1,  1, Vector2.One, 0xff00ffff, Vector3.One), // cyan
-            new( 1, -1,  1, Vector2.One, 0xffff00ff, Vector3.One), // magenta
-            new( 1,  1,  1, Vector2.One, 0xffffffff, Vector3.One), // white
-            new(-1,  1,  1, Vector2.One, 0xff808080, Vector3.One)  // gray
+            new(new Vector3(-1, -1, -1), Vector2.Zero, Vector3.One, Color.Red),
+            new(new Vector3( 1, -1, -1), Vector2.Zero, Vector3.One, Color.Green),
+            new(new Vector3( 1,  1, -1), Vector2.Zero, Vector3.One, Color.Yellow),
+            new(new Vector3(-1,  1, -1), Vector2.Zero, Vector3.One, Color.Blue),
+            new(new Vector3(-1, -1,  1), Vector2.Zero, Vector3.One, Color.Cyan),
+            new(new Vector3( 1, -1,  1), Vector2.Zero, Vector3.One, Color.Magenta),
+            new(new Vector3( 1,  1,  1), Vector2.Zero, Vector3.One, Color.White),
+            new(new Vector3(-1,  1,  1), Vector2.Zero, Vector3.One, Color.Gray)
         ];
 
         // 12 triangles (36 indices)
@@ -112,11 +94,17 @@ public class StaticMesh : IDisposable
         ];
         WindingOrder = WindingOrder.Ccw;
         
-        LoadInternal(verts, indices);
+        // LoadInternal(verts, indices);
+        Load(verts, indices);
     }
     
-    public unsafe void Render(uint instanceCount, Transform[] worldTransforms, ushort viewId, Material material)
+    public unsafe void Render(uint instanceCount, ref Transform[] worldTransforms, ushort viewId, Material material)
     {
+        if (!IsValid)
+        {
+            Logger.Error("StaticMesh is not initialized. Call Load() first.");
+            return;
+        }
         var idb = new InstanceDataBuffer();
         const ushort bytesPerMatrix = 16 * sizeof(float);
         alloc_instance_data_buffer(&idb, instanceCount, bytesPerMatrix);
@@ -131,10 +119,10 @@ public class StaticMesh : IDisposable
                 instanceDataArray[i * 16 + j] = mat[j];
             }
         }
-        set_instance_data_buffer(&idb, 0, instanceCount);
+        SetInstanceDataBuffer(&idb, 0, instanceCount);
 
-        set_vertex_buffer(0, _vertexBuffer, 0, (uint)_vertexCount);
-        set_index_buffer(_indexBuffer, 0, (uint)_indexCount);
+        SetVertexBuffer(_vertexBuffer);
+        SetIndexBuffer(_indexBuffer);
         var stateFlags = StateFlags.WriteRgb | StateFlags.WriteA | StateFlags.WriteZ | StateFlags.DepthTestLess;
         if (WindingOrder == WindingOrder.Ccw)
             stateFlags |= StateFlags.CullCcw;
@@ -144,8 +132,20 @@ public class StaticMesh : IDisposable
         
         material.BindTexture();
         submit(viewId, material.Program, 1, 0);
-
     }
 
-    public void Dispose() { destroy_vertex_buffer(_vertexBuffer); destroy_index_buffer(_indexBuffer); }
+    public void Dispose()
+    {
+        destroy_vertex_buffer(_vertexBuffer.Handle);
+        destroy_index_buffer(_indexBuffer.Handle);
+    }
+    
+    [StructLayout(LayoutKind.Sequential, Pack = 1)]
+    private readonly struct RenderingVertex(float x, float y, float z, System.Numerics.Vector2 uv, uint color, System.Numerics.Vector3 normal)
+    {
+        public readonly float X = x, Y = y, Z = z;
+        public readonly System.Numerics.Vector2 Uv = uv;
+        public readonly uint Color = color;
+        public readonly System.Numerics.Vector3 Normal = normal;
+    }
 }

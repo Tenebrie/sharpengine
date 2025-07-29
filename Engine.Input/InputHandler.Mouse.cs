@@ -1,4 +1,5 @@
-﻿using Engine.Core.Logging;
+﻿using Engine.Core.Common;
+using Engine.Core.Logging;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
 using MouseButton = Silk.NET.Input.MouseButton;
@@ -25,7 +26,7 @@ public partial class InputHandler
         if (KnownMice.Count == 0)
             return Vector2.Zero;
         
-        return new Vector2(KnownMice[0].Position.X, KnownMice[0].Position.Y);
+        return KnownMice[0].Position;
     }
     public void SetMousePosition(Vector2 position)
     {

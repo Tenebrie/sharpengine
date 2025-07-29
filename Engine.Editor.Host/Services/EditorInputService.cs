@@ -80,6 +80,15 @@ public class EditorInputService : Service
 
         RecalculateActiveContext();
     }
+    
+    private bool _isGameSuspended = false;
+    [OnKeyInput(Key.F6)]
+    protected void OnToggleGameSuspended()
+    {
+        _isGameSuspended = !_isGameSuspended;
+        HostBackstage.Editor.SetGameplayTimeScale(_isGameSuspended ? 0.0 : 1.0);
+    }
+    
     [OnKeyInput(Key.F11)]
     protected void OnReload()
     {

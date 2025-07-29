@@ -1,4 +1,6 @@
-﻿namespace Engine.Core.Makers;
+﻿using Engine.Core.Common;
+
+namespace Engine.Core.Makers;
 
 public static class QuatMakers
 {
@@ -12,7 +14,7 @@ public static class QuatMakers
         return Quat.CreateFromYawPitchRoll(yaw, pitch, roll);
     }
     
-    public static Quat FromRowMatrix(in Matrix4x4 m)
+    public static Quat FromRowMatrix(in Matrix m)
     {
         double trace = m.M11 + m.M22 + m.M33;
         double qw, qx, qy, qz;
