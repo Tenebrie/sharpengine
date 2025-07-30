@@ -1,4 +1,6 @@
-﻿using System.Diagnostics;
+﻿using System.Buffers;
+using System.Diagnostics;
+using Engine.Assets.Rendering;
 using Engine.Core.Enum;
 using Engine.Core.Logging;
 using Engine.Core.Profiling;
@@ -30,6 +32,8 @@ public unsafe class RenderingCore : IRendererContract
         (int)Math.Round(_rootWindow.FramebufferSize.Y * ResolutionScale)
     );
 
+    private DynamicVertexBufferHandle _instanceTransformVertexBuffer;
+
     public void Register(Backstage backstage)
     {
         _backstages.Add(backstage);
@@ -56,7 +60,7 @@ public unsafe class RenderingCore : IRendererContract
         initData.resolution.width = (uint)FramebufferSize.X;
         initData.resolution.height = (uint)FramebufferSize.Y;
         initData.resolution.format = TextureFormat.RGBA8;
-        initData.resolution.reset = (uint)ResetFlags.Vsync;
+        initData.resolution.reset = 0;
         initData.resolution.numBackBuffers = 2;
         initData.resolution.maxFrameLatency = 3;
         initData.callback = BgfxCallbacks.InterfacePtr;
@@ -67,7 +71,7 @@ public unsafe class RenderingCore : IRendererContract
         HotInitialize(window);
     }
 
-    private ResetFlags _resetFlags = ResetFlags.MsaaX8 | ResetFlags.Maxanisotropy | ResetFlags.Vsync;
+    private ResetFlags _resetFlags = ResetFlags.MsaaX8 | ResetFlags.Maxanisotropy;
     private DebugFlags _debugFlags = DebugFlags.Text;
 
     private ResetFlags GetResetFlags()
@@ -87,10 +91,25 @@ public unsafe class RenderingCore : IRendererContract
         
         _logRenderer = new LogRenderer(this);
         
+        VertexLayout instLayout = default;
+        CreateVertexLayout(ref instLayout, [
+            new VertexLayoutAttribute(Attrib.TexCoord4, 4, AttribType.Float, false, false),
+            new VertexLayoutAttribute(Attrib.TexCoord5, 4, AttribType.Float, false, false),
+            new VertexLayoutAttribute(Attrib.TexCoord6, 4, AttribType.Float, false, false),
+            new VertexLayoutAttribute(Attrib.TexCoord7, 4, AttribType.Float, false, false),
+        ]);
+
+        _instanceTransformVertexBuffer = create_dynamic_vertex_buffer(1, &instLayout, (ushort)BufferFlags.AllowResize);
+        
         window.Render += RenderSingleFrame;
         window.Resize += OnResize;
         window.Closing += Shutdown;
     }
+
+    private int _atomsToRenderCount = 0;
+    private IRenderable[] _atomsToRender = [];
+    private int _culledAtomsCount = 0;
+    private IRenderable[] _culledAtoms = [];
 
     [Profile]
     private void RenderSingleFrame(double deltaTime)
@@ -119,20 +138,23 @@ public unsafe class RenderingCore : IRendererContract
             return;
         }
         
-        List<IRenderable> atomsToRender = [];
-        List<IRenderable> culledAtoms = [];
         activeCamera.UpdateFrustumPlanes();
-    
+        
         foreach (var backstage in _backstages)
         {
-            CollectAtomsToRender(ref atomsToRender, backstage);
-            FrustumCulling(activeCamera, ref atomsToRender, ref culledAtoms);
-            RenderAtomTree(culledAtoms);
+            // Collect all IRenderable entities reachable from the atom tree
+            CollectAtomsToRender(ref _atomsToRender, ref _atomsToRenderCount, backstage);
+            // Cull entities off-camera
+            FrustumCulling(activeCamera, ref _atomsToRender, _atomsToRenderCount, ref _culledAtoms, ref _culledAtomsCount);
+            // Render surviving atoms
+            RenderAtomTree(_culledAtoms, _culledAtomsCount);
             
-            atomsToRender.Clear();
-            culledAtoms.Clear();
+            _atomsToRenderCount = 0;
+            _culledAtomsCount = 0;
+            Array.Clear(_atomsToRender);
+            Array.Clear(_culledAtoms);
         }
-    
+        
         Frame(false);
     }
 
@@ -169,36 +191,95 @@ public unsafe class RenderingCore : IRendererContract
         }
     }
     
-    private void CollectAtomsToRender(ref List<IRenderable> entitiesToRender, Atom target)
+    private static void CollectAtomsToRender(ref IRenderable[] entitiesToRender, ref int entitiesToRenderCount, Atom target)
     {
         if (target is IRenderable renderable)
         {
-            entitiesToRender.Add(renderable);
+            // Resize the array if necessary
+            if (entitiesToRenderCount >= entitiesToRender.Length)
+                Array.Resize(ref entitiesToRender, Math.Max(entitiesToRenderCount + 1, entitiesToRender.Length * 2));
+            
+            entitiesToRender[entitiesToRenderCount++] = renderable;
         }
 
         foreach (var child in target.Children)
         {
-            CollectAtomsToRender(ref entitiesToRender, child);
+            CollectAtomsToRender(ref entitiesToRender, ref entitiesToRenderCount, child);
         }
     }
     
-    private void FrustumCulling(Camera activeCamera, ref List<IRenderable> atomsToRender, ref List<IRenderable> culledAtoms)
+    private static void FrustumCulling(
+        Camera activeCamera,
+        ref IRenderable[] atomsToRender,
+        int atomsToRenderCount,
+        ref IRenderable[] culledAtoms,
+        ref int culledAtomsCount)
     {
-        foreach (var atom in atomsToRender)
+        for (var index = 0; index < atomsToRenderCount; index++)
         {
+            var atom = atomsToRender[index];
             atom.PerformCulling(activeCamera);
             if (atom.IsOnScreen)
-                culledAtoms.Add(atom);
+            {
+                // Resize the culledAtoms array if necessary
+                if (culledAtomsCount >= culledAtoms.Length)
+                    Array.Resize(ref culledAtoms, Math.Max(culledAtomsCount + 1, culledAtoms.Length * 2));
+                culledAtoms[culledAtomsCount++] = atom;
+            }
         }
     }
 
-
-    private void RenderAtomTree(List<IRenderable> atomsToRender)
+    private static uint CollectInstanceCount(IRenderable[] culledAtoms, int culledAtomsCount)
     {
-        foreach (var renderable in atomsToRender)
+        uint instanceCount = 0;
+        for (var index = 0; index < culledAtomsCount; index++)
         {
-            renderable.Render();
+            var atom = culledAtoms[index];
+            instanceCount += (uint)atom.GetInstanceCount();
         }
+
+        return instanceCount;
+    }
+
+    private void RenderAtomTree(IRenderable[] atomsToRender, int atomsToRenderCount)
+    {
+        var instanceCount = CollectInstanceCount(atomsToRender, atomsToRenderCount);
+        if (instanceCount == 0)
+            return;
+
+        var instanceTransformPrepBuffer = ArrayPool<float>.Shared.Rent((int)instanceCount * 16);
+        
+        var renderContext = new RenderContext
+        {
+            ViewId = (ushort)ViewId.World,
+            InstanceTransformCount = 0,
+            InstanceTransformBuffer = _instanceTransformVertexBuffer,
+            InstanceTransformStride = 16,
+            InstanceTransformPrepBuffer = instanceTransformPrepBuffer,
+        };
+
+        for (var index = 0; index < atomsToRenderCount; index++)
+        {
+            var renderable = atomsToRender[index];
+            renderable.PrepareRender(ref renderContext);
+        }
+
+        const ushort bytesPerMatrix = 16 * sizeof(float);
+        fixed (float* instanceTransformPtr = renderContext.InstanceTransformPrepBuffer)
+        {
+            var mem = copy(instanceTransformPtr, instanceCount * bytesPerMatrix);
+            update_dynamic_vertex_buffer(_instanceTransformVertexBuffer, 0, mem);
+        }
+        
+        renderContext.InstanceTransformCount = 0;
+
+        for (var index = 0; index < atomsToRenderCount; index++)
+        {
+            var renderable = atomsToRender[index];
+            renderable.Render(ref renderContext);
+        }
+
+        ArrayPool<float>.Shared.Return(instanceTransformPrepBuffer);
     }
 
     private void OnResize(Vector2D<int> size)
@@ -261,16 +342,17 @@ public unsafe class RenderingCore : IRendererContract
 
     public void DisconnectCallbacks()
     {
+        destroy_dynamic_vertex_buffer(_instanceTransformVertexBuffer);
         _rootWindow.Render -= RenderSingleFrame;
         _rootWindow.Resize -= OnResize;
-        _rootWindow.Closing -= Shutdown; 
+        _rootWindow.Closing -= Shutdown;
     }
 
     public void Shutdown() 
     {
         DisconnectCallbacks();
 
-        frame(false);
+        Frame(false);
         shutdown();
     }
 }

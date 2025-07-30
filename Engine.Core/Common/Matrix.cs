@@ -181,21 +181,14 @@ public struct Matrix : IEquatable<Matrix>
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ToFloatSpan(ref Span<float> span)
-    {
-        ReadOnlySpan<double> src = ToSpan();
-
-        for (var i = 0; i < 16; i++)
-            span[i] = (float)src[i];
-    }
-    
+    public void ToFloatSpan(ref Span<float> span) => ToFloatSpan(ref span, 0);
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe void ToFloatSpan(float* array, int offset)
+    public void ToFloatSpan(ref Span<float> span, int offset)
     {
         ReadOnlySpan<double> src = ToSpan();
 
         for (var i = 0; i < 16; i++)
-            array[i + offset] = (float)src[i];
+            span[i + offset] = (float)src[i];
     }
 
     public Vector4 this[int i] => i switch

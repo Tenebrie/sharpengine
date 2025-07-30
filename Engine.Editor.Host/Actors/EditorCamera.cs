@@ -37,7 +37,7 @@ public class EditorCamera : Camera
     [OnInputHeld(InputAction.CameraBackward, -1.0, +0.0, +0.0)]
     protected void OnCameraPan(double deltaTime, Vector3 direction)
     {
-        var value = (Transform.Basis.Forward * direction.X + Transform.Basis.Right * direction.Y + Transform.Basis.Up * direction.Z) * _movementSpeed * deltaTime;
+        var value = (Transform.Basis.Forward * direction.X + Transform.Basis.Right * direction.Y + Transform.Basis.Up * direction.Z);
         value.NormalizeInPlace();
         Transform.TranslateGlobal(value * _movementSpeed * deltaTime);
     }

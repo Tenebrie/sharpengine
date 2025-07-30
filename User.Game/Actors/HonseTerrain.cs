@@ -1,5 +1,6 @@
-﻿using Engine.Assets.Loaders;
-using Engine.Assets.Materials.Meshes.HonseTerrain;
+﻿using Engine.Assets;
+using Engine.Assets.Loaders;
+using Engine.Assets.Meshes;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Components;
 using Engine.Worlds.Entities;
@@ -14,10 +15,9 @@ public class HonseTerrain : Actor
     [OnInit]
     protected void OnInit()
     {
-        MeshComponent.Material = new HonseTerrainMaterial();
-        ObjMeshLoader.LoadObj("Assets/Meshes/terrain-plain.obj", out var vertices, out var indices);
-        MeshComponent.Mesh.Load(vertices, indices);
-        MeshComponent.BoundingSphere.Generate(vertices);
+        MeshComponent.Material = AssetManager.LoadMaterial("Meshes/HonseTerrain/HonseTerrain");
+        MeshComponent.Mesh = AssetManager.LoadMesh("Assets/Meshes/terrain-plain.obj");
         MeshComponent.Material.LoadTexture("Assets/Textures/honse-terrain.png");
+        MeshComponent.BoundingSphere.Generate(MeshComponent.Mesh.Vertices);
     }
 }

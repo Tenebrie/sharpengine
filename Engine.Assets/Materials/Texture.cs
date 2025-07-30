@@ -106,7 +106,7 @@ public sealed class Texture : IDisposable
         destroy_texture(Handle);
     }
     
-    public static Texture Load(string path)
+    public static Texture CreateFromDisk(string path)
     {
         using var image = Image.Load<Rgba32>(path);
                 

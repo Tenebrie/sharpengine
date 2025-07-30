@@ -250,9 +250,9 @@ public class Transform
     }
     
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void ToFloatSpan(ref Span<float> span) => Data.ToFloatSpan(ref span);
+    public void ToFloatSpan(ref Span<float> span) => Data.ToFloatSpan(ref span, 0);
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public unsafe void ToFloatSpan(float* array, int offset) => Data.ToFloatSpan(array, offset);
+    public void ToFloatSpan(ref Span<float> span, int offset) => Data.ToFloatSpan(ref span, offset);
     
     public static Transform Identity => new();
     public static Transform Copy(Transform instance) => new() { Data = instance.Data };
@@ -281,6 +281,10 @@ public class Transform
     public void Multiply(in Transform child, ref Transform result)
     {
         result.Data = child.Data * Data;
+    }
+    public void MultiplyReverse(in Transform child, ref Transform result)
+    {
+        result.Data = Data * child.Data;
     }
     public void Multiply(in Matrix child, ref Matrix result)
     {

@@ -33,8 +33,8 @@ internal static class Editor
         {
             Title = "Custom Engine",
             Size = new Vector2D<int>(1920, 1080),
-            API = new GraphicsAPI(ContextAPI.None, new APIVersion()),
-            VSync = true
+            API = new GraphicsAPI(ContextAPI.None, new APIVersion())
+            
         };
         if (OperatingSystem.IsMacOS())
             opts.Size /= 2;
@@ -56,11 +56,6 @@ internal static class Editor
 
         MainWindow.Load += () =>
         {
-            var contentScale = MainWindow.FramebufferSize / MainWindow.Size;
-            float scaleX = (float)contentScale.X;
-            float scaleY = (float)contentScale.Y;
-    
-            Logger.Log($"Content scale: {scaleX}x{scaleY}");
             // Create input context
             WindowInputContext = MainWindow.CreateInput();
             

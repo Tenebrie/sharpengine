@@ -1,4 +1,4 @@
-﻿using Engine.Assets.Loaders;
+﻿using Engine.Assets;
 using Engine.Assets.Materials.Meshes.AlliedProjectile;
 using Engine.Core.Makers;
 using Engine.Worlds.Attributes;
@@ -15,10 +15,9 @@ public class BasicProjectile : Actor
     [OnInit]
     protected void OnInit()
     {
-        ObjMeshLoader.LoadObj("Assets/Meshes/projectile-sword.obj", out var vertices, out var indices);
-        MeshComponent.Mesh.Load(vertices, indices);
-        MeshComponent.BoundingSphere.Generate(vertices);
-        MeshComponent.Material = new AlliedProjectile();
+        MeshComponent.Mesh = AssetManager.LoadMesh("Assets/Meshes/projectile-sword.obj");
+        MeshComponent.BoundingSphere.Generate(MeshComponent.Mesh.Vertices);
+        MeshComponent.Material = AssetManager.LoadMaterial("Meshes/AlliedProjectile/AlliedProjectile");
         MeshComponent.Transform.Rotation = QuatMakers.FromRotation(0, -90, 0);
     }
 }

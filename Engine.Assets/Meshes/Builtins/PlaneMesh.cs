@@ -42,7 +42,7 @@ public static class PlaneMesh
             }
         }
 
-        mesh.Load(verts, indices);
+        mesh = StaticMesh.CreateFromMemory(verts, indices);
         return mesh;
     }
     

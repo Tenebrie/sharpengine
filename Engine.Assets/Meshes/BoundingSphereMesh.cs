@@ -1,13 +1,14 @@
 ﻿using System.Drawing;
 using System.Runtime.InteropServices;
 using Engine.Assets.Materials;
+using Engine.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Extensions;
 using Engine.Core.Logging;
 using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
 using Transform = Engine.Core.Common.Transform;
 
-namespace Engine.Assets.Meshes.Builtins;
+namespace Engine.Assets.Meshes;
 
 public class BoundingSphereMesh
 {
@@ -61,38 +62,33 @@ public class BoundingSphereMesh
         _indexBuffer = CreateIndexBuffer(ref indicesArray);
     }
     
-    public unsafe void Render(uint instanceCount, ref Transform[] worldTransforms, ushort viewId, Material material)
+    public static void PrepareRender(uint instanceCount, ref Transform[] worldTransforms, ref RenderContext context)
+    {
+        for (var i = 0; i < instanceCount; i++)
+            worldTransforms[i].ToFloatSpan(
+                ref context.InstanceTransformPrepBuffer,
+                (int)(context.InstanceTransformCount + i) * context.InstanceTransformStride
+            );
+        
+        context.InstanceTransformCount += instanceCount;
+    }
+    
+    public void Render(uint instanceCount, Material material, ref RenderContext context)
     {
         if (_refCount == 0)
         {
             Logger.Error("BoundingSphere is not initialized. Call Load() first.");
             return;
         }
-        var idb = new InstanceDataBuffer();
-        const ushort bytesPerMatrix = 16 * sizeof(float);
-        alloc_instance_data_buffer(&idb, instanceCount, bytesPerMatrix);
         
-        var instanceDataArray = (float*)idb.data;
-        Span<float> mat = stackalloc float[16];
-        for (var i = 0; i < instanceCount; i++)
-        {
-            // var t = Transform.Copy(worldTransforms[i]);
-            // t.TranslateLocal(Position);
-            // t.Rotation = Quat.Identity;
-            // t.Rescale(Radius);
-            worldTransforms[i].ToFloatSpan(ref mat);
-            for (var j = 0; j < 16; j++)
-            {
-                instanceDataArray[i * 16 + j] = mat[j];
-            }
-        }
-        SetInstanceDataBuffer(&idb, 0, instanceCount);
+        SetInstanceDataBuffer(context.InstanceTransformBuffer, context.InstanceTransformCount, instanceCount);
+        context.InstanceTransformCount += instanceCount;
         
         SetVertexBuffer(_vertexBuffer);
         SetIndexBuffer(_indexBuffer);
         SetState(StateFlags.WriteRgb | StateFlags.WriteZ | StateFlags.DepthTestLess | StateFlags.PtLines);
         
-        submit(viewId, material.Program, 1, 0);
+        submit(context.ViewId, material.Program, 1, 0);
     }
 
     public void Dereference()

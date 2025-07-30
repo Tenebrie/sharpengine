@@ -1,9 +1,11 @@
 ﻿using System.Drawing;
 using System.Numerics;
+using Engine.Assets;
 using Engine.Assets.Loaders;
 using Engine.Assets.Materials;
 using Engine.Assets.Materials.Meshes.HonseTerrain;
 using Engine.Assets.Meshes;
+using Engine.Assets.Meshes.Builtins;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Components;
 using Engine.Worlds.Entities;
@@ -18,9 +20,10 @@ public class UnitCube : Actor
     [OnInit]
     protected void OnInit()
     {
-        InstanceManager.Mesh = new StaticMesh();
-        InstanceManager.Material = new HonseTerrainMaterial();
-        InstanceManager.Mesh.LoadUnitCube();
+        // InstanceManager.Mesh = new StaticMesh();
+        InstanceManager.Material = AssetManager.LoadMaterial("Meshes/RawColor/RawColor");
+        CubeMesh.Instance.Load();
+        InstanceManager.Mesh = CubeMesh.Instance.Mesh;
         
         AssetVertex[] verts =
         [

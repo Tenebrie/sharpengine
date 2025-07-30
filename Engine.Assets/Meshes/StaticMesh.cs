@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using Engine.Assets.Loaders;
 using Engine.Assets.Materials;
+using Engine.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Extensions;
 using Engine.Core.Logging;
@@ -26,79 +27,64 @@ public class StaticMesh : IDisposable
     private IndexBuffer _indexBuffer;
     private VertexLayout _layout;
 
-    public void Load(AssetVertex[] verts, ushort[] indices)
+    public AssetVertex[] Vertices { get; set; } = [];
+    public ushort[] Indices { get; set; } = [];
+    
+    private void Load(AssetVertex[] verts, ushort[] indices, WindingOrder windingOrder)
     {
-        WindingOrder = WindingOrder.Cw;
+        Vertices = verts;
+        Indices = indices;
+        
+        WindingOrder = windingOrder;
         var renderVerts = new RenderingVertex[verts.Length];
         for (var i = 0; i < verts.Length; i++)
         {
             var v = verts[i];
             renderVerts[i] = new RenderingVertex(v.Position, v.TexCoord, v.VertexColor, Vector3.One);
         }
-
-        LoadInternal(renderVerts, indices);
-    }
-    
-    private void LoadInternal(RenderingVertex[] verts, ushort[] indices)
-    {
+        
         CreateVertexLayout(ref _layout, [
             new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
             new VertexLayoutAttribute(Attrib.TexCoord0, 2, AttribType.Float, true, false),
             new VertexLayoutAttribute(Attrib.Color0, 4, AttribType.Uint8, true, true),
             new VertexLayoutAttribute(Attrib.Normal, 3, AttribType.Float, true, false)
         ]);
-        _vertexBuffer = CreateVertexBuffer(ref verts, ref _layout);
+        _vertexBuffer = CreateVertexBuffer(ref renderVerts, ref _layout);
         _indexBuffer = CreateIndexBuffer(ref indices);
 
         IsValid = true;
     }
 
-    public void LoadUnitCube()
-    {
-        AssetVertex[] verts =
-        [
-            new(new Vector3(-1, -1, -1), Vector2.Zero, Vector3.One, Color.Red),
-            new(new Vector3( 1, -1, -1), Vector2.Zero, Vector3.One, Color.Green),
-            new(new Vector3( 1,  1, -1), Vector2.Zero, Vector3.One, Color.Yellow),
-            new(new Vector3(-1,  1, -1), Vector2.Zero, Vector3.One, Color.Blue),
-            new(new Vector3(-1, -1,  1), Vector2.Zero, Vector3.One, Color.Cyan),
-            new(new Vector3( 1, -1,  1), Vector2.Zero, Vector3.One, Color.Magenta),
-            new(new Vector3( 1,  1,  1), Vector2.Zero, Vector3.One, Color.White),
-            new(new Vector3(-1,  1,  1), Vector2.Zero, Vector3.One, Color.Gray)
-        ];
-
-        ushort[] indices =
-        [
-            0,1,2,  2,3,0,
-            5,4,7,  7,6,5,
-            4,0,3,  3,7,4,
-            1,5,6,  6,2,1,
-            3,2,6,  6,7,3,
-            4,5,1,  1,0,4 
-        ];
-        WindingOrder = WindingOrder.Ccw;
-        Load(verts, indices);
-    }
-    
-    public unsafe void Render(uint instanceCount, ref Transform[] worldTransforms, ushort viewId, Material material)
+    public void PrepareRender(uint instanceCount, ref Transform[] worldTransforms, ref RenderContext context)
     {
         if (!IsValid)
         {
             Logger.Error("StaticMesh is not initialized. Call Load() first.");
             return;
         }
-        var idb = new InstanceDataBuffer();
-        const ushort bytesPerMatrix = 16 * sizeof(float);
-        alloc_instance_data_buffer(&idb, instanceCount, bytesPerMatrix);
-
-        var instanceDataArray = (float*)idb.data;
-        for (var i = 0; i < instanceCount; i++)
-            worldTransforms[i].ToFloatSpan(instanceDataArray, i * 16);
         
-        SetInstanceDataBuffer(&idb, 0, instanceCount);
+        for (var i = 0; i < instanceCount; i++)
+            worldTransforms[i].ToFloatSpan(
+                ref context.InstanceTransformPrepBuffer,
+                (int)(context.InstanceTransformCount + i) * context.InstanceTransformStride
+            );
+        
+        context.InstanceTransformCount += instanceCount;
+    }
+    
+    public void Render(uint instanceCount, MaterialInstance material, ref RenderContext context)
+    {
+        if (!IsValid)
+        {
+            Logger.Error("StaticMesh is not initialized. Call Load() first.");
+            return;
+        }
 
         SetVertexBuffer(_vertexBuffer);
         SetIndexBuffer(_indexBuffer);
+        SetInstanceDataBuffer(context.InstanceTransformBuffer, context.InstanceTransformCount, instanceCount);
+        context.InstanceTransformCount += instanceCount;
+        
         var stateFlags = StateFlags.WriteRgb | StateFlags.WriteA | StateFlags.WriteZ | StateFlags.DepthTestLess;
         if (WindingOrder == WindingOrder.Ccw)
             stateFlags |= StateFlags.CullCcw;
@@ -107,14 +93,21 @@ public class StaticMesh : IDisposable
         SetState(stateFlags);
         
         material.BindTexture();
-        submit(viewId, material.Program, 1, 0);
+        submit(context.ViewId, material.Program, 1, 0);
     }
 
     public void Dispose()
     {
-        GC.SuppressFinalize(this);
-        destroy_vertex_buffer(_vertexBuffer.Handle);
-        destroy_index_buffer(_indexBuffer.Handle);
+        // GC.SuppressFinalize(this);
+        // destroy_vertex_buffer(_vertexBuffer.Handle);
+        // destroy_index_buffer(_indexBuffer.Handle);
+    }
+    
+    public static StaticMesh CreateFromMemory(AssetVertex[] verts, ushort[] indices, WindingOrder windingOrder = WindingOrder.Cw)
+    {
+        var mesh = new StaticMesh();
+        mesh.Load(verts, indices, windingOrder);
+        return mesh;
     }
     
     [StructLayout(LayoutKind.Sequential, Pack = 1)]

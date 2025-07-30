@@ -1,4 +1,5 @@
 ﻿using Engine.Assets.Loaders;
+using Engine.Assets.Meshes;
 using Engine.Assets.Meshes.Builtins;
 using Engine.Core.Common;
 using Engine.Core.Logging;
@@ -17,12 +18,6 @@ public class BoundingSphereComponent : ActorComponent
     protected void OnInit()
     {
         Mesh.Load();
-    }
-    
-    [OnDestroy]
-    protected void OnDestroy()
-    {
-        Mesh.Dereference();
     }
     
     public void Generate(AssetVertex[] verts)

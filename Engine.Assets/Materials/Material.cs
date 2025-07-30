@@ -2,15 +2,10 @@
 
 namespace Engine.Assets.Materials;
 
-public class Material : IDisposable
+public class Material
 {
-    // Shaders
     public ProgramHandle Program { get; }
-
-    // Textures
-    protected Texture? Texture;
-    public UniformHandle DiffuseTextureHandle = create_uniform("s_diffuse", UniformType.Sampler, 1);
-
+    
     protected Material(string shaderPath)
     {
         var vertShader = LoadShader("Compiled/Shaders/" + shaderPath + ".vert.bin");
@@ -18,20 +13,6 @@ public class Material : IDisposable
         Program = CreateProgram(vertShader, fragShader);
     }
     
-    public void LoadTexture(string texturePath)
-    {
-        Texture?.Dispose();
-        Texture = Texture.Load(texturePath);
-    }
-
-    public void BindTexture()
-    {
-        if (Texture == null)
-            return;
-        
-        set_texture(0, DiffuseTextureHandle, Texture.Handle, (uint)(SamplerFlags.MinAnisotropic | SamplerFlags.MagAnisotropic));
-    }
-
     private static unsafe ShaderHandle LoadShader(string path)
     {
         // Path to compiled binary.
@@ -54,9 +35,8 @@ public class Material : IDisposable
         return program;
     }
 
-    public void Dispose()
+    public static Material CreateFromDisk(string shaderPath)
     {
-        GC.SuppressFinalize(this);
-        Texture?.Dispose();
+        return new Material(shaderPath);
     }
 }

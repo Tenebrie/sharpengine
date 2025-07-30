@@ -29,7 +29,6 @@ public static partial class Bgfx
 	public enum ViewId : ushort
 	{
 		World = 0,
-		DebugText = 1,
 	}
 
 	internal static byte PackDebugColor(DebugColor bgColor, DebugColor fgColor)
@@ -361,9 +360,9 @@ public static partial class Bgfx
     /// <param name="num">Number of data instances.</param>
     /// 
     /// <see cref="Bgfx" srcline="4437" />
-    public static unsafe void SetInstanceDataBuffer(InstanceDataBuffer* idb, uint start, uint num)
+    public static void SetInstanceDataBuffer(DynamicVertexBufferHandle idb, uint start, uint num)
     {
-	    set_instance_data_buffer(idb, start, num);
+	    set_instance_data_from_dynamic_vertex_buffer(idb, start, num);
     }
     
     /// <summary>

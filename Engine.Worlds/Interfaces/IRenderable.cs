@@ -1,4 +1,6 @@
-﻿using Engine.Worlds.Entities;
+﻿using Engine.Assets.Rendering;
+using Engine.Codegen.Bgfx.Unsafe;
+using Engine.Worlds.Entities;
 
 namespace Engine.Worlds.Interfaces;
 
@@ -6,5 +8,7 @@ public interface IRenderable
 {
     public bool IsOnScreen { get; set; }
     public void PerformCulling(Camera activeCamera);
-    public void Render();
+    public int GetInstanceCount();
+    public void PrepareRender(ref RenderContext renderContext);
+    public void Render(ref RenderContext renderContext);
 }
