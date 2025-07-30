@@ -112,6 +112,7 @@ public class StaticMesh : IDisposable
 
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
         destroy_vertex_buffer(_vertexBuffer.Handle);
         destroy_index_buffer(_indexBuffer.Handle);
     }

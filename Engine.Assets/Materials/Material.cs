@@ -2,7 +2,7 @@
 
 namespace Engine.Assets.Materials;
 
-public class Material
+public class Material : IDisposable
 {
     // Shaders
     public ProgramHandle Program { get; }
@@ -52,5 +52,11 @@ public class Material
         if (program.idx == ushort.MaxValue)
             throw new InvalidOperationException("Program creation failed.");
         return program;
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        Texture?.Dispose();
     }
 }

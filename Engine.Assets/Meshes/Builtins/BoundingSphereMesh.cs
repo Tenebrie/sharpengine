@@ -12,8 +12,8 @@ namespace Engine.Assets.Meshes.Builtins;
 public class BoundingSphereMesh
 {
     public static BoundingSphereMesh Instance { get; } = new();
-    
-    private bool IsValid { get; set; } = false;
+
+    private int _refCount = 0;
         
     private VertexBuffer _vertexBuffer;
     private IndexBuffer _indexBuffer;
@@ -21,7 +21,8 @@ public class BoundingSphereMesh
     
     public void Load()
     {
-        if (IsValid)
+        _refCount += 1;
+        if (_refCount > 1)
             return;
         
         List<RenderingVertex> verts = [];
@@ -58,12 +59,11 @@ public class BoundingSphereMesh
         ]);
         _vertexBuffer = CreateVertexBuffer(ref vertsArray, ref _layout);
         _indexBuffer = CreateIndexBuffer(ref indicesArray);
-        IsValid = true;
     }
     
     public unsafe void Render(uint instanceCount, ref Transform[] worldTransforms, ushort viewId, Material material)
     {
-        if (!IsValid)
+        if (_refCount == 0)
         {
             Logger.Error("BoundingSphere is not initialized. Call Load() first.");
             return;
@@ -93,6 +93,15 @@ public class BoundingSphereMesh
         SetState(StateFlags.WriteRgb | StateFlags.WriteZ | StateFlags.DepthTestLess | StateFlags.PtLines);
         
         submit(viewId, material.Program, 1, 0);
+    }
+
+    public void Dereference()
+    {
+        _refCount -= 1;
+        if (_refCount != 0)
+            return;
+        destroy_vertex_buffer(_vertexBuffer.Handle);
+        destroy_index_buffer(_indexBuffer.Handle);
     }
     
     [StructLayout(LayoutKind.Sequential, Pack = 1)]

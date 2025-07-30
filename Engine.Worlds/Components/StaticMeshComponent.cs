@@ -24,6 +24,13 @@ public class StaticMeshComponent : ActorComponent, IRenderable
         Material = new HonseTerrainMaterial();
     }
     
+    [OnDestroy]
+    protected void OnDestroy()
+    {
+        Mesh?.Dispose();
+        Material?.Dispose();
+    }
+    
     public bool IsOnScreen { get; set; }
     public void PerformCulling(Camera activeCamera) => IsOnScreen = activeCamera.SphereInFrustum(BoundingSphere, null);
     

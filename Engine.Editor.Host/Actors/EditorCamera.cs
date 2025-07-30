@@ -1,4 +1,5 @@
 ﻿using Engine.Core.Common;
+using Engine.Core.Logging;
 using Engine.Editor.Host.Services;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;

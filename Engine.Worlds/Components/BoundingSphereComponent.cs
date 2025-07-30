@@ -1,8 +1,8 @@
 ﻿using Engine.Assets.Loaders;
-using Engine.Assets.Meshes;
 using Engine.Assets.Meshes.Builtins;
 using Engine.Core.Common;
 using Engine.Core.Logging;
+using Engine.Worlds.Attributes;
 using Engine.Worlds.Entities;
 using JetBrains.Annotations;
 
@@ -12,6 +12,18 @@ namespace Engine.Worlds.Components;
 public class BoundingSphereComponent : ActorComponent
 {
     public readonly BoundingSphereMesh Mesh = BoundingSphereMesh.Instance;
+
+    [OnInit]
+    protected void OnInit()
+    {
+        Mesh.Load();
+    }
+    
+    [OnDestroy]
+    protected void OnDestroy()
+    {
+        Mesh.Dereference();
+    }
     
     public void Generate(AssetVertex[] verts)
     {
@@ -26,10 +38,7 @@ public class BoundingSphereComponent : ActorComponent
         } catch (Exception ex)
         {
             Logger.Error("Failed to calculate bounding sphere: " + ex.Message);
-            return;
         }
-
-        Mesh.Load();
     }
 
     private void CalculateRittersBoundingSphere(AssetVertex[] verts)

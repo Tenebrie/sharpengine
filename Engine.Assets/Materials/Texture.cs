@@ -90,7 +90,6 @@ public sealed class Texture : IDisposable
 
         _mipLevels.Add(mipmap);
         mipmap.CopyPixelDataTo(data);
-        mipmap.Save($"proper-mip-{level}.png");
 
         fixed (byte* ptr = data)
         {
@@ -115,19 +114,5 @@ public sealed class Texture : IDisposable
         image.CopyPixelDataTo(textureData);
                 
         return new Texture(textureData, (ushort)image.Width, (ushort)image.Height, generateMips: true);
-    }
-    
-    // sRGB 0..255 -> linear 0..1
-    float SrgbToLinear(byte v)
-    {
-        float c = v / 255f;
-        return c <= 0.04045f ? c / 12.92f : MathF.Pow((c + 0.055f) / 1.055f, 2.4f);
-    }
-
-    // linear 0..1 -> sRGB 0..255
-    byte LinearToSrgb(float l)
-    {
-        float c = l <= 0.0031308f ? l * 12.92f : 1.055f * MathF.Pow(l, 1f / 2.4f) - 0.055f;
-        return (byte)Math.Clamp(MathF.Round(c * 255f), 0, 255);
     }
 }
