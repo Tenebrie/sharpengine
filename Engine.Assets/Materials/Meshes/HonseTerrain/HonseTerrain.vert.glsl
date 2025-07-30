@@ -2,7 +2,6 @@ $input a_position, a_color0, i_data0, i_data1, i_data2, i_data3, a_texcoord0
 $output v_color0, v_uv0
 
 #include <bgfx_shader.sh>
-#include <common.sh>   // for mtxFromCols()
 
 void main()
 {

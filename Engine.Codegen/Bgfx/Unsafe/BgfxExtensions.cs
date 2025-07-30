@@ -293,7 +293,7 @@ public static partial class Bgfx
     {
 	    set_view_clear((ushort)viewId, (uint)flags, rgba, depth, stencil);
     }
-    
+
     /// <summary>
     /// Set render states for draw primitive.
     /// @remarks
@@ -311,8 +311,14 @@ public static partial class Bgfx
     /// <param name="flags">State flags. Default state for primitive type is   triangles. See: `BGFX_STATE_DEFAULT`.   - `BGFX_STATE_DEPTH_TEST_*` - Depth test function.   - `BGFX_STATE_BLEND_*` - See remark 1 about BGFX_STATE_BLEND_FUNC.   - `BGFX_STATE_BLEND_EQUATION_*` - See remark 2.   - `BGFX_STATE_CULL_*` - Backface culling mode.   - `BGFX_STATE_WRITE_*` - Enable R, G, B, A or Z write.   - `BGFX_STATE_MSAA` - Enable hardware multisample antialiasing.   - `BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]` - Primitive type.</param>
     /// <param name="rgba">Sets blend factor used by `BGFX_STATE_BLEND_FACTOR` and   `BGFX_STATE_BLEND_INV_FACTOR` blend modes.</param>
     /// <see cref="Bgfx" srcline="4219" />
-    [DllImport(DllName, EntryPoint="bgfx_set_state", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void SetState(StateFlags flags, uint rgba = 0);
+    public static void SetState(StateFlags flags, uint rgba = 0)
+    {
+	    set_state((ulong)flags, rgba);
+    }
+    public static unsafe void SetState(Encoder* encoder, StateFlags flags, uint rgba = 0)
+    {
+	    encoder_set_state(encoder, (ulong)flags, rgba);
+    }
 
     /// <summary>
     /// Set index buffer for draw primitive.
@@ -331,6 +337,10 @@ public static partial class Bgfx
 	{
 	    set_index_buffer(buffer.Handle, 0, (uint)buffer.Count);
 	}
+	public static unsafe void SetIndexBuffer(Encoder* encoder, IndexBuffer buffer)
+	{
+		encoder_set_index_buffer(encoder, buffer.Handle, 0, (uint)buffer.Count);
+	}
 
     /// <summary>
     /// Set vertex buffer for draw primitive.
@@ -345,10 +355,14 @@ public static partial class Bgfx
     {
 	    set_vertex_buffer(0, handle, (uint)startVertex, (uint)numVertices);
     }
-    
+
     public static void SetVertexBuffer(VertexBuffer buffer)
     {
 	    set_vertex_buffer(0, buffer.Handle, 0, (uint)buffer.Count);
+    }
+    public static unsafe void SetVertexBuffer(Encoder* encoder, VertexBuffer buffer)
+    {
+	    encoder_set_vertex_buffer(encoder, 0, buffer.Handle, 0, (uint)buffer.Count);
     }
 
     /// <summary>
@@ -364,6 +378,10 @@ public static partial class Bgfx
     {
 	    set_instance_data_from_dynamic_vertex_buffer(idb, start, num);
     }
+    public static unsafe void SetInstanceDataBuffer(Encoder* encoder, DynamicVertexBufferHandle idb, uint start, uint num)
+    {
+	    encoder_set_instance_data_from_dynamic_vertex_buffer(encoder, idb, start, num);
+    }
     
     /// <summary>
     /// Marks a view as "touched", ensuring that its background is cleared even if nothing is rendered.
@@ -374,5 +392,23 @@ public static partial class Bgfx
     public static void Touch(ViewId viewId)
     {
 	    touch((ushort)viewId);
+    }
+
+    /// <summary>
+    /// Submit primitive for rendering.
+    /// </summary>
+    ///
+    /// <param name="_id">View id.</param>
+    /// <param name="_program">Program.</param>
+    /// <param name="_depth">Depth for sorting.</param>
+    /// <param name="_flags">Which states to discard for next draw. See `BGFX_DISCARD_*`.</param>
+    ///
+    public static void Submit(ushort viewId, ProgramHandle _program, uint _depth, byte _flags)
+    {
+	    submit(viewId, _program, _depth, _flags);
+    }
+    public static unsafe void Submit(Encoder* encoder, ushort viewId, ProgramHandle _program, uint _depth, byte _flags)
+    {
+	    encoder_submit(encoder, viewId, _program, _depth, _flags);
     }
 }

@@ -21,4 +21,12 @@ public class MaterialInstance(Material material)
         
         set_texture(0, DiffuseTextureHandle, Texture.Handle, (uint)(SamplerFlags.MinAnisotropic | SamplerFlags.MagAnisotropic));
     }
+    
+    public unsafe void BindTexture(Encoder* encoder)
+    {
+        if (Texture == null)
+            return;
+        
+        encoder_set_texture(encoder, 0, DiffuseTextureHandle, Texture.Handle, (uint)(SamplerFlags.MinAnisotropic | SamplerFlags.MagAnisotropic));
+    }
 }

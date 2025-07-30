@@ -58,10 +58,7 @@ public class StaticMesh : IDisposable
     public void PrepareRender(uint instanceCount, ref Transform[] worldTransforms, ref RenderContext context)
     {
         if (!IsValid)
-        {
-            Logger.Error("StaticMesh is not initialized. Call Load() first.");
             return;
-        }
         
         for (var i = 0; i < instanceCount; i++)
             worldTransforms[i].ToFloatSpan(
@@ -71,18 +68,16 @@ public class StaticMesh : IDisposable
         
         context.InstanceTransformCount += instanceCount;
     }
-    
-    public void Render(uint instanceCount, MaterialInstance material, ref RenderContext context)
+
+    public unsafe void Render(uint instanceCount, MaterialInstance material, ref RenderContext context)
     {
         if (!IsValid)
-        {
-            Logger.Error("StaticMesh is not initialized. Call Load() first.");
             return;
-        }
 
-        SetVertexBuffer(_vertexBuffer);
-        SetIndexBuffer(_indexBuffer);
-        SetInstanceDataBuffer(context.InstanceTransformBuffer, context.InstanceTransformCount, instanceCount);
+        var encoder = encoder_begin(false);
+        SetVertexBuffer(encoder, _vertexBuffer);
+        SetIndexBuffer(encoder, _indexBuffer);
+        SetInstanceDataBuffer(encoder, context.InstanceTransformBuffer, context.InstanceTransformCount, instanceCount);
         context.InstanceTransformCount += instanceCount;
         
         var stateFlags = StateFlags.WriteRgb | StateFlags.WriteA | StateFlags.WriteZ | StateFlags.DepthTestLess;
@@ -90,10 +85,12 @@ public class StaticMesh : IDisposable
             stateFlags |= StateFlags.CullCcw;
         else
             stateFlags |= StateFlags.CullCw;
-        SetState(stateFlags);
+        SetState(encoder, stateFlags);
         
-        material.BindTexture();
-        submit(context.ViewId, material.Program, 1, 0);
+        material.BindTexture(encoder);
+        Submit(encoder, context.ViewId, material.Program, 1, 0);
+        
+        encoder_end(encoder);
     }
 
     public void Dispose()

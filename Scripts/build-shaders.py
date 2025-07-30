@@ -50,6 +50,8 @@ def invoke_compile_shaders(shdr_dir: Path, out_base: Path,
         if not ok:
             for line in proc.stderr.strip().splitlines():
                 print(Fore.YELLOW + line)
+            for line in proc.stdout.strip().splitlines():
+                print(Fore.YELLOW + line)
         count += 1
 
     return count

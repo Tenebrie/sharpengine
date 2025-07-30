@@ -55,16 +55,18 @@ public class UserScene : Scene
                 cubeManager.InstanceManager.AddInstance(transform);
             }
         }
-        //
+        
         var enemyManager = CreateActor<BasicEnemyManager>();
         for (var x = -25; x < 26; x++)
         {
             for (var y = -25; y < 26; y++)
             {
+                // var enemy = CreateActor<BasicEnemy>();
                 var transform = Transform.Identity;
                 transform.Position = new Vector3(x * 10, 3, y * 10);
                 transform.Scale = new Vector3(0.4f, 0.4f, 0.4f);
                 transform.Rotation = Quaternion.Identity;
+                // enemy.Transform = transform;
                 enemyManager.InstanceManager.AddInstance(transform);
             }
         }

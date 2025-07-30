@@ -44,9 +44,7 @@ public class TerrainMeshComponent : ActorComponent, IRenderable
     }
     public void Render(ref RenderContext renderContext)
     {
-        _singleComponentTransforms[0] = WorldTransform;
         Mesh.Render(1, Material, ref renderContext);
-        _singleComponentTransforms[0] = BoundingSphere.WorldTransform;
         BoundingSphere.Mesh.Render(1, WireframeMaterial.Instance, ref renderContext);
     }
 }

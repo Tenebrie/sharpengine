@@ -73,7 +73,7 @@ public class BoundingSphereMesh
         context.InstanceTransformCount += instanceCount;
     }
     
-    public void Render(uint instanceCount, Material material, ref RenderContext context)
+    public unsafe void Render(uint instanceCount, Material material, ref RenderContext context)
     {
         if (_refCount == 0)
         {
@@ -81,14 +81,17 @@ public class BoundingSphereMesh
             return;
         }
         
-        SetInstanceDataBuffer(context.InstanceTransformBuffer, context.InstanceTransformCount, instanceCount);
+        var encoder = encoder_begin(false);
+        SetInstanceDataBuffer(encoder, context.InstanceTransformBuffer, context.InstanceTransformCount, instanceCount);
         context.InstanceTransformCount += instanceCount;
         
-        SetVertexBuffer(_vertexBuffer);
-        SetIndexBuffer(_indexBuffer);
-        SetState(StateFlags.WriteRgb | StateFlags.WriteZ | StateFlags.DepthTestLess | StateFlags.PtLines);
+        SetVertexBuffer(encoder, _vertexBuffer);
+        SetIndexBuffer(encoder, _indexBuffer);
+        SetState(encoder, StateFlags.WriteRgb | StateFlags.WriteZ | StateFlags.DepthTestLess | StateFlags.PtLines);
         
-        submit(context.ViewId, material.Program, 1, 0);
+        Submit(encoder, context.ViewId, material.Program, 1, 0);
+        
+        encoder_end(encoder);
     }
 
     public void Dereference()
