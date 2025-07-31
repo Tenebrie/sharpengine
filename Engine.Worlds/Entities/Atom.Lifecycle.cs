@@ -110,6 +110,7 @@ public partial class Atom
     
     public void FreeImmediately()
     {
+        IsFinalized = true;
         var childrenCount = Children.Count;
         while (childrenCount > 0)
         {
@@ -129,8 +130,11 @@ public partial class Atom
     }
 
     public bool IsBeingDestroyed { get; internal set; }
+    public bool IsFinalized { get; internal set; }
     public void QueueFree()
     {
+        if (IsBeingDestroyed)
+            return;
         IsBeingDestroyed = true;
         GetService<ReaperService>().Condemn(this);
     }

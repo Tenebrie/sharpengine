@@ -11,6 +11,15 @@ public class BasicEnemy : ActorInstance
 {
     // [Component] public StaticMeshComponent Mesh;
 
+    public double Health { get; set; } = 100.0;
+
+    public void DealDamage(double damage)
+    {
+        Health -= damage;
+        if (Health <= 0)
+            QueueFree();
+    }
+
     [OnInit]
     protected void OnInit()
     {

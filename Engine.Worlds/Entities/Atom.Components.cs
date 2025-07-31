@@ -41,6 +41,16 @@ public partial class Atom
         return null;
     }
     
+    public T? GetChild<T>() where T : Atom
+    {
+        foreach (var child in Children)
+        {
+            if (child is T t)
+                return t;
+        }
+        return null;
+    }
+    
     private static Atom CreateDefaultInstance(Type type)
     {
         if (type is not { IsClass: true })

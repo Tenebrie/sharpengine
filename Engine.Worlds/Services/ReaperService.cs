@@ -1,4 +1,5 @@
-﻿using Engine.Core.Profiling;
+﻿using Engine.Core.Logging;
+using Engine.Core.Profiling;
 using Engine.Worlds.Entities;
 
 namespace Engine.Worlds.Services;
@@ -19,10 +20,10 @@ public class ReaperService : Service
         for (var i = 0; i < CondemnedAtoms.Count; i++)
         {
             var atom = CondemnedAtoms[i];
-            if (IsValid(atom))
-            {
-                atom.FreeImmediately();
-            }
+            if (IsStale(atom))
+                continue;
+                
+            atom.FreeImmediately();
         }
         CondemnedAtoms.Clear();
     }

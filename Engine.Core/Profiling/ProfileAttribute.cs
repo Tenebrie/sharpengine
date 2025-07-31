@@ -5,7 +5,7 @@ using JetBrains.Annotations;
 
 namespace Engine.Core.Profiling;
 
-[Injection(typeof(ProfileAspect))]
+// [Injection(typeof(ProfileAspect))]
 [AttributeUsage(AttributeTargets.Method)]
 public class ProfileAttribute : Attribute;
 

@@ -2,7 +2,7 @@
 
 namespace Engine.Worlds.Services;
 
-public class CommunicationService : Service
+public class ActorService : Service
 {
-
+    
 }

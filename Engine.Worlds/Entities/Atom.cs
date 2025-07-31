@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Engine.Core.Logging;
 using Engine.Core.Profiling;
 using JetBrains.Annotations;
 
@@ -64,8 +65,14 @@ public partial class Atom
     // Services don't need explicit registration, but this alias helps with clarity for services that are working passively.
     public void RegisterService<T>() where T : Service, new() => GetService<T>();
     
+    [SuppressMessage("ReSharper", "RedundantAlwaysMatchSubpattern")]
     public static bool IsValid(Atom? atom)
     {
         return atom is { IsBeingDestroyed: false, Backstage: not null };
+    }
+    
+    public static bool IsStale(Atom? atom)
+    {
+        return atom is { IsFinalized: true };
     }
 }

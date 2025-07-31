@@ -13,12 +13,19 @@ using JetBrains.Annotations;
 
 namespace Engine.Worlds.Components;
 
+public interface IInstancedActorComponent
+{
+    public void AddInstance(Transform instanceTransform);
+    public void RemoveInstance(ActorInstance instance);
+}
+
 [UsedImplicitly]
-public class InstancedActorComponent<TInstance> : ActorComponent, IRenderable where TInstance : ActorInstance, new()
+public class InstancedActorComponent<TInstance> : ActorComponent, IInstancedActorComponent, IRenderable where TInstance : ActorInstance, new()
 {
     public StaticMesh Mesh { get; set; }
     public MaterialInstance Material { get; set; }
     public List<ActorInstance> Instances { get; set; } = [];
+    public int InstanceCount => Instances.Count;
 
     [Component] public BoundingSphereComponent BoundingSphere;
 
@@ -29,6 +36,16 @@ public class InstancedActorComponent<TInstance> : ActorComponent, IRenderable wh
         AdoptChild(instancedActor);
         instancedActor.Transform = instanceTransform;
         Instances.Add(instancedActor);
+        instancedActor.ParentManager = this;
+    }
+    
+    public void RemoveInstance(ActorInstance instance)
+    {
+        if (instance == null || !Instances.Contains(instance))
+            return;
+
+        instance.QueueFree();
+        Instances.Remove(instance);
     }
 
     public bool IsOnScreen { get; set; }
@@ -57,10 +74,10 @@ public class InstancedActorComponent<TInstance> : ActorComponent, IRenderable wh
             return;
         }
         
-        Array.Resize(ref _transformPool, Instances.Count);
-        Array.Resize(ref _sphereTransformPool, Instances.Count);
         if (Instances.Count > MaxInstancesSeen)
         {
+            Array.Resize(ref _transformPool, Instances.Count);
+            Array.Resize(ref _sphereTransformPool, Instances.Count);
             for (var i = MaxInstancesSeen; i < Instances.Count; i++)
             {
                 _transformPool[i] = Transform.Identity;
@@ -71,6 +88,8 @@ public class InstancedActorComponent<TInstance> : ActorComponent, IRenderable wh
         for (var i = 0; i < Instances.Count; i++)
         {
             var actor = Instances[i];
+            if (!IsValid(actor))
+                continue;
             _transformPool[i] = actor.WorldTransform;
         }
 
@@ -78,6 +97,8 @@ public class InstancedActorComponent<TInstance> : ActorComponent, IRenderable wh
         for (var i = 0; i < Instances.Count; i++)
         {
             var actor = Instances[i];
+            if (!IsValid(actor))
+                continue;
             BoundingSphere.Transform.MultiplyReverse(actor.WorldTransform, ref _sphereTransformPool[i]);
         }
         BoundingSphereMesh.PrepareRender((uint)Instances.Count, ref _sphereTransformPool, ref renderContext);

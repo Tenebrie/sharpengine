@@ -13,6 +13,9 @@ namespace Engine.Worlds.Components;
 public class BoundingSphereComponent : ActorComponent
 {
     public readonly BoundingSphereMesh Mesh = BoundingSphereMesh.Instance;
+    
+    public double Radius => Transform.Scale.X;
+    public double WorldRadius => WorldTransform.Scale.X;
 
     [OnInit]
     protected void OnInit()

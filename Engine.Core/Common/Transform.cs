@@ -24,11 +24,10 @@ public class Transform
     {
         get
         {
-            var s = Scale;
             var r = Data;
-            r.Row1 /= s.X;
-            r.Row2 /= s.Y;
-            r.Row3 /= s.Z;
+            r.Row1.NormalizeInPlace();
+            r.Row2.NormalizeInPlace();
+            r.Row3.NormalizeInPlace();
             return QuatMakers.FromRowMatrix(r);
         }
         set

@@ -29,6 +29,8 @@ public partial class Atom
 
             timer.IntervalFrames = attribute.Frames;
             timer.IntervalSeconds = attribute.Seconds;
+            timer.FramesRemaining = attribute.Frames;
+            timer.SecondsRemaining = attribute.Seconds;
             if (methodInfo.GetParameters().Length == 0)
             {
                 var onTick = (Action)Delegate.CreateDelegate(typeof(Action), this, methodInfo);
@@ -63,7 +65,7 @@ public partial class Atom
             {
                 timer.SecondsRemaining -= deltaTime;
                 if (timer.SecondsRemaining > 0) continue;
-                
+                     
                 timer.OnTick.Invoke(deltaTime);
                 timer.SecondsRemaining = timer.IntervalSeconds;
             }

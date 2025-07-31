@@ -193,7 +193,7 @@ public unsafe class RenderingCore : IRendererContract
     
     private static void CollectAtomsToRender(ref IRenderable[] entitiesToRender, ref int entitiesToRenderCount, Atom target)
     {
-        if (target is IRenderable renderable)
+        if (target is IRenderable renderable && Atom.IsValid(target))
         {
             // Resize the array if necessary
             if (entitiesToRenderCount >= entitiesToRender.Length)

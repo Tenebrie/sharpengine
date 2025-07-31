@@ -17,15 +17,32 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
     
     /** Indexers */
     
-    public double this[int i] => i switch
+    public double this[int i]
     {
-        0 => X,
-        1 => Y,
-        2 => Z,
-        3 => W,
-        _ => throw new IndexOutOfRangeException()
-    };
-    
+        get
+        {
+            return i switch
+            {
+                0 => X,
+                1 => Y,
+                2 => Z,
+                3 => W,
+                _ => throw new IndexOutOfRangeException()
+            };
+        }
+        set
+        {
+            switch (i)
+            {
+                case 0: X = value; break;
+                case 1: Y = value; break;
+                case 2: Z = value; break;
+                case 3: W = value; break;
+                default: throw new IndexOutOfRangeException();
+            }
+        }
+    }
+
     /**
      * Constructors
      */

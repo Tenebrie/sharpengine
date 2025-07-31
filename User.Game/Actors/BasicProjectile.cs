@@ -20,4 +20,22 @@ public class BasicProjectile : Actor
         MeshComponent.Material = AssetManager.LoadMaterial("Meshes/AlliedProjectile/AlliedProjectile");
         MeshComponent.Transform.Rotation = QuatMakers.FromRotation(0, -90, 0);
     }
+
+    [OnTimer(Seconds = 0.05f)]
+    protected void CheckCollision()
+    {
+        foreach (var enemy in ParentScene.Actors.OfType<BasicEnemy>()
+                     .Where(enemy => enemy.Transform.Position.DistanceTo(Transform.Position) <= MeshComponent.BoundingSphere.WorldRadius + 3))
+        {
+            enemy.DealDamage(100.0);
+            QueueFree();
+            return;
+        }
+    }
+    
+    [OnTimer(Seconds = 1.0f)]
+    protected void TimeoutDestroy()
+    {
+        QueueFree();
+    }
 }
