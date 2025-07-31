@@ -1,6 +1,6 @@
 ﻿<component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Run Editor" type="DotNetProject" factoryName=".NET Project" activateToolWindowBeforeRun="false">
-    <option name="EXE_PATH" value="$PROJECT_DIR$/Engine.Editor/bin/Debug/net9.0/Engine.Editor.exe" />
+    <option name="EXE_PATH" value="$PROJECT_DIR$/Engine.Editor/bin/Debug/net9.0/Engine.Editor" />
     <option name="PROGRAM_PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Engine.Editor/bin/Debug/net9.0" />
     <option name="PASS_PARENT_ENVS" value="1" />

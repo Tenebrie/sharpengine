@@ -29,7 +29,7 @@ public class PlayerCharacter : Actor
         
         var forwardVector = Vector3.Forward;
         var mousePos = GetService<InputService>().GetMousePosition();
-        var window = Backstage.GetWindow().FramebufferSize;
+        var window = Backstage.GetWindow().Size;
         var value = new Vector3(mousePos.X - window.X / 2.0, 0, mousePos.Y - window.Y / 2.0).NormalizeInPlace();
         var dotProduct = value.DotProduct(forwardVector);
         var crossProduct = value.CrossProduct(forwardVector);

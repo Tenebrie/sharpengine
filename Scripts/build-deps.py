@@ -44,7 +44,7 @@ def find_msbuild():
 
 
 def build_macos(bgfx_root):
-    for cfg, target in [("Debug", "osx-debug"), ("Release", "osx-release")]:
+    for cfg, target in [("Debug", "osx-arm64-debug"), ("Release", "osx-arm64")]:
         cmd = ["make", target]
         print(f"→ Running: {' '.join(cmd)} in {bgfx_root}")
         subprocess.check_call(cmd, cwd=str(bgfx_root))

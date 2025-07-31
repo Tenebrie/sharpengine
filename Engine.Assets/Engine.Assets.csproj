@@ -7,14 +7,16 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <Target Name="RunPython" BeforeTargets="BeforeBuild">
+    <Exec Command='python3 "$(ProjectDir)..\Scripts\build-shaders.py" -c $([System.String]::Copy($(Configuration)).ToLower())' />
+  </Target>
+
   <ItemGroup>
     <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
     <ProjectReference Include="..\Engine.Codegen\Engine.Codegen.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Compute\" />
-    <Folder Include="Materials\UI\" />
     <AdditionalFiles Include="Materials\Meshes\**\*.vert.glsl" />
     <AdditionalFiles Include="Materials\Meshes\**\*.frag.glsl" />
   </ItemGroup>

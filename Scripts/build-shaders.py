@@ -3,12 +3,29 @@ import argparse
 import subprocess
 import sys
 import time
+import platform
 from pathlib import Path
 
-from colorama import Fore, Style, init
+class Fore:
+    BLACK   = "\033[30m"
+    RED     = "\033[31m"
+    GREEN   = "\033[32m"
+    YELLOW  = "\033[33m"
+    BLUE    = "\033[34m"
+    MAGENTA = "\033[35m"
+    CYAN    = "\033[36m"
+    WHITE   = "\033[37m"
+    RESET   = "\033[39m"
+    GRAY    = "\033[90m"
+
+class Style:
+    DIM        = "\033[2m"
+    NORMAL     = "\033[22m"
+    BRIGHT     = "\033[1m"
+    RESET_ALL  = "\033[0m"
 
 # initialize colorama
-init(autoreset=True)
+# init(autoreset=True)
 
 def write_section(text: str, color: str = "CYAN"):
     fg = getattr(Fore, color.upper(), Fore.CYAN)
@@ -17,9 +34,9 @@ def write_section(text: str, color: str = "CYAN"):
     print(fg + ("-" * len(text)))
 
 
-def write_result(src: str, dst: str, ok: bool, pad: int):
-    flag = "[OK]" if ok else "[!!]"
-    color = Fore.GREEN if ok else Fore.RED
+def write_result(src: str, dst: str, ok: bool, skipped: bool, pad: int):
+    flag = "[Cache]" if skipped else "[Built]" if ok else "[Error]"
+    color = Fore.GRAY if skipped else Fore.GREEN if ok else Fore.RED
     src_padded = src.ljust(pad)
     print(color + flag + Style.RESET_ALL + f" {src_padded} -> {dst}")
 
@@ -38,6 +55,11 @@ def invoke_compile_shaders(shdr_dir: Path, out_base: Path,
         out_rel = rel[:-5] + ".bin"  # strip ".glsl", add ".bin"
         out_path = out_base / out_rel
         out_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        if out_path.is_file() and out_path.stat().st_mtime >= src_path.stat().st_mtime:
+            write_result(rel, out_rel, True, True, max_len)
+            count += 1
+            continue
 
         cmd = [str(compiler), "-f", str(src_path), "-o", str(out_path),
                "--type", shader_type] + common_params
@@ -46,7 +68,7 @@ def invoke_compile_shaders(shdr_dir: Path, out_base: Path,
         if proc.stderr:
             errors.extend(proc.stderr.strip().splitlines())
 
-        write_result(rel, out_rel, ok, max_len)
+        write_result(rel, out_rel, ok, False, max_len)
         if not ok:
             for line in proc.stderr.strip().splitlines():
                 print(Fore.YELLOW + line)
@@ -81,19 +103,37 @@ def main():
     bgfx = (solution_root / "Submodules" / "bgfx").resolve()
     if not bgfx.is_dir():
         print(Fore.RED +
-              f"bgfx folder not found next to {solution_root}; adjust BGFX path.")
+              f"BGFX submodule not found at {bgfx}.\nYou may need to run `git submodule update --init --recursive`.")
         sys.exit(1)
 
-    # fixed paths
-    compiler = bgfx / ".build" / "win64_vs2022" / "bin" / "shadercRelease.exe"
+    is_windows = sys.platform.startswith("win")
+    is_mac = sys.platform.startswith("darwin")
+    is_linux = sys.platform.startswith("linux")
+    if is_windows:
+        compiler = bgfx / ".build" / "win64_vs2022" / "bin" / "shadercRelease.exe"
+        platform_arg = "windows"
+    elif is_mac:
+        compiler = bgfx / ".build" / "osx-arm64" / "bin" / "shadercRelease"
+        platform_arg = "osx"
+    elif is_linux:
+        compiler = bgfx / ".build" / "linux64_gcc" / "bin" / "shadercRelease"
+        platform_arg = "linux"
+    else:
+        print(Fore.RED + "Unsupported platform.")
+        sys.exit(1)
+    if not compiler.is_file():
+        print(Fore.RED +
+              f"Shader compiler not found at {compiler}.\nYou may need to run `build-deps.py`.")
+        sys.exit(1)
+
     shdr_dir = solution_root / "Engine.Assets" / "Materials"
     out_base = (solution_root / "Engine.Editor" / "bin" /
                 args.config / args.framework / "Compiled" / "Shaders")
 
     # common params
     common_params = [
-        "--platform", "windows",
-        "-p", "s_5_0",
+        "--platform", platform_arg,
+        "-p", "s_5_0" if is_windows else "metal" if is_mac else "glsl",
         "-i", str(bgfx / "src"),
         "-i", str(bgfx / "examples" / "common"),
         "--varyingdef", str(shdr_dir / "varying.def.sc")
