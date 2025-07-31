@@ -1,4 +1,4 @@
-﻿using Engine.Codegen.Bgfx.Unsafe;
+﻿using Bgfx = Engine.Bindings.Bgfx.Bgfx;
 
 namespace Engine.Assets.Rendering;
 

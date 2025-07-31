@@ -13,10 +13,9 @@ using Engine.Worlds.Interfaces;
 using JetBrains.Annotations;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
-using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
+using static Engine.Bindings.Bgfx.Bgfx;
 
 namespace Engine.Rendering;
-
 
 [UsedImplicitly]
 public unsafe class RenderingCore : IRendererContract

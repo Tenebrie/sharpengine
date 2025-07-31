@@ -5,7 +5,7 @@ using Engine.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Extensions;
 using Engine.Core.Logging;
-using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
+using static Engine.Bindings.Bgfx.Bgfx;
 using Transform = Engine.Core.Common.Transform;
 
 namespace Engine.Assets.Meshes;

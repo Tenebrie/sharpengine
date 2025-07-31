@@ -1,4 +1,4 @@
-﻿using Engine.Codegen.Bgfx.Unsafe;
+﻿using Engine.Bindings.Bgfx;
 using Engine.Core.Enum;
 using Engine.Worlds.Entities;
 using Silk.NET.Windowing;

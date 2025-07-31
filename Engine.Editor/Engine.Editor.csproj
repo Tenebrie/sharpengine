@@ -13,6 +13,7 @@
       <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Remove="..\ProjectRoot\README.txt" />
   </ItemGroup>
 
   <ItemGroup>

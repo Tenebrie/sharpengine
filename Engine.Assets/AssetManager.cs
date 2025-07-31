@@ -1,7 +1,6 @@
 ﻿using Engine.Assets.Loaders;
 using Engine.Assets.Materials;
 using Engine.Assets.Meshes;
-using Engine.Codegen.Bgfx.Unsafe;
 
 namespace Engine.Assets;
 

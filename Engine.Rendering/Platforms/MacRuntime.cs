@@ -5,14 +5,14 @@ namespace Engine.Rendering.Platforms;
 
 internal static class MacRuntime
 {
-    public static unsafe void PrepareInit(ref Codegen.Bgfx.Unsafe.Bgfx.Init initData, IWindow window)
+    public static unsafe void PrepareInit(ref Bindings.Bgfx.Bgfx.Init initData, IWindow window)
     {
         var nsWindow = window.Native?.Cocoa ?? throw new InvalidOperationException("No Cocoa window!");
         var contentView = GetContentView(nsWindow);
         var metalLayer = CreateMetalLayer();
         AttachLayerToView(contentView, metalLayer);
             
-        initData.type = Codegen.Bgfx.Unsafe.Bgfx.RendererType.Metal;
+        initData.type = Bindings.Bgfx.Bgfx.RendererType.Metal;
         initData.platformData.nwh = metalLayer.ToPointer();
     }
     

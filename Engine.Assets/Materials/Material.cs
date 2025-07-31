@@ -1,4 +1,4 @@
-﻿using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
+﻿using static Engine.Bindings.Bgfx.Bgfx;
 
 namespace Engine.Assets.Materials;
 

@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 using Engine.Core.Errors;
 using Engine.Core.Logging;
 using JetBrains.Annotations;
-using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
+using static Engine.Bindings.Bgfx.Bgfx;
 // ReSharper disable InconsistentNaming
 
 namespace Engine.Rendering.Bgfx;

@@ -3,7 +3,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Processing.Processors.Transforms;
-using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
+using static Engine.Bindings.Bgfx.Bgfx;
 
 namespace Engine.Assets.Materials;
 

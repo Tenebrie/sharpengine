@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 
-namespace Engine.Codegen.Bgfx.Unsafe;
+namespace Engine.Bindings.Bgfx;
 
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 public static partial class Bgfx
@@ -101,7 +101,7 @@ public static partial class Bgfx
     /// <param name="height">Back-buffer height.</param>
     /// <param name="flags">See <see cref="ResetFlags" />.</param>
     /// <param name="format">Texture format. See: `TextureFormat::Enum`.</param>
-    /// <see cref="Bgfx" srcline="2588" />
+    /// <see cref="Bindings.Bgfx.Bgfx" srcline="2588" />
     ///
     public static void Reset(int width, int height, ResetFlags flags, TextureFormat format)
     {
@@ -126,7 +126,7 @@ public static partial class Bgfx
     /// </summary>
     ///
     /// <param name="debug">Available flags:   - `BGFX_DEBUG_IFH` - Infinitely fast hardware. When this flag is set     all rendering calls will be skipped. This is useful when profiling     to quickly assess potential bottlenecks between CPU and GPU.   - `BGFX_DEBUG_PROFILER` - Enable profiler.   - `BGFX_DEBUG_STATS` - Display internal statistics.   - `BGFX_DEBUG_TEXT` - Display debug text.   - `BGFX_DEBUG_WIREFRAME` - Wireframe rendering. All rendering     primitives will be rendered as lines.</param>
-    /// <see cref="Bgfx" srcline="2657" />
+    /// <see cref="Bindings.Bgfx.Bgfx" srcline="2657" />
     [DllImport(DllName, EntryPoint="bgfx_set_debug", CallingConvention = CallingConvention.Cdecl)]
     public static extern void SetDebug(DebugFlags debug);
 
@@ -213,7 +213,7 @@ public static partial class Bgfx
 	///
 	/// <param name="indices">Array of indices to create an index buffer out of.</param>
 	/// <param name="flags">Buffer creation flags. See <see cref="BufferFlags" />.</param>
-	/// <see cref="Bgfx" srcline="2716" />
+	/// <see cref="Bindings.Bgfx.Bgfx" srcline="2716" />
 	public static unsafe IndexBuffer CreateIndexBuffer(ref ushort[] indices, BufferFlags flags = BufferFlags.None)
 	{
 		fixed (ushort* ptr = indices)
@@ -241,7 +241,7 @@ public static partial class Bgfx
 	/// <param name="verts">Array of vertices to create a vertex buffer out of.</param>
 	/// <param name="layout">Vertex layout reference.</param>
 	/// <param name="flags">Buffer creation flags. See <see cref="BufferFlags" />.</param>
-	/// <see cref="Bgfx" srcline="2765" />
+	/// <see cref="Bindings.Bgfx.Bgfx" srcline="2765" />
 	public static unsafe VertexBuffer CreateVertexBuffer<TVertex>(ref TVertex[] verts, ref VertexLayout layout, BufferFlags flags = BufferFlags.None)
 		where TVertex : unmanaged
 	{
@@ -273,7 +273,7 @@ public static partial class Bgfx
     /// <param name="y">Position y from the top corner of the window.</param>
     /// <param name="width">Width of view port region.</param>
     /// <param name="height">Height of view port region.</param>
-    /// <see cref="Bgfx" srcline="3486" />
+    /// <see cref="Bindings.Bgfx.Bgfx" srcline="3486" />
     public static void SetViewRect(ViewId viewId, int x, int y, int width, int height)
     {
         set_view_rect((ushort)viewId, (ushort)x, (ushort)y, (ushort)width, (ushort)height);
@@ -288,7 +288,7 @@ public static partial class Bgfx
     /// <param name="rgba">Color clear value.</param>
     /// <param name="depth">Depth clear value.</param>
     /// <param name="stencil">Stencil clear value.</param>
-    /// <see cref="Bgfx" srcline="3525" />
+    /// <see cref="Bindings.Bgfx.Bgfx" srcline="3525" />
     public static void SetViewClear(ViewId viewId, ClearFlags flags, uint rgba, float depth, byte stencil)
     {
 	    set_view_clear((ushort)viewId, (uint)flags, rgba, depth, stencil);
@@ -310,7 +310,7 @@ public static partial class Bgfx
     ///
     /// <param name="flags">State flags. Default state for primitive type is   triangles. See: `BGFX_STATE_DEFAULT`.   - `BGFX_STATE_DEPTH_TEST_*` - Depth test function.   - `BGFX_STATE_BLEND_*` - See remark 1 about BGFX_STATE_BLEND_FUNC.   - `BGFX_STATE_BLEND_EQUATION_*` - See remark 2.   - `BGFX_STATE_CULL_*` - Backface culling mode.   - `BGFX_STATE_WRITE_*` - Enable R, G, B, A or Z write.   - `BGFX_STATE_MSAA` - Enable hardware multisample antialiasing.   - `BGFX_STATE_PT_[TRISTRIP/LINES/POINTS]` - Primitive type.</param>
     /// <param name="rgba">Sets blend factor used by `BGFX_STATE_BLEND_FACTOR` and   `BGFX_STATE_BLEND_INV_FACTOR` blend modes.</param>
-    /// <see cref="Bgfx" srcline="4219" />
+    /// <see cref="Bindings.Bgfx.Bgfx" srcline="4219" />
     public static void SetState(StateFlags flags, uint rgba = 0)
     {
 	    set_state((ulong)flags, rgba);
@@ -327,7 +327,7 @@ public static partial class Bgfx
     /// <param name="handle">Index buffer.</param>
     /// <param name="firstIndex">First index to render.</param>
     /// <param name="numIndices">Number of indices to render.</param>
-    /// <see cref="Bgfx" srcline="4318" />
+    /// <see cref="Bindings.Bgfx.Bgfx" srcline="4318" />
     public static void SetIndexBuffer(IndexBufferHandle handle, int firstIndex, int numIndices)
     {
 	    set_index_buffer(handle, (uint)firstIndex, (uint)numIndices);
@@ -350,7 +350,7 @@ public static partial class Bgfx
     /// <param name="startVertex">First vertex to render.</param>
     /// <param name="numVertices">Number of vertices to render.</param>
     ///
-    /// <see cref="Bgfx" srcline="4352" />
+    /// <see cref="Bindings.Bgfx.Bgfx" srcline="4352" />
     public static void SetVertexBuffer(VertexBufferHandle handle, int startVertex, int numVertices)
     {
 	    set_vertex_buffer(0, handle, (uint)startVertex, (uint)numVertices);
@@ -373,7 +373,7 @@ public static partial class Bgfx
     /// <param name="start">First instance data.</param>
     /// <param name="num">Number of data instances.</param>
     /// 
-    /// <see cref="Bgfx" srcline="4437" />
+    /// <see cref="Bindings.Bgfx.Bgfx" srcline="4437" />
     public static void SetInstanceDataBuffer(DynamicVertexBufferHandle idb, uint start, uint num)
     {
 	    set_instance_data_from_dynamic_vertex_buffer(idb, start, num);
@@ -388,7 +388,7 @@ public static partial class Bgfx
     /// </summary>
     /// <param name="viewId">The index of the view to touch.</param>
     /// <returns>The number of draw calls.</returns>
-    /// <see cref="Bgfx" srcline="4492" />
+    /// <see cref="Bindings.Bgfx.Bgfx" srcline="4492" />
     public static void Touch(ViewId viewId)
     {
 	    touch((ushort)viewId);

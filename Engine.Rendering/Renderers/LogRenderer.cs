@@ -1,6 +1,6 @@
 ﻿using Engine.Core.Logging;
 using Engine.Rendering.Abstract;
-using static Engine.Codegen.Bgfx.Unsafe.Bgfx;
+using static Engine.Bindings.Bgfx.Bgfx;
 
 namespace Engine.Rendering.Renderers;
 
