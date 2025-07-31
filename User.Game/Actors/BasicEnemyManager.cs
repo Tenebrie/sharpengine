@@ -24,10 +24,9 @@ public class BasicEnemyManager : Actor
         InstanceManager.Mesh = AssetManager.LoadMesh("Virtual/BasicEnemy");
         InstanceManager.Material = AssetManager.LoadMaterial("Meshes/HonseTerrain/HonseTerrain");
         InstanceManager.Material.LoadTexture("Assets/Textures/godot.png");
-        InstanceManager.BoundingSphere.Generate(PlaneMesh.CreateVerts());
     }
 
-    private int enemiesQueued = 0;
+    private int _enemiesQueued = 0;
     [OnTimer(Seconds = 0.02f)]
     protected void SpawnEnemy()
     {
@@ -38,16 +37,13 @@ public class BasicEnemyManager : Actor
         if (player is null)
             return;
 
-        enemiesQueued += 1;
-        for (int i = 0; i < enemiesQueued; i++)
+        _enemiesQueued += 1;
+        for (var i = 0; i < _enemiesQueued; i++)
         {
             var transform = Transform.Identity;
             transform.Rotate(0, Random.Shared.NextDouble() * 360, 0);
             transform.TranslateLocal(200, 0, 0);
             transform.TranslateGlobal(player.WorldTransform.Position);
-        
-            // var targetPos = player.WorldTransform.Position + new Vector3(150, 0, 0);
-            // targetPos.Y = -3.22;
         
             // TODO: Understand why rotation is affected by scale
             // transform.Scale = new Vector3(2,2,2);
@@ -55,10 +51,9 @@ public class BasicEnemyManager : Actor
             // transform.RotateAroundLocal(Vector3.Pitch, -90);
             transform.Rotation = Quaternion.Identity;
             transform.Rescale(5, 5, 5);
-            // enemy.Transform = transform;
             InstanceManager.AddInstance(transform);
         }
-        enemiesQueued = 0;
+        _enemiesQueued = 0;
     }
     
     [OnUpdate]
@@ -80,7 +75,7 @@ public class BasicEnemyManager : Actor
                 continue;
             
             enemy.QueueFree();
-            enemiesQueued += 1;
+            _enemiesQueued += 1;
         }
     }
 }

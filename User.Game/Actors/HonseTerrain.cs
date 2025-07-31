@@ -15,9 +15,9 @@ public class HonseTerrain : Actor
     [OnInit]
     protected void OnInit()
     {
-        MeshComponent.Material = AssetManager.LoadMaterial("Meshes/HonseTerrain/HonseTerrain");
         MeshComponent.Mesh = AssetManager.LoadMesh("Assets/Meshes/terrain-plain.obj");
+        MeshComponent.Material = AssetManager.LoadMaterial("Meshes/HonseTerrain/HonseTerrain");
+        // MeshComponent.Material = AssetManager.LoadMaterial("Meshes/HonseTerrain/HonseTerrain");
         MeshComponent.Material.LoadTexture("Assets/Textures/honse-terrain.png");
-        MeshComponent.BoundingSphere.Generate(MeshComponent.Mesh.Vertices);
     }
 }

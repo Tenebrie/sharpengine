@@ -2,6 +2,7 @@
 using Engine.Core.Extensions;
 using Engine.Core.Logging;
 using Engine.Core.Makers;
+using Engine.Core.Signals;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Components;
 using Engine.Worlds.Entities;
@@ -20,6 +21,15 @@ public class PlayerCharacter : Actor
     
     [Component] public DragonMesh DragonMeshComponent;
     [Component] public PhysicsComponent PhysicsComponent;
+
+    [OnInit]
+    protected void OnInit()
+    {
+        BasicProjectile.ProjectileCreated += projectile =>
+        {
+            Logger.InfoF("Projectile created at position: {0}", projectile.Transform.Position);
+        };
+    }
 
     [OnInput(InputAction.Shoot)]
     protected void OnShoot()

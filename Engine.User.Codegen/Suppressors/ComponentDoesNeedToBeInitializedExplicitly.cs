@@ -35,7 +35,9 @@ public class ComponentDoesNotNeedToBeInitializedExplicitly : DiagnosticSuppresso
                 continue;
 
             if (!field.GetAttributes()
-                    .Any(a => a.AttributeClass?.Name is "Component" or "ComponentAttribute")) continue;
+                    .Any(a => a.AttributeClass?.Name
+                        is "Component" or "ComponentAttribute"
+                        or "Signal" or "SignalAttribute")) continue;
             {
                 context.ReportSuppression(
                     Suppression.Create(Rule, diag));

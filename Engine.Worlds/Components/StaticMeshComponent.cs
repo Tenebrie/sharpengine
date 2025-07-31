@@ -1,9 +1,6 @@
-﻿using Engine.Assets;
-using Engine.Assets.Materials;
-using Engine.Assets.Materials.Meshes.HonseTerrain;
+﻿using Engine.Assets.Materials;
 using Engine.Assets.Materials.Meshes.Wireframe;
 using Engine.Assets.Meshes;
-using Engine.Assets.Meshes.Builtins;
 using Engine.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Worlds.Attributes;
@@ -16,15 +13,21 @@ namespace Engine.Worlds.Components;
 [UsedImplicitly]
 public class StaticMeshComponent : ActorComponent, IRenderable
 {
-    public StaticMesh Mesh;
-    public MaterialInstance Material;
-    [Component] public BoundingSphereComponent BoundingSphere;
-
-    [OnInit]
-    protected void OnInit()
+    [Component] private StaticMeshHolder _staticMeshHolder;
+    public StaticMesh Mesh
     {
-        Mesh = new StaticMesh();
-        Material = AssetManager.LoadMaterial("Meshes/HonseTerrain/HonseTerrain");
+        get => _staticMeshHolder.Mesh;
+        set => _staticMeshHolder.Mesh = value;
+    }
+    public MaterialInstance Material
+    {
+        get => _staticMeshHolder.Material;
+        set => _staticMeshHolder.Material = value;
+    }
+    public BoundingSphereComponent BoundingSphere
+    {
+        get => _staticMeshHolder.BoundingSphere;
+        set => _staticMeshHolder.BoundingSphere = value;
     }
     
     public bool IsOnScreen { get; set; }

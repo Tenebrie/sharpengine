@@ -123,7 +123,8 @@ public class CustomNullableFieldAnalyzer : DiagnosticAnalyzer
     private static bool IsComponentField(IFieldSymbol field)
     {
         return field.GetAttributes()
-            .Any(a => a.AttributeClass?.Name is "Component" or "ComponentAttribute");
+            .Any(a => a.AttributeClass?.Name is "Component" or "ComponentAttribute" 
+                      or "Signal" or "SignalAttribute");
     }
 
     private bool HasInitializer(SyntaxReference syntaxRef)

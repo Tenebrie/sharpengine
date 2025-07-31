@@ -43,6 +43,8 @@ public class Backstage : Scene
     {
         AdoptChild(ServiceRegistry);
         ServiceRegistry.Preload<CacheRevalidationService>();
+        
+        
     }
 
     [OnUpdate]

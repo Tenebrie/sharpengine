@@ -22,12 +22,24 @@ public interface IInstancedActorComponent
 [UsedImplicitly]
 public class InstancedActorComponent<TInstance> : ActorComponent, IInstancedActorComponent, IRenderable where TInstance : ActorInstance, new()
 {
-    public StaticMesh Mesh { get; set; }
-    public MaterialInstance Material { get; set; }
-    public List<ActorInstance> Instances { get; set; } = [];
+    [Component] private StaticMeshHolder _staticMeshHolder;
+    public StaticMesh Mesh
+    {
+        get => _staticMeshHolder.Mesh;
+        set => _staticMeshHolder.Mesh = value;
+    }
+    public MaterialInstance Material
+    {
+        get => _staticMeshHolder.Material;
+        set => _staticMeshHolder.Material = value;
+    }
+    public BoundingSphereComponent BoundingSphere
+    {
+        get => _staticMeshHolder.BoundingSphere;
+        set => _staticMeshHolder.BoundingSphere = value;
+    }
+    public List<ActorInstance> Instances { get; } = [];
     public int InstanceCount => Instances.Count;
-
-    [Component] public BoundingSphereComponent BoundingSphere;
 
     [Profile]
     public void AddInstance(Transform instanceTransform)
@@ -50,7 +62,7 @@ public class InstancedActorComponent<TInstance> : ActorComponent, IInstancedActo
 
     public bool IsOnScreen { get; set; }
 
-    private int MaxInstancesSeen = 0;
+    private int _maxInstancesSeen = 0;
     private Transform[] _transformPool = [];
     private Transform[] _sphereTransformPool = [];
     
@@ -74,16 +86,16 @@ public class InstancedActorComponent<TInstance> : ActorComponent, IInstancedActo
             return;
         }
         
-        if (Instances.Count > MaxInstancesSeen)
+        if (Instances.Count > _maxInstancesSeen)
         {
             Array.Resize(ref _transformPool, Instances.Count);
             Array.Resize(ref _sphereTransformPool, Instances.Count);
-            for (var i = MaxInstancesSeen; i < Instances.Count; i++)
+            for (var i = _maxInstancesSeen; i < Instances.Count; i++)
             {
                 _transformPool[i] = Transform.Identity;
                 _sphereTransformPool[i] = Transform.Identity;
             }
-            MaxInstancesSeen = Instances.Count;
+            _maxInstancesSeen = Instances.Count;
         }
         for (var i = 0; i < Instances.Count; i++)
         {

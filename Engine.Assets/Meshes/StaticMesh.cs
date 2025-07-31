@@ -6,6 +6,7 @@ using Engine.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Extensions;
 using Engine.Core.Logging;
+using Engine.Core.Signals;
 using static Engine.Bindings.Bgfx.Bgfx;
 using Transform = Engine.Core.Common.Transform;
 
@@ -19,7 +20,7 @@ public enum WindingOrder
 
 public class StaticMesh : IDisposable
 {
-    public bool IsValid { get; private set; } = false;
+    public bool IsValid { get; private set; }
     
     private WindingOrder WindingOrder { get; set; } = WindingOrder.Cw;
 
@@ -29,6 +30,8 @@ public class StaticMesh : IDisposable
 
     public AssetVertex[] Vertices { get; set; } = [];
     public ushort[] Indices { get; set; } = [];
+    
+    public Signal<AssetVertex[]> OnMeshLoaded { get; } = new();
     
     private void Load(AssetVertex[] verts, ushort[] indices, WindingOrder windingOrder)
     {
@@ -53,6 +56,8 @@ public class StaticMesh : IDisposable
         _indexBuffer = CreateIndexBuffer(ref indices);
 
         IsValid = true;
+
+        OnMeshLoaded.Emit(verts);
     }
 
     public void PrepareRender(uint instanceCount, ref Transform[] worldTransforms, ref RenderContext context)
