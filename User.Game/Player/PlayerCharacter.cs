@@ -1,5 +1,4 @@
 ﻿using Engine.Core.Common;
-using Engine.Core.Extensions;
 using Engine.Core.Logging;
 using Engine.Core.Makers;
 using Engine.Worlds.Attributes;
@@ -13,11 +12,12 @@ using Vector3 = Engine.Core.Common.Vector3;
 
 namespace User.Game.Player;
 
-public class PlayerCharacter : Actor
+public partial class PlayerCharacter : Actor
 {
     private const double MovementSpeed = 50.0;
     private const double RotationSpeed = 0.12;
-    
+
+    // [Group] public static readonly Group<PlayerCharacter> PlayerGroup;
     [Component] public DragonMesh DragonMeshComponent;
     [Component] public PhysicsComponent PhysicsComponent;
 

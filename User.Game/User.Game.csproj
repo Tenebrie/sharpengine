@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <NoWarn>$(NoWarn);CS8618</NoWarn>
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);User.Game.Player</InterceptorsNamespaces>
   </PropertyGroup>
 
   <ItemGroup>

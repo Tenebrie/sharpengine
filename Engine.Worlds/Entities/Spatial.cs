@@ -3,7 +3,7 @@ using Engine.Worlds.Primitives;
 
 namespace Engine.Worlds.Entities;
 
-public abstract class Spatial : Atom
+public abstract partial class Spatial : Atom
 {
     private Transform _transform = null!;
     public Transform Transform

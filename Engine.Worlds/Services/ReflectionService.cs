@@ -4,7 +4,7 @@ using Engine.Worlds.Entities;
 
 namespace Engine.Worlds.Services;
 
-public class ReflectionService : Service
+public partial class ReflectionService : Service
 {
     private Dictionary<Type, Type?> LookupCache { get; } = new();
     public Type? GetUserInputActionsEnum()

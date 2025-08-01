@@ -4,7 +4,7 @@ using Engine.Worlds.Components;
 
 namespace Engine.Worlds.Entities;
 
-public class ActorInstance : Actor
+public partial class ActorInstance : Actor
 {
     public bool IsOnScreen { get; set; }
 

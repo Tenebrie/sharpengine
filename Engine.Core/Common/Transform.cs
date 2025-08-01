@@ -237,9 +237,9 @@ public class Transform
         var rotation = Rotation;
         var scale = Scale;
         return $"Transform [" +
-               $"Translation: ({Data.M41}, {Data.M42}, {Data.M43}), " +
-               $"Rotation: ({rotation.X}, {rotation.Y}, {rotation.Z}, {rotation.W}), " +
-               $"Scale: ({scale.X}, {scale.Y}, {scale.Z})" +
+               $"T: ({Data.M41:F3}, {Data.M42:F3}, {Data.M43:F3}), " +
+               $"R: ({rotation.X:F3}, {rotation.Y:F3}, {rotation.Z:F3}, {rotation.W:F3}), " +
+               $"S: ({scale.X:F3}, {scale.Y:F3}, {scale.Z:F3})" +
                $"]";
     }
 

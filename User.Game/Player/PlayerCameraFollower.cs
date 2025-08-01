@@ -7,7 +7,7 @@ using User.Game.Actors;
 
 namespace User.Game.Player;
 
-public class PlayerCameraFollower : Actor
+public partial class PlayerCameraFollower : Actor
 {
     [Component] public MainCamera MainCameraComponent;
     

@@ -5,7 +5,7 @@ using Engine.Worlds.Entities;
 
 namespace Engine.Editor.Host.Services;
 
-public class PerformanceMonitoringService : Service
+public partial class PerformanceMonitoringService : Service
 {
     private int _lastGen0 = 0;
     private int _lastGen1 = 0;

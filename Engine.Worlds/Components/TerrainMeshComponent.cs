@@ -15,11 +15,24 @@ using JetBrains.Annotations;
 namespace Engine.Worlds.Components;
 
 [UsedImplicitly]
-public class TerrainMeshComponent : ActorComponent, IRenderable
+public partial class TerrainMeshComponent : ActorComponent, IRenderable
 {
-    public StaticMesh Mesh;
-    public MaterialInstance Material;
-    [Component] public BoundingSphereComponent BoundingSphere;
+    [Component] private StaticMeshHolder _staticMeshHolder;
+    public StaticMesh Mesh
+    {
+        get => _staticMeshHolder.Mesh;
+        set => _staticMeshHolder.Mesh = value;
+    }
+    public MaterialInstance Material
+    {
+        get => _staticMeshHolder.Material;
+        set => _staticMeshHolder.Material = value;
+    }
+    public BoundingSphereComponent BoundingSphere
+    {
+        get => _staticMeshHolder.BoundingSphere;
+        set => _staticMeshHolder.BoundingSphere = value;
+    }
     
     [OnInit]
     protected void OnInit()
@@ -27,7 +40,6 @@ public class TerrainMeshComponent : ActorComponent, IRenderable
         ObjMeshLoader.LoadObj("Assets/Meshes/terrain-plain.obj", out var vertices, out var indices);
         Mesh = StaticMesh.CreateFromMemory(vertices, indices);
         Material = AssetManager.LoadMaterial("Meshes/Terrain/Terrain");
-        BoundingSphere.Generate(vertices);
     }
     
     public bool IsOnScreen { get; set; }

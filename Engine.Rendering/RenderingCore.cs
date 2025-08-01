@@ -109,10 +109,8 @@ public unsafe class RenderingCore : IRendererContract
         window.Closing += Shutdown;
     }
 
-    private int _atomsToRenderCount = 0;
+    private int _atomsToRenderCount;
     private IRenderable[] _atomsToRender = [];
-    private int _culledAtomsCount = 0;
-    private IRenderable[] _culledAtoms = [];
 
     [Profile]
     private void RenderSingleFrame(double deltaTime)
@@ -146,16 +144,12 @@ public unsafe class RenderingCore : IRendererContract
         foreach (var backstage in _backstages)
         {
             // Collect all IRenderable entities reachable from the atom tree
-            CollectAtomsToRender(ref _atomsToRender, ref _atomsToRenderCount, backstage);
-            // Cull entities off-camera
-            FrustumCulling(activeCamera, ref _atomsToRender, _atomsToRenderCount, ref _culledAtoms, ref _culledAtomsCount);
+            CollectAtomsToRender(activeCamera, ref _atomsToRender, ref _atomsToRenderCount, backstage);
             // Render surviving atoms
-            RenderAtomTree(_culledAtoms, _culledAtomsCount);
+            RenderAtomTree(_atomsToRender, _atomsToRenderCount);
             
             _atomsToRenderCount = 0;
-            _culledAtomsCount = 0;
             Array.Clear(_atomsToRender);
-            Array.Clear(_culledAtoms);
         }
         
         SetViewRect(ViewId.UserInterface, 0, 0,
@@ -206,44 +200,34 @@ public unsafe class RenderingCore : IRendererContract
         }
     }
     
-    private static void CollectAtomsToRender(ref IRenderable[] entitiesToRender, ref int entitiesToRenderCount, Atom target)
+    private static void CollectAtomsToRender(
+        Camera activeCamera,
+        ref IRenderable[] entitiesToRender,
+        ref int entitiesToRenderCount,
+        Atom target)
     {
-        if (target is IRenderable renderable && Atom.IsValid(target))
+        if (!Atom.IsValid(target))
+            return;
+
+        if (target is IRenderable renderable)
         {
             // Resize the array if necessary
             if (entitiesToRenderCount >= entitiesToRender.Length)
                 Array.Resize(ref entitiesToRender, Math.Max(entitiesToRenderCount + 1, entitiesToRender.Length * 2));
             
-            entitiesToRender[entitiesToRenderCount++] = renderable;
+            renderable.PerformCulling(activeCamera);
+            if (renderable.IsOnScreen)
+                entitiesToRender[entitiesToRenderCount++] = renderable;
+            else
+                return;
         }
 
         foreach (var child in target.Children)
         {
-            CollectAtomsToRender(ref entitiesToRender, ref entitiesToRenderCount, child);
+            CollectAtomsToRender(activeCamera, ref entitiesToRender, ref entitiesToRenderCount, child);
         }
     }
     
-    private static void FrustumCulling(
-        Camera activeCamera,
-        ref IRenderable[] atomsToRender,
-        int atomsToRenderCount,
-        ref IRenderable[] culledAtoms,
-        ref int culledAtomsCount)
-    {
-        for (var index = 0; index < atomsToRenderCount; index++)
-        {
-            var atom = atomsToRender[index];
-            atom.PerformCulling(activeCamera);
-            if (atom.IsOnScreen)
-            {
-                // Resize the culledAtoms array if necessary
-                if (culledAtomsCount >= culledAtoms.Length)
-                    Array.Resize(ref culledAtoms, Math.Max(culledAtomsCount + 1, culledAtoms.Length * 2));
-                culledAtoms[culledAtomsCount++] = atom;
-            }
-        }
-    }
-
     private static uint CollectInstanceCount(IRenderable[] culledAtoms, int culledAtomsCount)
     {
         uint instanceCount = 0;

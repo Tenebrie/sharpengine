@@ -7,7 +7,7 @@ using Engine.Worlds.Entities;
 
 namespace User.Game.Actors;
 
-public class BasicEnemy : ActorInstance
+public partial class BasicEnemy : ActorInstance
 {
     // [Component] public StaticMeshComponent Mesh;
 

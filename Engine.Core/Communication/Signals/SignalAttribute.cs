@@ -1,11 +1,9 @@
 ﻿using JetBrains.Annotations;
 
-namespace Engine.Worlds.Attributes;
+namespace Engine.Core.Communication.Signals;
 
 [MeansImplicitUse]
 // TODO: Support properties
 [AttributeUsage(AttributeTargets.Field)]
 // [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-public sealed class ComponentAttribute : Attribute
-{
-}
+public sealed class SignalAttribute : Attribute;

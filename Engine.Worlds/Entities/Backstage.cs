@@ -7,7 +7,7 @@ using Silk.NET.Windowing;
 
 namespace Engine.Worlds.Entities;
 
-public class Backstage : Scene
+public partial class Backstage : Scene
 {
     public string Name { get; set; } = "Backstage";
 
@@ -43,6 +43,8 @@ public class Backstage : Scene
     {
         AdoptChild(ServiceRegistry);
         ServiceRegistry.Preload<CacheRevalidationService>();
+        
+        
     }
 
     [OnUpdate]

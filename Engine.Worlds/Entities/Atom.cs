@@ -14,13 +14,14 @@ public partial class Atom
     public List<Atom> Children { get; } = [];
     
     // Whether the atom itself is ready (excluding children).
-    private bool _isInitialized = false;
+    [UsedImplicitly] private bool _isInitialized = false;
     // Whether the atom and all its children are ready.
     [UsedImplicitly] private bool _isReady = false;
     
     internal void Initialize()
     {
         // Initialize the atom internals first. Children will be created, but not adopted until later.
+        InitializeSignals();
         InitializeComponents();
         InitializeLifecycle();
         // Timers after lifecycle
@@ -40,6 +41,11 @@ public partial class Atom
         }
 
         _isReady = true;
+    }
+
+    public static void InitializeStatic(Type type)
+    {
+        
     }
     
     public T AdoptChild<T>(T atom) where T : Atom, new()

@@ -10,7 +10,7 @@ using JetBrains.Annotations;
 namespace Engine.Worlds.Components;
 
 [UsedImplicitly]
-public class BoundingSphereComponent : ActorComponent
+public partial class BoundingSphereComponent : ActorComponent
 {
     public readonly BoundingSphereMesh Mesh = BoundingSphereMesh.Instance;
     

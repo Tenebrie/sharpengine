@@ -28,7 +28,7 @@ public enum InputAction
     CameraSpeedWheel,
 }
 
-public class EditorInputService : Service
+public partial class EditorInputService : Service
 {
     private HostBackstage HostBackstage => (HostBackstage)Backstage;
     

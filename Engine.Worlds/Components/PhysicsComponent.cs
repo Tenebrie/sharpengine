@@ -5,7 +5,7 @@ using Engine.Worlds.Entities;
 
 namespace Engine.Worlds.Components;
 
-public class PhysicsComponent : ActorComponent
+public partial class PhysicsComponent : ActorComponent
 {
     public Vector3 Velocity = Vector3.Zero;
     
@@ -18,10 +18,10 @@ public class PhysicsComponent : ActorComponent
         }
         
         Actor.Transform.TranslateGlobal(Velocity * deltaTime);
-        if (Actor.Transform.Position.Y <= 0)
-        {
-            Actor.Transform.Position = new Vector3(Actor.Transform.Position.X, 0, Actor.Transform.Position.Z);
-            Velocity.Y = 0;
-        }
+        if (Actor.Transform.Position.Y > 0)
+            return;
+        
+        Actor.Transform.Position = new Vector3(Actor.Transform.Position.X, 0, Actor.Transform.Position.Z);
+        Velocity.Y = 0;
     }
 }

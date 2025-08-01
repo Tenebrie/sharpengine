@@ -17,6 +17,12 @@ public static class BackstageEventLoop
             Logger.Error("Failed to initialize backstage", e);
         }
     }
+
+    public static void InitializeStaticAtomFields()
+    {
+        
+    }
+    
     public static void ProcessLogicFrame(Backstage backstage, double deltaTime)
     {
         backstage.ProcessLogicFrame(deltaTime);

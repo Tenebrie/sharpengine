@@ -2,7 +2,7 @@
 
 namespace Engine.Worlds.Utilities;
 
-public class ServiceRegistry : Atom
+public partial class ServiceRegistry : Atom
 {
     private Dictionary<Type, Service> Services { get; } = new();
     

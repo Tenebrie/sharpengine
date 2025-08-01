@@ -21,7 +21,7 @@ public enum InputAction
     Shoot
 }
 
-public class UserInputService : Service
+public partial class UserInputService : Service
 {
     private InputContext _baseContext;
     

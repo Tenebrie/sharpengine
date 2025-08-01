@@ -4,7 +4,7 @@ using Silk.NET.Input;
 
 namespace Engine.Editor.Host.Services;
 
-public class EditorLoggingService : Service
+public partial class EditorLoggingService : Service
 {
     private HostBackstage HostBackstage => (HostBackstage)Backstage;
     
