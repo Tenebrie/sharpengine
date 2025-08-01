@@ -12,7 +12,7 @@ namespace Engine.User.Codegen.Fixers;
 [Shared]
 public class AtomInheritedClassesMustBePartialCodeFixProvider : CodeFixProvider
 {
-    private const string Title = "Add 'partial' modifier";
+    private const string Title = "Make partial";
 
     public sealed override ImmutableArray<string> FixableDiagnosticIds =>
         [AnalyzerCode.AtomInheritedClassesMustBePartial.GetCode()];
