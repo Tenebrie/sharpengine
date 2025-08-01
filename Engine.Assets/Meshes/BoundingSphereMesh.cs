@@ -54,7 +54,7 @@ public class BoundingSphereMesh
         for (var i = 0; i < indices.Count; i++)
             indicesArray[i] = (ushort)indices[i];
         
-        CreateVertexLayout(ref _layout, [
+        _layout = CreateVertexLayout([
             new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
             new VertexLayoutAttribute(Attrib.Color0, 4, AttribType.Uint8, true, true)
         ]);

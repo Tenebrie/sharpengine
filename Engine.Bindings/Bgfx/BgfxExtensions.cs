@@ -29,6 +29,7 @@ public static partial class Bgfx
 	public enum ViewId : ushort
 	{
 		World = 0,
+		UserInterface = 1,
 	}
 
 	internal static byte PackDebugColor(DebugColor bgColor, DebugColor fgColor)
@@ -77,18 +78,17 @@ public static partial class Bgfx
 		public readonly bool AsInt = asInt;
 	}
 
-	public static unsafe void CreateVertexLayout(ref VertexLayout layout, VertexLayoutAttribute[] attribute)
+	public static unsafe VertexLayout CreateVertexLayout(VertexLayoutAttribute[] attribute)
 	{
-		layout = new VertexLayout();
-		fixed (VertexLayout* lPtr = &layout)
+		var layout = new VertexLayout();
+		vertex_layout_begin(&layout, get_renderer_type());
+		foreach (var attr in attribute)
 		{
-			vertex_layout_begin(lPtr, get_renderer_type());
-			foreach (var attr in attribute)
-			{
-				vertex_layout_add(lPtr, attr.Attribute, (byte)attr.Num, attr.Type, attr.Normalized, attr.AsInt);
-			}
-			vertex_layout_end(lPtr);
+			vertex_layout_add(&layout, attr.Attribute, (byte)attr.Num, attr.Type, attr.Normalized, attr.AsInt);
 		}
+		vertex_layout_end(&layout);
+
+		return layout;
 	}
 	
     /// <summary>
@@ -263,6 +263,51 @@ public static partial class Bgfx
 		public VertexBufferHandle Handle;
 		public int Count;
 	}
+
+	/// <summary>
+	/// Allocate transient index buffer.
+	/// </summary>
+	///
+	/// <param name="_tib">TransientIndexBuffer structure will be filled, and will be valid for the duration of frame, and can be reused for multiple draw calls.</param>
+	/// <param name="_num">Number of indices to allocate.</param>
+	/// <param name="_index32">Set to `true` if input indices will be 32-bit.</param>
+	/// <see cref="Bindings.Bgfx.Bgfx" srcline="2908" />
+	public static unsafe TransientIndexBuffer CreateTransientIndexBuffer(ushort[] indices)
+	{
+		TransientIndexBuffer ivb;
+		alloc_transient_index_buffer(&ivb, (uint)indices.Length, false);
+		var ibData = (ushort*)ivb.data;
+		for (var index = 0; index < indices.Length; index++)
+		{
+			ibData[index] = indices[index];
+		}
+
+		return ivb;
+	}
+	
+	/// <summary>
+	/// Allocate transient vertex buffer.
+	/// </summary>
+	///
+	/// <param name="_tvb">TransientVertexBuffer structure will be filled, and will be valid for the duration of frame, and can be reused for multiple draw calls.</param>
+	/// <param name="_num">Number of vertices to allocate.</param>
+	/// <param name="layout">Vertex layout.</param>
+	/// <see cref="Bindings.Bgfx.Bgfx" srcline="2919" />
+	public static unsafe TransientVertexBuffer CreateTransientVertexBuffer<TVertex>(ref TVertex[] verts, ref VertexLayout layout) where TVertex : unmanaged
+	{
+		TransientVertexBuffer tvb;
+		fixed (VertexLayout* layoutPtr = &layout)
+		{
+			alloc_transient_vertex_buffer(&tvb, (uint)verts.Length, layoutPtr);
+		}
+		var vbData = (TVertex*)tvb.data;
+		for (var i = 0; i < verts.Length; i++)
+		{
+			vbData[i] = verts[i];
+		}
+
+		return tvb;
+	}
 	
     /// <summary>
     /// Set view rectangle. Draw primitive outside view will be clipped.
@@ -337,6 +382,10 @@ public static partial class Bgfx
 	{
 	    set_index_buffer(buffer.Handle, 0, (uint)buffer.Count);
 	}
+	public static unsafe void SetIndexBuffer(TransientIndexBuffer buffer)
+	{
+		set_transient_index_buffer(&buffer, 0, buffer.size);
+	}
 	public static unsafe void SetIndexBuffer(Encoder* encoder, IndexBuffer buffer)
 	{
 		encoder_set_index_buffer(encoder, buffer.Handle, 0, (uint)buffer.Count);
@@ -359,6 +408,10 @@ public static partial class Bgfx
     public static void SetVertexBuffer(VertexBuffer buffer)
     {
 	    set_vertex_buffer(0, buffer.Handle, 0, (uint)buffer.Count);
+    }
+    public static unsafe void SetVertexBuffer(TransientVertexBuffer buffer)
+    {
+		set_transient_vertex_buffer(0, &buffer, 0, buffer.size);
     }
     public static unsafe void SetVertexBuffer(Encoder* encoder, VertexBuffer buffer)
     {
@@ -406,6 +459,10 @@ public static partial class Bgfx
     public static void Submit(ushort viewId, ProgramHandle _program, uint _depth, byte _flags)
     {
 	    submit(viewId, _program, _depth, _flags);
+    }
+    public static void Submit(ViewId viewId, ProgramHandle _program, uint _depth, byte _flags)
+    {
+	    submit((ushort)viewId, _program, _depth, _flags);
     }
     public static unsafe void Submit(Encoder* encoder, ushort viewId, ProgramHandle _program, uint _depth, byte _flags)
     {

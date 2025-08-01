@@ -5,8 +5,8 @@ namespace Engine.Editor.HotReload.Compiler;
 
 internal sealed class GuestAssemblyHost(string assemblyName)
 {
-    private readonly string _srcPath = Path.GetFullPath($@"../../../../{assemblyName}");
-    private readonly string _dllPath = Path.GetFullPath($@"../../../../{assemblyName}/bin/Debug/net9.0/{assemblyName}.dll");
+    private readonly string _srcPath = Path.GetFullPath($"../../../../{assemblyName}");
+    private readonly string _dllPath = Path.GetFullPath($"../../../../{assemblyName}/bin/Debug/net9.0/{assemblyName}.dll");
     private FileSystemWatcher? _watcher;
     private readonly GuestAssemblyCompiler _compiler = GuestAssemblyCompiler.Make(assemblyName);
     public bool IsCompiling => _compiler.IsCompiling;

@@ -43,7 +43,7 @@ public class StaticMesh : IDisposable
             renderVerts[i] = new RenderingVertex(v.Position, v.TexCoord, v.VertexColor, Vector3.One);
         }
         
-        CreateVertexLayout(ref _layout, [
+        _layout = CreateVertexLayout([
             new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
             new VertexLayoutAttribute(Attrib.TexCoord0, 2, AttribType.Float, true, false),
             new VertexLayoutAttribute(Attrib.Color0, 4, AttribType.Uint8, true, true),

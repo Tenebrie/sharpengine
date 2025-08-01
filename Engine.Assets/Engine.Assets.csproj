@@ -19,6 +19,8 @@
   <ItemGroup>
     <AdditionalFiles Include="Materials\Meshes\**\*.vert.glsl" />
     <AdditionalFiles Include="Materials\Meshes\**\*.frag.glsl" />
+    <AdditionalFiles Include="Materials\UserInterface\Font\Font.frag.glsl" />
+    <AdditionalFiles Include="Materials\UserInterface\Font\Font.vert.glsl" />
   </ItemGroup>
 
   <ItemGroup>

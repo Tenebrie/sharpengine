@@ -39,6 +39,15 @@ public sealed class Texture : IDisposable
         if (generateMips)
             Task.Run(() => GenerateMips(width, height));
     }
+
+    public unsafe void Update(byte[] data, int offsetX, int offsetY, int width, int height)
+    {
+        fixed (byte* ptr = data)
+        {
+            var mem = copy(ptr, (uint)data.Length);
+            update_texture_2d(Handle, 0, 0, (ushort)offsetX, (ushort)offsetY, (ushort)width, (ushort)height, mem, ushort.MaxValue);
+        }
+    }
     
     private static void CalculateSize(ushort width, ushort height, bool generateMips, out int totalLevels)
     {
@@ -114,5 +123,18 @@ public sealed class Texture : IDisposable
         image.CopyPixelDataTo(textureData);
                 
         return new Texture(textureData, (ushort)image.Width, (ushort)image.Height, generateMips: true);
+    }
+    
+    public static Texture CreateFromBytes(byte[] data, ushort width, ushort height, bool generateMips = false)
+    {
+        return new Texture(data, width, height, generateMips);
+    }
+    
+    public static Texture CreateFromImage(Image<Rgba32> image, bool generateMips = false)
+    {
+        var textureData = new byte[image.Width * image.Width * 4];
+        image.CopyPixelDataTo(textureData);
+        
+        return new Texture(textureData, (ushort)image.Width, (ushort)image.Height, generateMips);
     }
 }

@@ -1,10 +1,12 @@
 ﻿using System.Buffers;
 using System.Diagnostics;
+using System.Drawing;
 using Engine.Assets.Rendering;
 using Engine.Core.Enum;
 using Engine.Core.Logging;
 using Engine.Core.Profiling;
 using Engine.Rendering.Bgfx;
+using Engine.Rendering.Fonts;
 using Engine.Rendering.Platforms;
 using Engine.Rendering.Renderers;
 using Engine.User.Contracts;
@@ -23,6 +25,7 @@ public unsafe class RenderingCore : IRendererContract
     private IWindow _rootWindow = null!;
     private readonly List<Backstage> _backstages = [];
     private LogRenderer _logRenderer = null!;
+    private FontRenderer _fontRenderer = null!;
 
     private float BaseResolutionScale => (float)_rootWindow.Size.X / _rootWindow.FramebufferSize.X;
     private float ResolutionScale => BaseResolutionScale * 1.0f;
@@ -59,7 +62,7 @@ public unsafe class RenderingCore : IRendererContract
         initData.resolution.width = (uint)FramebufferSize.X;
         initData.resolution.height = (uint)FramebufferSize.Y;
         initData.resolution.format = TextureFormat.RGBA8;
-        initData.resolution.reset = 0;
+        initData.resolution.reset = (uint)ResetFlags.Vsync;
         initData.resolution.numBackBuffers = 2;
         initData.resolution.maxFrameLatency = 3;
         initData.callback = BgfxCallbacks.InterfacePtr;
@@ -70,7 +73,7 @@ public unsafe class RenderingCore : IRendererContract
         HotInitialize(window);
     }
 
-    private ResetFlags _resetFlags = ResetFlags.MsaaX8 | ResetFlags.Maxanisotropy;
+    private ResetFlags _resetFlags = ResetFlags.MsaaX8 | ResetFlags.Maxanisotropy | ResetFlags.Vsync;
     private DebugFlags _debugFlags = DebugFlags.Text;
 
     private ResetFlags GetResetFlags()
@@ -89,9 +92,10 @@ public unsafe class RenderingCore : IRendererContract
         Reset(FramebufferSize.X, FramebufferSize.Y, GetResetFlags(), TextureFormat.Count);
         
         _logRenderer = new LogRenderer(this);
+        _fontRenderer = new FontRenderer();
+        _fontRenderer.Initialize();
         
-        VertexLayout instLayout = default;
-        CreateVertexLayout(ref instLayout, [
+        var instLayout = CreateVertexLayout([
             new VertexLayoutAttribute(Attrib.TexCoord4, 4, AttribType.Float, false, false),
             new VertexLayoutAttribute(Attrib.TexCoord5, 4, AttribType.Float, false, false),
             new VertexLayoutAttribute(Attrib.TexCoord6, 4, AttribType.Float, false, false),
@@ -153,6 +157,18 @@ public unsafe class RenderingCore : IRendererContract
             Array.Clear(_atomsToRender);
             Array.Clear(_culledAtoms);
         }
+        
+        SetViewRect(ViewId.UserInterface, 0, 0,
+            FramebufferSize.X,
+            FramebufferSize.Y);
+        
+        _fontRenderer.RenderText("Hello! This is a lotsalotsa text that I am just gonna draw here for reasons.", -1920.0f, -1080, Color.Red);
+        _fontRenderer.RenderText("I dont have any kind of wrapping and I am hardcoding the positions for strings", -1920.0f, -950, Color.BlueViolet);
+        _fontRenderer.RenderText("But hey, this is bgfx text rendering alright! Took quite some time to set it up.", -1920.0f, -800, Color.Green);
+        _fontRenderer.RenderText("At least I dont have to manually create atlases and bind over to them.", -1920.0f, -650, Color.Pink);
+        _fontRenderer.RenderText("But as you can see from the frames, text is still HARD.", -1920.0f, -500, Color.Wheat);
+        _fontRenderer.RenderText("(We are still doing atlas under the hood, and I am technically drawing individual glyphs", -1920.0f, -350, Color.Magenta);
+        _fontRenderer.RenderText("glyphs)", -1920.0f, -200, Color.Magenta);
         
         Frame(false);
     }
@@ -341,6 +357,7 @@ public unsafe class RenderingCore : IRendererContract
 
     public void DisconnectCallbacks()
     {
+        _fontRenderer.Dispose();
         destroy_dynamic_vertex_buffer(_instanceTransformVertexBuffer);
         _rootWindow.Render -= RenderSingleFrame;
         _rootWindow.Resize -= OnResize;
