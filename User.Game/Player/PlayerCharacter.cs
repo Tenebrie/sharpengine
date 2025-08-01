@@ -21,12 +21,6 @@ public partial class PlayerCharacter : Actor
     [Component] public DragonMesh DragonMeshComponent;
     [Component] public PhysicsComponent PhysicsComponent;
 
-    [OnInit]
-    protected void OnInit()
-    {
-        
-    }
-
     [OnInput(InputAction.Shoot)]
     protected void OnShoot()
     {
