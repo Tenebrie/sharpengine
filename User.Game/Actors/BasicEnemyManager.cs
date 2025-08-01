@@ -8,7 +8,7 @@ using User.Game.Player;
 
 namespace User.Game.Actors;
 
-public class BasicEnemyManager : Actor
+public partial class BasicEnemyManager : Actor
 {
     [Component]
     public InstancedActorComponent<BasicEnemy> InstanceManager;

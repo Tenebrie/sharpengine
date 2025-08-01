@@ -1,6 +1,6 @@
 ﻿namespace Engine.Worlds.Entities;
 
-public abstract class Actor : Spatial
+public abstract partial class Actor : Spatial
 {
     public Scene ParentScene
     {

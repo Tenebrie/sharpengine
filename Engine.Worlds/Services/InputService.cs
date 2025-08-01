@@ -7,7 +7,7 @@ using Silk.NET.Input;
 
 namespace Engine.Worlds.Services;
 
-public class InputService : Service
+public partial class InputService : Service
 {
     private readonly InputHandler _inputHandler = new();
     

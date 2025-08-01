@@ -6,7 +6,7 @@ using Engine.Worlds.Entities;
 
 namespace User.Game.Player.Components;
 
-public class DragonMesh : Actor
+public partial class DragonMesh : Actor
 {
     [Component] public StaticMeshComponent MeshComponent;
     

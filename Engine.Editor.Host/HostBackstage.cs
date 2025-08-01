@@ -6,7 +6,7 @@ using Engine.Worlds.Entities;
 
 namespace Engine.Editor.Host;
 
-public class HostBackstage : Backstage, IEditorHostContract
+public partial class HostBackstage : Backstage, IEditorHostContract
 {
     [OnInit]
     protected void OnInit()

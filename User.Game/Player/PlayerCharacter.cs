@@ -1,8 +1,6 @@
 ﻿using Engine.Core.Common;
-using Engine.Core.Extensions;
 using Engine.Core.Logging;
 using Engine.Core.Makers;
-using Engine.Core.Signals;
 using Engine.Worlds.Attributes;
 using Engine.Worlds.Components;
 using Engine.Worlds.Entities;
@@ -14,21 +12,19 @@ using Vector3 = Engine.Core.Common.Vector3;
 
 namespace User.Game.Player;
 
-public class PlayerCharacter : Actor
+public partial class PlayerCharacter : Actor
 {
     private const double MovementSpeed = 50.0;
     private const double RotationSpeed = 0.12;
-    
+
+    // [Group] public static readonly Group<PlayerCharacter> PlayerGroup;
     [Component] public DragonMesh DragonMeshComponent;
     [Component] public PhysicsComponent PhysicsComponent;
 
     [OnInit]
     protected void OnInit()
     {
-        BasicProjectile.ProjectileCreated += projectile =>
-        {
-            Logger.InfoF("Projectile created at position: {0}", projectile.Transform.Position);
-        };
+        
     }
 
     [OnInput(InputAction.Shoot)]

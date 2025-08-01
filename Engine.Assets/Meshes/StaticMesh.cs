@@ -4,9 +4,9 @@ using Engine.Assets.Loaders;
 using Engine.Assets.Materials;
 using Engine.Assets.Rendering;
 using Engine.Core.Common;
+using Engine.Core.Communication.Signals;
 using Engine.Core.Extensions;
 using Engine.Core.Logging;
-using Engine.Core.Signals;
 using static Engine.Bindings.Bgfx.Bgfx;
 using Transform = Engine.Core.Common.Transform;
 

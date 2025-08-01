@@ -20,7 +20,7 @@ public interface IInstancedActorComponent
 }
 
 [UsedImplicitly]
-public class InstancedActorComponent<TInstance> : ActorComponent, IInstancedActorComponent, IRenderable where TInstance : ActorInstance, new()
+public partial class InstancedActorComponent<TInstance> : ActorComponent, IInstancedActorComponent, IRenderable where TInstance : ActorInstance, new()
 {
     [Component] private StaticMeshHolder _staticMeshHolder;
     public StaticMesh Mesh

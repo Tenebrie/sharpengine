@@ -2,7 +2,7 @@
 
 namespace Engine.Worlds.Services;
 
-public class LoggerService : Service
+public partial class LoggerService : Service
 {
     
 }

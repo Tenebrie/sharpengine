@@ -1,6 +1,6 @@
 ﻿namespace Engine.Worlds.Entities;
 
-public class Scene : Atom
+public partial class Scene : Atom
 {
     public List<Actor> Actors
     {

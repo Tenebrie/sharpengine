@@ -1,10 +1,15 @@
-﻿using System.Reflection;
-using Engine.Core.Signals;
+﻿using System.Collections.Immutable;
+using System.Reflection;
+using Engine.Core.Communication.Signals;
+using Engine.Worlds.Attributes;
 
 namespace Engine.Worlds.Entities;
 
-public partial class Atom
+public partial class Atom : ISignalSubscriber
 {
+    private ImmutableArray<SignalSubscription> _signalSubscriptions = [];
+    public ref ImmutableArray<SignalSubscription> SignalSubscriptions => ref _signalSubscriptions;
+    
     private void InitializeSignals()
     {
         var fields = GetType().GetFields(
@@ -37,5 +42,14 @@ public partial class Atom
             throw new Exception("Type " + type.Name + " is not a valid signal type (signals must inherit from Signal).");
         
         return signal;
+    }
+
+    [OnDestroy]
+    protected void OnClearSubscriptions()
+    {
+        // Defensive copy
+        var signalSubscriptions = SignalSubscriptions;
+        foreach (var signalSubscription in signalSubscriptions)
+            signalSubscription.Dispose();
     }
 }

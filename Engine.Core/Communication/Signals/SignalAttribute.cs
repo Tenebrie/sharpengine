@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 
-namespace Engine.Core.Signals;
+namespace Engine.Core.Communication.Signals;
 
 [MeansImplicitUse]
 // TODO: Support properties

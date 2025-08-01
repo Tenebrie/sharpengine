@@ -4,7 +4,7 @@ using Engine.Worlds.Entities;
 
 namespace Engine.Worlds.Services;
 
-public class ReaperService : Service
+public partial class ReaperService : Service
 {
     public List<Atom> CondemnedAtoms { get; } = [];
     

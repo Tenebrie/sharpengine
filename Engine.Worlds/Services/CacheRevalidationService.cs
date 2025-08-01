@@ -4,7 +4,7 @@ using Engine.Worlds.Interfaces;
 
 namespace Engine.Worlds.Services;
 
-public class CacheRevalidationService : Service
+public partial class CacheRevalidationService : Service
 {
     private readonly HashSet<Spatial> _transformInvalidatedAtoms = [];
     

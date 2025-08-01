@@ -6,7 +6,7 @@ using Silk.NET.Maths;
 
 namespace Engine.Worlds.Entities;
 
-public class Camera : Actor
+public partial class Camera : Actor
 {
     public bool IsEditorCamera { get; protected set; } = false;
     

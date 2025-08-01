@@ -5,7 +5,7 @@ using Engine.Worlds.Entities;
 
 namespace Engine.Worlds.Components;
 
-public class PhysicsComponent : ActorComponent
+public partial class PhysicsComponent : ActorComponent
 {
     public Vector3 Velocity = Vector3.Zero;
     

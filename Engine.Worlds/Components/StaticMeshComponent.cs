@@ -11,7 +11,7 @@ using JetBrains.Annotations;
 namespace Engine.Worlds.Components;
 
 [UsedImplicitly]
-public class StaticMeshComponent : ActorComponent, IRenderable
+public partial class StaticMeshComponent : ActorComponent, IRenderable
 {
     [Component] private StaticMeshHolder _staticMeshHolder;
     public StaticMesh Mesh

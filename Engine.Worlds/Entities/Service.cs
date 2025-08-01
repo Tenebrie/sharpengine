@@ -1,6 +1,6 @@
 ﻿namespace Engine.Worlds.Entities;
 
-public class Service : Atom
+public partial class Service : Atom
 {
     
 }

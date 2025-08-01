@@ -7,11 +7,9 @@ namespace Engine.User.Codegen.Suppressors;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class LifecycleMethodCantBeStatic : DiagnosticSuppressor
 {
-    private static readonly string DiagnosticId = SuppressorCode.LifecycleMethodCantBeStatic.GetCode();
-    
     private static readonly SuppressionDescriptor Rule =
         new(
-            id: DiagnosticId,
+            id: SuppressorCode.LifecycleMethodCantBeStatic.GetCode(),
             suppressedDiagnosticId: "CA1822",
             justification: "Lifecycle method - invoked via engine reflection."
         );

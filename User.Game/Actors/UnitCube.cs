@@ -12,7 +12,7 @@ using Engine.Worlds.Entities;
 
 namespace User.Game.Actors;
 
-public class UnitCube : Actor
+public partial class UnitCube : Actor
 {
     [Component]
     public InstancedActorComponent<UnitCubeInstance> InstanceManager;
@@ -42,7 +42,7 @@ public class UnitCube : Actor
     } 
 }
 
-public class UnitCubeInstance : ActorInstance
+public partial class UnitCubeInstance : ActorInstance
 {
     // TODO: Performance fix on large number of ticking instances?
     [OnUpdate]

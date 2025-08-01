@@ -2,7 +2,7 @@
 
 // This class is used to create a standalone backstage that exposes events usually called by the window.
 // It can be used primarily for testing.
-public class StandaloneBackstage : Backstage
+public partial class StandaloneBackstage : Backstage
 {
     public StandaloneBackstage(bool skipInit = false)
     {

@@ -9,7 +9,7 @@ using User.Game.Services;
 namespace User.Game;
 
 [MainBackstage]
-public class UserBackstage : Backstage
+public partial class UserBackstage : Backstage
 {
     [OnInit]
     protected void OnInit()
@@ -19,7 +19,7 @@ public class UserBackstage : Backstage
     }
 }
 
-public class UserScene : Scene
+public partial class UserScene : Scene
 {
     [OnInit]
     protected void OnInit()

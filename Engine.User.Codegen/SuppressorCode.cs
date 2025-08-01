@@ -3,7 +3,7 @@
 public enum SuppressorCode
 {
     LifecycleMethodCantBeStatic,
-    ComponentDoesNotNeedToBeInitializedExplicitly
+    ComponentDoesNotNeedToBeInitializedExplicitly,
 }
 
 public static class SuppressorCodeExtensions

@@ -8,7 +8,7 @@ using Silk.NET.Input;
 
 namespace Engine.Editor.Host.Actors;
 
-public class EditorCamera : Camera
+public partial class EditorCamera : Camera
 {
     private int _movementSpeedIncrement = 10;
     private double _movementSpeed = 50.0;

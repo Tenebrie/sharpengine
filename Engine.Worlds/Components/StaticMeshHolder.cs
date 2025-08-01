@@ -6,7 +6,7 @@ using Engine.Worlds.Entities;
 
 namespace Engine.Worlds.Components;
 
-public class StaticMeshHolder : ActorComponent
+public partial class StaticMeshHolder : ActorComponent
 {
     private StaticMesh? _mesh;
     public StaticMesh Mesh
@@ -16,7 +16,7 @@ public class StaticMeshHolder : ActorComponent
         {
             _mesh?.OnMeshLoaded.Disconnect(OnMeshLoaded);
             _mesh = value;
-            _mesh.OnMeshLoaded.Connect(OnMeshLoaded);
+            _mesh.OnMeshLoaded.Connect(this, OnMeshLoaded);
             if (_mesh.IsValid)
                 OnMeshLoaded(_mesh.Vertices);
         }

@@ -7,11 +7,9 @@ namespace Engine.User.Codegen.Suppressors;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class ComponentDoesNotNeedToBeInitializedExplicitly : DiagnosticSuppressor
 {
-    private static readonly string DiagnosticId = SuppressorCode.ComponentDoesNotNeedToBeInitializedExplicitly.GetCode();
-    
     private static readonly SuppressionDescriptor Rule =
         new(
-            id: DiagnosticId,
+            id: SuppressorCode.ComponentDoesNotNeedToBeInitializedExplicitly.GetCode(),
             suppressedDiagnosticId: "CS8618",
             justification: "Component fields are populated by the engine."
         );

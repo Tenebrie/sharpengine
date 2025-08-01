@@ -7,7 +7,7 @@ using Engine.Worlds.Entities;
 
 namespace User.Game.Actors;
 
-public class HonseTerrain : Actor
+public partial class HonseTerrain : Actor
 {
     [Component]
     public StaticMeshComponent MeshComponent;

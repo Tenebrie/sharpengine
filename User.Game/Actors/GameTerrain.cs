@@ -5,7 +5,7 @@ using Engine.Worlds.Entities;
 
 namespace User.Game.Actors;
 
-public class GameTerrain : Actor
+public partial class GameTerrain : Actor
 {
     [Component] public TerrainMeshComponent Terrain;
 
