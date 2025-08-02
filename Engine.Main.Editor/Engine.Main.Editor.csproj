@@ -35,7 +35,7 @@
     <ProjectReference Include="..\Engine.Core.Input\Engine.Core.Input.csproj" />
     <ProjectReference Include="..\Engine.Core.Contracts\Engine.Core.Contracts.csproj" />
     <ProjectReference Include="..\Engine.Core.EntitySystem\Engine.Core.EntitySystem.csproj" />
-    <ProjectReference Include="..\Engine.Roslyn\Engine.Roslyn.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+    <ProjectReference Include="..\Engine.Tooling.Roslyn\Engine.Tooling.Roslyn.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
   </ItemGroup>
 
 </Project>

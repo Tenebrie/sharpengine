@@ -1,4 +1,4 @@
-﻿namespace Engine.Roslyn;
+﻿namespace Engine.Tooling.Roslyn;
 
 public enum AnalyzerCode
 {

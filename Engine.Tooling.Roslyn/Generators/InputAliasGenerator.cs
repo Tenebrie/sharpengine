@@ -2,7 +2,7 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace Engine.Roslyn.Generators;
+namespace Engine.Tooling.Roslyn.Generators;
 
 [Generator]
 public sealed class InputAliasGenerator : IIncrementalGenerator

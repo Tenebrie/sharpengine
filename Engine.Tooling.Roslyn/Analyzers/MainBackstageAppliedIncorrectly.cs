@@ -5,7 +5,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace Engine.Roslyn.Analyzers;
+namespace Engine.Tooling.Roslyn.Analyzers;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 [SuppressMessage("MicrosoftCodeAnalysisDesign", "RS1017:DiagnosticId for analyzers must be a non-null constant")]

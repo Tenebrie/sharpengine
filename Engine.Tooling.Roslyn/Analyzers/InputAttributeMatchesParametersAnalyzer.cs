@@ -4,7 +4,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace Engine.Roslyn.Analyzers;
+namespace Engine.Tooling.Roslyn.Analyzers;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class InputAttributeMatchesParametersAnalyzer : DiagnosticAnalyzer

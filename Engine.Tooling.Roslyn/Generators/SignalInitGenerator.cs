@@ -1,4 +1,4 @@
-namespace Engine.Roslyn.Generators;
+namespace Engine.Tooling.Roslyn.Generators;
 
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;

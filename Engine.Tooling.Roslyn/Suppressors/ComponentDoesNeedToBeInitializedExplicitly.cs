@@ -2,16 +2,16 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Diagnostics;
 
-namespace Engine.Roslyn.Suppressors;
+namespace Engine.Tooling.Roslyn.Suppressors;
 
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
-public class LifecycleMethodCantBeStatic : DiagnosticSuppressor
+public class ComponentDoesNotNeedToBeInitializedExplicitly : DiagnosticSuppressor
 {
     private static readonly SuppressionDescriptor Rule =
         new(
-            id: SuppressorCode.LifecycleMethodCantBeStatic.GetCode(),
-            suppressedDiagnosticId: "CA1822",
-            justification: "Lifecycle method - invoked via engine reflection."
+            id: SuppressorCode.ComponentDoesNotNeedToBeInitializedExplicitly.GetCode(),
+            suppressedDiagnosticId: "CS8618",
+            justification: "Component fields are populated by the engine."
         );
 
     public override ImmutableArray<SuppressionDescriptor> SupportedSuppressions => [Rule];
@@ -20,7 +20,7 @@ public class LifecycleMethodCantBeStatic : DiagnosticSuppressor
     {
         foreach (var diag in context.ReportedDiagnostics)
         {
-            if (diag.Id != "CA1822")
+            if (diag.Id != "CS8618")
                 continue;
 
             var tree = diag.Location.SourceTree;
@@ -29,11 +29,13 @@ public class LifecycleMethodCantBeStatic : DiagnosticSuppressor
             var model = context.GetSemanticModel(tree);
             var node = tree.GetRoot(context.CancellationToken)
                 .FindNode(diag.Location.SourceSpan);
-            if (model.GetDeclaredSymbol(node, context.CancellationToken) is not IMethodSymbol method)
+            if (model.GetDeclaredSymbol(node, context.CancellationToken) is not IFieldSymbol field)
                 continue;
 
-            if (!method.GetAttributes()
-                    .Any(a => LifecycleAttribute.Includes(a.AttributeClass?.Name))) continue;
+            if (!field.GetAttributes()
+                    .Any(a => a.AttributeClass?.Name
+                        is "Component" or "ComponentAttribute"
+                        or "Signal" or "SignalAttribute")) continue;
             {
                 context.ReportSuppression(
                     Suppression.Create(Rule, diag));

@@ -6,7 +6,7 @@ using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace Engine.Roslyn.Fixers;
+namespace Engine.Tooling.Roslyn.Fixers;
 
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(AtomInheritedClassesMustBePartialCodeFixProvider))]
 [Shared]

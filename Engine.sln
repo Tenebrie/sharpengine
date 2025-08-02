@@ -17,7 +17,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Testing", "Engine.Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "User.Game", "User.Game\User.Game.csproj", "{33B06A87-7C42-4B71-9167-4D1601BF61BD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Roslyn", "Engine.Roslyn\Engine.Roslyn.csproj", "{14B9358F-3AB7-457F-A569-B58CC7D1340B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Tooling.Roslyn", "Engine.Tooling.Roslyn\Engine.Tooling.Roslyn.csproj", "{14B9358F-3AB7-457F-A569-B58CC7D1340B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core.Assets", "Engine.Core.Assets\Engine.Core.Assets.csproj", "{35209674-AA28-4826-AC74-024F8C432108}"
 EndProject
