@@ -1,6 +1,6 @@
 ﻿using Engine.Core.Common;
-using Engine.Worlds.Attributes;
-using Engine.Worlds.Entities;
+using Engine.Core.EntitySystem.Attributes;
+using Engine.Core.EntitySystem.Entities;
 
 namespace User.Game.Actors;
 

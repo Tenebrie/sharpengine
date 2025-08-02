@@ -5,31 +5,31 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core", "Engine.Core\Engine.Core.csproj", "{34F06698-A376-4AE2-84FE-CA25A47C4B85}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Rendering", "Engine.Rendering\Engine.Rendering.csproj", "{F5B56C5F-73F1-45E0-80BB-9A02A7D117B9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Module.Rendering", "Engine.Module.Rendering\Engine.Module.Rendering.csproj", "{F5B56C5F-73F1-45E0-80BB-9A02A7D117B9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Bindings", "Engine.Bindings\Engine.Bindings.csproj", "{913888D4-F68B-46EF-BB26-59AEEF4F32EF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Native", "Engine.Native\Engine.Native.csproj", "{913888D4-F68B-46EF-BB26-59AEEF4F32EF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Editor", "Engine.Editor\Engine.Editor.csproj", "{B7414AE0-0839-45D1-8743-7E9B2FF1D8EB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Main.Editor", "Engine.Main.Editor\Engine.Main.Editor.csproj", "{B7414AE0-0839-45D1-8743-7E9B2FF1D8EB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Worlds", "Engine.Worlds\Engine.Worlds.csproj", "{D5A69DA2-D10F-4FC8-9F48-83E2BB5A7ED9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core.EntitySystem", "Engine.Core.EntitySystem\Engine.Core.EntitySystem.csproj", "{D5A69DA2-D10F-4FC8-9F48-83E2BB5A7ED9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Testing", "Engine.Testing\Engine.Testing.csproj", "{528B5DA6-7490-41DA-8BC8-48E8FDACD880}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "User.Game", "User.Game\User.Game.csproj", "{33B06A87-7C42-4B71-9167-4D1601BF61BD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.User.Codegen", "Engine.User.Codegen\Engine.User.Codegen.csproj", "{14B9358F-3AB7-457F-A569-B58CC7D1340B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Roslyn", "Engine.Roslyn\Engine.Roslyn.csproj", "{14B9358F-3AB7-457F-A569-B58CC7D1340B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Assets", "Engine.Assets\Engine.Assets.csproj", "{35209674-AA28-4826-AC74-024F8C432108}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core.Assets", "Engine.Core.Assets\Engine.Core.Assets.csproj", "{35209674-AA28-4826-AC74-024F8C432108}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Input", "Engine.Input\Engine.Input.csproj", "{A24103E5-EF8B-44CA-932B-1BBC3B1C2831}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core.Input", "Engine.Core.Input\Engine.Core.Input.csproj", "{A24103E5-EF8B-44CA-932B-1BBC3B1C2831}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.User.Contracts", "Engine.User.Contracts\Engine.User.Contracts.csproj", "{B24426C3-8D41-4AD6-91F8-E30020D4983B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core.Contracts", "Engine.Core.Contracts\Engine.Core.Contracts.csproj", "{B24426C3-8D41-4AD6-91F8-E30020D4983B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Editor.Host", "Engine.Editor.Host\Engine.Editor.Host.csproj", "{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Module.Host", "Engine.Module.Host\Engine.Module.Host.csproj", "{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Plugin.Shaderslang", "Plugin.Shaderslang\Plugin.Shaderslang.csproj", "{CFD65829-1AAC-429D-8955-962B68293F51}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Tooling.Shaderslang", "Engine.Tooling.Shaderslang\Engine.Tooling.Shaderslang.csproj", "{CFD65829-1AAC-429D-8955-962B68293F51}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Physics", "Engine.Physics\Engine.Physics.csproj", "{57715680-8A63-4E07-9C93-FC417EDCDBD6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Module.Physics", "Engine.Module.Physics\Engine.Module.Physics.csproj", "{57715680-8A63-4E07-9C93-FC417EDCDBD6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

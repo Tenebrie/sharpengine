@@ -2,7 +2,7 @@
 
 namespace Engine.Core.Logging;
 
-public static class Logger
+public static partial class Logger
 {
     private static readonly LogStream RecentLog = new(100);
     private static readonly PersistentLogStream PersistentLog = new();
@@ -63,7 +63,7 @@ public static class Logger
     }
 
     [SuppressMessage("ReSharper", "CollectionNeverUpdated.Local")]
-    private class LogStream
+    private partial class LogStream
     {
         private int _index = 0;
         private readonly int _capacity;
@@ -87,6 +87,16 @@ public static class Logger
 
         internal void Write(string message, LogLevel level)
         {
+            var previousIndex = _index - 1;
+            if (previousIndex < 0)
+                previousIndex = _capacity - 1;
+
+            if (_log[previousIndex].Message == message && _log[previousIndex].Level == level)
+            {
+                _log[previousIndex].Timestamp = DateTime.Now;
+                _log[previousIndex].EventCount += 1;
+                return;
+            }
             _log[_index].Timestamp = DateTime.Now;
             _log[_index].Level = level;
             _log[_index].Message = message;
@@ -116,6 +126,8 @@ public static class Logger
                 if (skipNonRecent && entry.Timestamp < DateTime.Now.AddSeconds(-5))
                     continue;
                 var formattedEntry = $@"{entry.Timestamp:hh\:mm\:ss} - {entry.Message}";
+                if (entry.EventCount > 1)
+                    formattedEntry += $" (x{entry.EventCount})";
                 _orderedLog.Add(new Tuple<string, LogLevel>(formattedEntry, entry.Level));
             }
 
@@ -130,6 +142,7 @@ public static class Logger
         internal DateTime Timestamp { get; set; } = DateTime.MinValue;
         internal LogLevel Level { get; set; } = LogLevel.Debug;
         internal string Message { get; set; } = string.Empty;
+        internal int EventCount { get; set; } = 0;
     }
 
     private class PersistentLogStream

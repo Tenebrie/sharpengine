@@ -21,7 +21,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
-    <ProjectReference Include="..\Engine.Worlds\Engine.Worlds.csproj" />
+    <ProjectReference Include="..\Engine.Core.EntitySystem\Engine.Core.EntitySystem.csproj" />
   </ItemGroup>
 
   <ItemGroup>

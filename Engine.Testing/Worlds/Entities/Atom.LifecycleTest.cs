@@ -1,7 +1,7 @@
-﻿using Engine.Worlds.Attributes;
-using Engine.Worlds.Entities;
-using Engine.Worlds.Entities.BuiltIns;
-using Engine.Worlds.Services;
+﻿using Engine.Core.EntitySystem.Attributes;
+using Engine.Core.EntitySystem.Entities;
+using Engine.Core.EntitySystem.Entities.BuiltIns;
+using Engine.Core.EntitySystem.Services;
 
 namespace Engine.Testing.Worlds.Entities;
 

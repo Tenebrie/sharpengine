@@ -1,11 +1,10 @@
 ﻿using Engine.Core.Attributes;
 using Engine.Core.Enum;
-using Engine.Input;
-using Engine.Input.Attributes;
-using Engine.Input.Contexts;
-using Engine.Worlds.Attributes;
-using Engine.Worlds.Entities;
-using Engine.Worlds.Services;
+using Engine.Core.Input.Attributes;
+using Engine.Core.Input.Contexts;
+using Engine.Core.EntitySystem.Attributes;
+using Engine.Core.EntitySystem.Entities;
+using Engine.Core.EntitySystem.Services;
 using Silk.NET.Input;
 
 namespace User.Game.Services;

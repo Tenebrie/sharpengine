@@ -1,10 +1,10 @@
-﻿using Engine.Assets;
+﻿using Engine.Core.Assets;
 using Engine.Core.Communication.Signals;
-using Engine.Core.Logging;
 using Engine.Core.Makers;
-using Engine.Worlds.Attributes;
-using Engine.Worlds.Components;
-using Engine.Worlds.Entities;
+using Engine.Core.EntitySystem.Attributes;
+using Engine.Core.EntitySystem.Components.Physics;
+using Engine.Core.EntitySystem.Components.Rendering;
+using Engine.Core.EntitySystem.Entities;
 
 namespace User.Game.Actors;
 

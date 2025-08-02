@@ -1,15 +1,13 @@
-﻿using Engine.Assets;
-using Engine.Assets.Meshes.Builtins;
-using Engine.Core.Common;
-using Engine.Worlds.Attributes;
-using Engine.Worlds.Components;
-using Engine.Worlds.Entities;
+﻿using Engine.Core.EntitySystem.Attributes;
+using Engine.Core.EntitySystem.Components.Physics;
+using Engine.Core.EntitySystem.Entities;
 
 namespace User.Game.Actors;
 
 public partial class BasicEnemy : ActorInstance
 {
     // [Component] public StaticMeshComponent Mesh;
+    [Component] public PhysicsComponent Physics;
 
     public double Health { get; set; } = 100.0;
 

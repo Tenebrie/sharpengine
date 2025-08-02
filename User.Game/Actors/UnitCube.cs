@@ -1,14 +1,11 @@
 ﻿using System.Drawing;
 using System.Numerics;
-using Engine.Assets;
-using Engine.Assets.Loaders;
-using Engine.Assets.Materials;
-using Engine.Assets.Materials.Meshes.HonseTerrain;
-using Engine.Assets.Meshes;
-using Engine.Assets.Meshes.Builtins;
-using Engine.Worlds.Attributes;
-using Engine.Worlds.Components;
-using Engine.Worlds.Entities;
+using Engine.Core.Assets;
+using Engine.Core.Assets.Loaders;
+using Engine.Core.Assets.Meshes.Builtins;
+using Engine.Core.EntitySystem.Attributes;
+using Engine.Core.EntitySystem.Components.Rendering;
+using Engine.Core.EntitySystem.Entities;
 
 namespace User.Game.Actors;
 

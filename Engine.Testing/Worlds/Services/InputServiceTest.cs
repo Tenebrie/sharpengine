@@ -1,11 +1,11 @@
 ﻿using Engine.Core.Common;
-using Engine.Input.Attributes;
-using Engine.Input.Contexts;
 using Engine.Testing.TestUtilities.Mocks;
-using Engine.Worlds.Entities.BuiltIns;
-using Engine.Worlds.Services;
+using Engine.Core.EntitySystem.Entities.BuiltIns;
+using Engine.Core.EntitySystem.Services;
+using Engine.Core.Input.Attributes;
+using Engine.Core.Input.Contexts;
 using Silk.NET.Input;
-using InputService = Engine.Worlds.Services.InputService;
+using InputService = Engine.Core.EntitySystem.Services.InputService;
 
 namespace Engine.Testing.Worlds.Services;
 

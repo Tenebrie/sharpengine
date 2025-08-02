@@ -1,7 +1,6 @@
 ﻿using Engine.Core.Common;
-using Engine.Core.Makers;
-using Engine.Worlds.Attributes;
-using Engine.Worlds.Entities;
+using Engine.Core.EntitySystem.Attributes;
+using Engine.Core.EntitySystem.Entities;
 using User.Game.Actors;
 using User.Game.Player;
 using User.Game.Services;
