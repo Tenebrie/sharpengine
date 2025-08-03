@@ -126,8 +126,8 @@ def main():
               f"Shader compiler not found at {compiler}.\nYou may need to run `build-deps.py`.")
         sys.exit(1)
 
-    shdr_dir = solution_root / "Engine.Assets" / "Materials"
-    out_base = (solution_root / "Engine.Editor" / "bin" /
+    shdr_dir = solution_root / "Engine.Core.Assets" / "Materials"
+    out_base = (solution_root / "Engine.Main.Editor" / "bin" /
                 args.config / args.framework / "Compiled" / "Shaders")
 
     # common params

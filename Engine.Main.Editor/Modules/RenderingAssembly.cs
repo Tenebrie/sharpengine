@@ -11,6 +11,8 @@ internal class RenderingAssembly(IWindow window) : GuestAssembly("Engine.Module.
     private bool _isInitialized = false;
     internal IRenderingModule? RenderingModule { get; set; }
     private readonly List<Backstage> _backstages = [];
+    
+    internal override bool IgnoresTimeScale => true;
 
     public override void Init()
     {

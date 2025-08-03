@@ -7,6 +7,8 @@ namespace Engine.Main.Editor.Modules;
 internal class PhysicsAssembly() : GuestAssembly("Engine.Module.Physics", EngineModule.Physics)
 {
     internal IPhysicsModule? PhysicsModule { get; private set; }
+    
+    internal override bool IgnoresTimeScale => false;
 
     public override void Init()
     {

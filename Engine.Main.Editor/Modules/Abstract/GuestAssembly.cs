@@ -9,6 +9,7 @@ public abstract class GuestAssembly(string assemblyName, EngineModule module)
 {
     internal string AssemblyName = assemblyName;
     internal EngineModule Module = module;
+    internal abstract bool IgnoresTimeScale { get; }
     internal GuestAssemblyHost Host { get; } = new(assemblyName);
     
     internal Backstage? Backstage { get; set; }

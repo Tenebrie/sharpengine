@@ -126,14 +126,19 @@ public partial class Camera : Actor
     }
     
     private Transform _instanceWorldTransform = Transform.Identity;
+
     public bool SphereInFrustum(BoundingSphereComponent sphere, Transform? instanceTransform)
+    {
+        return SphereInFrustum(sphere.WorldTransform, sphere.WorldRadius, instanceTransform);
+    }
+    public bool SphereInFrustum(Transform worldTransform, double worldRadius, Transform? instanceTransform)
     {
         // No instance => use the sphere's transform directly
         if (instanceTransform == null)
         {
             foreach (var p in _planes)
             {
-                if (p.Normal.DotProduct(sphere.WorldTransform.Position) + p.D < -sphere.WorldTransform.Scale.X)
+                if (p.Normal.DotProduct(worldTransform.Position) + p.D < -worldRadius)
                 {
                     return false;
                 }
@@ -143,7 +148,7 @@ public partial class Camera : Actor
         }
         
         // Instance transform provided, multiply it with the sphere's transform
-        instanceTransform.Multiply(sphere.WorldTransform, ref _instanceWorldTransform);
+        instanceTransform.Multiply(worldTransform, ref _instanceWorldTransform);
         
         foreach (var p in _planes)
         {

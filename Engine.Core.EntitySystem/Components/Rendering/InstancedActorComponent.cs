@@ -8,6 +8,7 @@ using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Logging;
 using Engine.Core.Profiling;
+using Engine.Native.Bgfx;
 using JetBrains.Annotations;
 
 namespace Engine.Core.EntitySystem.Components.Rendering;
@@ -37,6 +38,12 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
         get => _staticMeshHolder.BoundingSphere;
         set => _staticMeshHolder.BoundingSphere = value;
     }
+    public Bgfx.StateFlags RenderFlags
+    {
+        get => _staticMeshHolder.RenderFlags;
+        set => _staticMeshHolder.RenderFlags = value;
+    }
+    
     public List<TInstance> Instances { get; } = [];
     public int InstanceCount => Instances.Count;
 
@@ -117,7 +124,7 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
 
     public void Render(ref RenderContext renderContext)
     {
-        Mesh.Render((uint)Instances.Count, Material, ref renderContext);
-        BoundingSphere.Mesh.Render((uint)Instances.Count, WireframeMaterial.Instance, ref renderContext);
+        Mesh.Render((uint)Instances.Count, Material, ref renderContext, RenderFlags);
+        SphereMesh.Render((uint)Instances.Count, WireframeMaterial.Instance, ref renderContext, SphereMesh.ColorMode.AxisColor);
     }
 }

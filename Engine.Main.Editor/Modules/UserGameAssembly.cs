@@ -10,6 +10,8 @@ public class UserGameAssembly() : GuestAssembly("User.Game", EngineModule.UserHo
 {
     private double _updatesPausedFor = 0.0;
     
+    internal override bool IgnoresTimeScale => false;
+    
     public override void Init()
     {
         base.Init();

@@ -27,7 +27,8 @@ internal static class Editor
     internal static UserGameAssembly UserGameAssembly { get; private set; } = null!;
     
     private static List<GuestAssembly> GuestAssemblies { get; set; } = [];
-    
+
+    internal static double TimeScale = 1.0;
     private static EditorHypervisor Hypervisor { get; set; } = null!;
     
     [SuppressMessage("ReSharper", "ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator")]
@@ -86,7 +87,8 @@ internal static class Editor
         {
             foreach (var guestAssembly in GuestAssemblies)
             {
-                var needsReload = guestAssembly.Update(deltaTime);
+                var timeScale = guestAssembly.IgnoresTimeScale ? 1.0 : TimeScale;
+                var needsReload = guestAssembly.Update(deltaTime * timeScale);
                 if (needsReload)
                     ReloadAssembly(guestAssembly);
             }
@@ -172,6 +174,7 @@ public class EditorHypervisor : IRootHypervisor
 
     public void SetGameplayTimeScale(double timeScale)
     {
+        Editor.TimeScale = timeScale;
         if (Editor.UserGameAssembly.Backstage is not null)
             Editor.UserGameAssembly.Backstage.TimeScale = timeScale;
     }

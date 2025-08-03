@@ -55,6 +55,6 @@ public partial class TerrainMeshComponent : ActorComponent, IRenderable
     public void Render(ref RenderContext renderContext)
     {
         Mesh.Render(1, Material, ref renderContext);
-        BoundingSphere.Mesh.Render(1, WireframeMaterial.Instance, ref renderContext);
+        SphereMesh.Render(1, WireframeMaterial.Instance, ref renderContext, SphereMesh.ColorMode.AxisColor);
     }
 }

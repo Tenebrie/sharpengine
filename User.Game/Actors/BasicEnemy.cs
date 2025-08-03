@@ -21,6 +21,6 @@ public partial class BasicEnemy : ActorInstance
     [OnInit]
     protected void OnInit()
     {
-        ColliderSphere.Radius = 1.0;
+        ColliderSphere.Radius = 0.5;
     }
 }

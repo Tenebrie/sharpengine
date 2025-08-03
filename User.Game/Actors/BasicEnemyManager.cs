@@ -4,6 +4,7 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Native.Bgfx;
 using User.Game.Player;
 
 namespace User.Game.Actors;
@@ -22,8 +23,9 @@ public partial class BasicEnemyManager : Actor
             AssetManager.PutMesh("Virtual/BasicEnemy", PlaneMesh.Create());
         }
         InstanceManager.Mesh = AssetManager.LoadMesh("Virtual/BasicEnemy");
-        InstanceManager.Material = AssetManager.LoadMaterial("Meshes/HonseTerrain/HonseTerrain");
+        InstanceManager.Material = AssetManager.LoadMaterial("Meshes/BillboardSprite/BillboardSprite");
         InstanceManager.Material.LoadTexture("Assets/Textures/godot.png");
+        InstanceManager.RenderFlags = Bgfx.StateFlags.BlendAlphaToCoverage;
     }
 
     private int _enemiesQueued = 0;

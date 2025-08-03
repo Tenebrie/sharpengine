@@ -11,6 +11,7 @@ public class WorkerPoolMember
         CollectData,
         InitialMove,
         CollectCollisionCandidates,
+        ResolveCollisions,
         FlushTransform,
     }
     
@@ -91,6 +92,9 @@ public class WorkerPoolMember
             case PhysicsTaskType.CollectCollisionCandidates:
                 CollectCollisionCandidates(ref atomHandle, allParticipants);
                 break;
+            case PhysicsTaskType.ResolveCollisions:
+                ResolveCollisions(ref atomHandle);
+                break;
             case PhysicsTaskType.FlushTransform:
                 FlushTransform(ref atomHandle);
                 break;
@@ -104,12 +108,11 @@ public class WorkerPoolMember
         Transform.Copy(handle.Parent.WorldTransform, ref handle.WorldTransform);
         handle.Velocity = handle.Component.Velocity;
         handle.SphereColliders = handle.Component.GetSphereColliders();
+        handle.HasColliders = false;
         if (handle.SphereColliders.Count == 0)
-        {
-            handle.BoundingSphereRadius = 1.0;
             return;
-        }
 
+        handle.HasColliders = true;
         // TODO: Take ALL sphere into account, not just the first one.
         handle.BoundingSphereRadius = handle.SphereColliders[0].WorldRadius;
     }
@@ -143,9 +146,11 @@ public class WorkerPoolMember
     private static void CollectCollisionCandidates(ref AtomHandle handle, AtomHandle[] participants)
     {
         handle.CollisionCandidates.Clear();
+        if (!handle.HasColliders)
+            return;
         foreach (var participant in participants)
         {
-            if (participant.Rid == handle.Rid)
+            if (participant.Rid == handle.Rid || !participant.HasColliders)
                 continue;
             var distanceSquared = participant.WorldPosition.DistanceSquaredTo(handle.WorldPosition);
             var radiusSum = handle.BoundingSphereRadius + participant.BoundingSphereRadius;
@@ -161,11 +166,76 @@ public class WorkerPoolMember
             });
         }
     }
+    
+    private static void ResolveCollisions(ref AtomHandle handle)
+    {
+        // Early-out if nothing to do
+        if (handle.CollisionCandidates.Count == 0 || !handle.HasColliders)
+            return;
+
+        const double restitution = 0.5;     // 0 = sticky, 1 = perfectly elastic
+        const double percent     = 0.5;     // positional correction strength
+        const double slop        = 0;   // allow tiny penetration before pushing
+
+        var posA = handle.WorldPosition;
+        var velA = handle.Velocity;
+        var radiusOfA   = handle.BoundingSphereRadius;
+
+        foreach (var c in handle.CollisionCandidates)
+        {
+            // Each pair appears twice (A→B and B→A). Resolve only when A.Rid < B.Rid
+            var other = c.OtherHandle;
+            if (handle.Rid > other.Rid || !other.HasColliders)
+                continue;
+
+            var posB = other.WorldPosition;
+            var velB = other.Velocity;
+            var radiusOfB   = other.BoundingSphereRadius;
+
+            // Step 1: compute contact info
+            var vectorDelta   = posB - posA;
+            var dist    = Math.Sqrt(vectorDelta.LengthSquared);
+            if (dist == 0)                   // same centre – pick any axis
+                vectorDelta = Vector3.UnitY;
+
+            var normal  = vectorDelta / (dist + double.Epsilon);  // safe normal
+            var penDepth= (radiusOfA + radiusOfB) - dist;                 // linear penetration
+
+            if (penDepth <= 0)
+                continue;   // they separated since candidate pass
+
+            // Step 2: positional correction (split 50/50)
+            var correction = normal * percent * Math.Max(penDepth - slop, 0) * 0.5;
+            handle.WorldTransform.TranslateGlobal(-correction);
+            other.WorldTransform.TranslateGlobal( correction);
+
+            handle.WorldPosition = handle.WorldTransform.Position;
+            other.WorldPosition = other.WorldTransform.Position;
+
+            // Step 3: velocity impulse
+            var relVel   = velA - velB;
+            var velAlongN= relVel.DotProduct(normal);
+
+            if (velAlongN > 0)
+                continue;   // bodies are separating already
+
+            var j = -(1 + restitution) * velAlongN; // equal mass => divide by 2 omitted
+            var impulse = normal * (j * 0.5);       // 0.5 each (mass = 1)
+
+            velA +=  impulse;
+            velB -=  impulse;
+
+            // Write back to handles (structs!)
+            handle.Velocity = velA;
+            other.Velocity = velB;
+        }
+
+        // Clear for next frame
+        handle.CollisionCandidates.Clear();
+    }
 
     private static void FlushTransform(ref AtomHandle handle)
     {
-        if (handle.CollisionCandidates.Count > 0) 
-            return;
         var localTransform = handle.WorldTransform;
         handle.Component.Velocity = handle.Velocity;
         if (handle.Parent.Parent is Spatial higherLevelParent)

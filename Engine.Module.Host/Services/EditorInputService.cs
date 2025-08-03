@@ -1,8 +1,10 @@
-﻿using Engine.Core.Enum;
+﻿using Engine.Core.Assets.Meshes;
+using Engine.Core.Enum;
 using Engine.Core.Input;
 using Engine.Core.Input.Attributes;
 using Engine.Core.Input.Contexts;
 using Engine.Core.EntitySystem.Attributes;
+using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
 using Silk.NET.Input;
@@ -25,6 +27,14 @@ public enum InputAction
     CameraRotatePitch,
     CameraRotateYaw,
     CameraSpeedWheel,
+}
+
+public enum DebugRenderingMode
+{
+    None,
+    BoundingBoxes,
+    Colliders,
+    Count,
 }
 
 public partial class EditorInputService : Service
@@ -58,6 +68,27 @@ public partial class EditorInputService : Service
             .Build();
         
         RecalculateActiveContext();
+        NotifyDebugRendering();
+    }
+
+    private DebugRenderingMode _debugMode = DebugRenderingMode.None;
+    [OnKeyInput(Key.F4)]
+    protected void OnToggleDebugRendering()
+    {
+        _debugMode += 1;
+        if (_debugMode >= DebugRenderingMode.Count)
+            _debugMode = DebugRenderingMode.None;
+        NotifyDebugRendering();
+    }
+
+    private void NotifyDebugRendering()
+    {
+        SphereMesh.VisibleModes = _debugMode switch
+        {
+            DebugRenderingMode.BoundingBoxes => SphereMesh.ColorMode.AxisColor,
+            DebugRenderingMode.Colliders => SphereMesh.ColorMode.Collider,
+            _ => SphereMesh.ColorMode.None
+        };
     }
 
     [OnKeyInput(Key.F5)]

@@ -73,7 +73,7 @@ public class StaticMesh : IDisposable
         context.InstanceTransformCount += instanceCount;
     }
 
-    public unsafe void Render(uint instanceCount, MaterialInstance material, ref RenderContext context)
+    public unsafe void Render(uint instanceCount, MaterialInstance material, ref RenderContext context, StateFlags extraFlags = StateFlags.None)
     {
         if (!IsValid)
             return;
@@ -89,7 +89,7 @@ public class StaticMesh : IDisposable
             stateFlags |= StateFlags.CullCcw;
         else
             stateFlags |= StateFlags.CullCw;
-        SetState(encoder, stateFlags);
+        SetState(encoder, stateFlags | extraFlags);
         
         material.BindTexture(encoder);
         Submit(encoder, context.ViewId, material.Program, 1, 0);

@@ -37,6 +37,7 @@ public class PhysicsModule : IPhysicsModule
         PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.CollectData, atoms);
         PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.InitialMove, atoms);
         PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.CollectCollisionCandidates, atoms);
+        PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.ResolveCollisions, atoms);
         PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.FlushTransform, atoms);
         
         _revalidationServices.EnableAll();
@@ -54,6 +55,8 @@ public struct AtomHandle
     public Vector3 WorldPosition;
     public Transform WorldTransform;
     public Vector3 Velocity;
+
+    public bool HasColliders;
     public List<ColliderSphereComponent> SphereColliders;
     
     public double BoundingSphereRadius;

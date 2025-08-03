@@ -3,6 +3,7 @@ using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Native.Bgfx;
 
 namespace Engine.Core.EntitySystem.Components;
 
@@ -34,4 +35,6 @@ public partial class StaticMeshHolder : ActorComponent
     {
         BoundingSphere.Generate(vertices);
     }
+    
+    public Bgfx.StateFlags RenderFlags { get; set; } = Bgfx.StateFlags.None;
 }

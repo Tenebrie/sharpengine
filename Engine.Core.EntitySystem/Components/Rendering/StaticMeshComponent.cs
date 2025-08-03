@@ -6,6 +6,7 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
+using Engine.Native.Bgfx;
 using JetBrains.Annotations;
 
 namespace Engine.Core.EntitySystem.Components.Rendering;
@@ -29,13 +30,18 @@ public partial class StaticMeshComponent : ActorComponent, IRenderable
         get => _staticMeshHolder.BoundingSphere;
         set => _staticMeshHolder.BoundingSphere = value;
     }
+    public Bgfx.StateFlags RenderFlags
+    {
+        get => _staticMeshHolder.RenderFlags;
+        set => _staticMeshHolder.RenderFlags = value;
+    }
     
     public bool IsOnScreen { get; set; }
     public void PerformCulling(Camera activeCamera) => IsOnScreen = activeCamera.SphereInFrustum(BoundingSphere, null);
     public int GetInstanceCount() => 2;
     
     private Transform[] _singleComponentTransforms = new Transform[1];
-
+    
     public void PrepareRender(ref RenderContext renderContext)
     {
         _singleComponentTransforms[0] = WorldTransform;
@@ -45,7 +51,7 @@ public partial class StaticMeshComponent : ActorComponent, IRenderable
     }
     public void Render(ref RenderContext renderContext)
     {
-        Mesh.Render(1, Material, ref renderContext);
-        BoundingSphere.Mesh.Render(1, WireframeMaterial.Instance, ref renderContext);
+        Mesh.Render(1, Material, ref renderContext, RenderFlags);
+        SphereMesh.Render(1, WireframeMaterial.Instance, ref renderContext, SphereMesh.ColorMode.AxisColor);
     }
 }

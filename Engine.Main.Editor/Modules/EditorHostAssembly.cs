@@ -10,7 +10,9 @@ namespace Engine.Main.Editor.Modules;
 public class EditorHostAssembly() : GuestAssembly("Engine.Module.Host", EngineModule.EditorHost)
 {
     private double _updatesPausedFor = 0.0;
-    
+
+    internal override bool IgnoresTimeScale => true;
+
     public override void Init()
     {
         base.Init();
