@@ -37,5 +37,9 @@
     <ProjectReference Include="..\Engine.Core.EntitySystem\Engine.Core.EntitySystem.csproj" />
     <ProjectReference Include="..\Engine.Tooling.Roslyn\Engine.Tooling.Roslyn.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <Folder Include="Utilities\" />
+  </ItemGroup>
 
 </Project>

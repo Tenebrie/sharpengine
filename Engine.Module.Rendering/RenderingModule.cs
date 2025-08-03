@@ -60,7 +60,7 @@ public unsafe class RenderingModule : IRenderingModule
         initData.resolution.width = (uint)FramebufferSize.X;
         initData.resolution.height = (uint)FramebufferSize.Y;
         initData.resolution.format = TextureFormat.RGBA8;
-        initData.resolution.reset = (uint)ResetFlags.Vsync;
+        initData.resolution.reset = 0;
         initData.resolution.numBackBuffers = 2;
         initData.resolution.maxFrameLatency = 3;
         initData.callback = BgfxCallbacks.InterfacePtr;
@@ -71,7 +71,7 @@ public unsafe class RenderingModule : IRenderingModule
         HotInitialize(window);
     }
 
-    private ResetFlags _resetFlags = ResetFlags.MsaaX8 | ResetFlags.Maxanisotropy | ResetFlags.Vsync;
+    private ResetFlags _resetFlags = ResetFlags.MsaaX8 | ResetFlags.Maxanisotropy;
     private DebugFlags _debugFlags = DebugFlags.Text;
 
     private ResetFlags GetResetFlags()

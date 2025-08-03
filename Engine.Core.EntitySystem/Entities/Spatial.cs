@@ -11,6 +11,8 @@ public abstract partial class Spatial : Atom
         get => _transform;
         set => _transform = ClaimedTransform.Claim(value, this);
     }
+    
+    public ref Transform TransformReference => ref _transform;
 
     protected Spatial()
     {
@@ -39,4 +41,9 @@ public abstract partial class Spatial : Atom
     {
         _cachedWorldTransformValid = false;
     }
+}
+
+public static class SpatialExternals
+{
+    public static void InvalidateWorldTransform(Spatial spatial) => spatial.InvalidateWorldTransform();
 }

@@ -51,6 +51,17 @@ public partial class Atom
         return null;
     }
     
+    public List<T> GetChildren<T>() where T : Atom
+    {
+        var result = new List<T>();
+        foreach (var child in Children)
+        {
+            if (child is T t)
+                result.Add(t);
+        }
+        return result;
+    }
+    
     private static Atom CreateDefaultInstance(Type type)
     {
         if (type is not { IsClass: true })

@@ -3,7 +3,7 @@ using Engine.Core.EntitySystem;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Main.Editor.Modules.Abstract;
 
-namespace Engine.Hypervisor.Editor.Modules;
+namespace Engine.Main.Editor.Modules;
 
 public class UserGameAssembly(string assemblyName = "User.Game") : GuestAssembly(assemblyName)
 {
@@ -35,11 +35,12 @@ public class UserGameAssembly(string assemblyName = "User.Game") : GuestAssembly
 
         if (Backstage == null)
             return base.Update(deltaTime);
-        
+
         try
         {
             BackstageEventLoop.ProcessLogicFrame(Backstage, deltaTime);
-        } catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             Console.Error.WriteLine($"Error during Backstage update: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);

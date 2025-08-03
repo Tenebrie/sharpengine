@@ -7,6 +7,7 @@ namespace Engine.Core.Profiling;
 public enum ProfilingContext
 {
     Unknown,
+    PhysicsUpdate,
     OnInitCallback,
     OnUpdateCallback,
     OnDestroyCallback,
@@ -17,13 +18,13 @@ public class Profiler
     private readonly Dictionary<Type, Dictionary<string, ProfilerEntry>> _methodEntries = new();
     private readonly Dictionary<Type, Dictionary<ProfilingContext, ProfilerEntry>> _lifecycleEntries = new();
 
-    private static DefaultObjectPoolProvider _poolProvider = new();
-    private static ObjectPool<ProfilingStopwatch> _pool = _poolProvider.Create<ProfilingStopwatch>();
+    private static readonly DefaultObjectPoolProvider PoolProvider = new();
+    private static readonly ObjectPool<ProfilingStopwatch> Pool = PoolProvider.Create<ProfilingStopwatch>();
     private static Profiler Instance { get; } = new();
     
     public static ProfilingStopwatch Start()
     {
-        var stopwatch = _pool.Get();
+        var stopwatch = Pool.Get();
         stopwatch.Start();
         return stopwatch;
     }
@@ -76,7 +77,7 @@ public class Profiler
         }
         profilerEntry.RecordDuration(stopwatch.Stopwatch.Elapsed.Microseconds);
         // Logger.Debug(ownerType.Name + " - " + context + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
-        _pool.Return(stopwatch);
+        Pool.Return(stopwatch);
     }
     
     internal static void ReportByMethodName(ProfilingStopwatch stopwatch, Type ownerType, string methodName)
@@ -93,7 +94,7 @@ public class Profiler
         }
         profilerEntry.RecordDuration(stopwatch.Stopwatch.Elapsed.Microseconds);
         // Logger.Debug(ownerType.Name + " - " + methodName + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
-        _pool.Return(stopwatch);
+        Pool.Return(stopwatch);
     }
 }
 
@@ -130,7 +131,7 @@ internal class ProfilerEntry
     internal void RecordDuration(long duration)
     {
         _durations.Add(duration);
-        if (_durations.Count > 10000)
+        if (_durations.Count > 50000)
         {
             _durations.RemoveAt(0);
         }

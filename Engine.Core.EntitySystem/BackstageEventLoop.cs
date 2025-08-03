@@ -18,11 +18,6 @@ public static class BackstageEventLoop
         }
     }
 
-    public static void InitializeStaticAtomFields()
-    {
-        
-    }
-    
     public static void ProcessLogicFrame(Backstage backstage, double deltaTime)
     {
         backstage.ProcessLogicFrame(deltaTime);

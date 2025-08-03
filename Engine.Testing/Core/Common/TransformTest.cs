@@ -53,7 +53,7 @@ public class TransformTest
     {
         var parentTransform = Transform.FromTranslation(10, 100, 10).Rescale(2, 2, 2);
         var childTransform = Transform.FromTranslation(10, 100, 10);
-        var result = childTransform * parentTransform;
+        var result = parentTransform * childTransform;
         Assert.Equal(new Vector3(30, 300, 30), result.Position);
     }
     
@@ -62,7 +62,7 @@ public class TransformTest
     {
         var parentTransform = Transform.FromTranslation(10, 100, 10);
         var childTransform = Transform.FromTranslation(10, 100, 10).Rescale(2, 2, 2);
-        var result = childTransform * parentTransform;
+        var result = parentTransform * childTransform;
         Assert.Equal(new Vector3(20, 200, 20), result.Position);
     }
     
@@ -71,7 +71,7 @@ public class TransformTest
     {
         var parentTransform = Transform.FromRotation(0, 90, 0);
         var childTransform = Transform.FromTranslation(0, 0, -100);
-        var result = childTransform * parentTransform;
+        var result = parentTransform * childTransform;
         
         VectorAssert.Equal(new Vector3(100, 0, 0), result.Position);
     }
@@ -80,7 +80,7 @@ public class TransformTest
     public void InversesMatrixCorrectly()
     {
         var transform = Transform.FromTranslation(10, 100, 10).Rotate(15, 30, 45).Rescale(2, 3, 4);
-        var inverse = transform.Inverse();
+        var inverse = transform.Inverse;
         
         // Verify that applying the inverse results in the identity transform
         var result = transform * inverse;
@@ -93,7 +93,7 @@ public class TransformTest
     {
         var transform = Transform.FromTranslation(10, 100, 10).Rotate(15, 30, 45).Rescale(2, 3, 4);
         var inverse = Transform.Identity;
-        transform.Inverse(ref inverse);
+        transform.GetInverse(ref inverse);
         
         // Verify that applying the inverse results in the identity transform
         var result = transform * inverse;

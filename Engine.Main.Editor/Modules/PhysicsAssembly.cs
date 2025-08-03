@@ -1,7 +1,7 @@
 ﻿using Engine.Core.EntitySystem.Modules;
 using Engine.Main.Editor.Modules.Abstract;
 
-namespace Engine.Hypervisor.Editor.Modules;
+namespace Engine.Main.Editor.Modules;
 
 internal class PhysicsAssembly(string assemblyName = "Engine.Module.Physics") : GuestAssembly(assemblyName)
 {
@@ -17,5 +17,11 @@ internal class PhysicsAssembly(string assemblyName = "Engine.Module.Physics") : 
             return;
         }
         PhysicsModule.Initialize();
+    }
+    
+    public override bool Update(double deltaTime)
+    {
+        PhysicsModule?.ProcessPhysicsFrame(deltaTime);
+        return base.Update(deltaTime);
     }
 }

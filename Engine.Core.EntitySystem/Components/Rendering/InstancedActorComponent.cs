@@ -37,7 +37,7 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
         get => _staticMeshHolder.BoundingSphere;
         set => _staticMeshHolder.BoundingSphere = value;
     }
-    public List<ActorInstance> Instances { get; } = [];
+    public List<TInstance> Instances { get; } = [];
     public int InstanceCount => Instances.Count;
 
     [Profile]
@@ -52,11 +52,11 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
     
     public void RemoveInstance(ActorInstance instance)
     {
-        if (instance == null || !Instances.Contains(instance))
+        if (instance == null || !Instances.Contains(instance) || instance is not TInstance instancedActor)
             return;
 
         instance.QueueFree();
-        Instances.Remove(instance);
+        Instances.Remove(instancedActor);
     }
 
     public bool IsOnScreen { get; set; }

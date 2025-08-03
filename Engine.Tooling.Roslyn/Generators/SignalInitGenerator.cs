@@ -23,10 +23,8 @@ public sealed class SignalInitGenerator : IIncrementalGenerator
                     if (fieldDecl.Declaration.Variables[0].Initializer is not null)
                         return null;
 
-                    var symbol = context.SemanticModel.GetDeclaredSymbol(
-                        fieldDecl.Declaration.Variables[0]) as IFieldSymbol;
-
-                    if (symbol is null || !symbol.IsStatic) return null;
+                    if (context.SemanticModel.GetDeclaredSymbol(
+                            fieldDecl.Declaration.Variables[0]) is not IFieldSymbol { IsStatic: true } symbol) return null;
                     if (!symbol.GetAttributes().Any(a =>
                            a.AttributeClass?.Name is "SignalAttribute" or "Signal")) return null;
 

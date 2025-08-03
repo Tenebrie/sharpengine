@@ -4,7 +4,7 @@ using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Modules;
 using Engine.Core.Enum;
 using Engine.Core.Logging;
-using Engine.Hypervisor.Editor.Modules;
+using Engine.Main.Editor.Modules;
 using Engine.Main.Editor.Modules.Abstract;
 using Microsoft.Build.Locator;
 using Silk.NET.Input;

@@ -63,10 +63,12 @@ public partial class BasicEnemyManager : Actor
         if (player is null)
             return;
 
-        var movementSpeed = 15.0 * deltaTime;
+        var movementSpeed = 15.0;
         foreach (var enemy in InstanceManager.Instances)
         {
-            enemy.Transform.Position += (player.WorldTransform.Position - enemy.WorldTransform.Position).NormalizeInPlace() * movementSpeed;
+            // enemy.Transform.Position += (player.WorldTransform.Position - enemy.WorldTransform.Position).NormalizeInPlace() * movementSpeed;
+            enemy.Physics.Velocity =
+                (player.WorldTransform.Position - enemy.WorldTransform.Position).NormalizeInPlace() * movementSpeed;
             
             var distanceToPlayer = enemy.Transform.Position.DistanceTo(player.WorldTransform.Position);
             if (distanceToPlayer < 2.5)

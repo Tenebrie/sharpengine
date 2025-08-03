@@ -1,39 +1,46 @@
-﻿using Engine.Core.EntitySystem.Attributes;
+﻿using Engine.Core.DataStructures;
+using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 
 namespace Engine.Core.EntitySystem.Services;
 
 public partial class CacheRevalidationService : Service
 {
-    private readonly HashSet<Spatial> _transformInvalidatedAtoms = [];
+    private readonly ThreadLocalHashSet<Spatial> _transformInvalidatedAtoms = new();
+    private HashSet<Spatial> _collectedAtoms = [];
+    
+    public bool Disabled { get; set; } = false;
     
     internal void InvalidateTransform(Spatial atom)
     {
+        if (Disabled)
+            return;
         _transformInvalidatedAtoms.Add(atom);
+    }
+
+    [OnInit]
+    protected void OnInit()
+    {
+        Backstage.PhysicsModule?.RegisterService(this);
     }
     
     [OnUpdate]
     internal void OnUpdate()
     {
-        foreach (var atom in _transformInvalidatedAtoms)
+        _collectedAtoms.Clear();
+        _transformInvalidatedAtoms.Collect(ref _collectedAtoms);
+        foreach (var atom in _collectedAtoms)
         {
             if (!IsValid(atom))
                 continue;
 
-            RevalidateSpatial(atom);
+            Backstage.PhysicsModule?.RevalidateWorldTransform(atom);
         }
-        _transformInvalidatedAtoms.Clear();
     }
-
-    private static void RevalidateSpatial(Spatial atom)
+    
+    [OnDestroy]
+    protected void OnDestroy()
     {
-        atom.InvalidateWorldTransform();
-        _ = atom.WorldTransform;
-        foreach (var child in atom.Children)
-        {
-            if (child is not Spatial spatial)
-                continue;
-            RevalidateSpatial(spatial);
-        }
+        Backstage.PhysicsModule?.UnregisterService(this);
     }
 }

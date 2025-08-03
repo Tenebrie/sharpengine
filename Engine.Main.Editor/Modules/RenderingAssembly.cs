@@ -3,7 +3,7 @@ using Engine.Core.EntitySystem.Modules;
 using Engine.Main.Editor.Modules.Abstract;
 using Silk.NET.Windowing;
 
-namespace Engine.Hypervisor.Editor.Modules;
+namespace Engine.Main.Editor.Modules;
 
 internal class RenderingAssembly(IWindow window, string assemblyName = "Engine.Module.Rendering") : GuestAssembly(assemblyName)
 {
@@ -29,7 +29,7 @@ internal class RenderingAssembly(IWindow window, string assemblyName = "Engine.M
             RenderingModule.Initialize(window);
             _isInitialized = true;
         }
-        RenderingModule.SetGameplayContext(Main.Editor.Editor.GameplayContext);
+        RenderingModule.SetGameplayContext(Editor.GameplayContext);
         foreach (var backstage in _backstages)
             RenderingModule.Register(backstage);
     }

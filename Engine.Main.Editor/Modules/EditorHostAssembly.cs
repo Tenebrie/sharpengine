@@ -1,11 +1,10 @@
-﻿using Engine.Core.Logging;
-using Engine.Core.Contracts;
+﻿using Engine.Core.Contracts;
 using Engine.Core.EntitySystem;
 using Engine.Core.EntitySystem.Entities;
-using Engine.Main.Editor;
+using Engine.Core.Logging;
 using Engine.Main.Editor.Modules.Abstract;
 
-namespace Engine.Hypervisor.Editor.Modules;
+namespace Engine.Main.Editor.Modules;
 
 public class EditorHostAssembly(string assemblyName = "Engine.Module.Host") : GuestAssembly(assemblyName)
 {
@@ -24,10 +23,10 @@ public class EditorHostAssembly(string assemblyName = "Engine.Module.Host") : Gu
         Backstage = (Backstage)Activator.CreateInstance(Settings.MainBackstage)!;
         var backstageContract = (IHostBackstage)Backstage;
         backstageContract.RootSupervisor = new EditorHypervisor();
-        if (Main.Editor.Editor.UserGameAssembly.Backstage is not null)
-            backstageContract.UserBackstage = Main.Editor.Editor.UserGameAssembly.Backstage;
+        if (Editor.UserGameAssembly.Backstage is not null)
+            backstageContract.UserBackstage = Editor.UserGameAssembly.Backstage;
         Backstage.Name = "host-" + Guid.NewGuid();
-        Backstage.GameplayContext = Main.Editor.Editor.GameplayContext;
+        Backstage.GameplayContext = Editor.GameplayContext;
     }
 
     public override bool Update(double deltaTime)

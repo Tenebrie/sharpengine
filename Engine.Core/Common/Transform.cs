@@ -146,14 +146,15 @@ public class Transform
         return this;
     }
 
-    public Transform Inverse()
+    public Transform Inverse => GetInverse();
+    public Transform GetInverse()
     {
         var newTransform = new Transform();
-        Inverse(ref newTransform);
+        GetInverse(ref newTransform);
         return newTransform;
     }
     
-    public void Inverse(ref Transform inverse)
+    public void GetInverse(ref Transform inverse)
     {
         var m = Data;
     
@@ -267,7 +268,7 @@ public class Transform
     public static Transform FromScale(Vector3 scale) => new (Vector3.Zero, Quat.Identity, scale);
     public static Transform FromScale(double x, double y, double z) => new (Vector3.Zero, Quat.Identity, new Vector3(x, y, z));
     
-    public static Transform operator*(Transform child, Transform parent)
+    public static Transform operator*(Transform parent, Transform child)
     {
         var result = new Transform
         {
