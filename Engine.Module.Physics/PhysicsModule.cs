@@ -13,7 +13,6 @@ namespace Engine.Module.Physics;
 [UsedImplicitly]
 public class PhysicsModule : IPhysicsModule
 {
-    private readonly PhysicsTaskDispatcher _dispatcher = new();
     private readonly AtomRegistrationHandler _registeredAtoms = new();
     private readonly CacheRevalidationServiceHandler _revalidationServices = new();
 
@@ -35,9 +34,10 @@ public class PhysicsModule : IPhysicsModule
         
         _revalidationServices.DisableAll();
         
-        _dispatcher.Dispatch(_workerPool, deltaTime, PhysicsTaskDispatcher.PhysicsTaskType.CollectData, atoms);
-        _dispatcher.Dispatch(_workerPool, deltaTime, PhysicsTaskDispatcher.PhysicsTaskType.InitialMove, atoms);
-        _dispatcher.Dispatch(_workerPool, deltaTime, PhysicsTaskDispatcher.PhysicsTaskType.FlushTransform, atoms);
+        PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.CollectData, atoms);
+        PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.InitialMove, atoms);
+        PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.CollectCollisionCandidates, atoms);
+        PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.FlushTransform, atoms);
         
         _revalidationServices.EnableAll();
         stopwatch.StopAndReport(GetType(), ProfilingContext.PhysicsUpdate);
@@ -48,9 +48,20 @@ public class PhysicsModule : IPhysicsModule
 
 public struct AtomHandle
 {
-    public Spatial Parent;
+    public required long Rid;
+    public required Spatial Parent;
+    public required PhysicsComponent Component;
+    public Vector3 WorldPosition;
     public Transform WorldTransform;
     public Vector3 Velocity;
-    public PhysicsComponent Component;
     public List<ColliderSphereComponent> SphereColliders;
+    
+    public double BoundingSphereRadius;
+    public required List<CollisionCandidate> CollisionCandidates;
+}
+
+public struct CollisionCandidate
+{
+    public AtomHandle OtherHandle;
+    public double OverlapDistance;
 }

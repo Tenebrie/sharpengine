@@ -1,10 +1,19 @@
 ﻿using Engine.Core.Common;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Logging;
 
 namespace Engine.Module.Physics.WorkerThreads;
 
 public class WorkerPoolMember
 {
+    public enum PhysicsTaskType
+    {
+        CollectData,
+        InitialMove,
+        CollectCollisionCandidates,
+        FlushTransform,
+    }
+    
     private double _deltaTime;
     public readonly List<PhysicsTaskDispatcher.TaskDefinition> TaskQueue = [];
 
@@ -55,7 +64,7 @@ public class WorkerPoolMember
                 {
                     try
                     {
-                        ProcessTask(item.Type, ref item.AtomHandles[index]);
+                        ProcessTask(item.Type, ref item.AtomHandles[index], item.AtomHandles);
                     }
                     catch (Exception ex)
                     {
@@ -69,18 +78,21 @@ public class WorkerPoolMember
         }
     }
     
-    private void ProcessTask(PhysicsTaskDispatcher.PhysicsTaskType type, ref AtomHandle atomHandle)
+    private void ProcessTask(PhysicsTaskType type, ref AtomHandle atomHandle, AtomHandle[] allParticipants)
     {
         switch (type)
         {
-            case PhysicsTaskDispatcher.PhysicsTaskType.CollectData:
+            case PhysicsTaskType.CollectData:
                 CollectData(ref atomHandle);
                 break;
-            case PhysicsTaskDispatcher.PhysicsTaskType.InitialMove:
-                ProcessAtomMovement(atomHandle);
+            case PhysicsTaskType.InitialMove:
+                ProcessAtomMovement(ref atomHandle);
                 break;
-            case PhysicsTaskDispatcher.PhysicsTaskType.FlushTransform:
-                FlushTransform(atomHandle);
+            case PhysicsTaskType.CollectCollisionCandidates:
+                CollectCollisionCandidates(ref atomHandle, allParticipants);
+                break;
+            case PhysicsTaskType.FlushTransform:
+                FlushTransform(ref atomHandle);
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(type), type, null);
@@ -89,35 +101,78 @@ public class WorkerPoolMember
     
     private static void CollectData(ref AtomHandle handle)
     {
-        handle.WorldTransform = handle.Parent.WorldTransform;
+        Transform.Copy(handle.Parent.WorldTransform, ref handle.WorldTransform);
         handle.Velocity = handle.Component.Velocity;
         handle.SphereColliders = handle.Component.GetSphereColliders();
+        if (handle.SphereColliders.Count == 0)
+        {
+            handle.BoundingSphereRadius = 1.0;
+            return;
+        }
+
+        // TODO: Take ALL sphere into account, not just the first one.
+        handle.BoundingSphereRadius = handle.SphereColliders[0].WorldRadius;
     }
 
-    private void ProcessAtomMovement(AtomHandle handle)
+    private void ProcessAtomMovement(ref AtomHandle handle)
     {
         if (handle.WorldTransform.Position.Y > 0)
         {
             handle.Velocity.Y -= 35.0 * _deltaTime;
         }
+
         if (handle.Velocity.LengthSquared <= 0.0001)
+        {
+            handle.WorldPosition = handle.WorldTransform.Position;
             return;
+        }
         
         handle.WorldTransform.TranslateGlobal(handle.Velocity * _deltaTime);
+        handle.WorldPosition = handle.WorldTransform.Position;
         if (handle.WorldTransform.Position.Y > 0)
+        {
+            handle.WorldPosition = handle.WorldTransform.Position;
             return;
+        }
         
         handle.WorldTransform.Position = new Vector3(handle.WorldTransform.Position.X, 0, handle.WorldTransform.Position.Z);
+        handle.WorldPosition = handle.WorldTransform.Position;
         handle.Velocity.Y = 0;
     }
-
-    private static void FlushTransform(AtomHandle handle)
+    
+    private static void CollectCollisionCandidates(ref AtomHandle handle, AtomHandle[] participants)
     {
-        var localTransform = handle.WorldTransform;
-        if (handle.Parent.Parent is Spatial higherLevelParent)
+        handle.CollisionCandidates.Clear();
+        foreach (var participant in participants)
         {
-            higherLevelParent.WorldTransform.Inverse.Multiply(localTransform, ref handle.Parent.TransformReference);
+            if (participant.Rid == handle.Rid)
+                continue;
+            var distanceSquared = participant.WorldPosition.DistanceSquaredTo(handle.WorldPosition);
+            var radiusSum = handle.BoundingSphereRadius + participant.BoundingSphereRadius;
+            var radiusSumSquared = radiusSum * radiusSum;
+            var overlapDistance = radiusSumSquared - distanceSquared;
+            if (overlapDistance <= 0)
+                continue;
+            
+            handle.CollisionCandidates.Add(new CollisionCandidate
+            {
+                OtherHandle = participant,
+                OverlapDistance = overlapDistance
+            });
         }
+    }
+
+    private static void FlushTransform(ref AtomHandle handle)
+    {
+        if (handle.CollisionCandidates.Count > 0) 
+            return;
+        var localTransform = handle.WorldTransform;
+        handle.Component.Velocity = handle.Velocity;
+        if (handle.Parent.Parent is Spatial higherLevelParent)
+            higherLevelParent.WorldTransform.Inverse.Multiply(localTransform, ref handle.Parent.TransformReference);
+        else
+            handle.Parent.Transform = localTransform;
+
         RevalidateWorldTransform(handle.Parent);
     }
     

@@ -1,7 +1,8 @@
-﻿using Engine.Core.Common;
+﻿using Engine.Core.Attributes;
+using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
-using Engine.Core.Logging;
+using Engine.Core.Modules;
 
 namespace Engine.Core.EntitySystem.Components.Physics;
 
@@ -19,15 +20,13 @@ public partial class PhysicsComponent : ActorComponent
     }
 
     [OnInit]
+    [OnModuleReload(EngineModule.Physics)]
     protected void OnRegisterOnPhysicsServer()
     {
         var parent = GetSpatialParent();
         var physicsModule = Backstage.PhysicsModule;
         if (physicsModule == null)
-        {
-            Logger.Warn("PhysicsComponent could not register on PhysicsServer: Reference is null.");
             return;
-        }
         Rid = physicsModule.Register(parent, this);
     }
     
@@ -37,12 +36,7 @@ public partial class PhysicsComponent : ActorComponent
         if (Rid == -1)
             return;
         var physicsModule = Backstage.PhysicsModule;
-        if (physicsModule == null)
-        {
-            Logger.Warn("PhysicsComponent could not register on PhysicsServer: Reference is null.");
-            return;
-        }
-        physicsModule.Unregister(Rid);
+        physicsModule?.Unregister(Rid);
     }
 
     public List<ColliderSphereComponent> GetSphereColliders()

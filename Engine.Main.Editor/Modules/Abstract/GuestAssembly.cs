@@ -1,12 +1,14 @@
 ﻿using Engine.Core.EntitySystem.Entities;
 using Engine.Core.Contracts;
+using Engine.Core.Modules;
 using Engine.Main.Editor.HotReload.Compiler;
 
 namespace Engine.Main.Editor.Modules.Abstract;
 
-public abstract class GuestAssembly(string assemblyName)
+public abstract class GuestAssembly(string assemblyName, EngineModule module)
 {
     internal string AssemblyName = assemblyName;
+    internal EngineModule Module = module;
     internal GuestAssemblyHost Host { get; } = new(assemblyName);
     
     internal Backstage? Backstage { get; set; }

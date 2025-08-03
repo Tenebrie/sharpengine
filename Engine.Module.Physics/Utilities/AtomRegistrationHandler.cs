@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using Engine.Core.Common;
 using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Entities;
 
@@ -11,13 +12,16 @@ public class AtomRegistrationHandler
     
     public long Add(Spatial parent, PhysicsComponent component)
     {
-        var id = Interlocked.Increment(ref _idCounter);
+        var rid = Interlocked.Increment(ref _idCounter);
         var atomHandle = new AtomHandle
         {
+            Rid = rid,
             Parent = parent,
             Component = component,
+            CollisionCandidates = [],
+            WorldTransform = Transform.Identity,
         };
-        _registeredAtoms.TryAdd(id, atomHandle);
+        _registeredAtoms.TryAdd(rid, atomHandle);
         return _idCounter;
     }
 

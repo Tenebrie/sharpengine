@@ -4,6 +4,7 @@ using System.Reflection;
 using Engine.Core.Attributes;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Services;
+using Engine.Core.Modules;
 using Engine.Core.Profiling;
 using EntitySystem_Services_InputService = Engine.Core.EntitySystem.Services.InputService;
 using InputService = Engine.Core.EntitySystem.Services.InputService;
@@ -23,8 +24,10 @@ public partial class Atom
     public Action<double>? OnUpdateCallback { get; set; }
     
     public Action? OnDestroyCallback { get; set; }
-    
-    public Action? OnGameplayContextChangedCallback { get; set; }
+
+
+    public Dictionary<EngineModule, Action?> OnModuleReloadCallback { get; set; } = new();
+    public Action? OnGameplayContextChangeCallback { get; set; }
     
     private void InitializeLifecycle()
     {
@@ -55,10 +58,20 @@ public partial class Atom
             OnDestroyCallback += (Action)action;
         }
         
-        var gameplayContextMethods = methods.Where(method => method.GetCustomAttribute<OnGameplayContextChangedAttribute>() != null).ToList();
+        var moduleReloadedMethods = methods.Where(method => method.GetCustomAttribute<OnModuleReloadAttribute>() != null).ToList();
+        foreach (var methodInfo in moduleReloadedMethods)
+        {
+            var attribute = methodInfo.GetCustomAttribute<OnModuleReloadAttribute>()!;
+            var action = Delegate.CreateDelegate(typeof(Action), this, methodInfo);
+            if (OnModuleReloadCallback.ContainsKey(attribute.Module))
+                OnModuleReloadCallback[attribute.Module] += (Action)action;
+            else
+                OnModuleReloadCallback[attribute.Module] = (Action)action;
+        }
+        var gameplayContextMethods = methods.Where(method => method.GetCustomAttribute<OnGameplayContextChangeAttribute>() != null).ToList();
         foreach (var action in gameplayContextMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action), this, methodInfo)))
         {
-            OnGameplayContextChangedCallback += (Action)action;
+            OnGameplayContextChangeCallback += (Action)action;
         }
     }
     
@@ -89,10 +102,31 @@ public partial class Atom
             ArrayPool<Atom>.Shared.Return(buffer, clearArray: false);
         }
     }
+
+    protected internal void ProcessModuleReload(EngineModule module)
+    {
+        var callback = OnModuleReloadCallback.GetValueOrDefault(module);
+        callback?.Invoke();
+        
+        var count = Children.Count;
+        var buffer = ArrayPool<Atom>.Shared.Rent(count);
+        try
+        {
+            for (var i = 0; i < count; i++)
+                buffer[i] = Children[i];
+
+            for (var i = 0; i < count; i++)
+                buffer[i].ProcessModuleReload(module);
+        }
+        finally
+        {
+            ArrayPool<Atom>.Shared.Return(buffer, clearArray: false);
+        }
+    }
     
     protected internal void ProcessGameplayContextChanged()
     {
-        OnGameplayContextChangedCallback?.Invoke();
+        OnGameplayContextChangeCallback?.Invoke();
         
         var count = Children.Count;
         var buffer = ArrayPool<Atom>.Shared.Rent(count);

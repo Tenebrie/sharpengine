@@ -43,7 +43,7 @@ public partial class UserInputService : Service
         RecalculateActiveContext();
     }
     
-    [OnGameplayContextChanged]
+    [OnGameplayContextChange]
     protected void RecalculateActiveContext()
     {
         if (Backstage.GameplayContext == GameplayContext.Editor)

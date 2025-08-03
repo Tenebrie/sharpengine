@@ -11,6 +11,7 @@ public interface IPhysicsModule
     public void RegisterService(CacheRevalidationService service);
     public void UnregisterService(CacheRevalidationService service);
     public void Initialize();
+    public void Shutdown();
     public void ProcessPhysicsFrame(double deltaTime);
     public void RevalidateWorldTransform(Spatial atom);
 }

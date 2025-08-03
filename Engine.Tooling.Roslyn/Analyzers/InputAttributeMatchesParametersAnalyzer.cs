@@ -27,7 +27,10 @@ public sealed class InputAttributeMatchesParametersAnalyzer : DiagnosticAnalyzer
         ImmutableHashSet.Create(StringComparer.Ordinal,
             "OnInitAttribute",
             "OnUpdateAttribute",
-            "OnDestroyAttribute");
+            "OnDestroyAttribute",
+            "OnModuleReloadAttribute",
+            "OnGameplayContextChangeAttribute"
+        );
     
     private static readonly ImmutableHashSet<string> TrackedInputAttributeNames =
         ImmutableHashSet.Create(StringComparer.Ordinal,
@@ -36,7 +39,8 @@ public sealed class InputAttributeMatchesParametersAnalyzer : DiagnosticAnalyzer
             "OnInputReleasedAttribute",
             "OnKeyInputAttribute",
             "OnKeyInputHeldAttribute",
-            "OnKeyInputReleasedAttribute");
+            "OnKeyInputReleasedAttribute"
+        );
 
     public override void Initialize(AnalysisContext context)
     {

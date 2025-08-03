@@ -255,6 +255,7 @@ public class Transform
     
     public static Transform Identity => new();
     public static Transform Copy(Transform instance) => new() { Data = instance.Data };
+    public static void Copy(Transform instance, ref Transform copyInto) => Matrix.Copy(instance.Data, ref copyInto.Data);
     
     public static Transform FromTranslation(Vector3 translation) => new (translation, Quat.Identity, Vector3.One);
     public static Transform FromTranslation(double x, double y, double z) => new (new Vector3(x, y, z), Quat.Identity, Vector3.One);

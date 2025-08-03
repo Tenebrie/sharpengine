@@ -6,8 +6,8 @@ namespace User.Game.Actors;
 
 public partial class BasicEnemy : ActorInstance
 {
-    // [Component] public StaticMeshComponent Mesh;
     [Component] public PhysicsComponent Physics;
+    [Component] public ColliderSphereComponent ColliderSphere;
 
     public double Health { get; set; } = 100.0;
 
@@ -21,16 +21,6 @@ public partial class BasicEnemy : ActorInstance
     [OnInit]
     protected void OnInit()
     {
-        // if (!AssetManager.HasMesh("Virtual/BasicEnemy"))
-        // {
-        //     Console.WriteLine("Creating virtual mesh for BasicEnemy");
-        //     AssetManager.PutMesh("Virtual/BasicEnemy", PlaneMesh.Create());
-        // }
-        // Mesh.Mesh = AssetManager.LoadMesh("Virtual/BasicEnemy");
-        // Mesh.Material = AssetManager.LoadMaterial("Meshes/HonseTerrain/HonseTerrain");
-        // Mesh.Material.LoadTexture("Assets/Textures/godot.png");
-        // Mesh.BoundingSphere.Generate(PlaneMesh.CreateVerts());
-        // Transform.RotateAroundLocal(Vector3.Pitch, -90);
-        // Transform.Rescale(3, 3, 3);
+        ColliderSphere.Radius = 1.0;
     }
 }

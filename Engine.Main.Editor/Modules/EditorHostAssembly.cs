@@ -2,11 +2,12 @@
 using Engine.Core.EntitySystem;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.Logging;
+using Engine.Core.Modules;
 using Engine.Main.Editor.Modules.Abstract;
 
 namespace Engine.Main.Editor.Modules;
 
-public class EditorHostAssembly(string assemblyName = "Engine.Module.Host") : GuestAssembly(assemblyName)
+public class EditorHostAssembly() : GuestAssembly("Engine.Module.Host", EngineModule.EditorHost)
 {
     private double _updatesPausedFor = 0.0;
     

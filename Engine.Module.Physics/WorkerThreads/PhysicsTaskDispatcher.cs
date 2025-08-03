@@ -4,22 +4,15 @@ namespace Engine.Module.Physics.WorkerThreads;
 
 public class PhysicsTaskDispatcher
 {
-    public enum PhysicsTaskType
-    {
-        CollectData,
-        InitialMove,
-        FlushTransform,
-    }
-    
     public struct TaskDefinition
     {
-        public PhysicsTaskType Type;
+        public WorkerPoolMember.PhysicsTaskType Type;
         public AtomHandle[] AtomHandles;
         public int StartIndex;
         public int Count;
     }
     
-    public void Dispatch(WorkerPool workerPool, double deltaTime, PhysicsTaskType taskType, AtomHandle[] atoms)
+    public static void Dispatch(WorkerPool workerPool, double deltaTime, WorkerPoolMember.PhysicsTaskType taskType, AtomHandle[] atoms)
     {
         var startIndex = 0;
         var threadsPoked = 0;

@@ -1,9 +1,10 @@
 ﻿using Engine.Core.EntitySystem.Modules;
+using Engine.Core.Modules;
 using Engine.Main.Editor.Modules.Abstract;
 
 namespace Engine.Main.Editor.Modules;
 
-internal class PhysicsAssembly(string assemblyName = "Engine.Module.Physics") : GuestAssembly(assemblyName)
+internal class PhysicsAssembly() : GuestAssembly("Engine.Module.Physics", EngineModule.Physics)
 {
     internal IPhysicsModule? PhysicsModule { get; private set; }
 
@@ -15,7 +16,7 @@ internal class PhysicsAssembly(string assemblyName = "Engine.Module.Physics") : 
         {
             Console.Error.WriteLine("Failed to instantiate physics module.");
             return;
-        }
+        } 
         PhysicsModule.Initialize();
     }
     

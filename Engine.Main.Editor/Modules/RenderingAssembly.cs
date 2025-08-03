@@ -1,11 +1,12 @@
 ﻿using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Modules;
+using Engine.Core.Modules;
 using Engine.Main.Editor.Modules.Abstract;
 using Silk.NET.Windowing;
 
 namespace Engine.Main.Editor.Modules;
 
-internal class RenderingAssembly(IWindow window, string assemblyName = "Engine.Module.Rendering") : GuestAssembly(assemblyName)
+internal class RenderingAssembly(IWindow window) : GuestAssembly("Engine.Module.Rendering", EngineModule.Rendering)
 {
     private bool _isInitialized = false;
     internal IRenderingModule? RenderingModule { get; set; }

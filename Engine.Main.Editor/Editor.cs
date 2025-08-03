@@ -114,6 +114,17 @@ internal static class Editor
             InitBackstage(guestAssembly.Backstage);
         GC.Collect();
         GC.WaitForPendingFinalizers();
+        
+        foreach (var assembly in GuestAssemblies)
+        {
+            try
+            {
+                assembly.Backstage?.NotifyModuleReloaded(guestAssembly.Module);
+            } catch (Exception e)
+            {
+                Logger.Error($"Failed to notify backstage of module reload: {guestAssembly.Module}", e);
+            }
+        }
     }
     
     private static void InitBackstage(Backstage? backstage)

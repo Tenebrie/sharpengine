@@ -1,8 +1,10 @@
-﻿using Engine.Core.EntitySystem.Attributes;
+﻿using Engine.Core.Communication.Signals;
+using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Modules;
 using Engine.Core.EntitySystem.Services;
 using Engine.Core.EntitySystem.Utilities;
 using Engine.Core.Enum;
+using Engine.Core.Modules;
 using Silk.NET.Windowing;
 
 namespace Engine.Core.EntitySystem.Entities;
@@ -40,6 +42,8 @@ public partial class Backstage : Scene
     {
         return AdoptChild(new T());
     }
+
+    public void NotifyModuleReloaded(EngineModule module) => ProcessModuleReload(module);
     
     [OnInit]
     internal void OnInit()

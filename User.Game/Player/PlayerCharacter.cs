@@ -19,6 +19,7 @@ public partial class PlayerCharacter : Actor
     // [Group] public static readonly Group<PlayerCharacter> PlayerGroup;
     [Component] public DragonMesh DragonMeshComponent;
     [Component] public PhysicsComponent PhysicsComponent;
+    [Component] public ColliderSphereComponent ColliderSphere;
 
     [OnInput(InputAction.Shoot)]
     protected void OnShoot()

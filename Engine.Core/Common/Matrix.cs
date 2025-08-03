@@ -17,6 +17,19 @@ public struct Matrix : IEquatable<Matrix>
         0.0, 0.0, 0.0, 1.0
     );
 
+    public static Matrix Copy(Matrix instance) => new(instance.Row1, instance.Row2, instance.Row3, instance.Row4);
+
+    public static void Copy(Matrix instance, ref Matrix copyInto)
+    {
+        for (var y = 0; y < 4; y++)
+        {
+            for (var x = 0; x < 4; x++)
+            {
+                copyInto[x, y] = instance[x, y];
+            }
+        }
+    }
+
     [IgnoreDataMember] public Vector4 Row1;
     [IgnoreDataMember] public Vector4 Row2;
     [IgnoreDataMember] public Vector4 Row3;
@@ -199,7 +212,22 @@ public struct Matrix : IEquatable<Matrix>
         3 => Row4,
         _ => throw new IndexOutOfRangeException()
     };
-    public double this[int row, int column] => this[row][column];
+
+    public double this[int row, int column]
+    {
+        get => this[row][column];
+        set
+        {
+            switch (row)
+            {
+                case 0: Row1[column] = value; break;
+                case 1: Row2[column] = value; break;
+                case 2: Row3[column] = value; break;
+                case 3: Row4[column] = value; break;
+                default: throw new IndexOutOfRangeException();
+            }
+        }
+    }
     
     public static Matrix operator *(Matrix value1, Matrix value2)
     {

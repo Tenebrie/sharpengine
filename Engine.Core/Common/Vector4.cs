@@ -97,7 +97,7 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
 
     public readonly double DotProduct(Vector4 other)
     {
-        if (!(Avx.IsSupported && Sse3.IsSupported))
+        if (!(IsHardwareAccelerated && Sse3.IsSupported))
             return X * other.X + Y * other.Y + Z * other.Z + W * other.W;
         
         var a = ToAccelerated();
@@ -143,7 +143,7 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
     // Addition
     public static Vector4 operator +(Vector4 a, Vector4 b)
     {
-        if (!Avx.IsSupported)
+        if (!IsHardwareAccelerated)
             return new Vector4(a.X + b.X, a.Y + b.Y, a.Z + b.Z, a.W + b.W);
         
         return FromAccelerated(Avx.Add(a.ToAccelerated(), b.ToAccelerated()));
@@ -152,7 +152,7 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
     // Substraction
     public static Vector4 operator -(Vector4 a, Vector4 b)
     {
-        if (!Avx.IsSupported)
+        if (!IsHardwareAccelerated)
             return new Vector4(a.X - b.X, a.Y - b.Y, a.Z - b.Z, a.W - b.W);
         
         return FromAccelerated(Avx.Subtract(a.ToAccelerated(), b.ToAccelerated()));
@@ -162,7 +162,7 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
     // Multiplication
     public static Vector4 operator *(Vector4 a, double b)
     {
-        if (!Avx.IsSupported)
+        if (!IsHardwareAccelerated)
             return new Vector4(a.X * b, a.Y * b, a.Z * b, a.W * b);
         
         return FromAccelerated(Avx.Multiply(a.ToAccelerated(), Vector256.Create(b)));
@@ -170,7 +170,7 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
     public static Vector4 operator *(double b, Vector4 a) => a * b;
     public static Vector4 operator *(Vector4 a, Vector4 b)
     {
-        if (!Avx.IsSupported)
+        if (!IsHardwareAccelerated)
             return new Vector4(a.X * b.X, a.Y * b.Y, a.Z * b.Z, a.W * b.W);
         
         return FromAccelerated(Avx.Multiply(a.ToAccelerated(), b.ToAccelerated()));
@@ -179,21 +179,21 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
     // Division
     public static Vector4 operator /(Vector4 a, double b)
     {
-        if (!Avx.IsSupported)
+        if (!IsHardwareAccelerated)
             return new Vector4(a.X / b, a.Y / b, a.Z / b, a.W / b);
         
         return FromAccelerated(Avx.Divide(a.ToAccelerated(), Vector256.Create(b)));
     }
     public static Vector4 operator /(double b, Vector4 a)
     {
-        if (!Avx.IsSupported)
+        if (!IsHardwareAccelerated)
             return new Vector4(b / a.X, b / a.Y, b / a.Z, b / a.W);
         
         return FromAccelerated(Avx.Divide(Vector256.Create(b), a.ToAccelerated()));
     }
     public static Vector4 operator /(Vector4 a, Vector4 b)
     {
-        if (!Avx.IsSupported)
+        if (!IsHardwareAccelerated)
             return new Vector4(a.X / b.X, a.Y / b.Y, a.Z / b.Z, a.W / b.W);
         
         return FromAccelerated(Avx.Divide(a.ToAccelerated(), b.ToAccelerated()));
@@ -205,7 +205,7 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
     
     public bool Equals(Vector4 other)
     {
-        if (!Avx.IsSupported)
+        if (!IsHardwareAccelerated)
             return X.Equals(other.X) && Y.Equals(other.Y) && Z.Equals(other.Z) && W.Equals(other.W);
         var compareResult = Avx.CompareEqual(ToAccelerated(), other.ToAccelerated());
         return Avx.MoveMask(compareResult) == 0b1111;
@@ -228,4 +228,5 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
      */
     
     public override string ToString() => $"Vector4({X}, {Y}, {Z}, {W})";
+    private static readonly bool IsHardwareAccelerated = Avx.IsSupported;
 }

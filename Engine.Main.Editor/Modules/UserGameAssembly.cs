@@ -1,11 +1,12 @@
 ﻿using Engine.Core.Contracts;
 using Engine.Core.EntitySystem;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Modules;
 using Engine.Main.Editor.Modules.Abstract;
 
 namespace Engine.Main.Editor.Modules;
 
-public class UserGameAssembly(string assemblyName = "User.Game") : GuestAssembly(assemblyName)
+public class UserGameAssembly() : GuestAssembly("User.Game", EngineModule.UserHost)
 {
     private double _updatesPausedFor = 0.0;
     
@@ -20,9 +21,9 @@ public class UserGameAssembly(string assemblyName = "User.Game") : GuestAssembly
         }
         Settings = (IEngineContract<Backstage>)loadedSettings;
         Backstage = (Backstage)Activator.CreateInstance(Settings.MainBackstage)!;
-        Main.Editor.Editor.EditorHostAssembly.NotifyAboutUserBackstage(Backstage);
+        Editor.EditorHostAssembly.NotifyAboutUserBackstage(Backstage);
         Backstage.Name = "guest-" + Guid.NewGuid();
-        Backstage.GameplayContext = Main.Editor.Editor.GameplayContext;
+        Backstage.GameplayContext = Editor.GameplayContext;
     }
 
     public override bool Update(double deltaTime)
