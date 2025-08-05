@@ -35,7 +35,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
 
     public void Initialize()
     {
-        _material = AssetManager.LoadMaterial("UserInterface/Font/Font");
+        _material = AssetManager.InstantiateMaterial("UserInterface/Font/Font");
         _diffuseTextureHandle = create_uniform("s_diffuse", UniformType.Sampler, 1);
         _vertexLayout = CreateVertexLayout([
             new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Engine.Core.Logging;
 using Engine.Core.Profiling;
 using JetBrains.Annotations;
 
@@ -27,16 +28,39 @@ public partial class Atom
         InitializeTimers();
         InitializeInput();
         
+        if (OnCreateCallback != null)
+        {
+            using var stopwatch = Profiler.Start();
+            try
+            {
+                OnCreateCallback.Invoke();
+            } catch (Exception e)
+            {
+                Logger.Error($"Error during OnCreateCallback callback for {GetType().Name}: {e.Message}");
+                Console.Error.WriteLine(e);
+            }
+
+            stopwatch.StopAndReport(GetType(), ProfilingContext.OnCreateCallback);
+        }
+        
         _isInitialized = true;
         
         // Adopt and init children.
         InitializeChildren();
 
-        if (OnInitCallback != null)
+        if (OnReadyCallback != null)
         {
-            var stopwatch = Profiler.Start();
-            OnInitCallback.Invoke();
-            stopwatch.StopAndReport(GetType(), ProfilingContext.OnInitCallback);
+            using var stopwatch = Profiler.Start();
+            try
+            {
+                OnReadyCallback.Invoke();
+            } catch (Exception e)
+            {
+                Logger.Error($"Error during OnReady callback for {GetType().Name}: {e.Message}");
+                Console.Error.WriteLine(e);
+            }
+
+            stopwatch.StopAndReport(GetType(), ProfilingContext.OnReadyCallback);
         }
 
         _isReady = true;

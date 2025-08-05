@@ -17,6 +17,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Builders\Templates\**\*.glsl" />
+    <EmbeddedResource Include="Builders\Templates\**\*.sc" />
     <AdditionalFiles Include="Materials\Meshes\**\*.vert.glsl" />
     <AdditionalFiles Include="Materials\Meshes\**\*.frag.glsl" />
     <AdditionalFiles Include="Materials\UserInterface\Font\Font.frag.glsl" />

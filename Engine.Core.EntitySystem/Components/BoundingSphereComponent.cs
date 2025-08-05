@@ -16,8 +16,8 @@ public partial class BoundingSphereComponent : ActorComponent
     public double Radius => Transform.Scale.X;
     public double WorldRadius => WorldTransform.Scale.X;
 
-    [OnInit]
-    protected void OnInit()
+    [OnReady]
+    protected void OnReady()
     {
         Mesh.Load();
     }

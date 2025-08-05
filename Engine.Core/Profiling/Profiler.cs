@@ -8,7 +8,8 @@ public enum ProfilingContext
 {
     Unknown,
     PhysicsUpdate,
-    OnInitCallback,
+    OnCreateCallback,
+    OnReadyCallback,
     OnUpdateCallback,
     OnDestroyCallback,
 }
@@ -31,6 +32,7 @@ public class Profiler
     
     public static void GenerateReport()
     {
+        return;
         Logger.Debug("Profiler Report:");
         foreach (var (ownerType, contextDictionary) in Instance._lifecycleEntries)
         {
@@ -98,7 +100,7 @@ public class Profiler
     }
 }
 
-public class ProfilingStopwatch
+public sealed class ProfilingStopwatch : IDisposable
 {
     internal readonly Stopwatch Stopwatch = new();
     internal void Start()
@@ -121,6 +123,11 @@ public class ProfilingStopwatch
     {
         Stopwatch.Stop();
         Profiler.ReportByMethodName(this, owner, methodName);
+    }
+
+    public void Dispose()
+    {
+        Stopwatch.Stop();
     }
 }
 

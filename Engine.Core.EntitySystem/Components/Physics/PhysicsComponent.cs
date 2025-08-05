@@ -19,7 +19,7 @@ public partial class PhysicsComponent : ActorComponent
         return parent;
     }
 
-    [OnInit]
+    [OnCreate]
     [OnModuleReload(EngineModule.Physics)]
     protected void OnRegisterOnPhysicsServer()
     {

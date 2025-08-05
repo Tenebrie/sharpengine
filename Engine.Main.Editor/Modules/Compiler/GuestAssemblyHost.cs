@@ -1,5 +1,7 @@
 ﻿
+using System.Diagnostics;
 using Engine.Core.Logging;
+using Engine.Main.Editor.Modules.Compiler;
 
 namespace Engine.Main.Editor.HotReload.Compiler;
 
@@ -96,14 +98,18 @@ internal sealed class GuestAssemblyHost(string assemblyName)
     {
         if (!AssemblyLoaded)
             return;
-        // try { _entry?.Dispose(); } catch { /* ignore */ }
-        // _entry = null;
+
+        var weakAlc = new WeakReference(_assemblyLoadContext!, trackResurrection: false);
 
         _assemblyLoadContext?.Unload();
         _assemblyLoadContext = null;
 
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
+        for (int i = 0; weakAlc.IsAlive && i < 5; i++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
+        Debug.Assert(!weakAlc.IsAlive, "ALC is still alive - find the ref that keeps it!");
         AssemblyLoaded = false;
     }
 

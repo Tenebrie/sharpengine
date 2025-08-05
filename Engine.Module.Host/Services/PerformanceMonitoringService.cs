@@ -25,7 +25,7 @@ public partial class PerformanceMonitoringService : Service
         if (g0Diff > 1 || g1Diff > 1 || g2Diff > 1)
             Logger.Debug($"GC Report:  g0: {g0Diff}  g1: {g1Diff}  g2: {g2Diff}");
         
-        if (g0Diff > 2 || g1Diff > 2 || g2Diff > 2)
+        if (g0Diff > 1 || g1Diff > 1 || g2Diff > 1)
             Logger.ShowPersistent(this, $"GC Warning: {g0Diff + g1Diff + g2Diff} collections per second.");
         else
             Logger.ClearPersistent(this);

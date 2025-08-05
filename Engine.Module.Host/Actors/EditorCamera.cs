@@ -16,8 +16,8 @@ public partial class EditorCamera : Camera
     private double _pitch = 0.0;
     private double _yaw = 0.0;
 
-    [OnInit]
-    protected void OnInit()
+    [OnReady]
+    protected void OnReady()
     {
         IsEditorCamera = true; 
         Transform.Position = new Vector3(0.0, 50.0, 50.0);
@@ -55,7 +55,7 @@ public partial class EditorCamera : Camera
         GetService<InputService>().SetMousePosition(_savedMousePosition);
     }
 
-    [OnInit]
+    [OnCreate]
     protected void SetInitialCamera() => OnChangeCameraSpeed(0.0);
     
     [OnInput(InputAction.CameraSpeedWheel, 1.0)]

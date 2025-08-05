@@ -11,15 +11,15 @@ public partial class BasicEnemy : ActorInstance
 
     public double Health { get; set; } = 100.0;
 
-    public void DealDamage(double damage)
+    public void DealDamage(double damage) 
     {
-        Health -= damage;
-        if (Health <= 0)
-            QueueFree();
+        Health -= damage;       
+        if (Health <= 0) 
+            QueueFree();   
     }
 
-    [OnInit]
-    protected void OnInit()
+    [OnReady]
+    protected void OnReady()     
     {
         ColliderSphere.Radius = 0.5;
     }

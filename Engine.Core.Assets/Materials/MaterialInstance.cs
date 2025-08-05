@@ -1,4 +1,5 @@
-﻿using static Engine.Native.Bgfx.Bgfx;
+﻿using Engine.Native.Bgfx;
+using static Engine.Native.Bgfx.Bgfx;
 
 namespace Engine.Core.Assets.Materials;
 
@@ -17,7 +18,11 @@ public class MaterialInstance(Material material)
     public void BindTexture()
     {
         if (Texture == null)
+        {
+            var invalidHandle = new TextureHandle { idx = ushort.MaxValue };
+            set_texture(0, DiffuseTextureHandle, invalidHandle, 0);
             return;
+        }
         
         set_texture(0, DiffuseTextureHandle, Texture.Handle, (uint)(SamplerFlags.MinAnisotropic | SamplerFlags.MagAnisotropic));
     }
@@ -25,7 +30,11 @@ public class MaterialInstance(Material material)
     public unsafe void BindTexture(Encoder* encoder)
     {
         if (Texture == null)
+        {
+            var invalidHandle = new TextureHandle { idx = ushort.MaxValue };
+            set_texture(0, DiffuseTextureHandle, invalidHandle, 0);
             return;
+        }
         
         encoder_set_texture(encoder, 0, DiffuseTextureHandle, Texture.Handle, (uint)(SamplerFlags.MinAnisotropic | SamplerFlags.MagAnisotropic));
     }

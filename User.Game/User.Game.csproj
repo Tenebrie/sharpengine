@@ -5,7 +5,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <NoWarn>$(NoWarn);CS8618</NoWarn>
-    <InterceptorsNamespaces>$(InterceptorsNamespaces);User.Game.Player</InterceptorsNamespaces>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +12,11 @@
     <ProjectReference Include="..\Engine.Core.Contracts\Engine.Core.Contracts.csproj" />
     <ProjectReference Include="..\Engine.Core.EntitySystem\Engine.Core.EntitySystem.csproj" />
     <ProjectReference Include="..\Engine.Tooling.Roslyn\Engine.Tooling.Roslyn.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="**/*.ResourceHash.g.cs" />
+    <None Include="**/*.ResourceHash.g.cs" />
   </ItemGroup>
 
   <ItemGroup>

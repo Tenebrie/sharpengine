@@ -16,7 +16,8 @@ namespace Engine.Core.EntitySystem.Entities;
 [SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
 public partial class Atom
 {
-    public Action? OnInitCallback { get; set; }
+    public Action? OnCreateCallback { get; set; }
+    public Action? OnReadyCallback { get; set; }
     
     public bool IsTicking => HasOnUpdateCallbacks || HasOnTimerCallbacks;
     public double TimeScale { get; set; } = 1.0;
@@ -25,7 +26,6 @@ public partial class Atom
     
     public Action? OnDestroyCallback { get; set; }
 
-
     public Dictionary<EngineModule, Action?> OnModuleReloadCallback { get; set; } = new();
     public Action? OnGameplayContextChangeCallback { get; set; }
     
@@ -33,10 +33,15 @@ public partial class Atom
     {
         var methods = GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         
-        var initMethods = methods.Where(method => method.GetCustomAttribute<OnInitAttribute>() != null).ToList();
-        foreach (var action in initMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action), this, methodInfo)))
+        var createMethods = methods.Where(method => method.GetCustomAttribute<OnCreateAttribute>() != null).ToList();
+        foreach (var action in createMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action), this, methodInfo)))
         {
-            OnInitCallback += (Action)action;
+            OnCreateCallback += (Action)action;
+        }
+        var readyMethods = methods.Where(method => method.GetCustomAttribute<OnReadyAttribute>() != null).ToList();
+        foreach (var action in readyMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action), this, methodInfo)))
+        {
+            OnReadyCallback += (Action)action;
         }
 
         var updateMethods = methods.Where(method => method.GetCustomAttribute<OnUpdateAttribute>() != null).ToArray();

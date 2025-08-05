@@ -24,8 +24,8 @@ public partial class UserInputService : Service
 {
     private InputContext _baseContext;
     
-    [OnInit]
-    protected void OnInit()
+    [OnReady]
+    protected void OnReady()
     {
         _baseContext = InputContext.GetBuilder<InputAction>()
             .Add(InputAction.MoveForward, Key.W)

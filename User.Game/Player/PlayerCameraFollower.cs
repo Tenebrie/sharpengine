@@ -12,8 +12,8 @@ public partial class PlayerCameraFollower : Actor
     
     public PlayerCharacter PlayerCharacter { get; set; }
 
-    [OnInit]
-    protected void OnInit()
+    [OnReady]
+    protected void OnReady()
     {
         MainCameraComponent.Transform.Position = new Vector3(0, 150, 0);
         MainCameraComponent.Transform.Rotation = QuatMakers.FromRotation(75, 0, 0);

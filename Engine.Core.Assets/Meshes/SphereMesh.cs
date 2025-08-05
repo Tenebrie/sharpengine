@@ -23,7 +23,7 @@ public class SphereMesh
     public static SphereMesh Instance { get; } = new();
     public static ColorMode VisibleModes = ColorMode.None;
 
-    private static int _refCount = 0;
+    private static bool _isLoaded = false;
         
     private static VertexBuffer _axisColoredVertexBuffer;
     private static VertexBuffer _colliderVertexBuffer;
@@ -32,9 +32,9 @@ public class SphereMesh
     
     public void Load()
     {
-        _refCount += 1;
-        if (_refCount > 1)
+        if (_isLoaded)
             return;
+        _isLoaded = true;
         
         List<RenderingVertex> axisColoredVerts = [];
         List<RenderingVertex> colliderVerts = [];
@@ -97,7 +97,7 @@ public class SphereMesh
             return;
         }
 
-        if (_refCount == 0)
+        if (!_isLoaded)
         {
             Logger.Error("BoundingSphere is not initialized. Call Load() first.");
             context.InstanceTransformCount += instanceCount;
@@ -122,10 +122,9 @@ public class SphereMesh
         encoder_end(encoder);
     }
 
-    public void Dereference()
+    public static void Dereference()
     {
-        _refCount -= 1;
-        if (_refCount != 0)
+        if (!_isLoaded)
             return;
         destroy_vertex_buffer(_axisColoredVertexBuffer.Handle);
         destroy_index_buffer(_indexBuffer.Handle);

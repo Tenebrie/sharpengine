@@ -2,6 +2,7 @@
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using User.Game.Actors;
+using User.Game.Actors.BasicWall;
 using User.Game.Player;
 using User.Game.Services;
 
@@ -10,8 +11,8 @@ namespace User.Game;
 [MainBackstage]
 public partial class UserBackstage : Backstage
 {
-    [OnInit]
-    protected void OnInit()
+    [OnReady]
+    protected void OnReady()
     {
         var scene = new UserScene();
         AdoptChild(scene);
@@ -20,8 +21,8 @@ public partial class UserBackstage : Backstage
 
 public partial class UserScene : Scene
 {
-    [OnInit]
-    protected void OnInit()
+    [OnReady]
+    protected void OnReady()
     {
         RegisterService<UserInputService>();
         
@@ -39,35 +40,12 @@ public partial class UserScene : Scene
         //
         var honseTerrain = CreateActor<HonseTerrain>();
         honseTerrain.Transform.Position = new Vector3(0, -3.25, 0);
-        var scale = 30;
+        const int scale = 30;
         honseTerrain.Transform.Scale = new Vector3(scale, scale, scale);
-        //
-        var cubeManager = CreateActor<UnitCube>();
-        for (var x = 0; x < 5; x++)
-        {
-            for (var y = 0; y < 5; y++)
-            {  
-                var transform = Transform.Identity;
-                transform.Position = new Vector3(x * 2, y * 2 + 20, -10);
-                transform.Scale = new Vector3(0.4f, 0.4f, 0.4f);
-                transform.Rotation = Quaternion.Identity;
-                cubeManager.InstanceManager.AddInstance(transform);
-            }
-        }
-        
-        var enemyManager = CreateActor<BasicEnemyManager>();
-        // for (var x = -25; x < 26; x++)
-        // {
-        //     for (var y = -25; y < 26; y++)
-        //     {
-        //         // var enemy = CreateActor<BasicEnemy>();
-        //         var transform = Transform.Identity;
-        //         transform.Position = new Vector3(x * 10, 3, y * 10);
-        //         transform.Scale = new Vector3(0.4f, 0.4f, 0.4f);
-        //         transform.Rotation = Quaternion.Identity;
-        //         // enemy.Transform = transform;
-        //         enemyManager.InstanceManager.AddInstance(transform);
-        //     }
-        // }
+
+        var wall = CreateActor<BasicWall>();
+        wall.Transform.Position = new Vector3(0, 0, -20);
+
+        CreateActor<BasicEnemyManager>();
     }
 }

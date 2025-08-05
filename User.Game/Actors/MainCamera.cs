@@ -8,8 +8,8 @@ public partial class MainCamera : ActorComponent
 {
     [Component] public MainCameraImpl Camera;
     
-    [OnInit]
-    protected void OnInit()
+    [OnReady]
+    protected void OnReady()
     {
         Camera.Transform.Position = new Vector3(0, -30, 0);
     }

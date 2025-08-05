@@ -14,12 +14,12 @@ public partial class BasicProjectile : Actor
     [Component] protected StaticMeshComponent MeshComponent;
     [Component] public PhysicsComponent PhysicsComponent;
     
-    [OnInit]
-    protected void OnInit()
+    [OnReady]
+    protected void OnReady()
     {
         ProjectileCreated.Emit(this);
         MeshComponent.Mesh = AssetManager.LoadMesh("Assets/Meshes/projectile-sword.obj");
-        MeshComponent.Material = AssetManager.LoadMaterial("Meshes/AlliedProjectile/AlliedProjectile");
+        MeshComponent.Material = AssetManager.InstantiateMaterial("Meshes/AlliedProjectile/AlliedProjectile");
         MeshComponent.Transform.Rotation = QuatMakers.FromRotation(0, -90, 0);
     }
 

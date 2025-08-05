@@ -5,7 +5,9 @@ public enum AnalyzerCode
     MainBackstageAppliedIncorrectly,
     LifecycleAttributeOnPrivateMethod,
     AtomInheritedClassesMustBePartial,
-    InputAttributeMatchesParametersAnalyzer,
+    LifecycleMethodSignature,
+    AlwaysStaticLifecycleMethod,
+    NeverStaticLifecycleMethod,
 }
 
 public static class ErrorCodeExtensions

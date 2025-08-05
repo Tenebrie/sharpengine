@@ -9,8 +9,8 @@ namespace Engine.Module.Host;
 
 public partial class HostBackstage : Backstage, IHostBackstage
 {
-    [OnInit]
-    protected void OnInit()
+    [OnReady]
+    protected void OnReady()
     {
         CreateActor<EditorCamera>();
         RegisterService<EditorInputService>();

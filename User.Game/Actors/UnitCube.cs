@@ -14,11 +14,11 @@ public partial class UnitCube : Actor
     [Component]
     public InstancedActorComponent<UnitCubeInstance> InstanceManager;
     
-    [OnInit]
-    protected void OnInit()
+    [OnReady]
+    protected void OnReady()
     {
         // InstanceManager.Mesh = new StaticMesh();
-        InstanceManager.Material = AssetManager.LoadMaterial("Meshes/RawColor/RawColor");
+        InstanceManager.Material = AssetManager.InstantiateMaterial("Meshes/RawColor/RawColor");
         CubeMesh.Instance.Load();
         InstanceManager.Mesh = CubeMesh.Instance.Mesh;
         

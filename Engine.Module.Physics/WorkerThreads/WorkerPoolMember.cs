@@ -167,7 +167,7 @@ public class WorkerPoolMember
         }
     }
     
-    private static void ResolveCollisions(ref AtomHandle handle)
+    private void ResolveCollisions(ref AtomHandle handle)
     {
         // Early-out if nothing to do
         if (handle.CollisionCandidates.Count == 0 || !handle.HasColliders)
@@ -175,7 +175,7 @@ public class WorkerPoolMember
 
         const double restitution = 0.5;     // 0 = sticky, 1 = perfectly elastic
         const double percent     = 0.5;     // positional correction strength
-        const double slop        = 0;   // allow tiny penetration before pushing
+        const double slop        = 0;       // allow tiny penetration before pushing
 
         var posA = handle.WorldPosition;
         var velA = handle.Velocity;
@@ -190,7 +190,7 @@ public class WorkerPoolMember
 
             var posB = other.WorldPosition;
             var velB = other.Velocity;
-            var radiusOfB   = other.BoundingSphereRadius;
+            var radiusOfB = other.BoundingSphereRadius;
 
             // Step 1: compute contact info
             var vectorDelta   = posB - posA;
@@ -230,7 +230,6 @@ public class WorkerPoolMember
             other.Velocity = velB;
         }
 
-        // Clear for next frame
         handle.CollisionCandidates.Clear();
     }
 

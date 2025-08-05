@@ -5,7 +5,11 @@ namespace Engine.Core.Assets.Materials;
 public class Material
 {
     public ProgramHandle Program { get; }
-    
+
+    private Material(ProgramHandle program)
+    {
+        Program = program;
+    }
     protected Material(string shaderPath)
     {
         var vertShader = LoadShader("Compiled/Shaders/" + shaderPath + ".vert.bin");
@@ -30,7 +34,7 @@ public class Material
     private static ProgramHandle CreateProgram(ShaderHandle vert, ShaderHandle frag, bool destroyShaders = true)
     {
         var program = create_program(vert, frag, destroyShaders);
-        if (program.idx == ushort.MaxValue)
+        if (program.idx == ushort.MaxValue || !program.Valid)
             throw new InvalidOperationException("Program creation failed.");
         return program;
     }
@@ -38,5 +42,13 @@ public class Material
     public static Material CreateFromDisk(string shaderPath)
     {
         return new Material(shaderPath);
+    }
+
+    public static Material CreateFromGenerated(string fullShaderPath)
+    {
+        var vertShader = LoadShader(fullShaderPath + ".vert.bin");
+        var fragShader = LoadShader(fullShaderPath + ".frag.bin");
+        var program = CreateProgram(vertShader, fragShader);
+        return new Material(program);
     }
 }

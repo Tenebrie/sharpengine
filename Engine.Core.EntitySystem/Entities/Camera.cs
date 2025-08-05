@@ -11,8 +11,8 @@ public partial class Camera : Actor
     
     private Matrix _projMatrix;
     
-    [OnInit]
-    internal void OnInit()
+    [OnReady]
+    internal void OnReady()
     {
         if (Backstage.Window == null)
             throw new Exception("Camera cannot be initialized without a Backstage Window.");

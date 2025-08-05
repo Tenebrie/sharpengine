@@ -44,8 +44,8 @@ public partial class EditorInputService : Service
     private InputContext _baseContext = null!;
     private InputContext _cameraControlContext = null!;
     
-    [OnInit]
-    protected void OnInit()
+    [OnReady]
+    protected void OnReady()
     {
         _baseContext = InputContext.GetBuilder<InputAction>()
             .Add(InputAction.HoldToControlCamera, MouseButton.Right)

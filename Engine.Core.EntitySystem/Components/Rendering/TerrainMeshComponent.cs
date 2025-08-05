@@ -32,12 +32,12 @@ public partial class TerrainMeshComponent : ActorComponent, IRenderable
         set => _staticMeshHolder.BoundingSphere = value;
     }
     
-    [OnInit]
-    protected void OnInit()
+    [OnReady]
+    protected void OnReady()
     {
         ObjMeshLoader.LoadObj("Assets/Meshes/terrain-plain.obj", out var vertices, out var indices);
         Mesh = StaticMesh.CreateFromMemory(vertices, indices);
-        Material = AssetManager.LoadMaterial("Meshes/Terrain/Terrain");
+        Material = AssetManager.InstantiateMaterial("Meshes/Terrain/Terrain");
     }
     
     public bool IsOnScreen { get; set; }

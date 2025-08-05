@@ -18,8 +18,8 @@ public partial class CacheRevalidationService : Service
         _transformInvalidatedAtoms.Add(atom);
     }
 
-    [OnInit]
-    protected void OnInit()
+    [OnReady]
+    protected void OnReady()
     {
         Backstage.PhysicsModule?.RegisterService(this);
     }

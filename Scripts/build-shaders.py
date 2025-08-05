@@ -80,6 +80,10 @@ def invoke_compile_shaders(shdr_dir: Path, out_base: Path,
 
 
 def main():
+    # roots
+    script_dir = Path(__file__).parent.resolve()
+    solution_root = script_dir.parent
+    
     parser = argparse.ArgumentParser(
         description="Compile BGFX shaders (vertex + fragment)."
     )
@@ -90,15 +94,30 @@ def main():
         help="Build configuration"
     )
     parser.add_argument(
+        "--src", "-s",
+        help="Source path"
+    )
+    parser.add_argument(
+        "--out", "-o",
+        help="Output folder path"
+    )
+    parser.add_argument(
         "--framework", "-f",
         default="net9.0",
         help="Target framework"
     )
     args = parser.parse_args()
-
-    # roots
-    script_dir = Path(__file__).parent.resolve()
-    solution_root = script_dir.parent
+    shader_source_dir = solution_root / "Engine.Core.Assets" / "Materials"
+    binary_output_dir = (solution_root / "Engine.Main.Editor" / "bin" /
+                args.config / args.framework / "Compiled" / "Shaders")
+    if args.src:
+        shader_source_dir = Path(args.src).resolve()
+    if args.out:
+        binary_output_dir = Path(args.out).resolve()
+        
+    print(Fore.CYAN +
+          f"Compiling shaders [{shader_source_dir}] -> [{binary_output_dir}] "
+          f"for {args.config} configuration and {args.framework} framework")
 
     bgfx = (solution_root / "Submodules" / "bgfx").resolve()
     if not bgfx.is_dir():
@@ -126,28 +145,24 @@ def main():
               f"Shader compiler not found at {compiler}.\nYou may need to run `build-deps.py`.")
         sys.exit(1)
 
-    shdr_dir = solution_root / "Engine.Core.Assets" / "Materials"
-    out_base = (solution_root / "Engine.Main.Editor" / "bin" /
-                args.config / args.framework / "Compiled" / "Shaders")
-
     # common params
     common_params = [
         "--platform", platform_arg,
         "-p", "s_5_0" if is_windows else "metal" if is_mac else "glsl",
         "-i", str(bgfx / "src"),
         "-i", str(bgfx / "examples" / "common"),
-        "--varyingdef", str(shdr_dir / "varying.def.sc")
+        "--varyingdef", str(shader_source_dir / "varying.def.sc")
     ]
 
     errors = []
     start = time.perf_counter()
 
     v_cnt = invoke_compile_shaders(
-        shdr_dir, out_base, compiler, common_params,
+        shader_source_dir, binary_output_dir, compiler, common_params,
         pattern="*.vert.glsl", shader_type="vertex", errors=errors
     )
     f_cnt = invoke_compile_shaders(
-        shdr_dir, out_base, compiler, common_params,
+        shader_source_dir, binary_output_dir, compiler, common_params,
         pattern="*.frag.glsl", shader_type="fragment", errors=errors
     )
 
@@ -164,3 +179,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    print(Style.RESET_ALL)

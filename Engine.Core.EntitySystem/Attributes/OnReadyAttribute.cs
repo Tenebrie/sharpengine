@@ -5,6 +5,6 @@ namespace Engine.Core.EntitySystem.Attributes;
 [MeansImplicitUse]
 // [Injection(typeof(ProfileAspect))]
 [AttributeUsage(AttributeTargets.Method)]
-public sealed class OnInitAttribute : Attribute
+public sealed class OnReadyAttribute : Attribute
 {
 }

@@ -45,11 +45,12 @@ public partial class Backstage : Scene
 
     public void NotifyModuleReloaded(EngineModule module) => ProcessModuleReload(module);
     
-    [OnInit]
-    internal void OnInit()
+    [OnCreate]
+    internal void OnCreate()
     {
         AdoptChild(ServiceRegistry);
         ServiceRegistry.Preload<CacheRevalidationService>();
+        RunAssemblyStaticInit();
     }
 
     [OnUpdate]

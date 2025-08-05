@@ -9,9 +9,9 @@ public partial class GameTerrain : Actor
 {
     [Component] public TerrainMeshComponent Terrain;
 
-    [OnInit]
-    protected void OnInit()
+    [OnReady]
+    protected void OnReady()
     {
-        Logger.Info("OnInit");
+        Logger.Info("OnReady");
     }
 }

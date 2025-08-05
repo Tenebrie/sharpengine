@@ -89,7 +89,7 @@ internal class MockAtom : Atom
     
     public double TotalDeltaTime { get; private set; }
 
-    [OnInit]
+    [OnCreate]
     internal void OnInit() => OnInitCallCount++;
     [OnUpdate]
     internal void OnSimpleUpdate() => OnSimpleUpdateCallCount++;
