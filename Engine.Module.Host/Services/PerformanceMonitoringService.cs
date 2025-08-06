@@ -22,8 +22,8 @@ public partial class PerformanceMonitoringService : Service
         var g0Diff = g0 - _lastGen0;
         var g1Diff = g1 - _lastGen1;
         var g2Diff = g2 - _lastGen2;
-        if (g0Diff > 1 || g1Diff > 1 || g2Diff > 1)
-            Logger.Debug($"GC Report:  g0: {g0Diff}  g1: {g1Diff}  g2: {g2Diff}");
+        // if (g0Diff > 1 || g1Diff > 1 || g2Diff > 1)
+            // Logger.Debug($"GC Report:  g0: {g0Diff}  g1: {g1Diff}  g2: {g2Diff}");
         
         if (g0Diff > 1 || g1Diff > 1 || g2Diff > 1)
             Logger.ShowPersistent(this, $"GC Warning: {g0Diff + g1Diff + g2Diff} collections per second.");

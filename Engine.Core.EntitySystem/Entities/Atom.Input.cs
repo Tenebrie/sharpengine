@@ -120,6 +120,14 @@ public partial class Atom
                     (_,_,_,_) =>
                         ((Action)Delegate.CreateDelegate(typeof(Action), this, method))()
                 ),
+            InputParamBinding.Int => 
+                new BoundHeldAction(
+                    this,
+                    groupId,
+                    attr.X, 0.0, 0.0,
+                    (x,_,_,_) =>
+                        ((Action<int>)Delegate.CreateDelegate(typeof(Action<int>), this, method))((int)Math.Round(x))
+                ),
             InputParamBinding.Double => 
                 new BoundHeldAction(
                     this,
@@ -154,7 +162,15 @@ public partial class Atom
         var innerExpression = attr.BindingParams switch
         {
             InputParamBinding.None => GetInputHeldActionHandlerWithNoParams(method, groupId),
-            InputParamBinding.Double => 
+            InputParamBinding.Int =>
+                new BoundHeldAction(
+                    this,
+                    groupId,
+                    attr.X, 0.0, 0.0,
+                    (delta,x,_,_) =>
+                        ((Action<double, int>)Delegate.CreateDelegate(typeof(Action<double, int>), this, method))(delta,(int)Math.Round(x))
+                ),
+            InputParamBinding.Double =>
                 new BoundHeldAction(
                     this,
                     groupId,

@@ -59,4 +59,31 @@ public partial class Backstage : Scene
         ServiceRegistry.Get<ReaperService>().Reap();
         ServiceRegistry.Get<InputService>().SendKeyboardHeldEvents(deltaTime);
     }
+
+    private Camera? GetActiveCamera => FindActiveCamera(this);
+    public Camera GetActiveCameraOrThrow()
+    {
+        var camera = GetActiveCamera;
+        if (camera == null)
+            throw new InvalidOperationException("No active camera found in the Backstage.");
+        return camera;
+    }
+    
+    private Camera? FindActiveCamera(Atom target)
+    {
+        if (target is Camera camera
+            && ((camera.IsEditorCamera && GameplayContext == GameplayContext.Editor) || (!camera.IsEditorCamera && GameplayContext != GameplayContext.Editor)))
+        {
+            return camera;
+        }
+        
+        foreach (var child in target.Children)
+        {
+            var foundCamera = FindActiveCamera(child);
+            if (foundCamera != null)
+                return foundCamera;
+        }
+
+        return null;
+    }
 }

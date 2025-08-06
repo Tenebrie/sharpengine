@@ -17,7 +17,11 @@ public enum InputAction
     MoveLeft,
     MoveRight,
     Jump,
-    Shoot
+    Primary,
+    Hotbar1,
+    Hotbar2,
+    Hotbar3,
+    Hotbar4,
 }
 
 public partial class UserInputService : Service
@@ -37,7 +41,11 @@ public partial class UserInputService : Service
             .Add(InputAction.MoveRight, Key.D)
             .Add(InputAction.MoveRight, Key.Right)
             .Add(InputAction.Jump, Key.Space)
-            .Add(InputAction.Shoot, MouseButton.Left)
+            .Add(InputAction.Primary, MouseButton.Left)
+            .Add(InputAction.Hotbar1, Key.Number1)
+            .Add(InputAction.Hotbar2, Key.Number2)
+            .Add(InputAction.Hotbar3, Key.Number3)
+            .Add(InputAction.Hotbar4, Key.Number4)
             .Build();
         
         RecalculateActiveContext();

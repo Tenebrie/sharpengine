@@ -12,6 +12,8 @@ public class OnKeyInputAttribute(Key explicitKey, double x, double y, double z, 
 {
     public OnKeyInputAttribute(Key explicitKey)
         : this(explicitKey, 0.0, 0.0, 0.0, InputParamBinding.None) {}
+    public OnKeyInputAttribute(Key explicitKey, int value)
+        : this(explicitKey, value, 0.0, 0.0, InputParamBinding.Int) {}
     public OnKeyInputAttribute(Key explicitKey, double value)
         : this(explicitKey, value, 0.0, 0.0, InputParamBinding.Double) {}
     public OnKeyInputAttribute(Key explicitKey, double x, double y)

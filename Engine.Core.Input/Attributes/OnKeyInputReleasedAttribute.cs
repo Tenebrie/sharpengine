@@ -12,6 +12,8 @@ public class OnKeyInputReleasedAttribute(Key explicitKey, double x, double y, do
 {
     public OnKeyInputReleasedAttribute(Key explicitKey)
         : this(explicitKey, 0.0, 0.0, 0.0, InputParamBinding.None) {}
+    public OnKeyInputReleasedAttribute(Key explicitKey, int value)
+        : this(explicitKey, value, 0.0, 0.0, InputParamBinding.Int) {}
     public OnKeyInputReleasedAttribute(Key explicitKey, double value)
         : this(explicitKey, value, 0.0, 0.0, InputParamBinding.Double) {}
     public OnKeyInputReleasedAttribute(Key explicitKey, double x, double y)

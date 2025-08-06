@@ -5,6 +5,7 @@ using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
 using User.Game.Actors;
+using User.Game.Player.Abilities;
 using User.Game.Player.Components;
 using User.Game.Services;
 using Vector3 = Engine.Core.Common.Vector3;
@@ -17,27 +18,10 @@ public partial class PlayerCharacter : Actor
     private const double RotationSpeed = 0.12;
 
     // [Group] public static readonly Group<PlayerCharacter> PlayerGroup;
+    [Component] public AbilityController Abilities;
     [Component] public DragonMesh DragonMeshComponent;
     [Component] public PhysicsComponent PhysicsComponent;
     // [Component] public ColliderSphereComponent ColliderSphere;
-
-    [OnInput(InputAction.Shoot)]
-    protected void OnShoot()
-    {
-        var projectile = CreateActor<BasicProjectile>();
-        projectile.Transform.Position = Transform.Position;
-        
-        var forwardVector = Vector3.Forward;
-        var mousePos = GetService<InputService>().GetMousePosition();
-        var window = Backstage.GetWindow().Size;
-        var value = new Vector3(mousePos.X - window.X / 2.0, 0, mousePos.Y - window.Y / 2.0).NormalizeInPlace();
-        var dotProduct = value.DotProduct(forwardVector);
-        var crossProduct = value.CrossProduct(forwardVector);
-        var difference = Math.Atan2(crossProduct.Y, dotProduct);
-        projectile.Transform.Rotation = QuatMakers.FromRotationRadians(0, difference, 0);
-
-        projectile.PhysicsComponent.Velocity = projectile.Transform.Basis.TransformVector(Vector3.Forward) * 100.0;
-    }
 
     [OnInputHeld(InputAction.MoveForward,  +1.0, +0.0)]
     [OnInputHeld(InputAction.MoveBackward, -1.0, -0.0)]

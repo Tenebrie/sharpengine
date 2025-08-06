@@ -12,6 +12,8 @@ public class OnInputAttribute<T>(T? action, double x, double y, double z, InputP
 {
     public OnInputAttribute(T action)
         : this(action, 0.0, 0.0, 0.0, InputParamBinding.None) {}
+    public OnInputAttribute(T action, int value)
+        : this(action, value, 0.0, 0.0, InputParamBinding.Int) {}
     public OnInputAttribute(T action, double value)
         : this(action, value, 0.0, 0.0, InputParamBinding.Double) {}
     public OnInputAttribute(T action, double x, double y)

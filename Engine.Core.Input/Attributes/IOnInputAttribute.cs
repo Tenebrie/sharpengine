@@ -5,6 +5,7 @@ namespace Engine.Core.Input.Attributes;
 public enum InputParamBinding
 {
     None,
+    Int,
     Double,
     Vector2,
     Vector3

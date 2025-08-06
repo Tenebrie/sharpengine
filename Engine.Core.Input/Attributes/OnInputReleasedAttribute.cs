@@ -12,6 +12,8 @@ public class OnInputReleasedAttribute<T>(T action, double x, double y, double z,
 {
     public OnInputReleasedAttribute(T action)
         : this(action, 0.0, 0.0, 0.0, InputParamBinding.None) {}
+    public OnInputReleasedAttribute(T action, int value)
+        : this(action, value, 0.0, 0.0, InputParamBinding.Int) {}
     public OnInputReleasedAttribute(T action, double value)
         : this(action, value, 0.0, 0.0, InputParamBinding.Double) {}
     public OnInputReleasedAttribute(T action, double x, double y)

@@ -81,11 +81,16 @@ public sealed class LifecycleMethodSignatureAnalyzer : DiagnosticAnalyzer
             else if (TrackedInputAttributeNames.Contains(attrName))
             {
                 var positionalCount = attr.ArgumentList?.Arguments.Count ?? 0;
-                if (positionalCount == 0)
+                if (attr.ArgumentList == null || positionalCount == 0)
                     continue;
-
+                
                 var extraDoubleCount = positionalCount - 1;
-                expectedBinding  = Binding.FromExtraCount(extraDoubleCount);
+                expectedBinding  = Binding.Infer(
+                    attr.ArgumentList.Arguments[positionalCount - 1].Expression,
+                    ctx.SemanticModel,
+                    // methodSymbol.Parameters[methodSymbol.Parameters.Length - 1].Type,
+                    extraDoubleCount
+                );
                 if (expectedBinding.Equals(Binding.Unknown))
                     continue;
             }
@@ -134,6 +139,7 @@ public sealed class LifecycleMethodSignatureAnalyzer : DiagnosticAnalyzer
         return binding.Kind switch
         {
             BindingKind.None => effectiveParamCount == 0,
+            BindingKind.Int => effectiveParamCount == 1 && IsInt(parameters[index]),
             BindingKind.Double => effectiveParamCount == 1 && IsDouble(parameters[index]),
             BindingKind.Vector2 => effectiveParamCount == 1 && IsVector(parameters[index], "Vector2"),
             BindingKind.Vector3 => effectiveParamCount == 1 && IsVector(parameters[index], "Vector3"),
@@ -142,6 +148,9 @@ public sealed class LifecycleMethodSignatureAnalyzer : DiagnosticAnalyzer
         };
     }
 
+    private static bool IsInt(IParameterSymbol p) =>
+        p.Type.SpecialType == SpecialType.System_Int32;
+    
     private static bool IsDouble(IParameterSymbol p) =>
         p.Type.SpecialType == SpecialType.System_Double;
 
@@ -160,10 +169,11 @@ public sealed class LifecycleMethodSignatureAnalyzer : DiagnosticAnalyzer
         private Binding(BindingKind kind) => Kind = kind;
 
         public static Binding None    => new(BindingKind.None);
+        public static Binding Int     => new(BindingKind.Int);
         public static Binding Double  => new(BindingKind.Double);
         public static Binding Vector2 => new(BindingKind.Vector2);
         public static Binding Vector3 => new(BindingKind.Vector3);
-        public static Binding Type  => new(BindingKind.Type);
+        public static Binding Type    => new(BindingKind.Type);
         public static Binding Unknown => new(BindingKind.Unknown);
 
         public bool Equals(Binding other)
@@ -181,26 +191,37 @@ public sealed class LifecycleMethodSignatureAnalyzer : DiagnosticAnalyzer
             return (int)Kind;
         }
 
-        public static Binding FromExtraCount(int extra) => extra switch
+        public static Binding Infer(ExpressionSyntax expression, SemanticModel semanticModel, int argumentCount)
         {
-            0 => None,
-            1 => Double,
-            2 => Vector2,
-            3 => Vector3,
-            _ => Unknown
-        };
+            if (expression is LiteralExpressionSyntax literal && 
+                semanticModel.GetConstantValue(literal).HasValue &&
+                semanticModel.GetConstantValue(literal).Value is int)
+            {
+                return Int;
+            }
+
+            return argumentCount switch
+            {
+                0 => None,
+                1 => Double,
+                2 => Vector2,
+                3 => Vector3,
+                _ => Unknown
+            };
+        }
 
         public string GetDisplay(bool isDeltaAllowed) =>
             Kind switch
             {
                 BindingKind.None    => isDeltaAllowed ? "[Double deltaTime]?" : "no parameters",
-                BindingKind.Double  => $"{(isDeltaAllowed ? "[Double deltaTime]? " : string.Empty)}double value",
-                BindingKind.Vector2 => $"{(isDeltaAllowed ? "[Double deltaTime]? " : string.Empty)}Vector2 value",
-                BindingKind.Vector3 => $"{(isDeltaAllowed ? "[Double deltaTime]? " : string.Empty)}Vector3 value",
+                BindingKind.Int     => $"{(isDeltaAllowed ? "[Double deltaTime]? " : string.Empty)}(int value)",
+                BindingKind.Double  => $"{(isDeltaAllowed ? "[Double deltaTime]? " : string.Empty)}(double value)",
+                BindingKind.Vector2 => $"{(isDeltaAllowed ? "[Double deltaTime]? " : string.Empty)}(Vector2 value)",
+                BindingKind.Vector3 => $"{(isDeltaAllowed ? "[Double deltaTime]? " : string.Empty)}(Vector3 value)",
                 BindingKind.Type =>    $"{(isDeltaAllowed ? "[Double deltaTime]? " : string.Empty)}[Type selfType]?",
                 _                   => "unknown"
             };
     }
 
-    private enum BindingKind { None, Double, Vector2, Vector3, Type, Unknown }
+    private enum BindingKind { None, Int, Double, Vector2, Vector3, Type, Unknown }
 }
