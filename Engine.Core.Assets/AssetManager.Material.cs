@@ -5,7 +5,7 @@ public partial class AssetManager
 {
     public static MaterialInstance InstantiateMaterial(string path) => Instance.Materials.InstantiateMaterial(path);
     public static MaterialInstance InstantiateMaterial(object key) => Instance.Materials.InstantiateMaterial(key);
-    public static MaterialInstance InstantiateMaterial(Material material) => MaterialAssetManager.InstantiateMaterial(material);
+    public static MaterialInstance InstantiateMaterial(Material material) => Instance.Materials.InstantiateMaterial(material);
 
     public static void SubmitMaterial(object key, Material material) => Instance.Materials.SubmitMaterial(key, material);
 }
@@ -31,16 +31,30 @@ public class MaterialAssetManager
         
         throw new InvalidOperationException($"Material {key} not found");
     }
-    public static MaterialInstance InstantiateMaterial(Material material)
+    public MaterialInstance InstantiateMaterial(Material material)
     {
+        if (_cachedMaterials.TryGetValue(material, out _))
+            return new MaterialInstance(material);
+        _cachedMaterials[material] = material;
         return new MaterialInstance(material);
     }
 
     public void SubmitMaterial(object key, Material material)
     {
         if (_cachedMaterials.TryGetValue(key, out _))
-            return;
+        {
+            throw new InvalidOperationException($"Material {key} already exists");
+        }
         
         _cachedMaterials[key] = material;
+    }
+    
+    public void Shutdown()
+    {
+        foreach (var material in _cachedMaterials.Values)
+        {
+            material.Dispose();
+        }
+        _cachedMaterials.Clear();
     }
 }

@@ -15,19 +15,14 @@ public partial class BasicWall : Actor
     private static Material _generatedMaterial;
 
     [OnPrepareResources]
-    public static Material PrepareResources()
+    public static void PrepareResources()
     {
-        return MaterialBuilder.Begin(typeof(BasicWall))
+        var material = MaterialBuilder.Begin(typeof(BasicWall))
             .SetTintColor(Color.Bisque)
             .SetSamplingTexture(false)
             .Compile();
-    }
- 
-    [OnLoadResources]  
-    public static void LoadResources(Material material)
-    {
         _generatedMaterial = material;
-    }  
+    }
 
     [OnReady]
     public void OnReady()

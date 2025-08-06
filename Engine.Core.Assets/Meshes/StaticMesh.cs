@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using Engine.Core.Assets.Loaders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Rendering;
@@ -8,6 +9,7 @@ using Engine.Core.Communication.Signals;
 using Engine.Core.Extensions;
 using static Engine.Native.Bgfx.Bgfx;
 using Transform = Engine.Core.Common.Transform;
+// ReSharper disable ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
 
 namespace Engine.Core.Assets.Meshes;
 
@@ -23,16 +25,16 @@ public class StaticMesh : IDisposable
     
     private WindingOrder WindingOrder { get; set; } = WindingOrder.Cw;
 
-    private VertexBuffer _vertexBuffer;
-    private IndexBuffer _indexBuffer;
-    private VertexLayout _layout;
+    protected VertexBuffer VertexBuffer = VertexBuffer.Invalid;
+    protected IndexBuffer IndexBuffer = IndexBuffer.Invalid;
+    protected VertexLayout Layout;
 
-    public AssetVertex[] Vertices { get; set; } = [];
+    public AssetVertex[] Vertices { get; private set; } = [];
     public ushort[] Indices { get; set; } = [];
     
     public Signal<AssetVertex[]> OnMeshLoaded { get; } = new();
-    
-    private void Load(AssetVertex[] verts, ushort[] indices, WindingOrder windingOrder)
+
+    private void LoadInternal(AssetVertex[] verts, ushort[] indices, WindingOrder windingOrder)
     {
         Vertices = verts;
         Indices = indices;
@@ -45,14 +47,14 @@ public class StaticMesh : IDisposable
             renderVerts[i] = new RenderingVertex(v.Position, v.TexCoord, v.VertexColor, Vector3.One);
         }
         
-        _layout = CreateVertexLayout([
+        Layout = CreateVertexLayout([
             new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
             new VertexLayoutAttribute(Attrib.TexCoord0, 2, AttribType.Float, true, false),
             new VertexLayoutAttribute(Attrib.Color0, 4, AttribType.Uint8, true, true),
             new VertexLayoutAttribute(Attrib.Normal, 3, AttribType.Float, true, false)
         ]);
-        _vertexBuffer = CreateVertexBuffer(ref renderVerts, ref _layout);
-        _indexBuffer = CreateIndexBuffer(ref indices);
+        VertexBuffer = CreateVertexBuffer(ref renderVerts, ref Layout);
+        IndexBuffer = CreateIndexBuffer(ref indices);
 
         IsValid = true;
 
@@ -62,7 +64,10 @@ public class StaticMesh : IDisposable
     public void PrepareRender(uint instanceCount, ref Transform[] worldTransforms, ref RenderContext context)
     {
         if (!IsValid)
+        {
+            context.InstanceTransformCount += instanceCount;
             return;
+        }
         
         for (var i = 0; i < instanceCount; i++)
             worldTransforms[i].ToFloatSpan(
@@ -75,12 +80,15 @@ public class StaticMesh : IDisposable
 
     public unsafe void Render(uint instanceCount, MaterialInstance material, ref RenderContext context, StateFlags extraFlags = StateFlags.None)
     {
-        if (!IsValid)
+        if (!IsValid || material == null || !material.Program.Valid)
+        {
+            context.InstanceTransformCount += instanceCount;
             return;
+        }
 
         var encoder = encoder_begin(false);
-        SetVertexBuffer(encoder, _vertexBuffer);
-        SetIndexBuffer(encoder, _indexBuffer);
+        SetVertexBuffer(encoder, VertexBuffer);
+        SetIndexBuffer(encoder, IndexBuffer);
         SetInstanceDataBuffer(encoder, context.InstanceTransformBuffer, context.InstanceTransformCount, instanceCount);
         context.InstanceTransformCount += instanceCount;
         
@@ -99,16 +107,71 @@ public class StaticMesh : IDisposable
 
     public void Dispose()
     {
-        // GC.SuppressFinalize(this);
-        // destroy_vertex_buffer(_vertexBuffer.Handle);
-        // destroy_index_buffer(_indexBuffer.Handle);
+        GC.SuppressFinalize(this);
+        if (VertexBuffer.Valid)
+            DestroyVertexBuffer(ref VertexBuffer);
+        if (IndexBuffer.Valid)
+            DestroyIndexBuffer(ref IndexBuffer);
+        IsValid = false;
     }
     
+    protected static string ComputeMeshHash(AssetVertex[] vertices, ushort[] indices)
+    {
+        // Create a more efficient hash by directly hashing the binary data
+        var vertexBytes = new byte[vertices.Length * sizeof(double) * 5 + vertices.Length * 4]; // position(3 doubles) + texcoord(2 doubles) + color(4 bytes)
+        var indexBytes = new byte[indices.Length * sizeof(ushort)];
+
+        var vertexSpan = new Span<byte>(vertexBytes);
+        var indexSpan = new Span<byte>(indexBytes);
+
+        // Copy vertex data
+        for (var i = 0; i < vertices.Length; i++)
+        {
+            var vertex = vertices[i];
+            var offset = i * (sizeof(double) * 5 + 4);
+
+            // Position (3 doubles)
+            BitConverter.TryWriteBytes(vertexSpan[offset..], vertex.Position.X);
+            BitConverter.TryWriteBytes(vertexSpan[(offset + 8)..], vertex.Position.Y);
+            BitConverter.TryWriteBytes(vertexSpan[(offset + 16)..], vertex.Position.Z);
+
+            // TexCoord (2 doubles)
+            BitConverter.TryWriteBytes(vertexSpan[(offset + 24)..], vertex.TexCoord.X);
+            BitConverter.TryWriteBytes(vertexSpan[(offset + 32)..], vertex.TexCoord.Y);
+
+            // Color (4 bytes)
+            vertexSpan[offset + 40] = vertex.VertexColor.R;
+            vertexSpan[offset + 41] = vertex.VertexColor.G;
+            vertexSpan[offset + 42] = vertex.VertexColor.B;
+            vertexSpan[offset + 43] = vertex.VertexColor.A;
+        }
+
+        // Copy index data
+        for (var i = 0; i < indices.Length; i++)
+        {
+            BitConverter.TryWriteBytes(indexSpan[(i * sizeof(ushort))..], indices[i]);
+        }
+
+        // Combine vertex and index data for final hash
+        var combinedBytes = new byte[vertexBytes.Length + indexBytes.Length];
+        vertexBytes.CopyTo(combinedBytes, 0);
+        indexBytes.CopyTo(combinedBytes, vertexBytes.Length);
+
+        var hashBytes = SHA256.HashData(combinedBytes);
+        return Convert.ToHexString(hashBytes).ToLowerInvariant();
+    }
+
     public static StaticMesh CreateFromMemory(AssetVertex[] verts, ushort[] indices, WindingOrder windingOrder = WindingOrder.Cw)
     {
-        var mesh = new StaticMesh();
-        mesh.Load(verts, indices, windingOrder);
-        return mesh;
+        var hash = ComputeMeshHash(verts, indices);
+
+        if (AssetManager.Meshes.TryGet(hash, out var mesh))
+            return mesh;
+
+        var newMesh = new StaticMesh();
+        newMesh.LoadInternal(verts, indices, windingOrder);
+        AssetManager.PutMesh(hash, newMesh);
+        return newMesh;
     }
     
     [StructLayout(LayoutKind.Sequential, Pack = 1)]

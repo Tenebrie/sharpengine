@@ -1,6 +1,8 @@
 ﻿using System.Drawing;
 using System.Reflection;
 using Engine.Core.Assets.Materials;
+using Engine.Core.Extensions;
+using Engine.Core.Logging;
 using Engine.Core.Shell;
 
 namespace Engine.Core.Assets.Builders;
@@ -46,8 +48,8 @@ public class MaterialBuilder(object key)
 
     public Material Compile()
     {
-        var fragSource = BuildFragmentShaderSource();
-        var vertSource = BuildVertexShaderSource();
+        var vertSource = BuildVertShaderSource();
+        var fragSource = BuildFragShaderSource();
         var varyingSource = ReadTemplateFile("varying.def.sc");
         
         var tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
@@ -57,32 +59,45 @@ public class MaterialBuilder(object key)
         Directory.CreateDirectory(srcDir);
         Directory.CreateDirectory(outDir);
         
-        var fragShaderPath = Path.Combine(srcDir, "generated.frag.glsl");
         var vertShaderPath = Path.Combine(srcDir, "generated.vert.glsl");
+        var fragShaderPath = Path.Combine(srcDir, "generated.frag.glsl");
         var varyingFilePath = Path.Combine(srcDir, "varying.def.sc");
         File.WriteAllText(fragShaderPath, fragSource);
         File.WriteAllText(vertShaderPath, vertSource);
         File.WriteAllText(varyingFilePath, varyingSource);
-        
-        PythonShell.RunEngineScript("build-shaders.py", $"--src {srcDir} --out {outDir}");
-        
+
+        try
+        {
+            PythonShell.RunEngineScript("build-shaders.py", $"--src {srcDir} --out {outDir}");
+        }
+        catch (Exception e)
+        {
+            Logger.ErrorF("Failed to compile material shaders: {0}", e.Message);
+            Console.WriteLine("Generated vert shader at: " + vertShaderPath);
+            Console.WriteLine("Generated frag shader at: " + fragShaderPath);
+        }
+
         var fragBinPath = Path.Combine(outDir, "generated");
         var material = Material.CreateFromGenerated(fragBinPath);
         AssetManager.SubmitMaterial(Key, material);
         return material;
     }
 
-    private string BuildFragmentShaderSource()
+    private string BuildFragShaderSource()
     {
         var baseShader = $"{System.Enum.GetName(Domain)}.tfrag.glsl";
         var template = ReadTemplateFile(baseShader);
         
         template = template.Replace("$base_color", IsSamplingTexture ? "texture2D(s_diffuse, v_uv0)" : "vec4(1.0, 1.0, 1.0, 1.0)");
-        template = template.Replace("$tint", $"vec4({TintColor.R / 255f}, {TintColor.G / 255f}, {TintColor.B / 255f}, {TintColor.A / 255f})");
+        var r = (TintColor.R / 255f).ToInvariantString();
+        var g = (TintColor.G / 255f).ToInvariantString();
+        var b = (TintColor.B / 255f).ToInvariantString();
+        var a = (TintColor.A / 255f).ToInvariantString();
+        template = template.Replace("$tint", $"vec4({r}, {g}, {b}, {a})");
         return template;
     }
 
-    private string BuildVertexShaderSource()
+    private string BuildVertShaderSource()
     {
         var baseShader = $"{System.Enum.GetName(Domain)}.tvert.glsl";
         var template = ReadTemplateFile(baseShader);

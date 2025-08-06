@@ -10,17 +10,13 @@ using Transform = Engine.Core.Common.Transform;
 
 namespace Engine.Core.Assets.Meshes;
 
-public class BoxMesh
+public class BoxMesh : StaticMesh
 {
-    public static BoxMesh Instance { get; } = new();
+    private static BoxMesh Instance { get; } = new();
 
     private static bool _isLoaded = false;
         
-    private static VertexBuffer _vertexBuffer;
-    private static IndexBuffer _indexBuffer;
-    private VertexLayout _layout;
-    
-    public void Load()
+    public static void Load()
     {
         if (_isLoaded)
             return;
@@ -49,23 +45,18 @@ public class BoxMesh
             4,5,1,  1,0,4 
         ];
         
-        _layout = CreateVertexLayout([
+        Instance.Layout = CreateVertexLayout([
             new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
             new VertexLayoutAttribute(Attrib.Color0, 4, AttribType.Uint8, true, true)
         ]);
-        _vertexBuffer = CreateVertexBuffer(ref verts, ref _layout);
-        _indexBuffer = CreateIndexBuffer(ref indices);
+        Instance.VertexBuffer = CreateVertexBuffer(ref verts, ref Instance.Layout);
+        Instance.IndexBuffer = CreateIndexBuffer(ref indices);
+        AssetManager.Meshes.Put("Generated/BoxMesh", Instance);
     }
-    
+
     public static void PrepareRender(uint instanceCount, ref Transform[] worldTransforms, ref RenderContext context)
     {
-        for (var i = 0; i < instanceCount; i++)
-            worldTransforms[i].ToFloatSpan(
-                ref context.InstanceTransformPrepBuffer,
-                (int)(context.InstanceTransformCount + i) * context.InstanceTransformStride
-            );
-        
-        context.InstanceTransformCount += instanceCount;
+        ((StaticMesh)Instance).PrepareRender(instanceCount, ref worldTransforms, ref context);
     }
     
     public static unsafe void Render(uint instanceCount, Material material, ref RenderContext context)
@@ -81,8 +72,8 @@ public class BoxMesh
         SetInstanceDataBuffer(encoder, context.InstanceTransformBuffer, context.InstanceTransformCount, instanceCount);
         context.InstanceTransformCount += instanceCount;
         
-        SetVertexBuffer(encoder, _vertexBuffer);
-        SetIndexBuffer(encoder, _indexBuffer);
+        SetVertexBuffer(encoder, Instance.VertexBuffer);
+        SetIndexBuffer(encoder, Instance.IndexBuffer);
         SetState(encoder, StateFlags.WriteRgb | StateFlags.WriteZ | StateFlags.DepthTestLess | StateFlags.PtLines);
         
         Submit(encoder, context.ViewId, material.Program, 1, 0);
@@ -90,11 +81,9 @@ public class BoxMesh
         encoder_end(encoder);
     }
 
-    public void Dereference()
+    public static void Dispose()
     {
-        if (!_isLoaded)
-            return;
-        destroy_index_buffer(_indexBuffer.Handle);
+        ((StaticMesh)Instance).Dispose();
     }
     
     [StructLayout(LayoutKind.Sequential, Pack = 1)]

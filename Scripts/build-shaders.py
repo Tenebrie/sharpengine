@@ -65,8 +65,13 @@ def invoke_compile_shaders(shdr_dir: Path, out_base: Path,
                "--type", shader_type] + common_params
         proc = subprocess.run(cmd, capture_output=True, text=True)
         ok = (proc.returncode == 0)
+        
+        # Capture errors from both stderr and stdout (shaderc is stupid)
         if proc.stderr:
             errors.extend(proc.stderr.strip().splitlines())
+        if proc.stdout and not ok:
+            # If compilation failed, treat stdout as potential error output
+            errors.extend(proc.stdout.strip().splitlines())
 
         write_result(rel, out_rel, ok, False, max_len)
         if not ok:
@@ -175,8 +180,11 @@ def main():
         write_section("-- Errors", color="RED")
         for line in errors:
             print(Fore.RED + line)
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    exit_code = main()
     print(Style.RESET_ALL)
+    sys.exit(exit_code)

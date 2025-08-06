@@ -7,12 +7,10 @@ On macOS: uses Makefile (make osx-release, make osx-debug).
 On Windows: generates a VS2022 solution via GENie (from bx) with shared-lib, locates MSBuild.exe automatically, builds both Debug and Release, then reports DLL and LIB locations.
 Script resides in Scripts/ and can be invoked from any folder.
 """
-
 import sys
 import shutil
 import subprocess
 from pathlib import Path
-
 
 def err(msg):
     print(f"Error: {msg}", file=sys.stderr)
@@ -48,9 +46,12 @@ def build_macos(bgfx_root):
         cmd = ["make", target]
         print(f"→ Running: {' '.join(cmd)} in {bgfx_root}")
         subprocess.check_call(cmd, cwd=str(bgfx_root))
-        out_dir = bgfx_root / ".build" / target.split('-')[1]
-        print(f"✅ macOS {cfg} build complete. Binaries under: {out_dir}")
-
+        out_dir = bgfx_root / ".build" / target
+    print(f"✅ macOS {cfg} build complete. Binaries under: {out_dir}/bin")
+    script = Path(__file__).resolve()
+    repo = script.parent.parent
+    shutil.copy(out_dir / "bin" / "libbgfx-shared-libDebug.dylib", repo / "Engine.Main.Editor" / "bin" / "Debug" / "net9.0" / "libbgfx_debug")
+    shutil.copy(out_dir / "bin" / "libbgfx-shared-libRelease.dylib", repo / "Engine.Main.Editor" / "bin" / "Release" / "net9.0" / "libbgfx")
 
 def build_windows(bgfx_root, bx_root):
     genie = bx_root / "tools" / "bin" / "windows" / "genie.exe"

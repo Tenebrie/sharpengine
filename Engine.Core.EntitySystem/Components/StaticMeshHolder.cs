@@ -35,18 +35,12 @@ public partial class StaticMeshHolder : ActorComponent
     [Component] public BoundingSphereComponent BoundingSphere;
 
     [OnPrepareResources]
-    protected static Material OnPrepareResources()
+    protected static void OnPrepareResources()
     {
-        Console.WriteLine("PREPAREING");
-        return MaterialBuilder.Begin(typeof(StaticMeshHolder))
+        var material = MaterialBuilder.Begin(typeof(StaticMeshHolder))
             .SetTintColor(System.Drawing.Color.White)
             .SetSamplingTexture(false)
             .Compile();
-    }
-
-    [OnLoadResources]
-    protected static void OnLoadResources(Material material)
-    {
         _fallbackMaterial = AssetManager.InstantiateMaterial(material);
     }
 

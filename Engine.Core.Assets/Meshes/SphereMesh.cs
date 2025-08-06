@@ -10,7 +10,7 @@ using Transform = Engine.Core.Common.Transform;
 
 namespace Engine.Core.Assets.Meshes;
 
-public class SphereMesh
+public class SphereMesh : StaticMesh
 {
     [Flags]
     public enum ColorMode
@@ -24,11 +24,9 @@ public class SphereMesh
     public static ColorMode VisibleModes = ColorMode.None;
 
     private static bool _isLoaded = false;
-        
+
     private static VertexBuffer _axisColoredVertexBuffer;
     private static VertexBuffer _colliderVertexBuffer;
-    private static IndexBuffer _indexBuffer;
-    private VertexLayout _layout;
     
     public void Load()
     {
@@ -69,24 +67,20 @@ public class SphereMesh
         for (var i = 0; i < indices.Count; i++)
             indicesArray[i] = (ushort)indices[i];
         
-        _layout = CreateVertexLayout([
+        Layout = CreateVertexLayout([
             new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
             new VertexLayoutAttribute(Attrib.Color0, 4, AttribType.Uint8, true, true)
         ]);
-        _axisColoredVertexBuffer = CreateVertexBuffer(ref vertsArray, ref _layout);
-        _colliderVertexBuffer = CreateVertexBuffer(ref colliderVertsArray, ref _layout);
-        _indexBuffer = CreateIndexBuffer(ref indicesArray);
+        _axisColoredVertexBuffer = CreateVertexBuffer(ref vertsArray, ref Layout);
+        _colliderVertexBuffer = CreateVertexBuffer(ref colliderVertsArray, ref Layout);
+        IndexBuffer = CreateIndexBuffer(ref indicesArray);
+        AssetManager.PutMesh("Generated/SphereMesh", Instance);
+        AssetManager.Finalizers.Register(Dispose);
     }
     
-    public static void PrepareRender(uint instanceCount, ref Transform[] worldTransforms, ref RenderContext context)
+    public new static void PrepareRender(uint instanceCount, ref Transform[] worldTransforms, ref RenderContext context)
     {
-        for (var i = 0; i < instanceCount; i++)
-            worldTransforms[i].ToFloatSpan(
-                ref context.InstanceTransformPrepBuffer,
-                (int)(context.InstanceTransformCount + i) * context.InstanceTransformStride
-            );
-        
-        context.InstanceTransformCount += instanceCount;
+        ((StaticMesh)Instance).PrepareRender(instanceCount, ref worldTransforms, ref context);
     }
     
     public static unsafe void Render(uint instanceCount, Material material, ref RenderContext context, ColorMode color)
@@ -114,7 +108,7 @@ public class SphereMesh
             SetVertexBuffer(encoder, _colliderVertexBuffer);
         else
             throw new ArgumentOutOfRangeException(nameof(color), color, null);
-        SetIndexBuffer(encoder, _indexBuffer);
+        SetIndexBuffer(encoder, Instance.IndexBuffer);
         SetState(encoder, StateFlags.WriteRgb | StateFlags.WriteZ | StateFlags.DepthTestLess | StateFlags.PtLines);
         
         Submit(encoder, context.ViewId, material.Program, 1, 0);
@@ -122,12 +116,10 @@ public class SphereMesh
         encoder_end(encoder);
     }
 
-    public static void Dereference()
+    private new static void Dispose()
     {
-        if (!_isLoaded)
-            return;
         destroy_vertex_buffer(_axisColoredVertexBuffer.Handle);
-        destroy_index_buffer(_indexBuffer.Handle);
+        destroy_vertex_buffer(_colliderVertexBuffer.Handle);
     }
     
     [StructLayout(LayoutKind.Sequential, Pack = 1)]

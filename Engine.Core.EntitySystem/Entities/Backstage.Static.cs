@@ -12,7 +12,10 @@ public partial class Backstage : Scene
         {
             var initMethods = atomType
                 .GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)
-                .Where(methodInfo => methodInfo.GetCustomAttribute<OnCreateAttribute>() != null).ToList();
+                .Where(methodInfo =>
+                    methodInfo.GetCustomAttribute<OnCreateAttribute>() != null ||
+                    methodInfo.GetCustomAttribute<OnPrepareResourcesAttribute>() != null)
+                .ToList();
             foreach (var methodInfo in initMethods)
             {
                 if (methodInfo.GetParameters().Length == 0)

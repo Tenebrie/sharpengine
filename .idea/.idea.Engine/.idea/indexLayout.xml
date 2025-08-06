@@ -11,6 +11,10 @@
       <Path>Submodules</Path>
     </attachedFolders>
     <explicitIncludes />
-    <explicitExcludes />
+    <explicitExcludes>
+      <Path>Submodules/bgfx</Path>
+      <Path>Submodules/bimg</Path>
+      <Path>Submodules/bx</Path>
+    </explicitExcludes>
   </component>
 </project>

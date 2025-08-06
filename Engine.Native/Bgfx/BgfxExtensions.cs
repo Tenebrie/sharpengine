@@ -232,6 +232,26 @@ public static partial class Bgfx
 	{
 		public IndexBufferHandle Handle;
 		public int Count;
+		public bool Valid => Handle.Valid;
+		
+		public static IndexBuffer Invalid => new()
+		{
+			Handle = new IndexBufferHandle { idx = ushort.MaxValue },
+			Count = 0
+		};
+	}
+
+	/// <summary>
+	/// Destroy static index buffer.
+	/// </summary>
+	///
+	/// <param name="buffer">Static index buffer handle.</param>
+	/// <see cref="Bgfx" srcline="2765" />
+	public static void DestroyIndexBuffer(ref IndexBuffer buffer)
+	{
+		destroy_index_buffer(buffer.Handle);
+		buffer.Handle.idx = ushort.MaxValue; // Mark as invalid
+		buffer.Count = 0;
 	}
 
 	/// <summary>
@@ -262,6 +282,26 @@ public static partial class Bgfx
 	{
 		public VertexBufferHandle Handle;
 		public int Count;
+		public bool Valid => Handle.Valid;
+		
+		public static VertexBuffer Invalid => new()
+		{
+			Handle = new VertexBufferHandle { idx = ushort.MaxValue },
+			Count = 0
+		};
+	}
+
+	/// <summary>
+	/// Destroy static vertex buffer.
+	/// </summary>
+	///
+	/// <param name="buffer">Static vertex buffer handle.</param>
+	/// <see cref="Bgfx" srcline="2785" />
+	public static void DestroyVertexBuffer(ref VertexBuffer buffer)
+	{
+		destroy_vertex_buffer(buffer.Handle);
+		buffer.Handle.idx = ushort.MaxValue; // Mark as invalid
+		buffer.Count = 0;
 	}
 
 	/// <summary>

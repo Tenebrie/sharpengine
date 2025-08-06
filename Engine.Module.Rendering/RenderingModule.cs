@@ -1,4 +1,6 @@
 ﻿using System.Buffers;
+using Engine.Core.Assets;
+using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Enum;
 using Engine.Core.Logging;
@@ -349,6 +351,9 @@ public unsafe class RenderingModule : IRenderingModule
         DisconnectCallbacks();
 
         Frame(false);
+        AssetManager.Shutdown();
+        Frame(false);
+
         shutdown();
     }
 }

@@ -86,6 +86,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
     public void Dispose()
     {
         GC.SuppressFinalize(this);
+        destroy_uniform(_diffuseTextureHandle);
         _fontSystem.Dispose();
     }
     

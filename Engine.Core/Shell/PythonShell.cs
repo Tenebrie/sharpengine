@@ -44,10 +44,15 @@ public static class PythonShell
 
             Console.WriteLine(outputBuilder);
             Console.Error.WriteLine(errorBuilder);
+            
+            // Check if the script failed
+            if (process.ExitCode != 0)
+                throw new InvalidOperationException($"Python script '{scriptPath}' failed with exit code {process.ExitCode}");
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error running Python script: {ex.Message}");
+            throw;
         }
     }
 }

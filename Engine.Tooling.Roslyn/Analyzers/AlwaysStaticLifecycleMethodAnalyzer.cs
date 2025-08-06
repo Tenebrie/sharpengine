@@ -26,8 +26,7 @@ public sealed class AlwaysStaticLifecycleMethodAnalyzer : DiagnosticAnalyzer
 
     private static readonly ImmutableHashSet<string> AlwaysStaticAttributeNames =
         ImmutableHashSet.Create(StringComparer.Ordinal,
-            "OnPrepareResourcesAttribute",
-            "OnLoadResourcesAttribute"
+            "OnPrepareResourcesAttribute"
         );
 
     public override void Initialize(AnalysisContext context)

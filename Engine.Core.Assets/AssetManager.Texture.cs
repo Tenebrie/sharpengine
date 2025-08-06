@@ -20,4 +20,13 @@ public class TextureAssetManager
         _cachedTextures[path] = texture;
         return texture;
     }
+    
+    public void Shutdown()
+    {
+        foreach (var texture in _cachedTextures.Values)
+        {
+            texture.Dispose();
+        }
+        _cachedTextures.Clear();
+    }
 }

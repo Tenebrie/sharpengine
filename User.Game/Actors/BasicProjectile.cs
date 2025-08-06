@@ -11,8 +11,8 @@ namespace User.Game.Actors;
 public partial class BasicProjectile : Actor
 {
     [Signal] public static readonly Signal<BasicProjectile> ProjectileCreated;
-    [Component] protected StaticMeshComponent MeshComponent;
     [Component] public PhysicsComponent PhysicsComponent;
+    [Component] protected StaticMeshComponent MeshComponent;
     
     [OnReady]
     protected void OnReady()

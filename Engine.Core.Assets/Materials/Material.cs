@@ -2,21 +2,38 @@
 
 namespace Engine.Core.Assets.Materials;
 
-public class Material
+public class Material : IDisposable
 {
+    public ShaderHandle VertexShader { get; private set; }
+    public ShaderHandle FragmentShader { get; private set; }
     public ProgramHandle Program { get; }
+    public UniformHandle DiffuseTextureHandle { get; }
 
-    private Material(ProgramHandle program)
+    private Material(ProgramHandle program, ShaderHandle vertShader, ShaderHandle fragShader)
     {
+        VertexShader = vertShader;
+        FragmentShader = fragShader;
         Program = program;
+        DiffuseTextureHandle = create_uniform("s_diffuse", UniformType.Sampler, 1);
+        AssetManager.Finalizers.Register(this, () => 
+        {
+            destroy_uniform(DiffuseTextureHandle);
+        });
     }
     protected Material(string shaderPath)
     {
         var vertShader = LoadShader("Compiled/Shaders/" + shaderPath + ".vert.bin");
         var fragShader = LoadShader("Compiled/Shaders/" + shaderPath + ".frag.bin");
+        VertexShader = vertShader;
+        FragmentShader = fragShader;
         Program = CreateProgram(vertShader, fragShader);
+        DiffuseTextureHandle = create_uniform("s_diffuse", UniformType.Sampler, 1);
+        AssetManager.Finalizers.Register(this, () => 
+        {
+            destroy_uniform(DiffuseTextureHandle);
+        });
     }
-    
+
     private static unsafe ShaderHandle LoadShader(string path)
     {
         // Path to compiled binary.
@@ -49,6 +66,14 @@ public class Material
         var vertShader = LoadShader(fullShaderPath + ".vert.bin");
         var fragShader = LoadShader(fullShaderPath + ".frag.bin");
         var program = CreateProgram(vertShader, fragShader);
-        return new Material(program);
+        return new Material(program, vertShader, fragShader);
+    }
+    
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        destroy_shader(VertexShader);
+        destroy_shader(FragmentShader);
+        destroy_program(Program);
     }
 }

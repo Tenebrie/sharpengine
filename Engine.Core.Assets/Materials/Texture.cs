@@ -1,4 +1,5 @@
-﻿using Engine.Core.Logging;
+﻿using System.Runtime.Serialization;
+using Engine.Core.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -82,6 +83,7 @@ public sealed class Texture : IDisposable
             mipWidth /= 2;
             mipHeight /= 2;
         }
+        _mipLevels.Clear();
     }
 
     private unsafe void GenerateMipLevel(int level, ushort parentWidth, ushort parentHeight)
