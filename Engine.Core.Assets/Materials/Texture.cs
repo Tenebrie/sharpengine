@@ -1,5 +1,4 @@
-﻿using System.Runtime.Serialization;
-using Engine.Core.Logging;
+﻿using Engine.Core.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -111,15 +110,18 @@ public sealed class Texture : IDisposable
     
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
         if (!_isValid || !Handle.Valid)
             return;
         
         destroy_texture(Handle);
     }
     
+    ~Texture() => Dispose();
+    
     public static Texture CreateFromDisk(string path)
     {
-        using var image = Image.Load<Rgba32>(path);
+        using var image = Image.Load<Rgba32>(Path.Combine("Assets", path));
                 
         var textureData = new byte[image.Width * image.Height * 4];
         image.CopyPixelDataTo(textureData);

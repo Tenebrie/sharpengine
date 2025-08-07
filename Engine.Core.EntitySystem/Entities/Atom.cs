@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Engine.Core.Assets;
 using Engine.Core.Logging;
 using Engine.Core.Profiling;
 using JetBrains.Annotations;
@@ -66,11 +67,6 @@ public partial class Atom
         _isReady = true;
     }
 
-    public static void InitializeStatic(Type type)
-    {
-        
-    }
-    
     public T AdoptChild<T>(T atom) where T : Atom, new()
     {
         Children.Add(atom);

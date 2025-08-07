@@ -9,9 +9,9 @@ namespace Engine.Main.Editor.Modules;
 public class UserGameAssembly() : GuestAssembly("User.Game", EngineModule.UserHost)
 {
     private double _updatesPausedFor = 0.0;
-    
+
     internal override bool IgnoresTimeScale => false;
-    
+
     public override void Init()
     {
         base.Init();
@@ -53,9 +53,9 @@ public class UserGameAssembly() : GuestAssembly("User.Game", EngineModule.UserHo
         return base.Update(deltaTime);
     }
 
-    protected override void Destroy()
+    public override void Destroy()
     {
-        Main.Editor.Editor.EditorHostAssembly.NotifyAboutUserBackstage(null);
+        Editor.EditorHostAssembly.NotifyAboutUserBackstage(null);
         base.Destroy();
     }
 }

@@ -1,4 +1,5 @@
-﻿using Engine.Core.EntitySystem.Entities;
+﻿using System.Diagnostics.CodeAnalysis;
+using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
 using Engine.Core.Common;
 using Engine.Core.Logging;
@@ -15,11 +16,10 @@ public partial class LightningStrikeAbility : ActorComponent, IAbility
         var mousePos = GetService<InputService>().GetMousePosition();
         
         // Get the intersection point with the ground plane (Y=0)
-        var intersectionPoint = GetMouseWorldPositionOnGround(activeCamera, mousePos);
-        Logger.Info(intersectionPoint.ToString());
-        
-        // Now you can use intersectionPoint for your lightning strike
-        // intersectionPoint will be the 3D world position where the mouse ray hits the ground
+        if (!GetMouseWorldPositionOnGround(activeCamera, mousePos, out var intersectionPoint))
+            return;
+        var effect = CreateActor<LightningStrikeEffect>();
+        effect.Transform.Position = intersectionPoint;
     }
     
     /// <summary>
@@ -27,8 +27,9 @@ public partial class LightningStrikeAbility : ActorComponent, IAbility
     /// </summary>
     /// <param name="camera">The active camera</param>
     /// <param name="mousePos">Mouse position in screen coordinates</param>
-    /// <returns>World position where the mouse ray intersects the ground plane, or null if no intersection</returns>
-    private Vector3? GetMouseWorldPositionOnGround(Camera camera, Vector2 mousePos)
+    /// <param name="intersectionPoint">World position where the mouse ray intersects the ground plane</param>
+    /// <returns type="bool">Whether the raycast found an intersection</returns>
+    private bool GetMouseWorldPositionOnGround(Camera camera, Vector2 mousePos, out Vector3 intersectionPoint)
     {
         // Get camera properties in world space
         var cameraPosition = camera.WorldTransform.Position;
@@ -55,9 +56,9 @@ public partial class LightningStrikeAbility : ActorComponent, IAbility
         var rayDirViewZ = -1.0; // Forward in view space
         
         // Transform ray direction from view space to world space
-        var rayDirection = cameraForward * rayDirViewZ + 
-                          cameraRight * (-rayDirViewX) + 
-                          cameraUp * rayDirViewY;
+        var rayDirection = cameraForward * -rayDirViewZ + 
+                          cameraRight * -rayDirViewX + 
+                          cameraUp * -rayDirViewY;
         rayDirection = rayDirection.NormalizedCopy();
 
         // Define the ground plane (normal pointing up, at Y=0)
@@ -65,7 +66,14 @@ public partial class LightningStrikeAbility : ActorComponent, IAbility
         var planePoint = Vector3.Zero;   // (0, 0, 0)
         
         // Calculate intersection with the plane
-        return RayPlaneIntersection(cameraPosition, rayDirection, planePoint, planeNormal);
+        var point = RayPlaneIntersection(cameraPosition, rayDirection, planePoint, planeNormal);
+        if (point is null)
+        {
+            intersectionPoint = Vector3.Zero;
+            return false;
+        }
+        intersectionPoint = point.Value;
+        return true;
     }
     
     /// <summary>

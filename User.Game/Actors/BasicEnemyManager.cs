@@ -1,4 +1,5 @@
 ﻿using Engine.Core.Assets;
+using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes.Builtins;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
@@ -17,14 +18,15 @@ public partial class BasicEnemyManager : Actor
     [OnReady]
     protected void OnReady()
     {
-        if (!AssetManager.HasMesh("Virtual/BasicEnemy"))
+        if (!AssetManager.Meshes.Has("Virtual/BasicEnemy"))
         {
-            Console.WriteLine("Creating virtual mesh for BasicEnemy");
-            AssetManager.PutMesh("Virtual/BasicEnemy", PlaneMesh.Create());
+            Console.WriteLine("Creating virtual mesh for BasicEnemy"); 
+            AssetManager.Meshes.Put("Virtual/BasicEnemy", TessellatedPlaneMesh.Create());
         }
-        InstanceManager.Mesh = AssetManager.LoadMesh("Virtual/BasicEnemy");
-        InstanceManager.Material = AssetManager.InstantiateMaterial("Meshes/BillboardSprite/BillboardSprite");
-        InstanceManager.Material.LoadTexture("Assets/Textures/godot.png");
+        InstanceManager.Mesh = AssetManager.Meshes.LoadFromDisk("Virtual/BasicEnemy");
+        InstanceManager.Material = AssetManager.Materials
+            .Instantiate("Meshes/BillboardSprite/BillboardSprite")
+            .SetTexture(Texture.CreateFromDisk("Textures/godot.png"));
         InstanceManager.RenderFlags = Bgfx.StateFlags.BlendAlphaToCoverage;
     }
 

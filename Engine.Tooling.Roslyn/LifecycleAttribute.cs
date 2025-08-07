@@ -4,7 +4,8 @@ public static class LifecycleAttribute
 {
     private static readonly string[] LifecycleAttributes =
     [
-        "OnInit",
+        "OnCreate",
+        "OnReady",
         "OnUpdate",
         "OnDestroy",
         "OnInput",

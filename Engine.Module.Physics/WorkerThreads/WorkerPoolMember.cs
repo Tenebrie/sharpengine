@@ -18,18 +18,19 @@ public class WorkerPoolMember
     private double _deltaTime;
     public readonly List<PhysicsTaskDispatcher.TaskDefinition> TaskQueue = [];
 
+    private readonly Thread _thread;
     private bool _isRunning = true;
     private readonly ManualResetEventSlim _waitingForTasksEvent = new(false);
     private readonly ManualResetEventSlim _tasksDoneEvent = new(false);
 
     public WorkerPoolMember(int id)
     {
-        var thread = new Thread(WorkerLoop)
+        _thread = new Thread(WorkerLoop)
         {
             Name = $"PhysicsWorker-{id}",
             IsBackground = true
         };
-        thread.Start();
+        _thread.Start();
     }
 
     public void Poke(double deltaTime)
@@ -51,6 +52,7 @@ public class WorkerPoolMember
         _tasksDoneEvent.Wait();
         _waitingForTasksEvent.Dispose();
         _tasksDoneEvent.Dispose();
+        _thread.Join();
     }
     
     private void WorkerLoop()

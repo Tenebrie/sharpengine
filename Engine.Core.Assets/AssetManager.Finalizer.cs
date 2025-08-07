@@ -17,7 +17,7 @@ public class AssetFinalizerManager
         _namedFinalizers[key] = finalizer;
     }
 
-    public void Invoke()
+    public void Dispose()
     {
         _finalizers.Invoke();
         foreach (var finalizer in _namedFinalizers.Values)

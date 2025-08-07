@@ -2,10 +2,5 @@
 
 public class WireframeMaterial() : Material("Meshes/Wireframe/Wireframe")
 {
-    public static readonly WireframeMaterial Instance = new();
-
-    static WireframeMaterial()
-    {
-        AssetManager.SubmitMaterial("WireframeMaterial", Instance);
-    }
+    public static readonly WireframeMaterial Shared = new();
 }

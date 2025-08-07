@@ -35,9 +35,9 @@ public partial class TerrainMeshComponent : ActorComponent, IRenderable
     [OnReady]
     protected void OnReady()
     {
-        ObjMeshLoader.LoadObj("Assets/Meshes/terrain-plain.obj", out var vertices, out var indices);
+        ObjMeshLoader.LoadObj("Meshes/terrain-plain.obj", out var vertices, out var indices);
         Mesh = StaticMesh.CreateFromMemory(vertices, indices);
-        Material = AssetManager.InstantiateMaterial("Meshes/Terrain/Terrain");
+        Material = AssetManager.Materials.Instantiate("Meshes/Terrain/Terrain");
     }
     
     public bool IsOnScreen { get; set; }
@@ -50,11 +50,11 @@ public partial class TerrainMeshComponent : ActorComponent, IRenderable
         _singleComponentTransforms[0] = WorldTransform;
         Mesh.PrepareRender(1, ref _singleComponentTransforms, ref renderContext);
         _singleComponentTransforms[0] = BoundingSphere.WorldTransform;
-        SphereMesh.PrepareRender(1, ref _singleComponentTransforms, ref renderContext);
+        LineSphereMesh.Shared.PrepareRender(1, ref _singleComponentTransforms, ref renderContext);
     }
     public void Render(ref RenderContext renderContext)
     {
         Mesh.Render(1, Material, ref renderContext);
-        SphereMesh.Render(1, WireframeMaterial.Instance, ref renderContext, SphereMesh.ColorMode.AxisColor);
+        LineSphereMesh.Shared.Render(1, WireframeMaterial.Shared, ref renderContext, LineSphereMesh.ColorMode.AxisColor);
     }
 }

@@ -13,8 +13,8 @@ public partial class DragonMesh : Actor
     [OnReady]
     protected void OnReady()
     {
-        MeshComponent.Mesh = AssetManager.LoadMesh("Assets/Meshes/decimated_dragon32.obj");
-        MeshComponent.Material = AssetManager.InstantiateMaterial("Meshes/RawColor/RawColor");
+        MeshComponent.Mesh = AssetManager.Meshes.LoadFromDisk("Meshes/decimated_dragon32.obj");
+        MeshComponent.Material = AssetManager.Materials.Instantiate("Meshes/RawColor/RawColor");
         
         MeshComponent.Transform.Rotation = QuatMakers.FromRotation(90, 0, 0);
     }

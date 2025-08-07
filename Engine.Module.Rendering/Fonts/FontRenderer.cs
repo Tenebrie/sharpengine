@@ -15,15 +15,19 @@ namespace Engine.Module.Rendering.Fonts;
 
 public class FontRenderer : IFontStashRenderer2, IDisposable
 {
+    private AssetManager _assetManager;
     private FontSystem _fontSystem;
     private DynamicSpriteFont _font;
     private UniformHandle _diffuseTextureHandle;
+    private RenderingModule _parent;
 
     private VertexLayout _vertexLayout;
     private MaterialInstance _material = null!;
     
-    public FontRenderer()
+    public FontRenderer(RenderingModule parent)
     {
+        _parent = parent;
+        _assetManager = parent.AssetManager;
         _fontSystem = new FontSystem(new FontSystemSettings
         {
             TextureWidth = 1024,
@@ -35,7 +39,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
 
     public void Initialize()
     {
-        _material = AssetManager.InstantiateMaterial("UserInterface/Font/Font");
+        _material = _assetManager.Materials.Instantiate("UserInterface/Font/Font");
         _diffuseTextureHandle = create_uniform("s_diffuse", UniformType.Sampler, 1);
         _vertexLayout = CreateVertexLayout([
             new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),

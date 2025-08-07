@@ -1,16 +1,18 @@
-﻿using Engine.Core.Logging;
+﻿using System.Runtime.CompilerServices;
+using Engine.Core.Logging;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
 using Microsoft.Build.Logging;
 
-namespace Engine.Main.Editor.HotReload.Compiler;
+namespace Engine.Main.Editor.Modules.Compiler;
 
 public class GuestAssemblyCompiler
 {
     private readonly string _assemblyName;
     public bool IsCompiling = false;
     private readonly Project _project;
+    
     private GuestAssemblyCompiler(string assemblyName, string projectPath)
     {
         _assemblyName = assemblyName;
@@ -19,13 +21,13 @@ public class GuestAssemblyCompiler
         _project.SetProperty("BuildProjectReferences", "false");
     }
 
-    // private static GuestAssemblyCompiler? Instance { get; set; }
     public static GuestAssemblyCompiler Make(string assemblyName)
     {
         var projectPath = Path.GetFullPath($@"../../../../{assemblyName}/{assemblyName}.csproj");
         return new GuestAssemblyCompiler(assemblyName, projectPath);
     }
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private void Compile()
     {
         var buildParams = new BuildParameters(ProjectCollection.GlobalProjectCollection)

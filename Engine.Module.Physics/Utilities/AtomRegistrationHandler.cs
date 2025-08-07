@@ -9,7 +9,7 @@ public class AtomRegistrationHandler
 {
     private long _idCounter = 0;
     private readonly ConcurrentDictionary<long, AtomHandle> _registeredAtoms = new();
-    
+
     public long Add(Spatial parent, PhysicsComponent component)
     {
         var rid = Interlocked.Increment(ref _idCounter);
@@ -31,14 +31,14 @@ public class AtomRegistrationHandler
     public AtomHandle[] AsArray()
     {
         Array.Resize(ref _scratchArray, _registeredAtoms.Count);
-    
+
         var count = 0;
         foreach (var handle in _registeredAtoms.Values)
         {
             _scratchArray[count] = handle;
             count++;
         }
-    
+
         return _scratchArray;
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Engine.Core.Assets;
+using Engine.Core.Assets.Materials;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
@@ -13,9 +14,9 @@ public partial class HonseTerrain : Actor
     [OnReady]
     protected void OnReady()
     {
-        MeshComponent.Mesh = AssetManager.LoadMesh("Assets/Meshes/terrain-plain.obj");
-        MeshComponent.Material = AssetManager.InstantiateMaterial("Meshes/HonseTerrain/HonseTerrain");
-        // MeshComponent.Material = AssetManager.LoadMaterial("Meshes/HonseTerrain/HonseTerrain");
-        MeshComponent.Material.LoadTexture("Assets/Textures/honse-terrain.png");
+        MeshComponent.Mesh = AssetManager.Meshes.LoadFromDisk("Meshes/terrain-plain.obj");
+        MeshComponent.Material = AssetManager.Materials
+            .Instantiate("Meshes/HonseTerrain/HonseTerrain")
+            .SetTexture(Texture.CreateFromDisk("Textures/honse-terrain.png"));
     }
 }

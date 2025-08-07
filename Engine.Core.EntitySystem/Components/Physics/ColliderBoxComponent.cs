@@ -23,10 +23,11 @@ public partial class ColliderBoxComponent : ActorComponent, IRenderable
     public void PrepareRender(ref RenderContext renderContext)
     {
         _singleComponentTransforms[0] = WorldTransform;
-        SphereMesh.PrepareRender(1, ref _singleComponentTransforms, ref renderContext);
+        LineSphereMesh.Shared.PrepareRender(1, ref _singleComponentTransforms, ref renderContext);
+        _singleComponentTransforms = new Transform[1];
     }
     public void Render(ref RenderContext renderContext)
     {
-        SphereMesh.Render(1, WireframeMaterial.Instance, ref renderContext, SphereMesh.ColorMode.Collider);
+        LineSphereMesh.Shared.Render(1, WireframeMaterial.Shared, ref renderContext, LineSphereMesh.ColorMode.Collider);
     }
 }

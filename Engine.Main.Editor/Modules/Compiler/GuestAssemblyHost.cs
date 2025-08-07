@@ -1,9 +1,10 @@
-﻿
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.Loader;
 using Engine.Core.Logging;
-using Engine.Main.Editor.Modules.Compiler;
 
-namespace Engine.Main.Editor.HotReload.Compiler;
+namespace Engine.Main.Editor.Modules.Compiler;
 
 internal sealed class GuestAssemblyHost(string assemblyName)
 {
@@ -11,9 +12,9 @@ internal sealed class GuestAssemblyHost(string assemblyName)
     private readonly string _dllPath = Path.GetFullPath($"../../../../{assemblyName}/bin/Debug/net9.0/{assemblyName}.dll");
     private FileSystemWatcher? _watcher;
     private readonly GuestAssemblyCompiler _compiler = GuestAssemblyCompiler.Make(assemblyName);
-    public bool IsCompiling => _compiler.IsCompiling;
-    public bool AssemblyLoaded = false;
-    public bool IsAssemblyDirty = false;
+    private bool IsCompiling => _compiler.IsCompiling;
+    private bool _assemblyLoaded = false;
+    private bool _isAssemblyDirty = false;
     public bool AssemblyAwaitingReload = false;
 
     private GameAssemblyLoadContext? _assemblyLoadContext;
@@ -27,14 +28,14 @@ internal sealed class GuestAssemblyHost(string assemblyName)
         if (IsCompiling)
             return false;
 
-        if (!IsAssemblyDirty)
+        if (!_isAssemblyDirty)
             return AssemblyAwaitingReload;
-        
+
         BuildGuestAsync();
         return false;
 
     }
-    
+
     private void StartWatching()
     {
         Logger.Debug("Watching for changes in: " + _srcPath);
@@ -53,13 +54,13 @@ internal sealed class GuestAssemblyHost(string assemblyName)
     
     private void OnSourceChanged(object sender, FileSystemEventArgs e)
     {
-        IsAssemblyDirty = true;
+        _isAssemblyDirty = true;
         Logger.Debug("Source file changed: " + e.FullPath);
     }
-    
-    public void BuildGuestAsync()
+
+    private void BuildGuestAsync()
     {
-        IsAssemblyDirty = false;
+        _isAssemblyDirty = false;
         AssemblyAwaitingReload = false;
         _compiler.CompileAsync(() =>
         {
@@ -76,17 +77,17 @@ internal sealed class GuestAssemblyHost(string assemblyName)
         var cacheDir = Path.Combine(Path.GetTempPath(), "CustomEngine/EnginePlugins");
         Directory.CreateDirectory(cacheDir);
 
-        var stamp   = DateTime.UtcNow.ToString("yyyyMMdd_HHmmssfff");
-        var tmpDll  = Path.Combine(cacheDir, $"{assemblyName}_{stamp}.dll");
-        var tmpPdb  = Path.ChangeExtension(tmpDll, ".pdb");
+        var stamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmssfff");
+        var tmpDll = Path.Combine(cacheDir, $"{assemblyName}_{stamp}.dll");
+        var tmpPdb = Path.ChangeExtension(tmpDll, ".pdb");
 
         File.Copy(_dllPath, tmpDll, overwrite: true);
         if (File.Exists(srcPdb))
             File.Copy(srcPdb, tmpPdb, overwrite: true);
 
-        AssemblyLoaded = true;
+        _assemblyLoaded = true;
         StartWatching();
-        
+
         _assemblyLoadContext = new GameAssemblyLoadContext(tmpDll);
         var asm = _assemblyLoadContext.LoadFromAssemblyPath(tmpDll);
 
@@ -96,21 +97,23 @@ internal sealed class GuestAssemblyHost(string assemblyName)
 
     public void UnloadCurrent()
     {
-        if (!AssemblyLoaded)
+        if (!_assemblyLoaded)
             return;
 
-        var weakAlc = new WeakReference(_assemblyLoadContext!, trackResurrection: false);
-
-        _assemblyLoadContext?.Unload();
-        _assemblyLoadContext = null;
-
-        for (int i = 0; weakAlc.IsAlive && i < 5; i++)
+        if (_watcher is not null)
         {
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
+            _watcher.EnableRaisingEvents = false;
+            _watcher.Changed -= OnSourceChanged;
+            _watcher.Created -= OnSourceChanged;
+            _watcher.Renamed -= OnSourceChanged;
+            _watcher.Dispose();
+            _watcher = null;
         }
-        Debug.Assert(!weakAlc.IsAlive, "ALC is still alive - find the ref that keeps it!");
-        AssemblyLoaded = false;
+        
+        _assemblyLoadContext!.Unload();
+        _assemblyLoadContext = null;
+        
+        _assemblyLoaded = false;
     }
 
     private static bool ImplementsContract<TContract>(Type t)

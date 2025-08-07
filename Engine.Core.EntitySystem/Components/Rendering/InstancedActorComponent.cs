@@ -119,12 +119,12 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
                 continue;
             BoundingSphere.Transform.MultiplyReverse(actor.WorldTransform, ref _sphereTransformPool[i]);
         }
-        SphereMesh.PrepareRender((uint)Instances.Count, ref _sphereTransformPool, ref renderContext);
+        LineSphereMesh.Shared.PrepareRender((uint)Instances.Count, ref _sphereTransformPool, ref renderContext);
     }
 
     public void Render(ref RenderContext renderContext)
     {
         Mesh.Render((uint)Instances.Count, Material, ref renderContext, RenderFlags);
-        SphereMesh.Render((uint)Instances.Count, WireframeMaterial.Instance, ref renderContext, SphereMesh.ColorMode.AxisColor);
+        LineSphereMesh.Shared.Render((uint)Instances.Count, WireframeMaterial.Shared, ref renderContext, LineSphereMesh.ColorMode.AxisColor);
     }
 }

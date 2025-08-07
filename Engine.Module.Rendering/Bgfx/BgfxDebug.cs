@@ -20,7 +20,7 @@ internal static unsafe partial class Native
     [UnmanagedCallConv(CallConvs = [typeof(CallConvCdecl)])]
     private static partial int vsnprintf_unix(
         byte* str, UIntPtr size, sbyte* fmt, void* ap);
-    
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal static int vsnprintf(byte* str, UIntPtr size, sbyte* fmt, void* ap)
         => RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
@@ -45,37 +45,48 @@ public static unsafe class BgfxCallbacks
     // === Native function pointer struct (matches bgfx_callback_vtbl_t) ===
     private struct BgfxCallbackVTable
     {
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl]
             <void*, Fatal, sbyte*, ushort, sbyte*, void> Fatal;
 
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl]
             <void*, sbyte*, ushort, sbyte*, void*, void> TraceVargs;
 
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl]
             <void*, sbyte*, uint, sbyte*, ushort, void> ProfilerBegin;
 
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl]
             <void*, void> ProfilerEnd;
 
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl]
             <void*, ulong, uint> CacheReadSize;
 
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl]
             <void*, ulong, void*, uint, byte> CacheRead;      // returns byte (bool)
 
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl]
             <void*, ulong, void*, uint, void> CacheWrite;
 
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl]
             <void*, sbyte*, uint, uint, uint, void*, uint, byte, void> ScreenShot;
 
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl]
             <void*, uint, uint, uint, TextureFormat, byte, void> CaptureBegin;
 
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl]
             <void*, void> CaptureEnd;
 
-        [UsedImplicitly] public delegate* unmanaged[Cdecl]
+        [UsedImplicitly]
+        public delegate* unmanaged[Cdecl]
             <void*, void*, uint, void> CaptureFrame;
     }
 
@@ -98,17 +109,17 @@ public static unsafe class BgfxCallbacks
         // Allocate managed structs (will pin them)
         var vtbl = new BgfxCallbackVTable
         {
-            Fatal           = &FatalFn,
-            TraceVargs     = &TraceVargsFn,
-            ProfilerBegin  = &ProfilerBeginFn,
-            ProfilerEnd    = &ProfilerEndFn,
+            Fatal = &FatalFn,
+            TraceVargs = &TraceVargsFn,
+            ProfilerBegin = &ProfilerBeginFn,
+            ProfilerEnd = &ProfilerEndFn,
             CacheReadSize = &CacheReadSizeFn,
-            CacheRead      = &CacheReadFn,
-            CacheWrite     = &CacheWriteFn,
-            ScreenShot     = &ScreenShotFn,
-            CaptureBegin   = &CaptureBeginFn,
-            CaptureEnd     = &CaptureEndFn,
-            CaptureFrame   = &CaptureFrameFn
+            CacheRead = &CacheReadFn,
+            CacheWrite = &CacheWriteFn,
+            ScreenShot = &ScreenShotFn,
+            CaptureBegin = &CaptureBeginFn,
+            CaptureEnd = &CaptureEndFn,
+            CaptureFrame = &CaptureFrameFn
         };
 
         var iface = new BgfxCallbackInterface
@@ -117,7 +128,7 @@ public static unsafe class BgfxCallbacks
                 GCHandle.Alloc(vtbl, GCHandleType.Pinned).AddrOfPinnedObject()
         };
 
-        _vtblHandle  = GCHandle.Alloc(vtbl,  GCHandleType.Pinned);
+        _vtblHandle = GCHandle.Alloc(vtbl, GCHandleType.Pinned);
         _ifaceHandle = GCHandle.Alloc(iface, GCHandleType.Pinned);
 
         InterfacePtr = _ifaceHandle.AddrOfPinnedObject();
@@ -127,7 +138,7 @@ public static unsafe class BgfxCallbacks
     {
         // Call only *after* bgfx_shutdown.
         if (_ifaceHandle.IsAllocated) _ifaceHandle.Free();
-        if (_vtblHandle.IsAllocated)  _vtblHandle.Free();
+        if (_vtblHandle.IsAllocated) _vtblHandle.Free();
         InterfacePtr = IntPtr.Zero;
     }
 
@@ -137,7 +148,7 @@ public static unsafe class BgfxCallbacks
     private static void FatalFn(void* self, Fatal code, sbyte* file, ushort line, sbyte* msg)
     {
         var f = Marshal.PtrToStringAnsi((nint)file) ?? "<null>";
-        var m = Marshal.PtrToStringAnsi((nint)msg)  ?? "<null>";
+        var m = Marshal.PtrToStringAnsi((nint)msg) ?? "<null>";
         Logger.Fatal($"BGFX Fatal {code} @ {f}:{line} : {m}");
         Logger.Fatal("BGFX Fatal errors are unrecoverable. Goodbye.");
         KillSwitch.ForceKillProcess(0);
@@ -145,9 +156,9 @@ public static unsafe class BgfxCallbacks
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void TraceVargsFn(
-        void*  self,
+        void* self,
         sbyte* file, ushort line,
-        sbyte* fmt,  void*  args)
+        sbyte* fmt, void* args)
     {
         // (1) File name
         var fileStr = Marshal.PtrToStringAnsi((nint)file) ?? "<bgfx>";
@@ -200,11 +211,13 @@ public static unsafe class BgfxCallbacks
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void ScreenShotFn(void* self, sbyte* filePath,
         uint w, uint h, uint pitch,
-        void* data, uint size, byte yflip) { }
+        void* data, uint size, byte yflip)
+    { }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void CaptureBeginFn(void* self, uint w, uint h, uint pitch,
-        TextureFormat format, byte yflip) { }
+        TextureFormat format, byte yflip)
+    { }
 
     [UnmanagedCallersOnly(CallConvs = [typeof(CallConvCdecl)])]
     private static void CaptureEndFn(void* self) { }

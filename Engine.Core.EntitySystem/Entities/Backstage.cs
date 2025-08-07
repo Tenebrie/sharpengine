@@ -1,4 +1,5 @@
-﻿using Engine.Core.Communication.Signals;
+﻿using Engine.Core.Assets;
+using Engine.Core.Communication.Signals;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Modules;
 using Engine.Core.EntitySystem.Services;
@@ -23,9 +24,10 @@ public partial class Backstage : Scene
             ProcessGameplayContextChanged();
         }
     }
-    
+
+    internal AssetManager SharedAssetManager { get; } = new();
     internal ServiceRegistry ServiceRegistry { get; } = new();
-    
+
     public Backstage()
     {
         Backstage = this;
@@ -37,19 +39,20 @@ public partial class Backstage : Scene
     public IPhysicsModule? PhysicsModule => RootHypervisor.PhysicsModule;
     public IRenderingModule? RenderingModule => RootHypervisor.RenderingModule;
     public IWindow GetWindow() => Window;
-    
+
     public T CreateScene<T>() where T : Scene, new()
     {
         return AdoptChild(new T());
     }
 
     public void NotifyModuleReloaded(EngineModule module) => ProcessModuleReload(module);
-    
+
     [OnCreate]
     internal void OnCreate()
     {
         AdoptChild(ServiceRegistry);
         ServiceRegistry.Preload<CacheRevalidationService>();
+        SharedAssetManager.Initialize();
         RunAssemblyStaticInit();
     }
 
@@ -60,6 +63,12 @@ public partial class Backstage : Scene
         ServiceRegistry.Get<InputService>().SendKeyboardHeldEvents(deltaTime);
     }
 
+    [OnDestroy]
+    internal void OnDestroy()
+    {
+        SharedAssetManager.Dispose();
+    }
+
     private Camera? GetActiveCamera => FindActiveCamera(this);
     public Camera GetActiveCameraOrThrow()
     {
@@ -68,7 +77,7 @@ public partial class Backstage : Scene
             throw new InvalidOperationException("No active camera found in the Backstage.");
         return camera;
     }
-    
+
     private Camera? FindActiveCamera(Atom target)
     {
         if (target is Camera camera
@@ -76,7 +85,7 @@ public partial class Backstage : Scene
         {
             return camera;
         }
-        
+
         foreach (var child in target.Children)
         {
             var foundCamera = FindActiveCamera(child);

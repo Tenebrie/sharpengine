@@ -10,16 +10,16 @@ namespace User.Game.Actors;
 
 public partial class BasicProjectile : Actor
 {
-    [Signal] public static readonly Signal<BasicProjectile> ProjectileCreated;
+    // [Signal] public static readonly Signal<BasicProjectile> ProjectileCreated;
     [Component] public PhysicsComponent PhysicsComponent;
     [Component] protected StaticMeshComponent MeshComponent;
     
     [OnReady]
     protected void OnReady()
     {
-        ProjectileCreated.Emit(this);
-        MeshComponent.Mesh = AssetManager.LoadMesh("Assets/Meshes/projectile-sword.obj");
-        MeshComponent.Material = AssetManager.InstantiateMaterial("Meshes/AlliedProjectile/AlliedProjectile");
+        // ProjectileCreated.Emit(this);
+        MeshComponent.Mesh = AssetManager.Meshes.LoadFromDisk("Meshes/projectile-sword.obj");
+        MeshComponent.Material = AssetManager.Materials.Instantiate("Meshes/AlliedProjectile/AlliedProjectile");
         MeshComponent.Transform.Rotation = QuatMakers.FromRotation(0, -90, 0);
     }
 

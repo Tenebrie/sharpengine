@@ -25,7 +25,7 @@ public partial class ReflectionService : Service
         LookupCache.Add(typeof(T), value);
         return value;
     }
-    
+
     private Type? GetUserTypeByAttribute<T>() where T : Attribute
     {
         var inputActionEnum =

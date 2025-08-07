@@ -15,10 +15,6 @@ public class Material : IDisposable
         FragmentShader = fragShader;
         Program = program;
         DiffuseTextureHandle = create_uniform("s_diffuse", UniformType.Sampler, 1);
-        AssetManager.Finalizers.Register(this, () => 
-        {
-            destroy_uniform(DiffuseTextureHandle);
-        });
     }
     protected Material(string shaderPath)
     {
@@ -28,11 +24,9 @@ public class Material : IDisposable
         FragmentShader = fragShader;
         Program = CreateProgram(vertShader, fragShader);
         DiffuseTextureHandle = create_uniform("s_diffuse", UniformType.Sampler, 1);
-        AssetManager.Finalizers.Register(this, () => 
-        {
-            destroy_uniform(DiffuseTextureHandle);
-        });
     }
+
+    public MaterialInstance Instantiate() => new(this);
 
     private static unsafe ShaderHandle LoadShader(string path)
     {
@@ -68,12 +62,12 @@ public class Material : IDisposable
         var program = CreateProgram(vertShader, fragShader);
         return new Material(program, vertShader, fragShader);
     }
-    
+
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        destroy_shader(VertexShader);
-        destroy_shader(FragmentShader);
         destroy_program(Program);
     }
+
+    ~Material() => Dispose();
 }

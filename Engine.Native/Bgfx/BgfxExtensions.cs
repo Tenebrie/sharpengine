@@ -249,6 +249,8 @@ public static partial class Bgfx
 	/// <see cref="Bgfx" srcline="2765" />
 	public static void DestroyIndexBuffer(ref IndexBuffer buffer)
 	{
+		if (!buffer.Valid)
+			return;
 		destroy_index_buffer(buffer.Handle);
 		buffer.Handle.idx = ushort.MaxValue; // Mark as invalid
 		buffer.Count = 0;
@@ -299,6 +301,8 @@ public static partial class Bgfx
 	/// <see cref="Bgfx" srcline="2785" />
 	public static void DestroyVertexBuffer(ref VertexBuffer buffer)
 	{
+		if (!buffer.Valid)
+			return;
 		destroy_vertex_buffer(buffer.Handle);
 		buffer.Handle.idx = ushort.MaxValue; // Mark as invalid
 		buffer.Count = 0;

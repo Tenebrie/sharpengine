@@ -2,31 +2,18 @@
 
 namespace Engine.Core.Assets;
 
-public partial class AssetManager
-{
-    public static Texture LoadTexture(string path) => Instance.Textures.LoadTexture(path);
-}
-
-public class TextureAssetManager
+public class TextureAssetManager : IDisposable
 {
     private readonly Dictionary<object, Texture> _cachedTextures = new();
     
-    public Texture LoadTexture(string path)
+    public void Dispose()
     {
-        if (_cachedTextures.TryGetValue(path, out var texture))
-            return texture;
-        
-        texture = Texture.CreateFromDisk(path);
-        _cachedTextures[path] = texture;
-        return texture;
-    }
-    
-    public void Shutdown()
-    {
+        GC.SuppressFinalize(this);
         foreach (var texture in _cachedTextures.Values)
         {
             texture.Dispose();
         }
         _cachedTextures.Clear();
     }
+    ~TextureAssetManager() => Dispose();
 }

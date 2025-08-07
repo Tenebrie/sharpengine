@@ -6,9 +6,6 @@ using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Services;
 using Engine.Core.Modules;
 using Engine.Core.Profiling;
-using EntitySystem_Services_InputService = Engine.Core.EntitySystem.Services.InputService;
-using InputService = Engine.Core.EntitySystem.Services.InputService;
-using Services_InputService = Engine.Core.EntitySystem.Services.InputService;
 
 namespace Engine.Core.EntitySystem.Entities;
 
@@ -18,21 +15,21 @@ public partial class Atom
 {
     public Action? OnCreateCallback { get; set; }
     public Action? OnReadyCallback { get; set; }
-    
+
     public bool IsTicking => HasOnUpdateCallbacks || HasOnTimerCallbacks;
     public double TimeScale { get; set; } = 1.0;
     private bool HasOnUpdateCallbacks { get; set; }
     public Action<double>? OnUpdateCallback { get; set; }
-    
+
     public Action? OnDestroyCallback { get; set; }
 
     public Dictionary<EngineModule, Action?> OnModuleReloadCallback { get; set; } = new();
     public Action? OnGameplayContextChangeCallback { get; set; }
-    
+
     private void InitializeLifecycle()
     {
         var methods = GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        
+
         var createMethods = methods.Where(method => method.GetCustomAttribute<OnCreateAttribute>() != null).ToList();
         foreach (var action in createMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action), this, methodInfo)))
         {
@@ -62,7 +59,7 @@ public partial class Atom
         {
             OnDestroyCallback += (Action)action;
         }
-        
+
         var moduleReloadedMethods = methods.Where(method => method.GetCustomAttribute<OnModuleReloadAttribute>() != null).ToList();
         foreach (var methodInfo in moduleReloadedMethods)
         {
@@ -79,7 +76,8 @@ public partial class Atom
             OnGameplayContextChangeCallback += (Action)action;
         }
     }
-    
+
+    protected readonly ArrayPool<Atom> AtomPool = ArrayPool<Atom>.Create();
     protected internal void ProcessLogicFrame(double deltaTime)
     {
         var localDelta = deltaTime * TimeScale;
@@ -93,7 +91,7 @@ public partial class Atom
 
 
         var count = Children.Count;
-        var buffer = ArrayPool<Atom>.Shared.Rent(count);
+        var buffer = AtomPool.Rent(count);
         try
         {
             for (var i = 0; i < count; i++)
@@ -104,7 +102,7 @@ public partial class Atom
         }
         finally
         {
-            ArrayPool<Atom>.Shared.Return(buffer, clearArray: false);
+            AtomPool.Return(buffer, clearArray: false);
         }
     }
 
@@ -112,9 +110,9 @@ public partial class Atom
     {
         var callback = OnModuleReloadCallback.GetValueOrDefault(module);
         callback?.Invoke();
-        
+
         var count = Children.Count;
-        var buffer = ArrayPool<Atom>.Shared.Rent(count);
+        var buffer = AtomPool.Rent(count);
         try
         {
             for (var i = 0; i < count; i++)
@@ -125,16 +123,16 @@ public partial class Atom
         }
         finally
         {
-            ArrayPool<Atom>.Shared.Return(buffer, clearArray: false);
+            AtomPool.Return(buffer, clearArray: false);
         }
     }
-    
+
     protected internal void ProcessGameplayContextChanged()
     {
         OnGameplayContextChangeCallback?.Invoke();
-        
+
         var count = Children.Count;
-        var buffer = ArrayPool<Atom>.Shared.Rent(count);
+        var buffer = AtomPool.Rent(count);
         try
         {
             for (var i = 0; i < count; i++)
@@ -145,10 +143,10 @@ public partial class Atom
         }
         finally
         {
-            ArrayPool<Atom>.Shared.Return(buffer, clearArray: false);
+            AtomPool.Return(buffer, clearArray: false);
         }
     }
-    
+
     public void FreeImmediately()
     {
         IsFinalized = true;
@@ -160,12 +158,44 @@ public partial class Atom
                 throw new InvalidOperationException("Child count did not decrease after FreeImmediately call.");
             childrenCount = Children.Count;
         }
-        
-        GetService<EntitySystem_Services_InputService>().ClearSubscriptions(this);
-        
+
+        foreach (var @delegate in OnReadyCallback?.GetInvocationList() ?? [])
+        {
+            OnReadyCallback -= (Action)@delegate;
+        }
+        foreach (var @delegate in OnCreateCallback?.GetInvocationList() ?? [])
+        {
+            OnCreateCallback -= (Action)@delegate;
+        }
+        foreach (var @delegate in OnUpdateCallback?.GetInvocationList() ?? [])
+        {
+            OnUpdateCallback -= (Action<double>)@delegate;
+        }
+        foreach (var kvp in OnModuleReloadCallback)
+        {
+            foreach (var @delegate in kvp.Value?.GetInvocationList() ?? [])
+            {
+                OnModuleReloadCallback[kvp.Key] -= (Action)@delegate;
+            }
+        }  
+        OnReadyCallback = null;
+        OnCreateCallback = null;
+        OnUpdateCallback = null;
+        OnGameplayContextChangeCallback = null;
+        OnModuleReloadCallback.Clear();
+
+        GetService<InputService>().ClearSubscriptions(this);
+
         OnDestroyCallback?.Invoke();
-        if (Parent == null) return;
+        OnDestroyCallback = null;
         
+        foreach (var @delegate in OnDestroyCallback?.GetInvocationList() ?? [])
+        {
+            OnDestroyCallback -= (Action)@delegate;
+        }
+        
+        if (Parent == null) return;
+
         Parent.Children.Remove(this);
         Backstage = null!;
     }
@@ -183,23 +213,18 @@ public partial class Atom
 
 internal static class DelegateHelpers
 {
-    // This static method matches (Action, double) → void.
-    // When we bind the first argument to our Action instance,
-    // it “drops” the double for us.
     private static void InvokeDropFirst(Action target, double _)
         => target();
 
-    // Wrap your Action so you get an Action<double> back.
     internal static Action<double> AsDoubleCallback(Action action)
     {
-        // cache this MethodInfo somewhere if you do it often
         var mi = typeof(DelegateHelpers)
             .GetMethod(nameof(InvokeDropFirst),
                 BindingFlags.NonPublic | BindingFlags.Static);
 
         return (Action<double>)Delegate.CreateDelegate(
             typeof(Action<double>),
-            action, // bound to the 'target' param of InvokeDropFirst
+            action,
             mi!
         );
     }

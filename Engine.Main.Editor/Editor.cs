@@ -20,17 +20,17 @@ internal static class Editor
     private static IWindow MainWindow { get; set; } = null!;
     private static IInputContext WindowInputContext { get; set; } = null!;
     internal static GameplayContext GameplayContext { get; set; } = GameplayContext.Editor;
-    
+
     internal static EditorHostAssembly EditorHostAssembly { get; private set; } = null!;
     internal static PhysicsAssembly PhysicsAssembly { get; private set; } = null!;
     internal static RenderingAssembly RenderingAssembly { get; private set; } = null!;
     internal static UserGameAssembly UserGameAssembly { get; private set; } = null!;
-    
+
     private static List<GuestAssembly> GuestAssemblies { get; set; } = [];
 
     internal static double TimeScale = 1.0;
     private static EditorHypervisor Hypervisor { get; set; } = null!;
-    
+
     [SuppressMessage("ReSharper", "ForeachCanBePartlyConvertedToQueryUsingAnotherGetEnumerator")]
     private static void Main()
     {
@@ -40,7 +40,7 @@ internal static class Editor
             Title = "Custom Engine",
             Size = new Vector2D<int>(1920, 1080),
             API = new GraphicsAPI(ContextAPI.None, new APIVersion())
-            
+
         };
         if (OperatingSystem.IsMacOS())
             opts.Size /= 2;
@@ -49,12 +49,12 @@ internal static class Editor
         WindowStateManager.TryLoadWindowState(ref opts);
         MainWindow = Window.Create(opts);
         Hypervisor = new EditorHypervisor();
-        
+
         EditorHostAssembly = new EditorHostAssembly();
         PhysicsAssembly = new PhysicsAssembly();
         RenderingAssembly = new RenderingAssembly(MainWindow);
         UserGameAssembly = new UserGameAssembly();
-        
+
         GuestAssemblies =
         [
             EditorHostAssembly,
@@ -67,19 +67,19 @@ internal static class Editor
         {
             // Create input context
             WindowInputContext = MainWindow.CreateInput();
-            
+
             // Setup guest assemblies
             EditorHostAssembly.Init();
             PhysicsAssembly.Init();
             RenderingAssembly.Init();
             UserGameAssembly.Init();
-            
+
             InitBackstage(EditorHostAssembly.Backstage);
             InitBackstage(UserGameAssembly.Backstage);
-            
+
             // Save window state for hot reload
             WindowStateManager.SetupAutosaveHandler(MainWindow);
-            
+
             Logger.Info("Engine startup complete.");
         };
 
@@ -93,10 +93,18 @@ internal static class Editor
                     ReloadAssembly(guestAssembly);
             }
         };
-        
+
         MainWindow.Closing += () =>
         {
             WindowStateManager.SaveWindowState(MainWindow);
+
+            PhysicsAssembly.Destroy();
+            UserGameAssembly.Destroy();
+            EditorHostAssembly.Destroy();
+            RenderingAssembly.DestroyPermanently();
+
+            Console.WriteLine("Guest assemblies destroyed.");
+
             WindowStateManager.Cleanup();
         };
 
@@ -116,24 +124,25 @@ internal static class Editor
             InitBackstage(guestAssembly.Backstage);
         GC.Collect();
         GC.WaitForPendingFinalizers();
-        
+
         foreach (var assembly in GuestAssemblies)
         {
             try
             {
                 assembly.Backstage?.NotifyModuleReloaded(guestAssembly.Module);
-            } catch (Exception e)
+            }
+            catch (Exception e)
             {
                 Logger.Error($"Failed to notify backstage of module reload: {guestAssembly.Module}", e);
             }
         }
     }
-    
+
     private static void InitBackstage(Backstage? backstage)
     {
         if (backstage == null)
             return;
-        
+
         var inputHandler = backstage.GetService<InputService>();
         foreach (var inputKeyboard in WindowInputContext.Keyboards)
         {
@@ -145,7 +154,7 @@ internal static class Editor
         }
 
         backstage.RootHypervisor = Hypervisor;
-        
+
         BackstageEventLoop.Initialize(backstage, MainWindow);
         RenderingAssembly.Register(backstage);
     }

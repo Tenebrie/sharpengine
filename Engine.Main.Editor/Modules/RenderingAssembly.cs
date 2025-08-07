@@ -11,7 +11,7 @@ internal class RenderingAssembly(IWindow window) : GuestAssembly("Engine.Module.
     private bool _isInitialized = false;
     internal IRenderingModule? RenderingModule { get; set; }
     private readonly List<Backstage> _backstages = [];
-    
+
     internal override bool IgnoresTimeScale => true;
 
     public override void Init()
@@ -36,22 +36,30 @@ internal class RenderingAssembly(IWindow window) : GuestAssembly("Engine.Module.
         foreach (var backstage in _backstages)
             RenderingModule.Register(backstage);
     }
-    
+
     internal void Register(Backstage backstage)
     {
         _backstages.Add(backstage);
         RenderingModule?.Register(backstage);
     }
-    
+
     internal void Unregister(Backstage backstage)
     {
         _backstages.Remove(backstage);
         RenderingModule?.Unregister(backstage);
     }
 
-    protected override void Destroy()
+    public override void Destroy()
     {
-        base.Destroy();
         RenderingModule?.DisconnectCallbacks();
+        _backstages.Clear();
+        base.Destroy();
+    }
+
+    public void DestroyPermanently()
+    {
+        _backstages.Clear();
+        base.Destroy();
+        RenderingModule?.Shutdown();
     }
 }

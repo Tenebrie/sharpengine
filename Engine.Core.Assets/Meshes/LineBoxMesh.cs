@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Rendering;
@@ -10,16 +11,17 @@ using Transform = Engine.Core.Common.Transform;
 
 namespace Engine.Core.Assets.Meshes;
 
-public class BoxMesh : StaticMesh
+public class LineBoxMesh : StaticMesh
 {
-    private static BoxMesh Instance { get; } = new();
-
-    private static bool _isLoaded = false;
+    private static readonly LineBoxMesh Instance = new();
+    public static LineBoxMesh Shared => Instance.Load(Assembly.GetCallingAssembly());
+    
+    private bool _isLoaded = false;
         
-    public static void Load()
+    private LineBoxMesh Load(Assembly callingAssembly)
     {
         if (_isLoaded)
-            return;
+            return this;
         _isLoaded = true;
         
         var positions = new[]
@@ -45,21 +47,17 @@ public class BoxMesh : StaticMesh
             4,5,1,  1,0,4 
         ];
         
-        Instance.Layout = CreateVertexLayout([
+        Layout = CreateVertexLayout([
             new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
             new VertexLayoutAttribute(Attrib.Color0, 4, AttribType.Uint8, true, true)
         ]);
-        Instance.VertexBuffer = CreateVertexBuffer(ref verts, ref Instance.Layout);
-        Instance.IndexBuffer = CreateIndexBuffer(ref indices);
-        AssetManager.Meshes.Put("Generated/BoxMesh", Instance);
-    }
-
-    public static void PrepareRender(uint instanceCount, ref Transform[] worldTransforms, ref RenderContext context)
-    {
-        ((StaticMesh)Instance).PrepareRender(instanceCount, ref worldTransforms, ref context);
+        VertexBuffer = CreateVertexBuffer(ref verts, ref Layout);
+        IndexBuffer = CreateIndexBuffer(ref indices);
+        AssetManager.Shared(callingAssembly).Meshes.Put("Generated/LineBoxMesh", this);
+        return this;
     }
     
-    public static unsafe void Render(uint instanceCount, Material material, ref RenderContext context)
+    public unsafe void Render(uint instanceCount, Material material, ref RenderContext context)
     {
         if (!_isLoaded)
         {
@@ -72,18 +70,13 @@ public class BoxMesh : StaticMesh
         SetInstanceDataBuffer(encoder, context.InstanceTransformBuffer, context.InstanceTransformCount, instanceCount);
         context.InstanceTransformCount += instanceCount;
         
-        SetVertexBuffer(encoder, Instance.VertexBuffer);
-        SetIndexBuffer(encoder, Instance.IndexBuffer);
+        SetVertexBuffer(encoder, VertexBuffer);
+        SetIndexBuffer(encoder, IndexBuffer);
         SetState(encoder, StateFlags.WriteRgb | StateFlags.WriteZ | StateFlags.DepthTestLess | StateFlags.PtLines);
         
         Submit(encoder, context.ViewId, material.Program, 1, 0);
         
         encoder_end(encoder);
-    }
-
-    public static void Dispose()
-    {
-        ((StaticMesh)Instance).Dispose();
     }
     
     [StructLayout(LayoutKind.Sequential, Pack = 1)]

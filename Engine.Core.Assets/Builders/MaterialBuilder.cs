@@ -16,15 +16,32 @@ public enum MaterialDomain
 public class MaterialBuilder(object key)
 {
     private object Key = key;
+    private Assembly Assembly;
     private MaterialDomain Domain = MaterialDomain.Mesh;
     private Color TintColor = Color.White;
     private bool IsSamplingTexture = false;
-    
+    private bool UseCache = true;
+
     public static MaterialBuilder Begin(object key)
     {
-        return new MaterialBuilder(key);
+        return BeginInternal(key.ToString()!)
+            .SetAssembly(Assembly.GetExecutingAssembly());
     }
+
+    public static MaterialBuilder Begin<T>()
+    {
+        Console.WriteLine(typeof(T).ToString());
+        return BeginInternal(typeof(T).ToString())
+            .SetAssembly(Assembly.GetCallingAssembly());
+    }
+
+    private static MaterialBuilder BeginInternal(object key) => new(key);
     
+    private MaterialBuilder SetAssembly(Assembly assembly)
+    {
+        Assembly = assembly;
+        return this;
+    }
     public MaterialBuilder SetDomain(MaterialDomain domain)
     {
         Domain = domain;
@@ -40,19 +57,38 @@ public class MaterialBuilder(object key)
         IsSamplingTexture = sampling;
         return this;
     }
+    public MaterialBuilder SetCacheAutomatically(bool cache)
+    {
+        UseCache = cache;
+        return this;
+    }
 
     public int GetHash()
     {
-        return HashCode.Combine(TintColor, Domain);
+        return HashCode.Combine(TintColor, Domain, IsSamplingTexture);
     }
 
     public Material Compile()
     {
+        var hash = GetHash();
+        var storageKey = $"Generated.{Key}.{hash}";
+        if (UseCache && AssetManager.Shared(Assembly).Materials.TryGet(storageKey, out var existingMaterial))
+            return existingMaterial;
+        
         var vertSource = BuildVertShaderSource();
         var fragSource = BuildFragShaderSource();
         var varyingSource = ReadTemplateFile("varying.def.sc");
         
         var tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        
+        // PRINT ACTUAL STACK TRACE
+        Console.WriteLine("Compiling material shaders...");
+        Console.WriteLine("  Domain: " + Domain);
+        Console.WriteLine("  Tint Color: " + TintColor);
+        Console.WriteLine("  Sampling Texture: " + IsSamplingTexture);
+        Console.WriteLine("  Storage Key: " + storageKey);
+        Console.WriteLine("  Temp Directory: " + tempDir);
+        
         
         var srcDir = Path.Combine(tempDir, "src");
         var outDir = Path.Combine(tempDir, "out");
@@ -79,7 +115,8 @@ public class MaterialBuilder(object key)
 
         var fragBinPath = Path.Combine(outDir, "generated");
         var material = Material.CreateFromGenerated(fragBinPath);
-        AssetManager.SubmitMaterial(Key, material);
+        if (UseCache)
+            AssetManager.Shared(Assembly).Materials.Submit(storageKey, material);
         return material;
     }
 

@@ -13,7 +13,7 @@ public partial class PiercingBladeAbility : ActorComponent, IAbility
     public void OnCast()
     {
         var projectile = CreateActor<BasicProjectile>();
-        projectile.Transform.Position = Transform.Position;
+        projectile.Transform.Position = WorldTransform.Position;
         
         var forwardVector = Vector3.Forward;
         var mousePos = GetService<InputService>().GetMousePosition();

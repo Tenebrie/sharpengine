@@ -27,7 +27,7 @@ public enum InputAction
 public partial class UserInputService : Service
 {
     private InputContext _baseContext;
-    
+
     [OnReady]
     protected void OnReady()
     {
@@ -47,10 +47,10 @@ public partial class UserInputService : Service
             .Add(InputAction.Hotbar3, Key.Number3)
             .Add(InputAction.Hotbar4, Key.Number4)
             .Build();
-        
+
         RecalculateActiveContext();
     }
-    
+
     [OnGameplayContextChange]
     protected void RecalculateActiveContext()
     {
@@ -59,7 +59,7 @@ public partial class UserInputService : Service
             GetService<InputService>().InputContext = InputContext.Empty;
             return;
         }
-        
+
         var activeContext = InputContext.From(_baseContext);
         GetService<InputService>().InputContext = activeContext;
     }

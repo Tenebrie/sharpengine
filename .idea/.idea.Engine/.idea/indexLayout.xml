@@ -2,7 +2,6 @@
 <project version="4">
   <component name="UserContentModel">
     <attachedFolders>
-      <Path>.plugins</Path>
       <Path>Dependencies</Path>
       <Path>ProjectRoot</Path>
       <Path>ProjectRoot-MacOS</Path>
@@ -12,6 +11,7 @@
     </attachedFolders>
     <explicitIncludes />
     <explicitExcludes>
+      <Path>.run</Path>
       <Path>Submodules/bgfx</Path>
       <Path>Submodules/bimg</Path>
       <Path>Submodules/bx</Path>

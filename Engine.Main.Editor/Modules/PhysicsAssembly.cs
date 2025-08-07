@@ -18,7 +18,7 @@ internal class PhysicsAssembly() : GuestAssembly("Engine.Module.Physics", Engine
         {
             Console.Error.WriteLine("Failed to instantiate physics module.");
             return;
-        } 
+        }
         PhysicsModule.Initialize();
     }
     
@@ -26,5 +26,11 @@ internal class PhysicsAssembly() : GuestAssembly("Engine.Module.Physics", Engine
     {
         PhysicsModule?.ProcessPhysicsFrame(deltaTime);
         return base.Update(deltaTime);
+    }
+    
+    public override void Destroy()
+    {
+        PhysicsModule!.Shutdown();
+        base.Destroy();
     }
 }

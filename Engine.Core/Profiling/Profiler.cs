@@ -26,6 +26,7 @@ public class Profiler
     public static ProfilingStopwatch Start()
     {
         var stopwatch = Pool.Get();
+        // var stopwatch = new ProfilingStopwatch();
         stopwatch.Start();
         return stopwatch;
     }
@@ -67,6 +68,7 @@ public class Profiler
     
     internal static void ReportByContext(ProfilingStopwatch stopwatch, Type ownerType, ProfilingContext context)
     {
+        return;
         if (!Instance._lifecycleEntries.TryGetValue(ownerType, out var contextDictionary))
         {
             contextDictionary = new Dictionary<ProfilingContext, ProfilerEntry>();
@@ -78,7 +80,7 @@ public class Profiler
             contextDictionary[context] = profilerEntry;
         }
         profilerEntry.RecordDuration(stopwatch.Stopwatch.Elapsed.Microseconds);
-        // Logger.Debug(ownerType.Name + " - " + context + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
+        Logger.Debug(ownerType.Name + " - " + context + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
         Pool.Return(stopwatch);
     }
     
@@ -95,7 +97,7 @@ public class Profiler
             contextDictionary[methodName] = profilerEntry;
         }
         profilerEntry.RecordDuration(stopwatch.Stopwatch.Elapsed.Microseconds);
-        // Logger.Debug(ownerType.Name + " - " + methodName + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
+        Logger.Debug(ownerType.Name + " - " + methodName + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
         Pool.Return(stopwatch);
     }
 }
@@ -131,20 +133,21 @@ public sealed class ProfilingStopwatch : IDisposable
     }
 }
 
-internal class ProfilerEntry
+internal struct ProfilerEntry
 {
-    private readonly List<long> _durations = [];
-    
+    private int _ptr = 0;
+    private readonly long[] _durations = new long[100000];
+
+    public ProfilerEntry()
+    {
+    }
+
     internal void RecordDuration(long duration)
     {
-        _durations.Add(duration);
-        if (_durations.Count > 50000)
-        {
-            _durations.RemoveAt(0);
-        }
+        _durations[_ptr++ % 50000] = duration;
     }
 
     internal double Average() => _durations.Average() / 1000.0;
     internal double Total() => _durations.Sum() / 1000.0;
-    internal double Count() => _durations.Count;
+    internal double Count() => _ptr;
 }

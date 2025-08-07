@@ -22,6 +22,8 @@ public partial class Atom
         }
         return assemblies
             .Where(a => a.FullName!.StartsWith("Engine") || a.FullName!.StartsWith("User"))
+            .GroupBy(a => a.GetName().Name)
+            .Select(g => g.Last())
             .Select(a =>
             {
                 Console.WriteLine("Processing assembly: " + a.FullName);

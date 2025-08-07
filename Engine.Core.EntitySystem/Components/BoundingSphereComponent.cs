@@ -11,17 +11,9 @@ namespace Engine.Core.EntitySystem.Components;
 [UsedImplicitly]
 public partial class BoundingSphereComponent : ActorComponent
 {
-    public readonly SphereMesh Mesh = SphereMesh.Instance;
-    
     public double Radius => Transform.Scale.X;
     public double WorldRadius => WorldTransform.Scale.X;
 
-    [OnReady]
-    protected void OnReady()
-    {
-        Mesh.Load();
-    }
-    
     public void Generate(AssetVertex[] verts)
     {
         if (verts.Length < 3)

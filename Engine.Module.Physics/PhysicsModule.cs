@@ -23,7 +23,7 @@ public class PhysicsModule : IPhysicsModule
 
     public void Initialize() => _workerPool.Initialize();
     public void Shutdown() => _workerPool.Shutdown();
-    
+
     public long Register(Spatial parent, PhysicsComponent component) => _registeredAtoms.Add(parent, component);
     public void Unregister(long rid) => _registeredAtoms.Remove(rid);
 
@@ -31,15 +31,15 @@ public class PhysicsModule : IPhysicsModule
     {
         var stopwatch = Profiler.Start();
         var atoms = _registeredAtoms.AsArray();
-        
+
         _revalidationServices.DisableAll();
-        
+
         PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.CollectData, atoms);
         PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.InitialMove, atoms);
         PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.CollectCollisionCandidates, atoms);
         PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.ResolveCollisions, atoms);
         PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.FlushTransform, atoms);
-        
+
         _revalidationServices.EnableAll();
         stopwatch.StopAndReport(GetType(), ProfilingContext.PhysicsUpdate);
     }
@@ -58,7 +58,7 @@ public struct AtomHandle
 
     public bool HasColliders;
     public List<ColliderSphereComponent> SphereColliders;
-    
+
     public double BoundingSphereRadius;
     public required List<CollisionCandidate> CollisionCandidates;
 }

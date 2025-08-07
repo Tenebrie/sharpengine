@@ -25,14 +25,20 @@ public partial class Backstage : Scene
                 }
                 else if (methodInfo.GetParameters().Length == 1)
                 {
-                    var methodDelegate = Delegate.CreateDelegate(typeof(Action<Type>), null, methodInfo);
-                    ((Action<Type>)methodDelegate).Invoke(atomType);
+                    var methodDelegate = Delegate.CreateDelegate(typeof(Action<Backstage>), null, methodInfo);
+                    ((Action<Backstage>)methodDelegate).Invoke(this);
+                }
+                else if (methodInfo.GetParameters().Length == 2)
+                {
+                    var methodDelegate = Delegate.CreateDelegate(typeof(Action<Backstage, Type>), null, methodInfo);
+                    ((Action<Backstage, Type>)methodDelegate).Invoke(this, atomType);
                 }
                 else
                     throw new InvalidOperationException(
                         $"Method {methodInfo.Name} in type {atomType.FullName} has an invalid signature. "
                     );
-            };
+            }
+            ;
         }
     }
 }

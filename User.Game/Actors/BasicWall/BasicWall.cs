@@ -12,22 +12,22 @@ namespace User.Game.Actors.BasicWall;
 public partial class BasicWall : Actor
 {
     [Component] public StaticMeshComponent StaticMesh;
-    private static Material _generatedMaterial;
+    private static MaterialInstance _generatedMaterial;    
 
     [OnPrepareResources]
     public static void PrepareResources()
     {
-        var material = MaterialBuilder.Begin(typeof(BasicWall))
+        _generatedMaterial = MaterialBuilder.Begin<BasicWall>()
             .SetTintColor(Color.Bisque)
             .SetSamplingTexture(false)
-            .Compile();
-        _generatedMaterial = material;
+            .Compile()
+            .Instantiate();
     }
 
     [OnReady]
     public void OnReady()
     {
-        StaticMesh.Mesh = AssetManager.LoadMesh("Assets/Meshes/testwall.obj");
-        StaticMesh.Material = AssetManager.InstantiateMaterial(_generatedMaterial);
-    } 
+        StaticMesh.Mesh = AssetManager.Meshes.LoadFromDisk("Meshes/testwall.obj");
+        StaticMesh.Material = _generatedMaterial;
+    }
 }

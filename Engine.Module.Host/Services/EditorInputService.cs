@@ -83,11 +83,11 @@ public partial class EditorInputService : Service
 
     private void NotifyDebugRendering()
     {
-        SphereMesh.VisibleModes = _debugMode switch
+        LineSphereMesh.VisibleModes = _debugMode switch
         {
-            DebugRenderingMode.BoundingBoxes => SphereMesh.ColorMode.AxisColor,
-            DebugRenderingMode.Colliders => SphereMesh.ColorMode.Collider,
-            _ => SphereMesh.ColorMode.None
+            DebugRenderingMode.BoundingBoxes => LineSphereMesh.ColorMode.AxisColor,
+            DebugRenderingMode.Colliders => LineSphereMesh.ColorMode.Collider,
+            _ => LineSphereMesh.ColorMode.None
         };
     }
 

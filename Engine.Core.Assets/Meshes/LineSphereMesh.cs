@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Rendering;
@@ -10,7 +11,7 @@ using Transform = Engine.Core.Common.Transform;
 
 namespace Engine.Core.Assets.Meshes;
 
-public class SphereMesh : StaticMesh
+public class LineSphereMesh : StaticMesh
 {
     [Flags]
     public enum ColorMode
@@ -20,18 +21,19 @@ public class SphereMesh : StaticMesh
         Collider = 1 << 1
     }
     
-    public static SphereMesh Instance { get; } = new();
     public static ColorMode VisibleModes = ColorMode.None;
+    private static readonly LineSphereMesh Instance = new();
+    public static LineSphereMesh Shared => Instance.Load(Assembly.GetCallingAssembly());
 
-    private static bool _isLoaded = false;
+    private bool _isLoaded = false;
 
-    private static VertexBuffer _axisColoredVertexBuffer;
-    private static VertexBuffer _colliderVertexBuffer;
+    private VertexBuffer _axisColoredVertexBuffer = VertexBuffer.Invalid;
+    private VertexBuffer _colliderVertexBuffer = VertexBuffer.Invalid;
     
-    public void Load()
+    private LineSphereMesh Load(Assembly callingAssembly)
     {
         if (_isLoaded)
-            return;
+            return this;
         _isLoaded = true;
         
         List<RenderingVertex> axisColoredVerts = [];
@@ -74,16 +76,11 @@ public class SphereMesh : StaticMesh
         _axisColoredVertexBuffer = CreateVertexBuffer(ref vertsArray, ref Layout);
         _colliderVertexBuffer = CreateVertexBuffer(ref colliderVertsArray, ref Layout);
         IndexBuffer = CreateIndexBuffer(ref indicesArray);
-        AssetManager.PutMesh("Generated/SphereMesh", Instance);
-        AssetManager.Finalizers.Register(Dispose);
+        AssetManager.Shared(callingAssembly).Meshes.Put("Generated/LineSphereMesh", this);
+        return this;
     }
     
-    public new static void PrepareRender(uint instanceCount, ref Transform[] worldTransforms, ref RenderContext context)
-    {
-        ((StaticMesh)Instance).PrepareRender(instanceCount, ref worldTransforms, ref context);
-    }
-    
-    public static unsafe void Render(uint instanceCount, Material material, ref RenderContext context, ColorMode color)
+    public unsafe void Render(uint instanceCount, Material material, ref RenderContext context, ColorMode color)
     {
         if (VisibleModes == ColorMode.None || (VisibleModes & color) == 0)
         {
@@ -108,7 +105,7 @@ public class SphereMesh : StaticMesh
             SetVertexBuffer(encoder, _colliderVertexBuffer);
         else
             throw new ArgumentOutOfRangeException(nameof(color), color, null);
-        SetIndexBuffer(encoder, Instance.IndexBuffer);
+        SetIndexBuffer(encoder, IndexBuffer);
         SetState(encoder, StateFlags.WriteRgb | StateFlags.WriteZ | StateFlags.DepthTestLess | StateFlags.PtLines);
         
         Submit(encoder, context.ViewId, material.Program, 1, 0);
@@ -116,11 +113,14 @@ public class SphereMesh : StaticMesh
         encoder_end(encoder);
     }
 
-    private new static void Dispose()
+    public override void Dispose()
     {
-        destroy_vertex_buffer(_axisColoredVertexBuffer.Handle);
-        destroy_vertex_buffer(_colliderVertexBuffer.Handle);
+        base.Dispose();
+        GC.SuppressFinalize(this);
+        DestroyVertexBuffer(ref _axisColoredVertexBuffer);
+        DestroyVertexBuffer(ref _colliderVertexBuffer);
     }
+    
     
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     private readonly struct RenderingVertex(Vector3 position, Color color)

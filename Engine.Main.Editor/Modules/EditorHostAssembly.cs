@@ -1,4 +1,5 @@
-﻿using Engine.Core.Contracts;
+﻿using System.Runtime.CompilerServices;
+using Engine.Core.Contracts;
 using Engine.Core.EntitySystem;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.Logging;
@@ -13,6 +14,7 @@ public class EditorHostAssembly() : GuestAssembly("Engine.Module.Host", EngineMo
 
     internal override bool IgnoresTimeScale => true;
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
     public override void Init()
     {
         base.Init();
@@ -32,6 +34,7 @@ public class EditorHostAssembly() : GuestAssembly("Engine.Module.Host", EngineMo
         Backstage.GameplayContext = Editor.GameplayContext;
     }
 
+    [MethodImpl(MethodImplOptions.NoInlining)]
     public override bool Update(double deltaTime)
     {
         if (_updatesPausedFor > 0.0)
@@ -42,11 +45,12 @@ public class EditorHostAssembly() : GuestAssembly("Engine.Module.Host", EngineMo
 
         if (Backstage == null)
             return base.Update(deltaTime);
-        
+
         try
         {
             BackstageEventLoop.ProcessLogicFrame(Backstage, deltaTime);
-        } catch (Exception ex)
+        }
+        catch (Exception ex)
         {
             Logger.Error($"Error during OnUpdate: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
@@ -55,7 +59,8 @@ public class EditorHostAssembly() : GuestAssembly("Engine.Module.Host", EngineMo
         }
         return base.Update(deltaTime);
     }
-    
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
     public void NotifyAboutUserBackstage(Backstage? backstage)
     {
         if (Backstage is IHostBackstage hostContract)

@@ -34,7 +34,7 @@ public class StaticMesh : IDisposable
     
     public Signal<AssetVertex[]> OnMeshLoaded { get; } = new();
 
-    private void LoadInternal(AssetVertex[] verts, ushort[] indices, WindingOrder windingOrder)
+    protected void LoadInternal(AssetVertex[] verts, ushort[] indices, WindingOrder windingOrder)
     {
         Vertices = verts;
         Indices = indices;
@@ -105,15 +105,17 @@ public class StaticMesh : IDisposable
         encoder_end(encoder);
     }
 
-    public void Dispose()
+    public virtual void Dispose()
     {
+        Vertices = [];
+        Indices = [];
         GC.SuppressFinalize(this);
-        if (VertexBuffer.Valid)
-            DestroyVertexBuffer(ref VertexBuffer);
-        if (IndexBuffer.Valid)
-            DestroyIndexBuffer(ref IndexBuffer);
+        DestroyVertexBuffer(ref VertexBuffer);
+        DestroyIndexBuffer(ref IndexBuffer);
         IsValid = false;
     }
+    
+    ~StaticMesh() => Dispose();
     
     protected static string ComputeMeshHash(AssetVertex[] vertices, ushort[] indices)
     {
@@ -163,14 +165,8 @@ public class StaticMesh : IDisposable
 
     public static StaticMesh CreateFromMemory(AssetVertex[] verts, ushort[] indices, WindingOrder windingOrder = WindingOrder.Cw)
     {
-        var hash = ComputeMeshHash(verts, indices);
-
-        if (AssetManager.Meshes.TryGet(hash, out var mesh))
-            return mesh;
-
         var newMesh = new StaticMesh();
         newMesh.LoadInternal(verts, indices, windingOrder);
-        AssetManager.PutMesh(hash, newMesh);
         return newMesh;
     }
     

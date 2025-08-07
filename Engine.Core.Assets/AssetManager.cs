@@ -1,18 +1,49 @@
-﻿namespace Engine.Core.Assets;
+﻿using System.Reflection;
 
-public partial class AssetManager
+namespace Engine.Core.Assets;
+
+public enum AssetType
 {
-    private static AssetManager Instance { get; } = new();
-    private MaterialAssetManager Materials { get; } = new();
-    public static MeshAssetManager Meshes { get; } = new();
-    private TextureAssetManager Textures { get; } = new();
-    public static AssetFinalizerManager Finalizers { get; } = new();
-    
-    public static void Shutdown()
+    Material,
+    Mesh,
+    Texture
+}
+
+public partial class AssetManager : IDisposable
+{
+    public MaterialAssetManager Materials { get; } = new();
+    public MeshAssetManager Meshes { get; } = new();
+    public TextureAssetManager Textures { get; } = new();
+    public static AssetManager Shared(Assembly assembly) => AssemblyAssetManager.GetAssetManager(assembly);
+
+    public void Initialize()
     {
-        Instance.Materials.Shutdown();
-        Meshes.Shutdown();
-        Instance.Textures.Shutdown();
-        Finalizers.Invoke();
+        MaterialAssetManager.Initialize();
+    }
+    
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        Materials.Dispose();
+        Meshes.Dispose();
+        Textures.Dispose();
+    }
+    
+    ~AssetManager() => Dispose();
+}
+
+public static class AssemblyAssetManager
+{
+    private static Dictionary<string, AssetManager> AssetManagers { get; } = new();
+    public static AssetManager GetAssetManager(Assembly assembly)
+    {
+        Console.WriteLine(assembly.GetName());
+        if (AssetManagers.TryGetValue(assembly.GetName().ToString(), out var assetManager))
+            return assetManager;
+
+        assetManager = new AssetManager();
+        assetManager.Initialize();
+        AssetManagers[assembly.GetName().ToString()] = assetManager;
+        return assetManager;
     }
 }

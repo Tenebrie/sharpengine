@@ -11,7 +11,6 @@ namespace Engine.Core.EntitySystem.Components;
 
 public partial class StaticMeshHolder : ActorComponent
 {
-    private static MaterialInstance _fallbackMaterial = null!;
     private StaticMesh? _mesh;
     public StaticMesh Mesh
     {
@@ -29,25 +28,15 @@ public partial class StaticMeshHolder : ActorComponent
     private MaterialInstance? _material;
     public MaterialInstance Material
     {
-        get => _material ?? _fallbackMaterial;
+        get => _material ?? MaterialAssetManager.FallbackMaterial;
         set => _material = value;
     }
     [Component] public BoundingSphereComponent BoundingSphere;
-
-    [OnPrepareResources]
-    protected static void OnPrepareResources()
-    {
-        var material = MaterialBuilder.Begin(typeof(StaticMeshHolder))
-            .SetTintColor(System.Drawing.Color.White)
-            .SetSamplingTexture(false)
-            .Compile();
-        _fallbackMaterial = AssetManager.InstantiateMaterial(material);
-    }
 
     private void OnMeshLoaded(AssetVertex[] vertices)
     {
         BoundingSphere.Generate(vertices);
     }
-    
+
     public Bgfx.StateFlags RenderFlags { get; set; } = Bgfx.StateFlags.None;
 }

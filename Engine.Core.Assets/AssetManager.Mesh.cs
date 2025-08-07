@@ -1,17 +1,11 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.Loader;
 using Engine.Core.Assets.Loaders;
 using Engine.Core.Assets.Meshes;
 
 namespace Engine.Core.Assets;
 
-public partial class AssetManager
-{
-    public static bool HasMesh(string path) => Meshes.Has(path);
-    public static void PutMesh(string path, StaticMesh mesh) => Meshes.Put(path, mesh);
-    public static StaticMesh LoadMesh(string path) => Meshes.LoadFromDisk(path);
-}
-
-public class MeshAssetManager
+public class MeshAssetManager : IDisposable
 {
     private readonly Dictionary<object, StaticMesh> _cachedMeshes = new();
     
@@ -38,17 +32,20 @@ public class MeshAssetManager
         if (_cachedMeshes.TryGetValue(path, out var mesh))
             return mesh;
         
-        ObjMeshLoader.LoadObj(path, out var vertices, out var indices);
+        ObjMeshLoader.LoadObj(Path.Combine("Assets", path), out var vertices, out var indices);
         mesh = StaticMesh.CreateFromMemory(vertices, indices);
         return mesh;
     }
     
-    public void Shutdown()
+    public void Dispose()
     {
+        GC.SuppressFinalize(this);
         foreach (var mesh in _cachedMeshes.Values)
         {
             mesh.Dispose();
         }
         _cachedMeshes.Clear();
     }
+
+    ~MeshAssetManager() => Dispose();
 }
