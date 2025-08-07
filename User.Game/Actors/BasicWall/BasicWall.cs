@@ -2,6 +2,7 @@
 using Engine.Core.Assets;
 using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
+using Engine.Core.Assets.Meshes;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
@@ -11,7 +12,7 @@ namespace User.Game.Actors.BasicWall;
 
 public partial class BasicWall : Actor
 {
-    [Component] public StaticMeshComponent StaticMesh;
+    [Component] public StaticMeshComponent MeshComponent;
     private static MaterialInstance _generatedMaterial;    
 
     [OnPrepareResources]
@@ -27,7 +28,7 @@ public partial class BasicWall : Actor
     [OnReady]
     public void OnReady()
     {
-        StaticMesh.Mesh = AssetManager.Meshes.LoadFromDisk("Meshes/testwall.obj");
-        StaticMesh.Material = _generatedMaterial;
+        MeshComponent.Mesh = StaticMesh.CreateFromDisk("Meshes/testwall.obj");
+        MeshComponent.Material = _generatedMaterial;
     }
 }

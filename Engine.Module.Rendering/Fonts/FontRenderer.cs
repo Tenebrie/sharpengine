@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Reflection;
+using System.Runtime.InteropServices;
 using Engine.Core.Assets;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Common;
@@ -15,7 +16,6 @@ namespace Engine.Module.Rendering.Fonts;
 
 public class FontRenderer : IFontStashRenderer2, IDisposable
 {
-    private AssetManager _assetManager;
     private FontSystem _fontSystem;
     private DynamicSpriteFont _font;
     private UniformHandle _diffuseTextureHandle;
@@ -27,7 +27,6 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
     public FontRenderer(RenderingModule parent)
     {
         _parent = parent;
-        _assetManager = parent.AssetManager;
         _fontSystem = new FontSystem(new FontSystemSettings
         {
             TextureWidth = 1024,
@@ -39,7 +38,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
 
     public void Initialize()
     {
-        _material = _assetManager.Materials.Instantiate("UserInterface/Font/Font");
+        _material = Material.CreateFromDisk("UserInterface/Font/Font").Instantiate();
         _diffuseTextureHandle = create_uniform("s_diffuse", UniformType.Sampler, 1);
         _vertexLayout = CreateVertexLayout([
             new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
@@ -108,7 +107,7 @@ public class MyTextureManager : ITexture2DManager
 {
     public object CreateTexture(int width, int height)
     {
-        var image = new Image<Rgba32>(width, height);
+        using var image = new Image<Rgba32>(width, height);
         return Texture.CreateFromImage(image);
     }
 

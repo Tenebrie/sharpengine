@@ -1,5 +1,6 @@
 ﻿using Engine.Core.Assets;
 using Engine.Core.Assets.Materials;
+using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Meshes.Builtins;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
@@ -18,14 +19,15 @@ public partial class BasicEnemyManager : Actor
     [OnReady]
     protected void OnReady()
     {
-        if (!AssetManager.Meshes.Has("Virtual/BasicEnemy"))
+        if (!AssetManager.Meshes.TryGet("Assets/Virtual/BasicEnemy", out var mesh))
         {
-            Console.WriteLine("Creating virtual mesh for BasicEnemy"); 
-            AssetManager.Meshes.Put("Virtual/BasicEnemy", TessellatedPlaneMesh.Create());
+            mesh = TessellatedPlaneMesh.CreateWithoutCache();
+            AssetManager.Meshes.Put("Assets/Virtual/BasicEnemy", mesh);
         }
-        InstanceManager.Mesh = AssetManager.Meshes.LoadFromDisk("Virtual/BasicEnemy");
-        InstanceManager.Material = AssetManager.Materials
-            .Instantiate("Meshes/BillboardSprite/BillboardSprite")
+        InstanceManager.Mesh = mesh;
+        InstanceManager.Material = Material
+            .CreateFromDisk("Meshes/BillboardSprite/BillboardSprite")
+            .Instantiate()
             .SetTexture(Texture.CreateFromDisk("Textures/godot.png"));
         InstanceManager.RenderFlags = Bgfx.StateFlags.BlendAlphaToCoverage;
     }
@@ -38,7 +40,7 @@ public partial class BasicEnemyManager : Actor
             return;
 
         var player = ParentScene.Actors.OfType<PlayerCharacter>().FirstOrDefault();
-        if (player is null)
+        if (player is null) 
             return;
 
         _enemiesQueued += 1;
@@ -54,6 +56,7 @@ public partial class BasicEnemyManager : Actor
             // transform.Rotation = Quaternion.Identity;
             // transform.RotateAroundLocal(Vector3.Pitch, -90);
             transform.Rotation = Quaternion.Identity;
+            transform.RotateAroundLocal(Vector3.Right, 2);
             transform.Rescale(5, 5, 5);
             InstanceManager.AddInstance(transform);
         }

@@ -8,18 +8,18 @@ public class MaterialAssetManager : IDisposable
 {
     private readonly Dictionary<object, Material> _cachedMaterials = new();
     private static bool _fallbackMaterialInitialized = false;
+    private static Material _fallbackMaterial = null!;
     public static MaterialInstance FallbackMaterial { get; private set; } = null!;
 
     private static class FallbackMaterialGenerator
     {
-        internal static MaterialInstance Create()
+        internal static Material Create()
         {
             return MaterialBuilder.Begin("FallbackMaterial")
                 .SetCacheAutomatically(false)
                 .SetTintColor(System.Drawing.Color.White)
                 .SetSamplingTexture(false)
-                .Compile()
-                .Instantiate();
+                .Compile();
         }
     }
     
@@ -27,32 +27,9 @@ public class MaterialAssetManager : IDisposable
     {
         if (_fallbackMaterialInitialized)
             return;
-        FallbackMaterial = FallbackMaterialGenerator.Create();
+        _fallbackMaterial = FallbackMaterialGenerator.Create();
+        FallbackMaterial = _fallbackMaterial.InstantiateWithoutCache();
         _fallbackMaterialInitialized = true;
-    }
-    
-    public MaterialInstance Instantiate(string path)
-    {
-        if (_cachedMaterials.TryGetValue(path, out var material))
-            return new MaterialInstance(material);
-        
-        material = Material.CreateFromDisk(path);
-        _cachedMaterials[path] = material;
-        return new MaterialInstance(material);
-    }
-    public MaterialInstance Instantiate(object key)
-    {
-        if (_cachedMaterials.TryGetValue(key, out var material))
-            return new MaterialInstance(material);
-        
-        throw new InvalidOperationException($"Material {key} not found");
-    }
-    public MaterialInstance Instantiate(Material material)
-    {
-        if (_cachedMaterials.TryGetValue(material, out _))
-            return new MaterialInstance(material);
-        _cachedMaterials[material] = material;
-        return new MaterialInstance(material);
     }
     
     public bool TryGet(object key, [MaybeNullWhen(false)] out Material material)
@@ -60,23 +37,30 @@ public class MaterialAssetManager : IDisposable
         return _cachedMaterials.TryGetValue(key, out material);
     }
 
-    public void Submit(object key, Material material)
+    public void Put(object key, Material material)
     {
         if (_cachedMaterials.TryGetValue(key, out _))
-        {
             throw new InvalidOperationException($"Material {key} already exists");
-        }
-        
         _cachedMaterials[key] = material;
+    }
+
+    public void RegisterInstance(MaterialInstance _)
+    {
+        // NOOP
     }
     
     public void Dispose()
     {
         GC.SuppressFinalize(this);
         foreach (var material in _cachedMaterials.Values)
-        {
             material.Dispose();
+
+        if (_fallbackMaterialInitialized)
+        {
+            Console.WriteLine("Disposing fallback material");
+            _fallbackMaterial.Dispose();
         }
+        _fallbackMaterialInitialized = false;
         _cachedMaterials.Clear();
     }
     

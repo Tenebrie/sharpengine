@@ -25,7 +25,6 @@ public unsafe class RenderingModule : IRenderingModule
     private List<Backstage> _backstages = [];
     private LogRenderer _logRenderer = null!;
     private FontRenderer _fontRenderer = null!;
-    public readonly AssetManager AssetManager = new();
 
     private float BaseResolutionScale => (float)_rootWindow.Size.X / _rootWindow.FramebufferSize.X;
     private float ResolutionScale => BaseResolutionScale * 1.0f;
@@ -93,7 +92,6 @@ public unsafe class RenderingModule : IRenderingModule
 
         _logRenderer = new LogRenderer(this);
         _fontRenderer = new FontRenderer(this);
-        AssetManager.Initialize();
         _fontRenderer.Initialize();
 
         var instLayout = CreateVertexLayout([
@@ -332,7 +330,6 @@ public unsafe class RenderingModule : IRenderingModule
     public void DisconnectCallbacks()
     {
         _fontRenderer.Dispose();
-        AssetManager.Dispose();
         _backstages = [];
         destroy_dynamic_vertex_buffer(_instanceTransformVertexBuffer);
         _rootWindow.Render -= RenderSingleFrame;
@@ -344,9 +341,27 @@ public unsafe class RenderingModule : IRenderingModule
     {
         DisconnectCallbacks();
 
-        AssetManager.Dispose();
+        Frame(false);
+        Frame(true);
+        Frame(true);
+        Frame(true);
+        Frame(true);
+        Frame(true);
+        Frame(true);
+        Frame(true);
+        Frame(true);
+        Frame(true);
+        Reset(0, 0, ResetFlags.None, TextureFormat.Count);
+        Reset(0, 0, ResetFlags.None, TextureFormat.Count);
+        Frame(true);
+        Frame(true);
+        Frame(true);
+        Frame(true);
+        Frame(true);
+        Frame(true);
         Frame(false);
 
         shutdown();
+        BgfxCallbacks.Uninstall();
     }
 }

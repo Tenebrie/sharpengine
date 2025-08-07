@@ -30,7 +30,6 @@ public class MaterialBuilder(object key)
 
     public static MaterialBuilder Begin<T>()
     {
-        Console.WriteLine(typeof(T).ToString());
         return BeginInternal(typeof(T).ToString())
             .SetAssembly(Assembly.GetCallingAssembly());
     }
@@ -81,15 +80,6 @@ public class MaterialBuilder(object key)
         
         var tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
         
-        // PRINT ACTUAL STACK TRACE
-        Console.WriteLine("Compiling material shaders...");
-        Console.WriteLine("  Domain: " + Domain);
-        Console.WriteLine("  Tint Color: " + TintColor);
-        Console.WriteLine("  Sampling Texture: " + IsSamplingTexture);
-        Console.WriteLine("  Storage Key: " + storageKey);
-        Console.WriteLine("  Temp Directory: " + tempDir);
-        
-        
         var srcDir = Path.Combine(tempDir, "src");
         var outDir = Path.Combine(tempDir, "out");
         Directory.CreateDirectory(srcDir);
@@ -101,6 +91,10 @@ public class MaterialBuilder(object key)
         File.WriteAllText(fragShaderPath, fragSource);
         File.WriteAllText(vertShaderPath, vertSource);
         File.WriteAllText(varyingFilePath, varyingSource);
+        
+        Logger.InfoF("Compiling material shaders for " + Key + " with storage " + storageKey);
+        // Logger.InfoF("Vertex shader source" + vertSource);
+        // Logger.InfoF("Fragment shader source" + fragSource);
 
         try
         {
@@ -116,7 +110,7 @@ public class MaterialBuilder(object key)
         var fragBinPath = Path.Combine(outDir, "generated");
         var material = Material.CreateFromGenerated(fragBinPath);
         if (UseCache)
-            AssetManager.Shared(Assembly).Materials.Submit(storageKey, material);
+            AssetManager.Shared(Assembly).Materials.Put(storageKey, material);
         return material;
     }
 

@@ -1,4 +1,6 @@
 ﻿using Engine.Core.Assets;
+using Engine.Core.Assets.Materials;
+using Engine.Core.Assets.Meshes;
 using Engine.Core.Makers;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
@@ -13,8 +15,8 @@ public partial class DragonMesh : Actor
     [OnReady]
     protected void OnReady()
     {
-        MeshComponent.Mesh = AssetManager.Meshes.LoadFromDisk("Meshes/decimated_dragon32.obj");
-        MeshComponent.Material = AssetManager.Materials.Instantiate("Meshes/RawColor/RawColor");
+        MeshComponent.Mesh = StaticMesh.CreateFromDisk("Meshes/decimated_dragon32.obj");
+        MeshComponent.Material = Material.CreateFromDisk("Meshes/RawColor/RawColor").Instantiate();
         
         MeshComponent.Transform.Rotation = QuatMakers.FromRotation(90, 0, 0);
     }

@@ -1,4 +1,5 @@
-﻿using Engine.Core.Logging;
+﻿using System.Reflection;
+using Engine.Core.Logging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -121,12 +122,18 @@ public sealed class Texture : IDisposable
     
     public static Texture CreateFromDisk(string path)
     {
-        using var image = Image.Load<Rgba32>(Path.Combine("Assets", path));
+        var filepath = Path.Combine("Assets", path);
+        if (AssetManager.Shared(Assembly.GetCallingAssembly()).Textures.TryGet(filepath, out var texture))
+            return texture;
+        
+        using var image = Image.Load<Rgba32>(filepath);
                 
         var textureData = new byte[image.Width * image.Height * 4];
         image.CopyPixelDataTo(textureData);
-                
-        return new Texture(textureData, (ushort)image.Width, (ushort)image.Height, generateMips: true);
+               
+        var tex = new Texture(textureData, (ushort)image.Width, (ushort)image.Height, generateMips: true);
+        AssetManager.Shared(Assembly.GetCallingAssembly()).Textures.Put(filepath, tex);
+        return tex;
     }
     
     public static Texture CreateFromBytes(byte[] data, ushort width, ushort height, bool generateMips = false)
@@ -138,7 +145,9 @@ public sealed class Texture : IDisposable
     {
         var textureData = new byte[image.Width * image.Width * 4];
         image.CopyPixelDataTo(textureData);
-        
-        return new Texture(textureData, (ushort)image.Width, (ushort)image.Height, generateMips);
+        var tex = new Texture(textureData, (ushort)image.Width, (ushort)image.Height, generateMips);
+        AssetManager.Shared(Assembly.GetCallingAssembly()).Textures.Put(Guid.NewGuid().ToString(), tex);
+
+        return tex;
     }
 }

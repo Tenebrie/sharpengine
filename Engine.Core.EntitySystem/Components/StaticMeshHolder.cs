@@ -14,7 +14,7 @@ public partial class StaticMeshHolder : ActorComponent
     private StaticMesh? _mesh;
     public StaticMesh Mesh
     {
-        get => _mesh ?? throw new InvalidOperationException("Mesh is not set.");
+        get => _mesh ?? MeshAssetManager.FallbackMesh;
         set
         {
             _mesh?.OnMeshLoaded.Disconnect(OnMeshLoaded);

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using Engine.Core.Assets;
 
 namespace Engine.Core.EntitySystem.Entities;
@@ -7,5 +8,5 @@ namespace Engine.Core.EntitySystem.Entities;
 [SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
 public partial class Atom
 {
-    public AssetManager AssetManager => Backstage.SharedAssetManager;
+    public static AssetManager AssetManager => AssetManager.Shared(Assembly.GetCallingAssembly());
 }

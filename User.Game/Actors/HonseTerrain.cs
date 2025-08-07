@@ -1,5 +1,6 @@
-﻿using Engine.Core.Assets;
+﻿using System.Reflection;
 using Engine.Core.Assets.Materials;
+using Engine.Core.Assets.Meshes;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
@@ -12,11 +13,11 @@ public partial class HonseTerrain : Actor
     public StaticMeshComponent MeshComponent;
     
     [OnReady]
-    protected void OnReady()
+    protected void OnReady() 
     {
-        MeshComponent.Mesh = AssetManager.Meshes.LoadFromDisk("Meshes/terrain-plain.obj");
-        MeshComponent.Material = AssetManager.Materials
-            .Instantiate("Meshes/HonseTerrain/HonseTerrain")
+        MeshComponent.Mesh = StaticMesh.CreateFromDisk("Meshes/terrain-plain.obj");
+        MeshComponent.Material = Material.CreateFromDisk("Meshes/HonseTerrain/HonseTerrain")
+            .Instantiate()
             .SetTexture(Texture.CreateFromDisk("Textures/honse-terrain.png"));
     }
 }

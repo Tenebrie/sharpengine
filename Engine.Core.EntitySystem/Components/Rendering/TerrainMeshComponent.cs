@@ -35,9 +35,8 @@ public partial class TerrainMeshComponent : ActorComponent, IRenderable
     [OnReady]
     protected void OnReady()
     {
-        ObjMeshLoader.LoadObj("Meshes/terrain-plain.obj", out var vertices, out var indices);
-        Mesh = StaticMesh.CreateFromMemory(vertices, indices);
-        Material = AssetManager.Materials.Instantiate("Meshes/Terrain/Terrain");
+        Mesh = StaticMesh.CreateFromDisk("Meshes/terrain-plain.obj");
+        Material = Engine.Core.Assets.Materials.Material.CreateFromDisk("Meshes/Terrain/Terrain").Instantiate();
     }
     
     public bool IsOnScreen { get; set; }

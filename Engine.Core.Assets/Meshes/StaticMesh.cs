@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using Engine.Core.Assets.Loaders;
@@ -22,7 +23,7 @@ public enum WindingOrder
 public class StaticMesh : IDisposable
 {
     public bool IsValid { get; private set; }
-    
+
     private WindingOrder WindingOrder { get; set; } = WindingOrder.Cw;
 
     protected VertexBuffer VertexBuffer = VertexBuffer.Invalid;
@@ -31,14 +32,14 @@ public class StaticMesh : IDisposable
 
     public AssetVertex[] Vertices { get; private set; } = [];
     public ushort[] Indices { get; set; } = [];
-    
+
     public Signal<AssetVertex[]> OnMeshLoaded { get; } = new();
 
     protected void LoadInternal(AssetVertex[] verts, ushort[] indices, WindingOrder windingOrder)
     {
         Vertices = verts;
         Indices = indices;
-        
+
         WindingOrder = windingOrder;
         var renderVerts = new RenderingVertex[verts.Length];
         for (var i = 0; i < verts.Length; i++)
@@ -46,7 +47,7 @@ public class StaticMesh : IDisposable
             var v = verts[i];
             renderVerts[i] = new RenderingVertex(v.Position, v.TexCoord, v.VertexColor, Vector3.One);
         }
-        
+
         Layout = CreateVertexLayout([
             new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
             new VertexLayoutAttribute(Attrib.TexCoord0, 2, AttribType.Float, true, false),
@@ -68,13 +69,13 @@ public class StaticMesh : IDisposable
             context.InstanceTransformCount += instanceCount;
             return;
         }
-        
+
         for (var i = 0; i < instanceCount; i++)
             worldTransforms[i].ToFloatSpan(
                 ref context.InstanceTransformPrepBuffer,
                 (int)(context.InstanceTransformCount + i) * context.InstanceTransformStride
             );
-        
+
         context.InstanceTransformCount += instanceCount;
     }
 
@@ -91,17 +92,17 @@ public class StaticMesh : IDisposable
         SetIndexBuffer(encoder, IndexBuffer);
         SetInstanceDataBuffer(encoder, context.InstanceTransformBuffer, context.InstanceTransformCount, instanceCount);
         context.InstanceTransformCount += instanceCount;
-        
+
         var stateFlags = StateFlags.WriteRgb | StateFlags.WriteA | StateFlags.WriteZ | StateFlags.DepthTestLess;
         if (WindingOrder == WindingOrder.Ccw)
             stateFlags |= StateFlags.CullCcw;
         else
             stateFlags |= StateFlags.CullCw;
         SetState(encoder, stateFlags | extraFlags);
-        
+
         material.BindTexture(encoder);
         Submit(encoder, context.ViewId, material.Program, 1, 0);
-        
+
         encoder_end(encoder);
     }
 
@@ -114,9 +115,9 @@ public class StaticMesh : IDisposable
         DestroyIndexBuffer(ref IndexBuffer);
         IsValid = false;
     }
-    
+
     ~StaticMesh() => Dispose();
-    
+
     protected static string ComputeMeshHash(AssetVertex[] vertices, ushort[] indices)
     {
         // Create a more efficient hash by directly hashing the binary data
@@ -163,13 +164,25 @@ public class StaticMesh : IDisposable
         return Convert.ToHexString(hashBytes).ToLowerInvariant();
     }
 
-    public static StaticMesh CreateFromMemory(AssetVertex[] verts, ushort[] indices, WindingOrder windingOrder = WindingOrder.Cw)
+    public static StaticMesh CreateFromDisk(string path)
+    {
+        var filepath = Path.Combine("Assets", path);
+        if (AssetManager.Shared(Assembly.GetCallingAssembly()).Meshes.TryGet(filepath, out var mesh))
+            return mesh;
+
+        ObjMeshLoader.LoadObj(filepath, out var vertices, out var indices);
+        mesh = CreateFromMemoryWithoutCache(vertices, indices);
+        AssetManager.Shared(Assembly.GetCallingAssembly()).Meshes.Put(filepath, mesh);
+        return mesh;
+    }
+
+    public static StaticMesh CreateFromMemoryWithoutCache(AssetVertex[] verts, ushort[] indices, WindingOrder windingOrder = WindingOrder.Cw)
     {
         var newMesh = new StaticMesh();
         newMesh.LoadInternal(verts, indices, windingOrder);
         return newMesh;
     }
-    
+
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
     private readonly struct RenderingVertex(Vector3 position, Vector2 uv, Color color, Vector3 normal)
     {

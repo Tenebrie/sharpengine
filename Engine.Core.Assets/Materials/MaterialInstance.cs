@@ -3,7 +3,7 @@ using static Engine.Native.Bgfx.Bgfx;
 
 namespace Engine.Core.Assets.Materials;
 
-public class MaterialInstance(Material material) : IDisposable
+public class MaterialInstance(Material material)
 {
     protected Texture? Texture;
 
@@ -38,10 +38,5 @@ public class MaterialInstance(Material material) : IDisposable
         }
 
         encoder_set_texture(encoder, 0, DiffuseTextureHandle, Texture.Handle, (uint)(SamplerFlags.MinAnisotropic | SamplerFlags.MagAnisotropic));
-    }
-
-    public void Dispose()
-    {
-        destroy_uniform(DiffuseTextureHandle);
     }
 }

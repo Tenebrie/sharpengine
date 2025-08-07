@@ -1,4 +1,5 @@
-﻿using static Engine.Native.Bgfx.Bgfx;
+﻿using System.Reflection;
+using static Engine.Native.Bgfx.Bgfx;
 
 namespace Engine.Core.Assets.Materials;
 
@@ -26,7 +27,14 @@ public class Material : IDisposable
         DiffuseTextureHandle = create_uniform("s_diffuse", UniformType.Sampler, 1);
     }
 
-    public MaterialInstance Instantiate() => new(this);
+    public MaterialInstance Instantiate()
+    {
+        var instance = InstantiateWithoutCache();
+        AssetManager.Shared(Assembly.GetCallingAssembly()).Materials.RegisterInstance(instance);
+        return instance;
+    }
+
+    public MaterialInstance InstantiateWithoutCache() => new(this);
 
     private static unsafe ShaderHandle LoadShader(string path)
     {
@@ -52,10 +60,14 @@ public class Material : IDisposable
 
     public static Material CreateFromDisk(string shaderPath)
     {
-        return new Material(shaderPath);
+        if (AssetManager.Shared(Assembly.GetCallingAssembly()).Materials.TryGet(shaderPath, out var material))
+            return material;
+        var newMaterial = new Material(shaderPath);
+        AssetManager.Shared(Assembly.GetCallingAssembly()).Materials.Put(shaderPath, newMaterial);
+        return newMaterial;
     }
 
-    public static Material CreateFromGenerated(string fullShaderPath)
+    internal static Material CreateFromGenerated(string fullShaderPath)
     {
         var vertShader = LoadShader(fullShaderPath + ".vert.bin");
         var fragShader = LoadShader(fullShaderPath + ".frag.bin");
@@ -67,6 +79,7 @@ public class Material : IDisposable
     {
         GC.SuppressFinalize(this);
         destroy_program(Program);
+        destroy_uniform(DiffuseTextureHandle);
     }
 
     ~Material() => Dispose();

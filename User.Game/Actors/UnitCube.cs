@@ -2,6 +2,7 @@
 using System.Numerics;
 using Engine.Core.Assets;
 using Engine.Core.Assets.Loaders;
+using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes.Builtins;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
@@ -18,7 +19,7 @@ public partial class UnitCube : Actor
     protected void OnReady()
     {
         // InstanceManager.Mesh = new StaticMesh();
-        InstanceManager.Material = AssetManager.Materials.Instantiate("Meshes/RawColor/RawColor");
+        InstanceManager.Material = Material.CreateFromDisk("Meshes/RawColor/RawColor").Instantiate();
         CubeMesh.Instance.Load();
         InstanceManager.Mesh = CubeMesh.Instance.Mesh;
         

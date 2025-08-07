@@ -25,7 +25,6 @@ public partial class Backstage : Scene
         }
     }
 
-    internal AssetManager SharedAssetManager { get; } = new();
     internal ServiceRegistry ServiceRegistry { get; } = new();
 
     public Backstage()
@@ -52,7 +51,6 @@ public partial class Backstage : Scene
     {
         AdoptChild(ServiceRegistry);
         ServiceRegistry.Preload<CacheRevalidationService>();
-        SharedAssetManager.Initialize();
         RunAssemblyStaticInit();
     }
 
@@ -61,12 +59,6 @@ public partial class Backstage : Scene
     {
         ServiceRegistry.Get<ReaperService>().Reap();
         ServiceRegistry.Get<InputService>().SendKeyboardHeldEvents(deltaTime);
-    }
-
-    [OnDestroy]
-    internal void OnDestroy()
-    {
-        SharedAssetManager.Dispose();
     }
 
     private Camera? GetActiveCamera => FindActiveCamera(this);

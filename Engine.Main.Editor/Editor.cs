@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Engine.Core.Assets;
 using Engine.Core.EntitySystem;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Modules;
@@ -101,6 +102,8 @@ internal static class Editor
             PhysicsAssembly.Destroy();
             UserGameAssembly.Destroy();
             EditorHostAssembly.Destroy();
+            
+            AssemblyAssetManager.DisposeAll();
             RenderingAssembly.DestroyPermanently();
 
             Console.WriteLine("Guest assemblies destroyed.");

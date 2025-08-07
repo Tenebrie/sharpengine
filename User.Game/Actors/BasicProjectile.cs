@@ -1,4 +1,6 @@
 ﻿using Engine.Core.Assets;
+using Engine.Core.Assets.Materials;
+using Engine.Core.Assets.Meshes;
 using Engine.Core.Communication.Signals;
 using Engine.Core.Makers;
 using Engine.Core.EntitySystem.Attributes;
@@ -10,16 +12,16 @@ namespace User.Game.Actors;
 
 public partial class BasicProjectile : Actor
 {
-    // [Signal] public static readonly Signal<BasicProjectile> ProjectileCreated;
+    [Signal] public static readonly Signal<BasicProjectile> ProjectileCreated;
     [Component] public PhysicsComponent PhysicsComponent;
     [Component] protected StaticMeshComponent MeshComponent;
     
     [OnReady]
     protected void OnReady()
     {
-        // ProjectileCreated.Emit(this);
-        MeshComponent.Mesh = AssetManager.Meshes.LoadFromDisk("Meshes/projectile-sword.obj");
-        MeshComponent.Material = AssetManager.Materials.Instantiate("Meshes/AlliedProjectile/AlliedProjectile");
+        ProjectileCreated.Emit(this);
+        MeshComponent.Mesh = StaticMesh.CreateFromDisk("Meshes/projectile-sword.obj");
+        MeshComponent.Material = Material.CreateFromDisk("Meshes/AlliedProjectile/AlliedProjectile").Instantiate();
         MeshComponent.Transform.Rotation = QuatMakers.FromRotation(0, -90, 0);
     }
 

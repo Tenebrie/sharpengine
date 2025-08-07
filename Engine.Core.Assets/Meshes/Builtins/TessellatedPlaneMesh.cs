@@ -1,4 +1,5 @@
-﻿using Engine.Core.Assets.Loaders;
+﻿using System.Reflection;
+using Engine.Core.Assets.Loaders;
 using Engine.Core.Common;
 
 namespace Engine.Core.Assets.Meshes.Builtins;
@@ -7,11 +8,21 @@ public static class TessellatedPlaneMesh
 {
     public static StaticMesh Create(float width = 1f, float height = 1f, int segmentsX = 1, int segmentsY = 1)
     {
+        var key = $"{width}_{height}_{segmentsX}_{segmentsY}";
+        if (AssetManager.Shared(Assembly.GetCallingAssembly()).Meshes.TryGet(key, out var mesh))
+            return mesh;
+        mesh = CreateWithoutCache(width, height, segmentsX, segmentsY);
+        AssetManager.Shared(Assembly.GetCallingAssembly()).Meshes.Put(key, mesh);
+        return mesh;
+    }
+
+    public static StaticMesh CreateWithoutCache(float width = 1f, float height = 1f, int segmentsX = 1, int segmentsY = 1)
+    {
         var verts = CreateVerts(width, height, segmentsX, segmentsY);
         var indices = CreateIndices(segmentsX * segmentsY);
-        return StaticMesh.CreateFromMemory(verts, indices);
+        return StaticMesh.CreateFromMemoryWithoutCache(verts, indices);
     }
-    
+
     public static AssetVertex[] CreateVerts(float width = 1f, float height = 1f, int segmentsX = 1, int segmentsY = 1)
     {
         var verts = new AssetVertex[(segmentsX + 1) * (segmentsY + 1)];
@@ -43,10 +54,10 @@ public static class TessellatedPlaneMesh
                 int baseIndex = (y * segmentsX + x) * 6;
                 int vertexIndex = y * (segmentsX + 1) + x;
 
-                indices[baseIndex]     = (ushort)(vertexIndex);
+                indices[baseIndex] = (ushort)(vertexIndex);
                 indices[baseIndex + 1] = (ushort)(vertexIndex + segmentsX + 1);
                 indices[baseIndex + 2] = (ushort)(vertexIndex + 1);
-                
+
                 indices[baseIndex + 3] = (ushort)(vertexIndex + segmentsX + 1);
                 indices[baseIndex + 4] = (ushort)(vertexIndex + segmentsX + 2);
                 indices[baseIndex + 5] = (ushort)(vertexIndex + 1);
