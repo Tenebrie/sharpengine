@@ -92,10 +92,6 @@ public class MaterialBuilder(object key)
         File.WriteAllText(vertShaderPath, vertSource);
         File.WriteAllText(varyingFilePath, varyingSource);
         
-        Logger.InfoF("Compiling material shaders for " + Key + " with storage " + storageKey);
-        // Logger.InfoF("Vertex shader source" + vertSource);
-        // Logger.InfoF("Fragment shader source" + fragSource);
-
         try
         {
             PythonShell.RunEngineScript("build-shaders.py", $"--src {srcDir} --out {outDir}");

@@ -18,6 +18,12 @@ public partial class AbilityController : ActorComponent
     {
         _hotbar = [PiercingBlade, LightningStrike, null, null];
     }
+
+    [OnUpdate]
+    protected void OnUpdate(double deltaTime)
+    {
+        _currentAbility?.OnCooldownReduce(deltaTime);
+    }
     
     [OnInput(InputAction.Hotbar1, 0)]
     [OnInput(InputAction.Hotbar2, 1)]
@@ -29,6 +35,7 @@ public partial class AbilityController : ActorComponent
     }
     
     [OnInput(InputAction.Primary)]
+    [OnInputHeld(InputAction.Primary)]
     protected void OnCastPrimary()
     {
         _currentAbility?.OnCast();

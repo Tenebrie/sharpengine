@@ -21,7 +21,7 @@ public static partial class Logger
 
     public static void ReadLevel(LogLevel level, out List<Tuple<string, LogLevel>> log) => Logs[level].ReadAll(out log);
     public static void ReadRecent(out List<Tuple<string, LogLevel>> log) => RecentLog.ReadAll(out log, skipNonRecent: true);
-    public static void ReadPersistent(out List<string> log) => PersistentLog.ReadAll(out log);
+    public static List<Tuple<string, LogLevel>> ReadPersistent() => PersistentLog.ReadAll();
     
     public static void Debug(object message) => Write(message, null, LogLevel.Debug);
     public static void DebugNoNewline(object message) => Write(message, null, LogLevel.Debug, skipNewline: true);
@@ -42,8 +42,10 @@ public static partial class Logger
     public static void Fatal(object message) => Write(message, null, LogLevel.Fatal);
     public static void Fatal(object message, Exception e) => Write(message, e, LogLevel.Fatal);
     public static void FatalF(string format, params object[] args) => Write(string.Format(format, args), null, LogLevel.Fatal);
-    public static void ShowPersistent(object key, object? message) => PersistentLog.Write(key, message);
-    public static void ShowPersistentF(object key, string format, params object[] args) => PersistentLog.Write(key, string.Format(format, args));
+    public static void ShowPersistent(object key, object? message) => PersistentLog.Write(LogLevel.Error, key, message);
+    public static void ShowPersistent(LogLevel level, object key, object? message) => PersistentLog.Write(level, key, message);
+    public static void ShowPersistentF(object key, string format, params object[] args) => PersistentLog.Write(LogLevel.Error, key, string.Format(format, args));
+    public static void ShowPersistentF(LogLevel level, object key, string format, params object[] args) => PersistentLog.Write(level, key, string.Format(format, args));
     public static void ClearPersistent(object key) => PersistentLog.Clear(key);
     
     private static void Write(object message, Exception? exception, LogLevel level, bool skipNewline = false)
@@ -147,26 +149,32 @@ public static partial class Logger
 
     private class PersistentLogStream
     {
-        private readonly Dictionary<string, string> _log = new();
+        private readonly Lock _mutex = new();
+        private readonly Dictionary<string, Tuple<string, LogLevel>> _log = new();
         
-        internal void Write(object key, object? message)
+        internal void Write(LogLevel level, object key, object? message)
         {
-            if (message is null)
+            var keyString = key.ToString();
+            var messageString = message?.ToString();
+            if (keyString is null || messageString is null)
                 return;
-            _log[key.ToString()!] = message.ToString()!;
+            lock (_mutex)
+                _log[keyString] = new Tuple<string, LogLevel>(messageString, level);
         }
         
         internal void Clear(object key)
         {
-            _log.Remove(key.ToString()!);
+            lock (_mutex)
+                _log.Remove(key.ToString()!);
         }
         
-        internal void ReadAll(out List<string> orderedLog)
+        internal List<Tuple<string, LogLevel>> ReadAll()
         {
-            orderedLog = new List<string>(_log.Count);
-            foreach (var kvp in _log)
+            lock (_mutex)
             {
-                orderedLog.Add(kvp.Value);
+                if (_log.Count == 0)
+                    return [];
+                return _log.Values.ToList();
             }
         }
     }

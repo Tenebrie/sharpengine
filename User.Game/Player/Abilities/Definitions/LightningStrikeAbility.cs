@@ -1,8 +1,6 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Engine.Core.EntitySystem.Entities;
+﻿using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
 using Engine.Core.Common;
-using Engine.Core.Logging;
 using JetBrains.Annotations;
 using User.Game.Actors;
 
@@ -11,8 +9,13 @@ namespace User.Game.Player.Abilities.Definitions;
 [UsedImplicitly]
 public partial class LightningStrikeAbility : ActorComponent, IAbility
 {
+    private const double CooldownTime = 0.2;
+    private double _cooldownRemaining = 0.0;
+    
     public void OnCast()
     {
+        if (_cooldownRemaining > 0)
+            return;
         var activeCamera = Backstage.GetActiveCameraOrThrow();
         var mousePos = GetService<InputService>().GetMousePosition();
         
@@ -25,14 +28,23 @@ public partial class LightningStrikeAbility : ActorComponent, IAbility
         effect.Transform.Rescale(75);
         
         var targets = BasicEnemy.All
-            .Where(enemy => enemy.WorldTransform.Position.DistanceTo(targetPoint) < 15)
+            .Where(enemy => enemy.WorldTransform.Position.DistanceTo(targetPoint) < 25)
             .ToArray();
         foreach (var hitEnemy in targets)
         {
             hitEnemy.DealDamage(100);
         }
+        
+        _cooldownRemaining = CooldownTime;
     }
-    
+
+    public void OnCooldownReduce(double deltaTime)
+    {
+        if (_cooldownRemaining <= 0.0)
+            return;
+        _cooldownRemaining -= deltaTime;
+    }
+
     /// <summary>
     /// Converts mouse screen position to world position on the ground plane (Y=0)
     /// </summary>
@@ -69,7 +81,7 @@ public partial class LightningStrikeAbility : ActorComponent, IAbility
         var rayDirection = cameraForward * -rayDirViewZ + 
                           cameraRight * -rayDirViewX + 
                           cameraUp * -rayDirViewY;
-        rayDirection = rayDirection.NormalizedCopy();
+        rayDirection = rayDirection.Normalized();
 
         // Define the ground plane (normal pointing up, at Y=0)
         var planeNormal = Vector3.UnitY; // (0, 1, 0)
@@ -108,10 +120,7 @@ public partial class LightningStrikeAbility : ActorComponent, IAbility
         
         // If distance is negative, intersection is behind the ray origin
         if (distance < 0)
-        {
-            Logger.Info("Dist is " + distance);
             return null;
-        }
         
         // Calculate intersection point
         return rayOrigin + rayDirection * distance;

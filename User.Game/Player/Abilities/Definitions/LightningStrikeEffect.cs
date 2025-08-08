@@ -21,7 +21,7 @@ public partial class LightningStrikeEffect : Actor
             .SetSamplingTexture(true)
             .Compile()
             .Instantiate()
-            .SetTexture(Texture.CreateFromDisk("Textures/lightning.png"));
+            .LoadTexture(Texture.CreateFromDisk("Textures/lightning.png"));
     }
 
     [OnReady]

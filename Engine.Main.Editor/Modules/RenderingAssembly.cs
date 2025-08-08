@@ -52,7 +52,6 @@ internal class RenderingAssembly(IWindow window) : GuestAssembly("Engine.Module.
     public override void Destroy()
     {
         RenderingModule?.DisconnectCallbacks();
-        _backstages.Clear();
         base.Destroy();
     }
 

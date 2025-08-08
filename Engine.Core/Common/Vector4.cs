@@ -110,13 +110,7 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
         return horizontalSum.ToScalar();
     }
 
-    public Vector4 NormalizedCopy() => new Vector4(this).SetLengthIfNotZero(1);
-
-    public Vector4 NormalizeInPlace()
-    {
-        this = SetLengthIfNotZero(1);
-        return this;
-    }
+    public Vector4 Normalized() => SetLengthIfNotZero(1);
 
     /**
      * Uncommon methods
@@ -125,7 +119,7 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
     public Vector4 SetLengthIfNotZero(double length)
     {
         var currentLength = Length;
-        if (currentLength < double.Epsilon)
+        if (currentLength < 1e-50)
             return this;
         
         var factor = length / currentLength;

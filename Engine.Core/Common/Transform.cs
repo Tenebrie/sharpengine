@@ -24,9 +24,9 @@ public class Transform
         get
         {
             var r = Data;
-            r.Row1.NormalizeInPlace();
-            r.Row2.NormalizeInPlace();
-            r.Row3.NormalizeInPlace();
+            r.Row1.Normalized();
+            r.Row2.Normalized();
+            r.Row3.Normalized();
             return QuatMakers.FromRowMatrix(r);
         }
         set
@@ -122,7 +122,7 @@ public class Transform
     
     public Transform RotateAroundLocal(Vector3 axis, double angle)
     {
-        var worldAxis = Basis.TransformVector(axis.NormalizedCopy());
+        var worldAxis = Basis.TransformVector(axis.Normalized());
         var rotation = Quat.CreateFromAxisAngle(worldAxis, double.DegreesToRadians(angle));
     
         // Apply the rotation

@@ -75,7 +75,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
         SetVertexBuffer(vertexBuffer);
         SetIndexBuffer(indexBuffer);
         SetState(StateFlags.WriteRgb | StateFlags.WriteA | StateFlags.BlendAlphaToCoverage);
-        set_texture(0, _diffuseTextureHandle, tex.Handle, 0);
+        SetTexture(0, _diffuseTextureHandle, tex.Handle, 0);
         Submit(ViewId.UserInterface, _material.Program, 1, 0);
     }
 

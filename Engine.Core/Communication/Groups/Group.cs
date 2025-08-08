@@ -35,8 +35,6 @@ public class Group<T> : IGroup, IEnumerable<T> where T : class
         if (!_members.Contains(member))
             return;
         
-        Logger.InfoF("Removing member to group: {0}", member.GetType().Name);
-
         _members.Remove(member);
     }
     public void Leave(object member) => Leave((T)member);

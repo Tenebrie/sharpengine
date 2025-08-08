@@ -30,12 +30,15 @@ public class AtomRegistrationHandler
     private AtomHandle[] _scratchArray = [];
     public AtomHandle[] AsArray()
     {
-        Array.Resize(ref _scratchArray, _registeredAtoms.Count);
+        var atomCount = _registeredAtoms.Count;
+        if (_scratchArray.Length < atomCount)
+            Array.Resize(ref _scratchArray, atomCount);
 
         var count = 0;
-        foreach (var handle in _registeredAtoms.Values)
+        for (var i = 0; i < atomCount; i++)
         {
-            _scratchArray[count] = handle;
+            var handle = _registeredAtoms.ElementAt(i);
+            _scratchArray[count] = handle.Value;
             count++;
         }
 

@@ -120,7 +120,37 @@ public static partial class Bgfx
     {
 	    return frame(capture);
     }
+
+    /// <summary>
+    /// Allocate buffer and copy data into it. Data will be freed inside bgfx.
+    /// </summary>
+    ///
+    /// <param name="data">Data to be copied.</param>
+    /// <param name="size">Size of data to be copied.</param>
+    ///
+    public static unsafe MemoryHandle CopyMemory(byte[] data, int size)
+    {
+	    fixed (void* ptr = data)
+	    {
+		    var mem = copy(ptr, (uint)data.Length);
+		    return new MemoryHandle { Data = mem };
+	    }
+    }
     
+    public unsafe struct MemoryHandle
+    {
+	    public Memory* Data;
+    }
+    
+    /// <summary>
+    /// Allocate buffer and copy data into it. Data will be freed inside bgfx.
+    /// Will copy the entire array length.
+    /// </summary>
+    ///
+    /// <param name="data">Data to be copied.</param>
+    ///
+    public static MemoryHandle CopyMemory(byte[] data) => CopyMemory(data, data.Length);
+
     /// <summary>
     /// Set debug flags.
     /// </summary>
@@ -352,6 +382,151 @@ public static partial class Bgfx
 
 		return tvb;
 	}
+
+	/// <summary>
+	/// Create 2D texture.
+	/// </summary>
+	///
+	/// <param name="width">Width.</param>
+	/// <param name="height">Height.</param>
+	/// <param name="hasMips">Indicates that texture contains full mip-map chain.</param>
+	/// <param name="numLayers">Number of layers in texture array. Must be 1 if caps `BGFX_CAPS_TEXTURE_2D_ARRAY` flag is not set.</param>
+	/// <param name="format">Texture format. See: `TextureFormat::Enum`.</param>
+	/// <param name="flags">Texture creation (see `BGFX_TEXTURE_*`.), and sampler (see `BGFX_SAMPLER_*`) flags. Default texture sampling mode is linear, and wrap mode is repeat. - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap   mode. - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic   sampling.</param>
+	/// <param name="data">Texture data. If `_mem` is non-NULL, created texture will be immutable. If `_mem` is NULL content of the texture is uninitialized. When `_numLayers` is more than 1, expected memory layout is texture and all mips together for each array element.</param>
+	/// <see cref="Bgfx" srcline="3128" />
+	public static unsafe NativeTexture CreateTexture2D(
+		int width,
+		int height,
+		bool hasMips,
+		ushort numLayers,
+		TextureFormat format,
+		TextureFlags flags,
+		byte[] data)
+	{
+		var memory = CopyMemory(data);
+		var handle = create_texture_2d((ushort)width, (ushort)height, hasMips, numLayers, format, (ulong)flags, memory.Data);
+		return new NativeTexture
+		{
+			Handle = handle,
+			Width = width,
+			Height = height
+		};
+	}
+	
+	public static unsafe NativeTexture CreateMutableTexture2D(
+		int width,
+		int height,
+		bool hasMips,
+		ushort numLayers,
+		TextureFormat format,
+		TextureFlags flags)
+	{
+		var handle = create_texture_2d((ushort)width, (ushort)height, hasMips, numLayers, format, (ulong)flags, null);
+		return new NativeTexture
+		{
+			Handle = handle,
+			Width = width,
+			Height = height
+		};
+	}
+
+	/// <summary>
+	/// Update 2D texture.
+	/// @attention It's valid to update only mutable texture. See `bgfx::createTexture2D` for more info.
+	/// </summary>
+	///
+	/// <param name="texture">Texture handle.</param>
+	/// <param name="layer">Layer in texture array.</param>
+	/// <param name="mipLevel">Mip level.</param>
+	/// <param name="x">X offset in texture.</param>
+	/// <param name="y">Y offset in texture.</param>
+	/// <param name="width">Width of texture block.</param>
+	/// <param name="height">Height of texture block.</param>
+	/// <param name="data">Texture update data.</param>
+	/// <see cref="Bgfx" srcline="3170" />
+	public static unsafe void UpdateTexture2D(
+		NativeTexture texture,
+		int layer,
+		int mipLevel,
+		byte[] data
+	)
+	{
+		var memory = CopyMemory(data);
+		update_texture_2d(
+			texture.Handle,
+			(ushort)layer,
+			(byte)mipLevel,
+			0,
+			0,
+			(ushort)texture.Width,
+			(ushort)texture.Height,
+			memory.Data,
+			ushort.MaxValue);
+	}
+	
+	/// <summary>
+	/// Update 2D texture.
+	/// @attention It's valid to update only mutable texture. See `bgfx::createTexture2D` for more info.
+	/// </summary>
+	///
+	/// <param name="texture">Texture handle.</param>
+	/// <param name="layer">Layer in texture array.</param>
+	/// <param name="mipLevel">Mip level.</param>
+	/// <param name="x">X offset in texture.</param>
+	/// <param name="y">Y offset in texture.</param>
+	/// <param name="width">Width of texture block.</param>
+	/// <param name="height">Height of texture block.</param>
+	/// <param name="data">Texture update data.</param>
+	/// <see cref="Bgfx" srcline="3170" />
+	public static unsafe void UpdateTexture2D(
+		NativeTexture texture,
+		int layer,
+		int mipLevel,
+		int x,
+		int y,
+		int width,
+		int height,
+		byte[] data)
+	{
+		var memory = CopyMemory(data);
+		update_texture_2d(
+			texture.Handle,
+			(ushort)layer,
+			(byte)mipLevel,
+			(ushort)x,
+			(ushort)y,
+			(ushort)width,
+			(ushort)height,
+			memory.Data,
+			ushort.MaxValue);
+	}
+
+	public struct NativeTexture
+	{
+		public TextureHandle Handle;
+		public bool Valid => Handle.Valid;
+		public int Width;
+		public int Height;
+		
+		public static NativeTexture Invalid => new()
+		{
+			Handle = new TextureHandle { idx = ushort.MaxValue },
+			Width = 0,
+			Height = 0
+		};
+	}
+
+	/// <summary>
+	/// Destroy texture.
+	/// </summary>
+	///
+	/// <param name="texture">Texture handle.</param>
+	///
+	public static void DestroyTexture(NativeTexture texture)
+	{
+		destroy_texture(texture.Handle);
+	}
 	
     /// <summary>
     /// Set view rectangle. Draw primitive outside view will be clipped.
@@ -478,6 +653,25 @@ public static partial class Bgfx
     public static unsafe void SetInstanceDataBuffer(Encoder* encoder, DynamicVertexBufferHandle idb, uint start, uint num)
     {
 	    encoder_set_instance_data_from_dynamic_vertex_buffer(encoder, idb, start, num);
+    }
+
+    /// <summary>
+    /// Set texture stage for draw primitive.
+    /// </summary>
+    ///
+    /// <param name="stage">Texture unit.</param>
+    /// <param name="sampler">Program sampler.</param>
+    /// <param name="texture">Texture handle.</param>
+    /// <param name="flags">Texture sampling mode. Default value UINT32_MAX uses   texture sampling settings from the texture.   - `BGFX_SAMPLER_[U/V/W]_[MIRROR/CLAMP]` - Mirror or clamp to edge wrap     mode.   - `BGFX_SAMPLER_[MIN/MAG/MIP]_[POINT/ANISOTROPIC]` - Point or anisotropic     sampling.</param>
+    ///
+    public static void SetTexture(int stage, UniformHandle sampler, NativeTexture texture, SamplerFlags flags)
+    {
+	    set_texture((byte)stage, sampler, texture.Handle, (uint)flags);
+    }
+    
+    public static unsafe void SetTexture(Encoder* encoder, int stage, UniformHandle sampler, NativeTexture texture, SamplerFlags flags)
+    {
+	    encoder_set_texture(encoder, (byte)stage, sampler, texture.Handle, (uint)flags);
     }
     
     /// <summary>

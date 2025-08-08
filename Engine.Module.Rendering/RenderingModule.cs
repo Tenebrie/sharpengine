@@ -113,6 +113,7 @@ public unsafe class RenderingModule : IRenderingModule
     [Profile]
     private void RenderSingleFrame(double deltaTime)
     {
+        var stopwatch = Profiler.Start();
         DebugTextClear();
         _logRenderer.RenderFrame(deltaTime);
 
@@ -153,6 +154,7 @@ public unsafe class RenderingModule : IRenderingModule
         SetViewRect(ViewId.UserInterface, 0, 0, FramebufferSize.X, FramebufferSize.Y);
 
         Frame(false);
+        stopwatch.StopAndReport(typeof(RenderingModule), ProfilingContext.RenderingPrepare);
     }
 
     private Camera? FindActiveCamera(Atom target)

@@ -100,7 +100,7 @@ public class StaticMesh : IDisposable
             stateFlags |= StateFlags.CullCw;
         SetState(encoder, stateFlags | extraFlags);
 
-        material.BindTexture(encoder);
+        material.LoadTextureForRendering(encoder);
         Submit(encoder, context.ViewId, material.Program, 1, 0);
 
         encoder_end(encoder);

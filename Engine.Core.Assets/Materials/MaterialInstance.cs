@@ -10,33 +10,31 @@ public class MaterialInstance(Material material)
     public ProgramHandle Program => material.Program;
     public UniformHandle DiffuseTextureHandle => material.DiffuseTextureHandle;
 
-    public MaterialInstance SetTexture(Texture texture)
+    public MaterialInstance LoadTexture(Texture texture)
     {
         Texture = texture;
         return this;
     }
 
-    public void BindTexture()
+    public void LoadTextureForRendering()
     {
         if (Texture == null)
         {
-            var invalidHandle = new TextureHandle { idx = ushort.MaxValue };
-            set_texture(0, DiffuseTextureHandle, invalidHandle, 0);
+            SetTexture(0, DiffuseTextureHandle, NativeTexture.Invalid, 0);
             return;
         }
 
-        set_texture(0, DiffuseTextureHandle, Texture.Handle, (uint)(SamplerFlags.MinAnisotropic | SamplerFlags.MagAnisotropic));
+        SetTexture(0, DiffuseTextureHandle, Texture.Handle, SamplerFlags.MinAnisotropic | SamplerFlags.MagAnisotropic);
     }
 
-    public unsafe void BindTexture(Encoder* encoder)
+    public unsafe void LoadTextureForRendering(Encoder* encoder)
     {
         if (Texture == null)
         {
-            var invalidHandle = new TextureHandle { idx = ushort.MaxValue };
-            set_texture(0, DiffuseTextureHandle, invalidHandle, 0);
+            SetTexture(0, DiffuseTextureHandle, NativeTexture.Invalid, 0);
             return;
         }
 
-        encoder_set_texture(encoder, 0, DiffuseTextureHandle, Texture.Handle, (uint)(SamplerFlags.MinAnisotropic | SamplerFlags.MagAnisotropic));
+        SetTexture(encoder, 0, DiffuseTextureHandle, Texture.Handle, SamplerFlags.MinAnisotropic | SamplerFlags.MagAnisotropic);
     }
 }

@@ -16,6 +16,8 @@ public partial class BasicProjectile : Actor
     [Component] public PhysicsComponent PhysicsComponent;
     [Component] protected StaticMeshComponent MeshComponent;
     
+    private readonly List<BasicEnemy> _enemiesHit = [];
+    
     [OnReady]
     protected void OnReady()
     {
@@ -29,15 +31,20 @@ public partial class BasicProjectile : Actor
     protected void CheckCollision()
     {
         foreach (var enemy in ParentScene.Actors.OfType<BasicEnemy>()
+                     .Where(enemy => !_enemiesHit.Contains(enemy))
                      .Where(enemy => enemy.Transform.Position.DistanceTo(Transform.Position) <= MeshComponent.BoundingSphere.WorldRadius + 3))
         {
             enemy.DealDamage(100.0);
-            QueueFree();
-            return;
+            _enemiesHit.Add(enemy);
+            if (_enemiesHit.Count >= 3)
+            {
+                QueueFree();
+                return;
+            }
         }
     }
     
-    [OnTimer(Seconds = 1.0f)]
+    [OnTimer(Seconds = 2.0f)]
     protected void TimeoutDestroy()
     {
         QueueFree();

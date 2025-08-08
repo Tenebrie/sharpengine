@@ -32,7 +32,7 @@ public partial class PlayerCharacter : Actor
         if (direction.LengthSquared == 0)
             return;
         
-        var value = new Vector3(direction.Y, 0, -direction.X).NormalizeInPlace();
+        var value = new Vector3(direction.Y, 0, -direction.X).Normalized();
         var forwardVector = Vector3.Forward;
         var dotProduct = value.DotProduct(forwardVector);
         var crossProduct = value.CrossProduct(forwardVector);

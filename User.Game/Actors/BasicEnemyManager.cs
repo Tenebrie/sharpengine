@@ -6,6 +6,7 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Logging;
 using Engine.Native.Bgfx;
 using User.Game.Player;
 
@@ -28,7 +29,7 @@ public partial class BasicEnemyManager : Actor
         InstanceManager.Material = Material
             .CreateFromDisk("Meshes/BillboardSprite/BillboardSprite")
             .Instantiate()
-            .SetTexture(Texture.CreateFromDisk("Textures/godot.png"));
+            .LoadTexture(Texture.CreateFromDisk("Textures/godot.png"));
         InstanceManager.RenderFlags = Bgfx.StateFlags.BlendAlphaToCoverage;
     }
 
@@ -56,6 +57,7 @@ public partial class BasicEnemyManager : Actor
             // transform.Rotation = Quaternion.Identity;
             // transform.RotateAroundLocal(Vector3.Pitch, -90);
             transform.Rotation = Quaternion.Identity;
+            transform.TranslateGlobal(0, Random.Shared.NextDouble() * 1.0, 0);
             // transform.RotateAroundLocal(Vector3.Right, -2);
             transform.Rescale(5, 5, 5);
             InstanceManager.AddInstance(transform);
@@ -73,8 +75,9 @@ public partial class BasicEnemyManager : Actor
         const double movementSpeed = 15.0;
         foreach (var enemy in InstanceManager.Instances)
         {
-            enemy.Physics.Velocity =
-                (player.WorldTransform.Position - enemy.WorldTransform.Position).NormalizeInPlace() * movementSpeed;
+            enemy.Physics.Velocity = player.WorldTransform.Position - enemy.WorldTransform.Position;
+            enemy.Physics.Velocity = enemy.Physics.Velocity.Normalized();
+            enemy.Physics.Velocity *= movementSpeed;
             
             var distanceToPlayer = enemy.Transform.Position.DistanceTo(player.WorldTransform.Position);
             if (distanceToPlayer < 250)

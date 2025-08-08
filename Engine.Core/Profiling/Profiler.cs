@@ -4,20 +4,29 @@ using Microsoft.Extensions.ObjectPool;
 
 namespace Engine.Core.Profiling;
 
+[Flags]
 public enum ProfilingContext
 {
-    Unknown,
-    PhysicsUpdate,
-    OnCreateCallback,
-    OnReadyCallback,
-    OnUpdateCallback,
-    OnDestroyCallback,
+    Unknown = 0,
+    PhysicsUpdate = 1 << 0,
+    OnCreateCallback = 1 << 1,
+    OnReadyCallback = 1 << 2,
+    OnUpdateCallback = 1 << 3,
+    OnDestroyCallback = 1 << 4,
+    BackstageUpdate = 1 << 5,
+    RenderingPrepare = 1 << 6,
 }
 
 public class Profiler
 {
-    private readonly Dictionary<Type, Dictionary<string, ProfilerEntry>> _methodEntries = new();
-    private readonly Dictionary<Type, Dictionary<ProfilingContext, ProfilerEntry>> _lifecycleEntries = new();
+    private int _currentBufferIndex = 0;
+    private readonly Dictionary<Type, Dictionary<string, ProfilerEntry>>[] _methodEntriesBuffers = [new(), new()];
+    private readonly Dictionary<Type, Dictionary<ProfilingContext, ProfilerEntry>>[] _lifecycleEntriesBuffers = [new(), new()];
+
+    private Dictionary<Type, Dictionary<string, ProfilerEntry>> MethodEntries => _methodEntriesBuffers[_currentBufferIndex];
+    private Dictionary<Type, Dictionary<ProfilingContext, ProfilerEntry>> LifecycleEntries => _lifecycleEntriesBuffers[_currentBufferIndex];
+    private Dictionary<Type, Dictionary<string, ProfilerEntry>> LastSecondMethodEntries => _methodEntriesBuffers[1 - _currentBufferIndex];
+    private Dictionary<Type, Dictionary<ProfilingContext, ProfilerEntry>> LastSecondLifecycleEntries => _lifecycleEntriesBuffers[1 - _currentBufferIndex];
 
     private static readonly DefaultObjectPoolProvider PoolProvider = new();
     private static readonly ObjectPool<ProfilingStopwatch> Pool = PoolProvider.Create<ProfilingStopwatch>();
@@ -26,78 +35,90 @@ public class Profiler
     public static ProfilingStopwatch Start()
     {
         var stopwatch = Pool.Get();
-        // var stopwatch = new ProfilingStopwatch();
         stopwatch.Start();
         return stopwatch;
     }
-    
-    public static void GenerateReport()
+    //
+    // public static void GenerateReport()
+    // {
+    //     return;
+    //     Logger.Debug("Profiler Report:");
+    //     foreach (var (ownerType, contextDictionary) in Instance.LifecycleEntries)
+    //     {
+    //         Logger.Debug($"Owner Type: {ownerType.Name}");
+    //         foreach (var (context, profilerEntry) in contextDictionary)
+    //         {
+    //             var averageDuration = $"Average: {profilerEntry.AverageMilliseconds()} ms";
+    //             var totalDuration = $"Total: {profilerEntry.TotalMilliseconds()} ms ({profilerEntry.TotalMilliseconds() / 30.0}%)";
+    //             var callCount = $"Calls: {profilerEntry.Count()}";
+    //             Logger.Debug($"  Context: {context}, {averageDuration}, {totalDuration}, {callCount}");
+    //         }
+    //     }
+    //     
+    //     foreach (var (ownerType, methodDictionary) in Instance.MethodEntries)
+    //     {
+    //         Logger.Debug($"Owner Type: {ownerType.Name}");
+    //         foreach (var (methodName, profilerEntry) in methodDictionary)
+    //         {
+    //             var averageDuration = $"Average: {profilerEntry.AverageMilliseconds()} ms";
+    //             var totalDuration = $"Total: {profilerEntry.TotalMilliseconds()} ms ({profilerEntry.TotalMilliseconds() / 30.0}%)";
+    //             var callCount = $"Calls: {profilerEntry.Count()}";
+    //             Logger.Debug($"  Method: {methodName}, {averageDuration}, {totalDuration}, {callCount}");
+    //         }
+    //     }
+    // }
+
+    public static ProfilerEntry[] Query(ProfilingContext context)
     {
-        return;
-        Logger.Debug("Profiler Report:");
-        foreach (var (ownerType, contextDictionary) in Instance._lifecycleEntries)
-        {
-            Logger.Debug($"Owner Type: {ownerType.Name}");
-            foreach (var (context, profilerEntry) in contextDictionary)
-            {
-                var averageDuration = $"Average: {profilerEntry.Average()} ms";
-                var totalDuration = $"Total: {profilerEntry.Total()} ms ({profilerEntry.Total() / 30.0}%)";
-                var callCount = $"Calls: {profilerEntry.Count()}";
-                Logger.Debug($"  Context: {context}, {averageDuration}, {totalDuration}, {callCount}");
-            }
-        }
-        
-        foreach (var (ownerType, methodDictionary) in Instance._methodEntries)
-        {
-            Logger.Debug($"Owner Type: {ownerType.Name}");
-            foreach (var (methodName, profilerEntry) in methodDictionary)
-            {
-                var averageDuration = $"Average: {profilerEntry.Average()} ms";
-                var totalDuration = $"Total: {profilerEntry.Total()} ms ({profilerEntry.Total() / 30.0}%)";
-                var callCount = $"Calls: {profilerEntry.Count()}";
-                Logger.Debug($"  Method: {methodName}, {averageDuration}, {totalDuration}, {callCount}");
-            }
-        }
+        return Instance.LastSecondLifecycleEntries
+            .SelectMany(kvp => kvp.Value)
+            .Where(kvp => context.HasFlag(kvp.Key))
+            .Select(kvp => kvp.Value)
+            .ToArray();
     }
     
-    public static void Reset()
+    public static void SwapBuffers()
     {
-        Instance._methodEntries.Clear();
-        Instance._lifecycleEntries.Clear();
+        Instance._currentBufferIndex = 1 - Instance._currentBufferIndex;
+        Instance.MethodEntries.Clear();
+        Instance.LifecycleEntries.Clear();
     }
     
     internal static void ReportByContext(ProfilingStopwatch stopwatch, Type ownerType, ProfilingContext context)
     {
-        return;
-        if (!Instance._lifecycleEntries.TryGetValue(ownerType, out var contextDictionary))
+        if (!Instance.LifecycleEntries.TryGetValue(ownerType, out var contextDictionary))
         {
             contextDictionary = new Dictionary<ProfilingContext, ProfilerEntry>();
-            Instance._lifecycleEntries[ownerType] = contextDictionary;
+            Instance.LifecycleEntries[ownerType] = contextDictionary;
         }
         if (!contextDictionary.TryGetValue(context, out var profilerEntry))
         {
-            profilerEntry = new ProfilerEntry();
+            profilerEntry = new ProfilerEntry
+            {
+                TypeName = ownerType.Name
+            };
             contextDictionary[context] = profilerEntry;
         }
-        profilerEntry.RecordDuration(stopwatch.Stopwatch.Elapsed.Microseconds);
-        Logger.Debug(ownerType.Name + " - " + context + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
+        profilerEntry.RecordDuration(stopwatch.Stopwatch.Elapsed.TotalMicroseconds);
         Pool.Return(stopwatch);
     }
     
     internal static void ReportByMethodName(ProfilingStopwatch stopwatch, Type ownerType, string methodName)
     {
-        if (!Instance._methodEntries.TryGetValue(ownerType, out var contextDictionary))
+        if (!Instance.MethodEntries.TryGetValue(ownerType, out var contextDictionary))
         {
             contextDictionary = new Dictionary<string, ProfilerEntry>();
-            Instance._methodEntries[ownerType] = contextDictionary;
+            Instance.MethodEntries[ownerType] = contextDictionary;
         }
         if (!contextDictionary.TryGetValue(methodName, out var profilerEntry))
         {
-            profilerEntry = new ProfilerEntry();
+            profilerEntry = new ProfilerEntry
+            {
+                TypeName = ownerType.Name
+            };
             contextDictionary[methodName] = profilerEntry;
         }
-        profilerEntry.RecordDuration(stopwatch.Stopwatch.Elapsed.Microseconds);
-        Logger.Debug(ownerType.Name + " - " + methodName + ": " + stopwatch.Stopwatch.ElapsedMilliseconds + " ms");
+        profilerEntry.RecordDuration(stopwatch.Stopwatch.Elapsed.TotalMicroseconds);
         Pool.Return(stopwatch);
     }
 }
@@ -133,21 +154,18 @@ public sealed class ProfilingStopwatch : IDisposable
     }
 }
 
-internal struct ProfilerEntry
+public class ProfilerEntry
 {
     private int _ptr = 0;
-    private readonly long[] _durations = new long[100000];
+    private readonly double[] _durations = new double[10000];
 
-    public ProfilerEntry()
+    internal void RecordDuration(double duration)
     {
+        _durations[_ptr++ % 10000] = duration;
     }
 
-    internal void RecordDuration(long duration)
-    {
-        _durations[_ptr++ % 50000] = duration;
-    }
-
-    internal double Average() => _durations.Average() / 1000.0;
-    internal double Total() => _durations.Sum() / 1000.0;
-    internal double Count() => _ptr;
+    public string TypeName { get; internal set; } = string.Empty;
+    public double AverageMilliseconds() => TotalMilliseconds() / _ptr;
+    public double TotalMilliseconds() => _durations.Sum() / 1000.0;
+    public double Count() => _ptr;
 }

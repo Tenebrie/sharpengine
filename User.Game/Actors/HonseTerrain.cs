@@ -17,6 +17,6 @@ public partial class HonseTerrain : Actor
         MeshComponent.Mesh = StaticMesh.CreateFromDisk("Meshes/terrain-plain.obj");
         MeshComponent.Material = Material.CreateFromDisk("Meshes/HonseTerrain/HonseTerrain")
             .Instantiate()
-            .SetTexture(Texture.CreateFromDisk("Textures/honse-terrain.png"));
+            .LoadTexture(Texture.CreateFromDisk("Textures/honse-terrain.png"));
     }
 }

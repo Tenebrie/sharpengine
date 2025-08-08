@@ -71,9 +71,8 @@ public struct Vector3(double x, double y, double z)
         X * b.Y - Y * b.X
     );
     
-    public Vector3 NormalizedCopy() => Promote().NormalizedCopy();
-    public Vector3 NormalizeInPlace() => Promote().NormalizeInPlace();
-
+    public Vector3 Normalized() => Promote().Normalized();
+    
     public Vector3 SetLengthIfNotZero(double length)
     {
         var currentLength = Length;

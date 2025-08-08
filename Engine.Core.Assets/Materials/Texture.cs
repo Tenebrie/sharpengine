@@ -10,112 +10,106 @@ namespace Engine.Core.Assets.Materials;
 
 public sealed class Texture : IDisposable
 {
-    private readonly bool _isValid = false;
-    public TextureHandle Handle { get; }
+    public bool IsValid { get; private set; } = false;
+    public NativeTexture Handle { get; private set; }
     public int Width { get; private set; }
     public int Height { get; private set; }
 
-    private readonly List<Image<Rgba32>> _mipLevels;
+    private Image<Rgba32> _baseImage = null!;
     private readonly IResampler _sampler = KnownResamplers.Lanczos3;
 
     private Texture(byte[] data, ushort width, ushort height, bool generateMips = false)
     {
         Width = width;
         Height = height;
-        
-        CalculateSize(width, height, generateMips, out var totalLevels);
-        _mipLevels = new List<Image<Rgba32>>(totalLevels) { Image.LoadPixelData<Rgba32>(data, width, height) };
 
-        unsafe
+        Task.Run(() =>
         {
-            fixed (byte* ptr = data)
+            try
             {
-                var mem = copy(ptr, (uint)data.Length);
-                Handle = create_texture_2d(width, height, generateMips, 1, TextureFormat.RGBA8, (ulong)TextureFlags.None, null);
-                update_texture_2d(Handle, 0, 0, 0,0, width, height, mem, ushort.MaxValue);
-                _isValid = Handle.Valid;
+                InitializeAsync(data, width, height, generateMips);
             }
-        }
+            catch (Exception e)
+            {
+                Logger.Error($"Failed to initialize texture: {e.Message}");
+                Console.Error.WriteLine(e);
+            }
+        });
+    }
+
+    private void InitializeAsync(byte[] data, ushort width, ushort height, bool generateMips = false)
+    {
+        _baseImage = Image.LoadPixelData<Rgba32>(data, width, height);
+
+        Handle = CreateMutableTexture2D(width, height, generateMips, 1, TextureFormat.RGBA8, (ulong)TextureFlags.None);
+        UpdateTexture2D(Handle, 0, 0, data);
+        IsValid = Handle.Valid;
 
         if (generateMips)
             Task.Run(() => GenerateMips(width, height));
     }
-
-    public unsafe void Update(byte[] data, int offsetX, int offsetY, int width, int height)
+    
+    public void Update(byte[] data, int offsetX, int offsetY, int width, int height)
     {
-        fixed (byte* ptr = data)
-        {
-            var mem = copy(ptr, (uint)data.Length);
-            update_texture_2d(Handle, 0, 0, (ushort)offsetX, (ushort)offsetY, (ushort)width, (ushort)height, mem, ushort.MaxValue);
-        }
+        UpdateTexture2D(Handle, 0, 0, offsetX, offsetY, width, height, data);
     }
     
-    private static void CalculateSize(ushort width, ushort height, bool generateMips, out int totalLevels)
-    {
-        totalLevels = 1;
-
-        if (!generateMips)
-            return;
-        
-        var mipWidth = width / 2;
-        var mipHeight = height / 2;
-        
-        while (mipWidth > 0 && mipHeight > 0)
-        {
-            totalLevels += 1;
-            mipWidth /= 2;
-            mipHeight /= 2;
-        }
-    }
-
     private void GenerateMips(ushort width, ushort height)
     {
         var level = 1;
         var mipWidth = width;
         var mipHeight = height;
         
+        var tasks = new List<Task>();
+        
         while (mipWidth > 1 && mipHeight > 1)
         {
-            Logger.InfoF("Generating mip level for texture: {0}x{1}", mipWidth / 2, mipHeight / 2);
-            GenerateMipLevel(level, mipWidth, mipHeight);
-            
+            var currentLevel = level;
+            var currentMipWidth = mipWidth;
+            var currentMipHeight = mipHeight;
+            tasks.Add(Task.Run(() =>
+            {
+                try
+                {
+                    GenerateMipLevel(currentLevel, currentMipWidth, currentMipHeight);
+                } catch (Exception ex)
+                {
+                    Logger.Error($"Failed to generate mip level {currentLevel}: {ex.Message}");
+                    Console.Error.WriteLine(ex.StackTrace);
+                }
+            }));
+
             level += 1;
             mipWidth /= 2;
             mipHeight /= 2;
         }
-        _mipLevels.Clear();
+        Task.WaitAll(tasks.ToArray());
     }
 
-    private unsafe void GenerateMipLevel(int level, ushort parentWidth, ushort parentHeight)
+    private void GenerateMipLevel(int level, ushort parentWidth, ushort parentHeight)
     {
+        using var taskHandle = BackgroundTaskManager.Start();
         var width = Math.Max(1, parentWidth / 2);
         var height = Math.Max(1, parentHeight / 2);
         var data = new byte[width * height * 4];
-        var length = width * height * 4;
-        
-        var mipmap = _mipLevels[0].Clone(ctx => ctx.Resize(
+
+        var mipmap = _baseImage.Clone(ctx => ctx.Resize(
             size: new Size(width, height),
             sampler: _sampler,
             compand: true
         ));
 
-        _mipLevels.Add(mipmap);
         mipmap.CopyPixelDataTo(data);
-
-        fixed (byte* ptr = data)
-        {
-            var mem = copy(ptr, (uint)length);
-            update_texture_2d(Handle, 0, (byte)level, 0, 0, (ushort)width, (ushort)height, mem, (ushort)(width * 4));
-        }
+        UpdateTexture2D(Handle, 0, level, 0, 0, width, height, data);
     }
     
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        if (!_isValid || !Handle.Valid)
+        if (!IsValid || !Handle.Valid)
             return;
         
-        destroy_texture(Handle);
+        DestroyTexture(Handle);
     }
     
     ~Texture() => Dispose();
