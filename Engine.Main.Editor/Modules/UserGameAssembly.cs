@@ -1,6 +1,7 @@
 ﻿using Engine.Core.Contracts;
 using Engine.Core.EntitySystem;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Main.Editor.Modules.Abstract;
 
@@ -42,11 +43,13 @@ public class UserGameAssembly() : GuestAssembly("User.Game", EngineModule.UserHo
         try
         {
             BackstageEventLoop.ProcessLogicFrame(Backstage, deltaTime);
+            Logger.ClearPersistent("UserGameUpdatesSuppressed");
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error during Backstage update: {ex.Message}");
+            Logger.Error($"Error during Backstage update: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
+            Logger.ShowPersistent("UserGameUpdatesSuppressed", "Game updates temporarily suppressed.");
             _updatesPausedFor = 3.0;
             return false;
         }

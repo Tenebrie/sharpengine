@@ -41,6 +41,6 @@ public partial class CacheRevalidationService : Service
     [OnDestroy]
     protected void OnDestroy()
     {
-        Backstage.PhysicsModule?.UnregisterService(this);
+        _transformInvalidatedAtoms.Dispose();
     }
 }

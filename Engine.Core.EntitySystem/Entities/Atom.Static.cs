@@ -24,11 +24,6 @@ public partial class Atom
             .Where(a => a.FullName!.StartsWith("Engine") || a.FullName!.StartsWith("User"))
             .GroupBy(a => a.GetName().Name)
             .Select(g => g.Last())
-            .Select(a =>
-            {
-                Console.WriteLine("Processing assembly: " + a.FullName);
-                return a;
-            })
             .SelectMany(a => a.GetTypes())
             .Where(IsAtomType)
             .ToArray();

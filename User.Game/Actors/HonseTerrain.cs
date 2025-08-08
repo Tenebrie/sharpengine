@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using Engine.Core.Assets.Materials;
+﻿using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;

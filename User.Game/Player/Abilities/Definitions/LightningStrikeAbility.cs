@@ -4,6 +4,7 @@ using Engine.Core.EntitySystem.Services;
 using Engine.Core.Common;
 using Engine.Core.Logging;
 using JetBrains.Annotations;
+using User.Game.Actors;
 
 namespace User.Game.Player.Abilities.Definitions;
 
@@ -16,10 +17,20 @@ public partial class LightningStrikeAbility : ActorComponent, IAbility
         var mousePos = GetService<InputService>().GetMousePosition();
         
         // Get the intersection point with the ground plane (Y=0)
-        if (!GetMouseWorldPositionOnGround(activeCamera, mousePos, out var intersectionPoint))
+        if (!GetMouseWorldPositionOnGround(activeCamera, mousePos, out var targetPoint))
             return;
         var effect = CreateActor<LightningStrikeEffect>();
-        effect.Transform.Position = intersectionPoint;
+        effect.Transform.RotateAroundLocal(Vector3.Right, -15.0f);
+        effect.Transform.Position = targetPoint + new Vector3(0, 0.1, 0);
+        effect.Transform.Rescale(75);
+        
+        var targets = BasicEnemy.All
+            .Where(enemy => enemy.WorldTransform.Position.DistanceTo(targetPoint) < 15)
+            .ToArray();
+        foreach (var hitEnemy in targets)
+        {
+            hitEnemy.DealDamage(100);
+        }
     }
     
     /// <summary>
@@ -46,9 +57,8 @@ public partial class LightningStrikeAbility : ActorComponent, IAbility
         var halfFov = fov / 2.0;
         
         // Convert mouse position to normalized device coordinates (-1 to 1)
-        var ndcX = mousePos.X / windowSize.X * 2.0 - 1.0;
-        var ndcY = -(mousePos.Y / windowSize.Y * 2.0 - 1.0); // Flip Y axis
-        Logger.Info(ndcX + " " + ndcY);
+        var ndcX = -(mousePos.X / windowSize.X * 2.0 - 1.0);
+        var ndcY = mousePos.Y / windowSize.Y * 2.0 - 1.0;
         
         // Calculate ray direction in view space
         var rayDirViewX = ndcX * Math.Tan(halfFov) * aspectRatio;
@@ -64,7 +74,7 @@ public partial class LightningStrikeAbility : ActorComponent, IAbility
         // Define the ground plane (normal pointing up, at Y=0)
         var planeNormal = Vector3.UnitY; // (0, 1, 0)
         var planePoint = Vector3.Zero;   // (0, 0, 0)
-        
+
         // Calculate intersection with the plane
         var point = RayPlaneIntersection(cameraPosition, rayDirection, planePoint, planeNormal);
         if (point is null)
@@ -97,7 +107,7 @@ public partial class LightningStrikeAbility : ActorComponent, IAbility
         var distance = (planePoint - rayOrigin).DotProduct(planeNormal) / denominator;
         
         // If distance is negative, intersection is behind the ray origin
-        if (distance > 0)
+        if (distance < 0)
         {
             Logger.Info("Dist is " + distance);
             return null;

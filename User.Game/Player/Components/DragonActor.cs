@@ -17,7 +17,8 @@ public partial class DragonMesh : Actor
     {
         MeshComponent.Mesh = StaticMesh.CreateFromDisk("Meshes/decimated_dragon32.obj");
         MeshComponent.Material = Material.CreateFromDisk("Meshes/RawColor/RawColor").Instantiate();
-        
+
+        MeshComponent.Transform.TranslateLocal(0, 3.20, 0);
         MeshComponent.Transform.Rotation = QuatMakers.FromRotation(90, 0, 0);
     }
 }

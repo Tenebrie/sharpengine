@@ -23,6 +23,7 @@ public partial class Atom
     {
         // Initialize the atom internals first. Children will be created, but not adopted until later.
         InitializeSignals();
+        InitializeGroups();
         InitializeComponents();
         InitializeLifecycle();
         // Timers after lifecycle

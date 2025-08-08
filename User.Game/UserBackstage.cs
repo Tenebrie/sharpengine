@@ -31,7 +31,7 @@ public partial class UserScene : Scene
         cameraFollower.PlayerCharacter = player;
         
         var honseTerrain = CreateActor<HonseTerrain>();
-        honseTerrain.Transform.Position = new Vector3(0, -3.25, 0);
+        honseTerrain.Transform.Position = new Vector3(0, -0.05, 0);
         const int scale = 30;
         honseTerrain.Transform.Scale = new Vector3(scale, scale, scale);
 

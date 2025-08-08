@@ -56,7 +56,7 @@ public partial class BasicEnemyManager : Actor
             // transform.Rotation = Quaternion.Identity;
             // transform.RotateAroundLocal(Vector3.Pitch, -90);
             transform.Rotation = Quaternion.Identity;
-            transform.RotateAroundLocal(Vector3.Right, 2);
+            // transform.RotateAroundLocal(Vector3.Right, -2);
             transform.Rescale(5, 5, 5);
             InstanceManager.AddInstance(transform);
         }
