@@ -22,7 +22,7 @@ public class AtomRegistrationHandler
             WorldTransform = Transform.Identity,
         };
         _registeredAtoms.TryAdd(rid, atomHandle);
-        return _idCounter;
+        return rid;
     }
 
     public void Remove(long rid) => _registeredAtoms.TryRemove(rid, out _);
@@ -30,18 +30,19 @@ public class AtomRegistrationHandler
     private AtomHandle[] _scratchArray = [];
     public AtomHandle[] AsArray()
     {
-        var atomCount = _registeredAtoms.Count;
-        if (_scratchArray.Length < atomCount)
-            Array.Resize(ref _scratchArray, atomCount);
+        // var atomCount = _registeredAtoms.Count;
+        // if (_scratchArray.Length < atomCount)
+        //     Array.Resize(ref _scratchArray, atomCount);
+        //
+        // var count = 0;
+        // // _registeredAtoms.Values
+        // for (var i = 0; i < atomCount; i++)
+        // {
+        //     var handle = _registeredAtoms.ElementAt(i);
+        //     _scratchArray[count] = handle.Value;
+        //     count++;
+        // }
 
-        var count = 0;
-        for (var i = 0; i < atomCount; i++)
-        {
-            var handle = _registeredAtoms.ElementAt(i);
-            _scratchArray[count] = handle.Value;
-            count++;
-        }
-
-        return _scratchArray;
+        return _registeredAtoms.Values.ToArray();
     }
 }

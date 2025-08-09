@@ -240,7 +240,7 @@ public class WorkerPoolMember
         var localTransform = handle.WorldTransform;
         handle.Component.Velocity = handle.Velocity;
         if (handle.Parent.Parent is Spatial higherLevelParent)
-            higherLevelParent.WorldTransform.Inverse.Multiply(localTransform, ref handle.Parent.TransformReference);
+            higherLevelParent.WorldTransformInverse.Multiply(localTransform, ref handle.Parent.TransformReference);
         else
             handle.Parent.Transform = localTransform;
 
@@ -251,6 +251,7 @@ public class WorkerPoolMember
     {
         SpatialExternals.InvalidateWorldTransform(atom);
         _ = atom.WorldTransform;
+        _ = atom.WorldTransformInverse;
         foreach (var child in atom.Children)
         {
             if (child is not Spatial spatial)

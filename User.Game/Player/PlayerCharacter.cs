@@ -17,11 +17,9 @@ public partial class PlayerCharacter : Actor
     private const double MovementSpeed = 50.0;
     private const double RotationSpeed = 0.12;
 
-    // [Group] public static readonly Group<PlayerCharacter> PlayerGroup;
     [Component] public AbilityController Abilities;
     [Component] public DragonMesh DragonMeshComponent;
     [Component] public PhysicsComponent PhysicsComponent;
-    // [Component] public ColliderSphereComponent ColliderSphere;
 
     [OnInputHeld(InputAction.MoveForward,  +1.0, +0.0)]
     [OnInputHeld(InputAction.MoveBackward, -1.0, -0.0)]

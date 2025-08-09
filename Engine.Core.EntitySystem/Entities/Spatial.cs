@@ -21,6 +21,8 @@ public abstract partial class Spatial : Atom
 
     private bool _cachedWorldTransformValid = false;
     private Transform _cachedWorldTransform = Transform.Identity;
+    private bool _cachedWorldTransformInverseValid = false;
+    private Transform _cachedWorldTransformInverse = Transform.Identity;
     public Transform WorldTransform
     {
         get
@@ -36,10 +38,23 @@ public abstract partial class Spatial : Atom
             return _cachedWorldTransform;
         }
     }
+    public Transform WorldTransformInverse
+    {
+        get
+        {
+            if (_cachedWorldTransformInverseValid)
+                return _cachedWorldTransform;
+
+            WorldTransform.GetInverse(ref _cachedWorldTransformInverse);
+            _cachedWorldTransformInverseValid = true;
+            return _cachedWorldTransformInverse;
+        }
+    }
     
     internal void InvalidateWorldTransform()
     {
         _cachedWorldTransformValid = false;
+        _cachedWorldTransformInverseValid = false;
     }
 }
 
