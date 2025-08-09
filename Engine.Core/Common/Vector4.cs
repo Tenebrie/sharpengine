@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
@@ -6,7 +7,7 @@ using System.Runtime.Intrinsics.X86;
 
 namespace Engine.Core.Common;
 
-[StructLayout(LayoutKind.Explicit)]
+[StructLayout(LayoutKind.Explicit, Size = 32)]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
 public struct Vector4(double x, double y, double z, double w) : IEquatable<Vector4>
 {
@@ -223,4 +224,17 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
     
     public override string ToString() => $"Vector4({X}, {Y}, {Z}, {W})";
     private static readonly bool IsHardwareAccelerated = Avx.IsSupported;
+    
+    /**
+     * Debug assertions
+     */
+    
+    static Vector4()
+    {
+        #if DEBUG
+            Debug.Assert(Unsafe.SizeOf<Vector2>() == 32, "Vector2 layout changed!");
+            Debug.Assert(Unsafe.SizeOf<Vector3>() == 32, "Vector3 layout changed!");
+            Debug.Assert(Unsafe.SizeOf<Vector4>() == 32, "Vector4 layout changed!");
+        #endif
+    }
 }

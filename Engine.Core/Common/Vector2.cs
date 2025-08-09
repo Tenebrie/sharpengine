@@ -6,7 +6,7 @@ using System.Runtime.Intrinsics.X86;
 
 namespace Engine.Core.Common;
 
-[StructLayout(LayoutKind.Explicit)]
+[StructLayout(LayoutKind.Explicit, Size = 32)]
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 [SuppressMessage("ReSharper", "UnusedMember.Local")]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
@@ -14,8 +14,6 @@ public struct Vector2(double x, double y)
 {
     [FieldOffset(00)] public double X = x;
     [FieldOffset(08)] public double Y = y;
-    [FieldOffset(16)] private double _firstPadding = 0;
-    [FieldOffset(24)] private double _secondPadding = 0;
     
     public double this[int i] => i switch
     {

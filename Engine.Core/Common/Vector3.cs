@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
@@ -6,7 +7,7 @@ using System.Runtime.Intrinsics.X86;
 
 namespace Engine.Core.Common;
 
-[StructLayout(LayoutKind.Explicit)]
+[StructLayout(LayoutKind.Explicit, Size = 32)]
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 [SuppressMessage("ReSharper", "UnusedMember.Local")]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
@@ -15,7 +16,6 @@ public struct Vector3(double x, double y, double z)
     [FieldOffset(00)] public double X = x;
     [FieldOffset(08)] public double Y = y;
     [FieldOffset(16)] public double Z = z;
-    [FieldOffset(24)] private double _padding = 0;
     
     public double this[int i] => i switch
     {
