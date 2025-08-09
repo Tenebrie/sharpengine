@@ -31,6 +31,7 @@ public partial class Atom
             timer.IntervalSeconds = attribute.Seconds;
             timer.FramesRemaining = attribute.Frames;
             timer.SecondsRemaining = attribute.Seconds;
+            timer.TicksOnce = attribute.TicksOnce;
             if (methodInfo.GetParameters().Length == 0)
             {
                 var onTick = (Action)Delegate.CreateDelegate(typeof(Action), this, methodInfo);
@@ -60,6 +61,8 @@ public partial class Atom
                 
                 timer.OnTick.Invoke(deltaTime);
                 timer.FramesRemaining = timer.IntervalFrames;
+                if (timer.TicksOnce)
+                    timer.FramesRemaining = int.MaxValue;
             }
             else if (!double.IsNaN(timer.IntervalSeconds))
             {
@@ -68,6 +71,8 @@ public partial class Atom
                      
                 timer.OnTick.Invoke(deltaTime);
                 timer.SecondsRemaining = timer.IntervalSeconds;
+                if (timer.TicksOnce)
+                    timer.SecondsRemaining = double.PositiveInfinity;
             }
         }
     }
@@ -76,6 +81,7 @@ public partial class Atom
     {
         internal int FramesRemaining { get; set; } = -1;
         internal int IntervalFrames { get; set; } = -1;
+        internal bool TicksOnce { get; set; } = false;
         
         internal double SecondsRemaining { get; set; } = double.NaN;
         internal double IntervalSeconds { get; set; } = double.NaN;

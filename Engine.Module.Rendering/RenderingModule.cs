@@ -95,14 +95,15 @@ public unsafe class RenderingModule : IRenderingModule
         _fontRenderer.Initialize();
 
         var instLayout = CreateVertexLayout([
-            new VertexLayoutAttribute(Attrib.TexCoord4, 4, AttribType.Float, false, false),
-            new VertexLayoutAttribute(Attrib.TexCoord5, 4, AttribType.Float, false, false),
-            new VertexLayoutAttribute(Attrib.TexCoord6, 4, AttribType.Float, false, false),
             new VertexLayoutAttribute(Attrib.TexCoord7, 4, AttribType.Float, false, false),
+            new VertexLayoutAttribute(Attrib.TexCoord6, 4, AttribType.Float, false, false),
+            new VertexLayoutAttribute(Attrib.TexCoord5, 4, AttribType.Float, false, false),
+            new VertexLayoutAttribute(Attrib.TexCoord4, 4, AttribType.Float, false, false),
+            new VertexLayoutAttribute(Attrib.TexCoord3, 4, AttribType.Float, false, false),
         ]);
 
         _instanceTransformVertexBuffer = create_dynamic_vertex_buffer(1, &instLayout, (ushort)BufferFlags.AllowResize);
-
+        
         window.Render += RenderSingleFrame;
         window.Resize += OnResize;
     }
@@ -236,14 +237,15 @@ public unsafe class RenderingModule : IRenderingModule
         if (instanceCount == 0)
             return;
 
-        var instanceTransformPrepBuffer = ArrayPool<float>.Shared.Rent((int)instanceCount * 16);
+        const ushort instanceTransformStride = 20; // 16 floats for matrix + 4 tint
+        var instanceTransformPrepBuffer = ArrayPool<float>.Shared.Rent((int)instanceCount * instanceTransformStride);
 
         var renderContext = new RenderContext
         {
             ViewId = (ushort)ViewId.World,
             InstanceTransformCount = 0,
             InstanceTransformBuffer = _instanceTransformVertexBuffer,
-            InstanceTransformStride = 16,
+            InstanceTransformStride = instanceTransformStride,
             InstanceTransformPrepBuffer = instanceTransformPrepBuffer,
         };
 
@@ -253,7 +255,7 @@ public unsafe class RenderingModule : IRenderingModule
             renderable.PrepareRender(ref renderContext);
         }
 
-        const ushort bytesPerMatrix = 16 * sizeof(float);
+        const int bytesPerMatrix = instanceTransformStride * sizeof(float);
         fixed (float* instanceTransformPtr = renderContext.InstanceTransformPrepBuffer)
         {
             var mem = copy(instanceTransformPtr, instanceCount * bytesPerMatrix);

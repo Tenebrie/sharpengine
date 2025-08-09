@@ -32,7 +32,9 @@ public partial class LightningStrikeAbility : ActorComponent, IAbility
             .ToArray();
         foreach (var hitEnemy in targets)
         {
-            hitEnemy.DealDamage(100);
+            var baseDamage = 220;
+            var distanceMultiplier = 1.0 - hitEnemy.WorldTransform.Position.DistanceTo(targetPoint) / 25;
+            hitEnemy.DealDamage(baseDamage * distanceMultiplier);
         }
         
         _cooldownRemaining = CooldownTime;

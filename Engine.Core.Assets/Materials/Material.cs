@@ -9,6 +9,7 @@ public class Material : IDisposable
     public ShaderHandle FragmentShader { get; private set; }
     public ProgramHandle Program { get; }
     public UniformHandle DiffuseTextureHandle { get; }
+    // public UniformHandle TintColorHandle { get; }
 
     private Material(ProgramHandle program, ShaderHandle vertShader, ShaderHandle fragShader)
     {
@@ -16,6 +17,7 @@ public class Material : IDisposable
         FragmentShader = fragShader;
         Program = program;
         DiffuseTextureHandle = create_uniform("s_diffuse", UniformType.Sampler, 1);
+        // TintColorHandle = create_uniform("u_tintColor", UniformType.Vec4, 1);
     }
     protected Material(string shaderPath)
     {
@@ -25,6 +27,7 @@ public class Material : IDisposable
         FragmentShader = fragShader;
         Program = CreateProgram(vertShader, fragShader);
         DiffuseTextureHandle = create_uniform("s_diffuse", UniformType.Sampler, 1);
+        // TintColorHandle = create_uniform("u_tintColor", UniformType.Vec4, 1);
     }
 
     public MaterialInstance Instantiate()
@@ -80,6 +83,7 @@ public class Material : IDisposable
         GC.SuppressFinalize(this);
         destroy_program(Program);
         destroy_uniform(DiffuseTextureHandle);
+        // destroy_uniform(TintColorHandle);
     }
 
     ~Material() => Dispose();

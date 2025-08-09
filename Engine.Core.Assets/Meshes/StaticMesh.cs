@@ -62,7 +62,7 @@ public class StaticMesh : IDisposable
         OnMeshLoaded.Emit(verts);
     }
 
-    public void PrepareRender(uint instanceCount, ref Transform[] worldTransforms, ref RenderContext context)
+    public void PrepareRender(uint instanceCount, ref Transform[] worldTransforms, MaterialInstance[] materials, ref RenderContext context)
     {
         if (!IsValid)
         {
@@ -71,17 +71,24 @@ public class StaticMesh : IDisposable
         }
 
         for (var i = 0; i < instanceCount; i++)
+        {
             worldTransforms[i].ToFloatSpan(
                 ref context.InstanceTransformPrepBuffer,
                 (int)(context.InstanceTransformCount + i) * context.InstanceTransformStride
             );
+            var startIndex = (int)(context.InstanceTransformCount + i) * context.InstanceTransformStride;
+            context.InstanceTransformPrepBuffer[startIndex + 16] = materials[i].TintColor.X;
+            context.InstanceTransformPrepBuffer[startIndex + 17] = materials[i].TintColor.Y;
+            context.InstanceTransformPrepBuffer[startIndex + 18] = materials[i].TintColor.Z;
+            context.InstanceTransformPrepBuffer[startIndex + 19] = materials[i].TintColor.W;
+        }
 
         context.InstanceTransformCount += instanceCount;
     }
 
     public unsafe void Render(uint instanceCount, MaterialInstance material, ref RenderContext context, StateFlags extraFlags = StateFlags.None)
     {
-        if (!IsValid || material == null || !material.Program.Valid)
+        if (!IsValid || material == null || !material.Program.Valid || instanceCount == 0)
         {
             context.InstanceTransformCount += instanceCount;
             return;
@@ -90,6 +97,7 @@ public class StaticMesh : IDisposable
         var encoder = encoder_begin(false);
         SetVertexBuffer(encoder, VertexBuffer);
         SetIndexBuffer(encoder, IndexBuffer);
+        
         SetInstanceDataBuffer(encoder, context.InstanceTransformBuffer, context.InstanceTransformCount, instanceCount);
         context.InstanceTransformCount += instanceCount;
 
@@ -100,7 +108,7 @@ public class StaticMesh : IDisposable
             stateFlags |= StateFlags.CullCw;
         SetState(encoder, stateFlags | extraFlags);
 
-        material.LoadTextureForRendering(encoder);
+        material.ApplyForRendering(encoder);
         Submit(encoder, context.ViewId, material.Program, 1, 0);
 
         encoder_end(encoder);
@@ -117,52 +125,6 @@ public class StaticMesh : IDisposable
     }
 
     ~StaticMesh() => Dispose();
-
-    protected static string ComputeMeshHash(AssetVertex[] vertices, ushort[] indices)
-    {
-        // Create a more efficient hash by directly hashing the binary data
-        var vertexBytes = new byte[vertices.Length * sizeof(double) * 5 + vertices.Length * 4]; // position(3 doubles) + texcoord(2 doubles) + color(4 bytes)
-        var indexBytes = new byte[indices.Length * sizeof(ushort)];
-
-        var vertexSpan = new Span<byte>(vertexBytes);
-        var indexSpan = new Span<byte>(indexBytes);
-
-        // Copy vertex data
-        for (var i = 0; i < vertices.Length; i++)
-        {
-            var vertex = vertices[i];
-            var offset = i * (sizeof(double) * 5 + 4);
-
-            // Position (3 doubles)
-            BitConverter.TryWriteBytes(vertexSpan[offset..], vertex.Position.X);
-            BitConverter.TryWriteBytes(vertexSpan[(offset + 8)..], vertex.Position.Y);
-            BitConverter.TryWriteBytes(vertexSpan[(offset + 16)..], vertex.Position.Z);
-
-            // TexCoord (2 doubles)
-            BitConverter.TryWriteBytes(vertexSpan[(offset + 24)..], vertex.TexCoord.X);
-            BitConverter.TryWriteBytes(vertexSpan[(offset + 32)..], vertex.TexCoord.Y);
-
-            // Color (4 bytes)
-            vertexSpan[offset + 40] = vertex.VertexColor.R;
-            vertexSpan[offset + 41] = vertex.VertexColor.G;
-            vertexSpan[offset + 42] = vertex.VertexColor.B;
-            vertexSpan[offset + 43] = vertex.VertexColor.A;
-        }
-
-        // Copy index data
-        for (var i = 0; i < indices.Length; i++)
-        {
-            BitConverter.TryWriteBytes(indexSpan[(i * sizeof(ushort))..], indices[i]);
-        }
-
-        // Combine vertex and index data for final hash
-        var combinedBytes = new byte[vertexBytes.Length + indexBytes.Length];
-        vertexBytes.CopyTo(combinedBytes, 0);
-        indexBytes.CopyTo(combinedBytes, vertexBytes.Length);
-
-        var hashBytes = SHA256.HashData(combinedBytes);
-        return Convert.ToHexString(hashBytes).ToLowerInvariant();
-    }
 
     public static StaticMesh CreateFromDisk(string path)
     {

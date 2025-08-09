@@ -80,7 +80,7 @@ public class LineSphereMesh : StaticMesh
         return this;
     }
     
-    public unsafe void Render(uint instanceCount, Material material, ref RenderContext context, ColorMode color)
+    public unsafe void Render(uint instanceCount, MaterialInstance material, ref RenderContext context, ColorMode color)
     {
         if (VisibleModes == ColorMode.None || (VisibleModes & color) == 0)
         {

@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Runtime.InteropServices;
 
 namespace Engine.Native.Bgfx;
@@ -339,6 +340,19 @@ public static partial class Bgfx
 	}
 
 	/// <summary>
+	/// Update dynamic vertex buffer.
+	/// </summary>
+	///
+	/// <param name="handle">Dynamic vertex buffer handle.</param>
+	/// /// <param name="startVertex">Start vertex.</param>
+	/// <param name="data">Vertex buffer data.</param>
+	///
+	public static unsafe void UpdateDynamicVertexBuffer(DynamicVertexBufferHandle handle, int startVertex, byte[] data)
+	{
+		update_dynamic_vertex_buffer(handle, (uint)startVertex, CopyMemory(data).Data);
+	}
+
+	/// <summary>
 	/// Allocate transient index buffer.
 	/// </summary>
 	///
@@ -585,6 +599,22 @@ public static partial class Bgfx
     }
 
     /// <summary>
+    /// Set shader uniform parameter for draw primitive.
+    /// </summary>
+    ///
+    /// <param name="encoder">Optional encoder to target.</param>
+    /// <param name="uniform">Uniform handle.</param>
+    /// <param name="data">Uniform data (unmanaged struct).</param>
+    /// <see cref="Bgfx" srcline="4307" />
+    public static unsafe void SetUniform(Encoder* encoder, UniformHandle uniform, System.Numerics.Vector4 data)
+    {
+	    if (encoder == null)
+		    set_uniform(uniform, &data, ushort.MaxValue);
+	    else
+		    encoder_set_uniform(encoder, uniform, &data, ushort.MaxValue);
+    }
+
+    /// <summary>
     /// Set index buffer for draw primitive.
     /// </summary>
     ///
@@ -671,7 +701,10 @@ public static partial class Bgfx
     
     public static unsafe void SetTexture(Encoder* encoder, int stage, UniformHandle sampler, NativeTexture texture, SamplerFlags flags)
     {
-	    encoder_set_texture(encoder, (byte)stage, sampler, texture.Handle, (uint)flags);
+	    if (encoder == null)
+		    set_texture((byte)stage, sampler, texture.Handle, (uint)flags);
+	    else
+			encoder_set_texture(encoder, (byte)stage, sampler, texture.Handle, (uint)flags);
     }
     
     /// <summary>

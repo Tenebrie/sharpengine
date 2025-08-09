@@ -1,4 +1,5 @@
-﻿using Engine.Core.Assets.Materials;
+﻿using Engine.Core.Assets;
+using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Materials.Meshes.Wireframe;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Rendering;
@@ -28,11 +29,11 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
         get => _staticMeshHolder.Mesh;
         set => _staticMeshHolder.Mesh = value;
     }
-    public MaterialInstance Material
-    {
-        get => _staticMeshHolder.Material;
-        set => _staticMeshHolder.Material = value;
-    }
+    // public MaterialInstance Material
+    // {
+    //     get => _staticMeshHolder.Material;
+    //     set => _staticMeshHolder.Material = value;
+    // }
     public BoundingSphereComponent BoundingSphere
     {
         get => _staticMeshHolder.BoundingSphere;
@@ -43,7 +44,8 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
         get => _staticMeshHolder.RenderFlags;
         set => _staticMeshHolder.RenderFlags = value;
     }
-    
+
+    public Material? BaseMaterial { get; set; }
     public List<TInstance> Instances { get; } = [];
     public int InstanceCount => Instances.Count;
 
@@ -51,10 +53,11 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
     public void AddInstance(Transform instanceTransform)
     {
         var instancedActor = Activator.CreateInstance<TInstance>();
-        AdoptChild(instancedActor);
         instancedActor.Transform = instanceTransform;
+        instancedActor.MaterialInstance = BaseMaterial?.Instantiate() ?? MaterialAssetManager.FallbackMaterial;
         Instances.Add(instancedActor);
         instancedActor.ParentManager = this;
+        AdoptChild(instancedActor);
     }
     
     public void RemoveInstance(ActorInstance instance)
@@ -71,6 +74,7 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
     private int _maxInstancesSeen = 0;
     private Transform[] _transformPool = [];
     private Transform[] _sphereTransformPool = [];
+    private MaterialInstance[] _materialPool = [];
     
     public void PerformCulling(Camera activeCamera)
     {
@@ -96,10 +100,12 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
         {
             Array.Resize(ref _transformPool, Instances.Count);
             Array.Resize(ref _sphereTransformPool, Instances.Count);
+            Array.Resize(ref _materialPool, Instances.Count);
             for (var i = _maxInstancesSeen; i < Instances.Count; i++)
             {
                 _transformPool[i] = Transform.Identity;
                 _sphereTransformPool[i] = Transform.Identity;
+                _materialPool[i] = MaterialAssetManager.FallbackMaterial;
             }
             _maxInstancesSeen = Instances.Count;
         }
@@ -109,9 +115,10 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
             if (!IsValid(actor))
                 continue;
             _transformPool[i] = actor.WorldTransform;
+            _materialPool[i] = actor.MaterialInstance;
         }
 
-        Mesh.PrepareRender((uint)Instances.Count, ref _transformPool, ref renderContext);
+        Mesh.PrepareRender((uint)Instances.Count, ref _transformPool, _materialPool, ref renderContext);
         for (var i = 0; i < Instances.Count; i++)
         {
             var actor = Instances[i];
@@ -119,12 +126,12 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
                 continue;
             BoundingSphere.Transform.MultiplyReverse(actor.WorldTransform, ref _sphereTransformPool[i]);
         }
-        LineSphereMesh.Shared.PrepareRender((uint)Instances.Count, ref _sphereTransformPool, ref renderContext);
+        LineSphereMesh.Shared.PrepareRender((uint)Instances.Count, ref _sphereTransformPool, [WireframeMaterial.Shared], ref renderContext);
     }
 
     public void Render(ref RenderContext renderContext)
     {
-        Mesh.Render((uint)Instances.Count, Material, ref renderContext, RenderFlags);
+        Mesh.Render((uint)Instances.Count, _materialPool[0], ref renderContext, RenderFlags);
         LineSphereMesh.Shared.Render((uint)Instances.Count, WireframeMaterial.Shared, ref renderContext, LineSphereMesh.ColorMode.AxisColor);
     }
 }

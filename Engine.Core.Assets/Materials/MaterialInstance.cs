@@ -1,40 +1,42 @@
-﻿using Engine.Native.Bgfx;
+﻿using System.Drawing;
+using Engine.Core.Common;
 using static Engine.Native.Bgfx.Bgfx;
 
 namespace Engine.Core.Assets.Materials;
 
 public class MaterialInstance(Material material)
 {
-    protected Texture? Texture;
+    private Texture? _texture;
+    public Vector4Float TintColor = Vector4.One.Downgrade();
 
     public ProgramHandle Program => material.Program;
-    public UniformHandle DiffuseTextureHandle => material.DiffuseTextureHandle;
 
     public MaterialInstance LoadTexture(Texture texture)
     {
-        Texture = texture;
+        _texture = texture;
         return this;
     }
 
-    public void LoadTextureForRendering()
+    public MaterialInstance SetTintColor(Color color, double multiplier = 1.0)
     {
-        if (Texture == null)
-        {
-            SetTexture(0, DiffuseTextureHandle, NativeTexture.Invalid, 0);
-            return;
-        }
-
-        SetTexture(0, DiffuseTextureHandle, Texture.Handle, SamplerFlags.MinAnisotropic | SamplerFlags.MagAnisotropic);
+        var r = color.R / 255f;
+        var g = color.G / 255f;
+        var b = color.B / 255f;
+        var a = color.A / 255f;
+        TintColor = (new Vector4(r, g, b, a) * multiplier).Downgrade();
+        return this;
+    }
+    
+    public MaterialInstance SetOpacity(double opacity)
+    {
+        TintColor.W = (float)Math.Clamp(opacity, 0.0, 1.0);
+        return this;
     }
 
-    public unsafe void LoadTextureForRendering(Encoder* encoder)
+    public unsafe void ApplyForRendering(Encoder* encoder = null)
     {
-        if (Texture == null)
-        {
-            SetTexture(0, DiffuseTextureHandle, NativeTexture.Invalid, 0);
-            return;
-        }
-
-        SetTexture(encoder, 0, DiffuseTextureHandle, Texture.Handle, SamplerFlags.MinAnisotropic | SamplerFlags.MagAnisotropic);
+        var handle = _texture?.Handle ?? NativeTexture.Invalid;
+        SetTexture(encoder, 0, material.DiffuseTextureHandle, handle, SamplerFlags.MinAnisotropic | SamplerFlags.MagAnisotropic);
+        // SetUniform(encoder, material.TintColorHandle, TintColor);
     }
 }

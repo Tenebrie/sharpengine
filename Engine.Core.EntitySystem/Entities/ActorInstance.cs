@@ -1,4 +1,5 @@
-﻿using Engine.Core.EntitySystem.Attributes;
+﻿using Engine.Core.Assets.Materials;
+using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 
 namespace Engine.Core.EntitySystem.Entities;
@@ -9,6 +10,7 @@ public partial class ActorInstance : Actor
 
     // [Parent]
     public IInstancedActorComponent ParentManager = null!;
+    public MaterialInstance MaterialInstance = null!;
 
     [OnDestroy]
     protected void NotifyParentOnDestroy()

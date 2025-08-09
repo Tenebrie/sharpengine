@@ -24,4 +24,6 @@ public sealed class OnTimerAttribute : Attribute
     /// This uses a high-resolution timer which is guaranteed to hit on the next frame after the specified time has passed.
     /// </summary>
     public double Seconds { get; set; } = double.NaN;
+    
+    public bool TicksOnce { get; set; } = false;
 }

@@ -7,5 +7,5 @@ SAMPLER2D(s_diffuse, 0);
 void main()
 {
     // gl_FragColor = v_color0;
-    gl_FragColor = $base_color * $tint;
+    gl_FragColor = $base_color * v_color0;
 }

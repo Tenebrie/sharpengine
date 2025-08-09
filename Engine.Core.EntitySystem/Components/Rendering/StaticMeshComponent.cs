@@ -45,9 +45,9 @@ public partial class StaticMeshComponent : ActorComponent, IRenderable
     public void PrepareRender(ref RenderContext renderContext)
     {
         _singleComponentTransforms[0] = WorldTransform;
-        Mesh.PrepareRender(1, ref _singleComponentTransforms, ref renderContext);
+        Mesh.PrepareRender(1, ref _singleComponentTransforms, [Material], ref renderContext);
         _singleComponentTransforms[0] = BoundingSphere.WorldTransform;
-        LineSphereMesh.Shared.PrepareRender(1, ref _singleComponentTransforms, ref renderContext);
+        LineSphereMesh.Shared.PrepareRender(1, ref _singleComponentTransforms, [WireframeMaterial.Shared], ref renderContext);
     }
     public void Render(ref RenderContext renderContext)
     {

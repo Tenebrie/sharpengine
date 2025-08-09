@@ -1,4 +1,5 @@
 ﻿using Engine.Core.Assets;
+using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Meshes.Builtins;
@@ -26,10 +27,11 @@ public partial class BasicEnemyManager : Actor
             AssetManager.Meshes.Put("Assets/Virtual/BasicEnemy", mesh);
         }
         InstanceManager.Mesh = mesh;
-        InstanceManager.Material = Material
-            .CreateFromDisk("Meshes/BillboardSprite/BillboardSprite")
-            .Instantiate()
-            .LoadTexture(Texture.CreateFromDisk("Textures/godot.png"));
+        InstanceManager.BaseMaterial =
+            MaterialBuilder.Begin(typeof(BasicEnemyManager)).SetSamplingTexture(true).Compile();
+            // .CreateFromDisk("Meshes/BillboardSprite/BillboardSprite");
+            // .Instantiate()
+            // .LoadTexture(Texture.CreateFromDisk("Textures/godot.png"));
         InstanceManager.RenderFlags = Bgfx.StateFlags.BlendAlphaToCoverage;
     }
 
@@ -75,6 +77,11 @@ public partial class BasicEnemyManager : Actor
         const double movementSpeed = 15.0;
         foreach (var enemy in InstanceManager.Instances)
         {
+            if (enemy.IsDying)
+            {
+                enemy.Physics.Velocity = Vector3.Zero;
+                continue;
+            }
             enemy.Physics.Velocity = player.WorldTransform.Position - enemy.WorldTransform.Position;
             enemy.Physics.Velocity = enemy.Physics.Velocity.Normalized();
             enemy.Physics.Velocity *= movementSpeed;

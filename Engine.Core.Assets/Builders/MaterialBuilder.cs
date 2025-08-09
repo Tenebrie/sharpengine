@@ -15,12 +15,11 @@ public enum MaterialDomain
 
 public class MaterialBuilder(object key)
 {
-    private object Key = key;
-    private Assembly Assembly;
-    private MaterialDomain Domain = MaterialDomain.Mesh;
-    private Color TintColor = Color.White;
-    private bool IsSamplingTexture = false;
-    private bool UseCache = true;
+    private Assembly _assembly = null!;
+    private MaterialDomain _domain = MaterialDomain.Mesh;
+    private Color _tintColor = Color.White;
+    private bool _isSamplingTexture = false;
+    private bool _useCache = true;
 
     public static MaterialBuilder Begin(object key)
     {
@@ -38,40 +37,40 @@ public class MaterialBuilder(object key)
     
     private MaterialBuilder SetAssembly(Assembly assembly)
     {
-        Assembly = assembly;
+        _assembly = assembly;
         return this;
     }
     public MaterialBuilder SetDomain(MaterialDomain domain)
     {
-        Domain = domain;
+        _domain = domain;
         return this;
     }
     public MaterialBuilder SetTintColor(Color color)
     {
-        TintColor = color;
+        _tintColor = color;
         return this;
     }
     public MaterialBuilder SetSamplingTexture(bool sampling)
     {
-        IsSamplingTexture = sampling;
+        _isSamplingTexture = sampling;
         return this;
     }
     public MaterialBuilder SetCacheAutomatically(bool cache)
     {
-        UseCache = cache;
+        _useCache = cache;
         return this;
     }
 
-    public int GetHash()
+    private int GetHash()
     {
-        return HashCode.Combine(TintColor, Domain, IsSamplingTexture);
+        return HashCode.Combine(_tintColor, _domain, _isSamplingTexture);
     }
 
     public Material Compile()
     {
         var hash = GetHash();
-        var storageKey = $"Generated.{Key}.{hash}";
-        if (UseCache && AssetManager.Shared(Assembly).Materials.TryGet(storageKey, out var existingMaterial))
+        var storageKey = $"Generated.{key}.{hash}";
+        if (_useCache && AssetManager.Shared(_assembly).Materials.TryGet(storageKey, out var existingMaterial))
             return existingMaterial;
         
         var vertSource = BuildVertShaderSource();
@@ -105,28 +104,28 @@ public class MaterialBuilder(object key)
 
         var fragBinPath = Path.Combine(outDir, "generated");
         var material = Material.CreateFromGenerated(fragBinPath);
-        if (UseCache)
-            AssetManager.Shared(Assembly).Materials.Put(storageKey, material);
+        if (_useCache)
+            AssetManager.Shared(_assembly).Materials.Put(storageKey, material);
         return material;
     }
 
     private string BuildFragShaderSource()
     {
-        var baseShader = $"{System.Enum.GetName(Domain)}.tfrag.glsl";
+        var baseShader = $"{System.Enum.GetName(_domain)}.tfrag.glsl";
         var template = ReadTemplateFile(baseShader);
         
-        template = template.Replace("$base_color", IsSamplingTexture ? "texture2D(s_diffuse, v_uv0)" : "vec4(1.0, 1.0, 1.0, 1.0)");
-        var r = (TintColor.R / 255f).ToInvariantString();
-        var g = (TintColor.G / 255f).ToInvariantString();
-        var b = (TintColor.B / 255f).ToInvariantString();
-        var a = (TintColor.A / 255f).ToInvariantString();
-        template = template.Replace("$tint", $"vec4({r}, {g}, {b}, {a})");
+        template = template.Replace("$base_color", _isSamplingTexture ? "texture2D(s_diffuse, v_uv0)" : "vec4(1.0, 1.0, 1.0, 1.0)");
+        // var r = (_tintColor.R / 255f).ToInvariantString();
+        // var g = (_tintColor.G / 255f).ToInvariantString();
+        // var b = (_tintColor.B / 255f).ToInvariantString();
+        // var a = (_tintColor.A / 255f).ToInvariantString();
+        // template = template.Replace("$tint", $"vec4({r}, {g}, {b}, {a})");
         return template;
     }
 
     private string BuildVertShaderSource()
     {
-        var baseShader = $"{System.Enum.GetName(Domain)}.tvert.glsl";
+        var baseShader = $"{System.Enum.GetName(_domain)}.tvert.glsl";
         var template = ReadTemplateFile(baseShader);
         return template;
     }

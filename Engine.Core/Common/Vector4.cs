@@ -79,6 +79,20 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
     public static Vector4 FromVector2(Vector2 vector) => Unsafe.As<Vector2, Vector4>(ref vector);
     public static Vector4 FromVector3(Vector3 vector) => Unsafe.As<Vector3, Vector4>(ref vector);
     private static Vector4 FromAccelerated(Vector256<double> vector) => Unsafe.As<Vector256<double>, Vector4>(ref vector);
+    
+    public Vector4Float Downgrade()
+    {
+        if (!Avx.IsSupported)
+            return new Vector4Float((float)X, (float)Y, (float)Z, (float)W);
+        
+        var f128 = Avx.ConvertToVector128Single(ToAccelerated());
+        return new Vector4Float(
+            f128.GetElement(0),
+            f128.GetElement(1),
+            f128.GetElement(2),
+            f128.GetElement(3)
+        );
+    }
 
     /**
      * Common methods
