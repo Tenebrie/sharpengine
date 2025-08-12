@@ -1,13 +1,34 @@
-﻿using Bgfx = Engine.Native.Bgfx.Bgfx;
+﻿using System.Drawing;
+using Diligent;
+using Engine.Core.Common;
 
 namespace Engine.Core.Assets.Rendering;
 
-public ref struct RenderContext
+public struct RenderContext
 {
-    public ushort ViewId;
-    public uint InstanceTransformCount;
-    public Bgfx.DynamicVertexBufferHandle InstanceTransformBuffer;
-    public ushort InstanceTransformStride;
+    public required IRenderDevice RenderDevice;
+    public required IDeviceContext DeviceContext;
+    public required ISwapChain SwapChain;
+    public required IBuffer ViewMatrixBuffer;
+    public required IBuffer ObjectIndexBuffer;
+    public required IInstanceBuffer InstanceBuffer;
+    public required IShaderSourceInputStreamFactory ShaderFactory;
+}
 
-    public Span<float> InstanceTransformPrepBuffer;
+public interface IInstanceBuffer
+{
+    public InstanceBufferTicket Write(List<InstanceData> instances);
+}
+
+public struct InstanceData
+{
+    public required Transform WorldTransform;
+    public required Vector4Float Tint;
+}
+
+public struct InstanceBufferTicket
+{
+    public required IBufferView View;
+    public required int StartIndex;
+    public required int Count;
 }

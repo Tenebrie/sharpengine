@@ -27,22 +27,8 @@ public class AtomRegistrationHandler
 
     public void Remove(long rid) => _registeredAtoms.TryRemove(rid, out _);
 
-    private AtomHandle[] _scratchArray = [];
     public AtomHandle[] AsArray()
     {
-        // var atomCount = _registeredAtoms.Count;
-        // if (_scratchArray.Length < atomCount)
-        //     Array.Resize(ref _scratchArray, atomCount);
-        //
-        // var count = 0;
-        // // _registeredAtoms.Values
-        // for (var i = 0; i < atomCount; i++)
-        // {
-        //     var handle = _registeredAtoms.ElementAt(i);
-        //     _scratchArray[count] = handle.Value;
-        //     count++;
-        // }
-
         return _registeredAtoms.Values.ToArray();
     }
 }

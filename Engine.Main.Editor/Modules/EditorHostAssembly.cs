@@ -18,7 +18,7 @@ public class EditorHostAssembly() : GuestAssembly("Engine.Module.Host", EngineMo
     public override void Init()
     {
         base.Init();
-        var loadedSettings = Host.Load<IBaseEngineContract>();
+        var loadedSettings = Host.LoadAssembly<IBaseEngineContract>();
         if (loadedSettings == null)
         {
             Logger.Error("Failed to load EditorHost assembly settings.");

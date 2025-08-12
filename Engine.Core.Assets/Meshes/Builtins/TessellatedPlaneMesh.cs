@@ -9,10 +9,10 @@ public static class TessellatedPlaneMesh
     public static StaticMesh Create(float width = 1f, float height = 1f, int segmentsX = 1, int segmentsY = 1)
     {
         var key = $"{width}_{height}_{segmentsX}_{segmentsY}";
-        if (AssetManager.Shared(Assembly.GetCallingAssembly()).Meshes.TryGet(key, out var mesh))
+        if (AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Meshes.TryGet(key, out var mesh))
             return mesh;
         mesh = CreateWithoutCache(width, height, segmentsX, segmentsY);
-        AssetManager.Shared(Assembly.GetCallingAssembly()).Meshes.Put(key, mesh);
+        AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Meshes.Put(key, mesh);
         return mesh;
     }
 
@@ -43,9 +43,9 @@ public static class TessellatedPlaneMesh
 
         return verts;
     }
-    public static ushort[] CreateIndices(int segmentsX = 1, int segmentsY = 1)
+    public static uint[] CreateIndices(int segmentsX = 1, int segmentsY = 1)
     {
-        var indices = new ushort[segmentsX * segmentsY * 6];
+        var indices = new uint[segmentsX * segmentsY * 6];
 
         for (int y = 0; y < segmentsY; y++)
         {
@@ -54,13 +54,13 @@ public static class TessellatedPlaneMesh
                 int baseIndex = (y * segmentsX + x) * 6;
                 int vertexIndex = y * (segmentsX + 1) + x;
 
-                indices[baseIndex] = (ushort)(vertexIndex);
-                indices[baseIndex + 1] = (ushort)(vertexIndex + segmentsX + 1);
-                indices[baseIndex + 2] = (ushort)(vertexIndex + 1);
+                indices[baseIndex] = (uint)(vertexIndex);
+                indices[baseIndex + 1] = (uint)(vertexIndex + segmentsX + 1);
+                indices[baseIndex + 2] = (uint)(vertexIndex + 1);
 
-                indices[baseIndex + 3] = (ushort)(vertexIndex + segmentsX + 1);
-                indices[baseIndex + 4] = (ushort)(vertexIndex + segmentsX + 2);
-                indices[baseIndex + 5] = (ushort)(vertexIndex + 1);
+                indices[baseIndex + 3] = (uint)(vertexIndex + segmentsX + 1);
+                indices[baseIndex + 4] = (uint)(vertexIndex + segmentsX + 2);
+                indices[baseIndex + 5] = (uint)(vertexIndex + 1);
             }
         }
 

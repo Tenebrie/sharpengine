@@ -1,30 +1,120 @@
-﻿using System.Buffers;
+﻿using Diligent;
 using Engine.Core.Assets;
+using Engine.Core.Assets.Builders;
+using Engine.Core.Assets.Materials;
+using Engine.Core.Assets.Meshes;
+using Engine.Core.Assets.Renderers;
 using Engine.Core.Assets.Rendering;
+using Engine.Core.Common;
 using Engine.Core.Enum;
-using Engine.Core.Logging;
 using Engine.Module.Rendering.Fonts;
-using Engine.Module.Rendering.Platforms;
 using Engine.Module.Rendering.Renderers;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.EntitySystem.Modules;
+using Engine.Core.Logging;
 using Engine.Core.Profiling;
-using Engine.Module.Rendering.Bgfx;
 using JetBrains.Annotations;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
-using static Engine.Native.Bgfx.Bgfx;
+using Vector4 = System.Numerics.Vector4;
 
 namespace Engine.Module.Rendering;
 
+/**
+ * Excluded from hot reload - restart the application to apply changes in this class.
+ */
 [UsedImplicitly]
-public unsafe class RenderingModule : IRenderingModule
+public class RenderingModuleBootstrap : IRenderingModuleBootstrap
+{
+    private IRenderDevice _renderDevice = null!;
+    private IDeviceContext _deviceContext = null!;
+    private ISwapChain _swapChain = null!;
+    
+    public RenderingResources Initialize(IWindow window)
+    {
+        using var engineFactory = Native.GetEngineFactoryD3D12();
+        SetMessageCallback(engineFactory);
+        CreateRenderDeviceAndSwapChain(engineFactory, out var renderDeviceOut, out var deviceContextOut, out var swapChainOut, window);
+        _renderDevice = renderDeviceOut;
+        _deviceContext = deviceContextOut;
+        _swapChain = swapChainOut;
+
+        return new RenderingResources
+        {
+            DeviceContext = _deviceContext,
+            RenderDevice = _renderDevice,
+            SwapChain = _swapChain,
+        };
+    }
+    
+    private static void SetMessageCallback(IEngineFactory engineFactory)
+    {
+        engineFactory.SetMessageCallback((severity, message, function, file, line) =>
+        {
+            switch (severity)
+            {
+                case DebugMessageSeverity.Warning:
+                case DebugMessageSeverity.Error:
+                case DebugMessageSeverity.FatalError:
+                    Console.WriteLine($"Diligent Engine: {severity} in {function}() ({file}, {line}): {message}");
+                    break;
+                case DebugMessageSeverity.Info:
+                    Console.WriteLine($"Diligent Engine: {severity} {message}");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(severity), severity, null);
+            }
+        });
+    }
+
+    private static void CreateRenderDeviceAndSwapChain(
+        IEngineFactoryD3D12 engineFactory,
+        out IRenderDevice renderDevice,
+        out IDeviceContext deviceContext,
+        out ISwapChain swapChain,
+        IWindow window)
+    {
+        engineFactory.CreateDeviceAndContextsD3D12(new EngineD3D12CreateInfo
+        {
+            EnableValidation = true
+        }, out renderDevice, out IDeviceContext[] contextsOut);
+        swapChain = engineFactory.CreateSwapChainD3D12(
+            renderDevice,
+            contextsOut[0],
+            new SwapChainDesc(),
+            new FullScreenModeDesc(),
+            new Win32NativeWindow
+            {
+                Wnd = window.Native!.Win32!.Value.Hwnd
+            });
+
+        deviceContext = contextsOut[0];
+    }
+
+    public void Shutdown()
+    {
+        _renderDevice.Dispose();
+        _deviceContext.Dispose();
+        _swapChain.Dispose();
+    }
+}
+
+[UsedImplicitly]
+public class RenderingModule : IRenderingModule
 {
     private IWindow _rootWindow = null!;
     private List<Backstage> _backstages = [];
     private LogRenderer _logRenderer = null!;
     private FontRenderer _fontRenderer = null!;
+    
+    private IRenderDevice _renderDevice = null!;
+    private IDeviceContext _deviceContext = null!;
+    private ISwapChain _swapChain = null!;
+
+    private ITexture _renderTarget = null!;
+    private ITextureView _renderTargetView = null!;
+    private ITextureView _renderDepthView = null!;
 
     private float BaseResolutionScale => (float)_rootWindow.Size.X / _rootWindow.FramebufferSize.X;
     private float ResolutionScale => BaseResolutionScale * 1.0f;
@@ -32,8 +122,8 @@ public unsafe class RenderingModule : IRenderingModule
         (int)Math.Round(_rootWindow.FramebufferSize.X * ResolutionScale),
         (int)Math.Round(_rootWindow.FramebufferSize.Y * ResolutionScale)
     );
-
-    private DynamicVertexBufferHandle _instanceTransformVertexBuffer;
+    
+    internal int MSAASamples => 8;
 
     public void Register(Backstage backstage)
     {
@@ -45,67 +135,100 @@ public unsafe class RenderingModule : IRenderingModule
         _backstages.Remove(backstage);
     }
 
-    public void Initialize(IWindow window)
+    private IBuffer _viewMatrixBuffer = null!;
+    private IBuffer _objectIndexBuffer = null!;
+    private InfiniteInstanceBuffer _infiniteInstanceBuffer = null!;
+    
+    public void HotInitialize(RenderingResources resources, IWindow window)
     {
         _rootWindow = window;
-        BgfxCallbacks.Install();
-        Init initData = default;
-        init_ctor(&initData);
-        if (OperatingSystem.IsWindows())
-            WindowsRuntime.PrepareInit(ref initData, window);
-        else if (OperatingSystem.IsMacOS())
-            MacRuntime.PrepareInit(ref initData, window);
-        else
-            throw new NotSupportedException("Unsupported platform for bgfx initialization.");
-
-        initData.resolution.width = (uint)FramebufferSize.X;
-        initData.resolution.height = (uint)FramebufferSize.Y;
-        initData.resolution.format = TextureFormat.RGBA8;
-        initData.resolution.reset = 0;
-        initData.resolution.numBackBuffers = 2;
-        initData.resolution.maxFrameLatency = 3;
-        initData.callback = BgfxCallbacks.InterfacePtr;
-
-        if (!init(&initData))
-            throw new InvalidOperationException("bgfx init failed");
-
-        HotInitialize(window);
-    }
-
-    private ResetFlags _resetFlags = ResetFlags.MsaaX8 | ResetFlags.Maxanisotropy;
-    private DebugFlags _debugFlags = DebugFlags.Text;
-
-    private ResetFlags GetResetFlags()
-    {
-        if (OperatingSystem.IsMacOS())
-            return _resetFlags & ~(ResetFlags.MsaaX2 | ResetFlags.MsaaX4 | ResetFlags.MsaaX8);
-        return _resetFlags;
-    }
-
-    public void HotInitialize(IWindow window)
-    {
-        _rootWindow = window;
-        SetDebug(_debugFlags);
-        SetViewClear(ViewId.World, ClearFlags.Color | ClearFlags.Depth, 0x303030ff, 0, 0);
-
-        Reset(FramebufferSize.X, FramebufferSize.Y, GetResetFlags(), TextureFormat.Count);
-
+        _renderDevice = resources.RenderDevice;
+        _deviceContext = resources.DeviceContext;
+        _swapChain = resources.SwapChain;
+        
+        _viewMatrixBuffer = resources.RenderDevice.CreateBuffer(new BufferDesc
+        {
+            Name = "CameraViewMatrixBuffer",
+            Size = MatrixFloat.SizeInBytes,
+            Usage = Usage.Dynamic,
+            BindFlags = BindFlags.UniformBuffer,
+            CPUAccessFlags = CpuAccessFlags.Write
+        });
+        
+        _objectIndexBuffer = resources.RenderDevice.CreateBuffer(new BufferDesc
+        {
+            Name = "ObjectIndexBuffer",
+            Size = 16u,
+            Usage = Usage.Dynamic,
+            BindFlags = BindFlags.UniformBuffer,
+            CPUAccessFlags = CpuAccessFlags.Write,
+        });
+                
+        using var engineFactory = Native.GetEngineFactoryD3D12();
+        _infiniteInstanceBuffer = new InfiniteInstanceBuffer();
+        var renderContext = new RenderContext
+        {
+            DeviceContext = _deviceContext,
+            RenderDevice = _renderDevice,
+            SwapChain = _swapChain,
+            ViewMatrixBuffer = _viewMatrixBuffer,
+            ObjectIndexBuffer = _objectIndexBuffer,
+            InstanceBuffer = _infiniteInstanceBuffer,
+            ShaderFactory = engineFactory.CreateDefaultShaderSourceStreamFactory("Assets/Shaders")
+        };
+        
+        Texture.Context = renderContext;
+        StaticMesh.Context = renderContext;
+        Material.Context = renderContext;
+        RenderScript.Context = renderContext;
+        MaterialInstance.Context = renderContext;
+        PipelineBuilder.Context = renderContext;
+        InfiniteInstanceBuffer.Context = renderContext;
+        
         _logRenderer = new LogRenderer(this);
         _fontRenderer = new FontRenderer(this);
         _fontRenderer.Initialize();
 
-        var instLayout = CreateVertexLayout([
-            new VertexLayoutAttribute(Attrib.TexCoord7, 4, AttribType.Float, false, false),
-            new VertexLayoutAttribute(Attrib.TexCoord6, 4, AttribType.Float, false, false),
-            new VertexLayoutAttribute(Attrib.TexCoord5, 4, AttribType.Float, false, false),
-            new VertexLayoutAttribute(Attrib.TexCoord4, 4, AttribType.Float, false, false),
-            new VertexLayoutAttribute(Attrib.TexCoord3, 4, AttribType.Float, false, false),
-        ]);
+        CreateRenderTargets();
 
-        _instanceTransformVertexBuffer = create_dynamic_vertex_buffer(1, &instLayout, (ushort)BufferFlags.AllowResize);
-        
         window.Render += RenderSingleFrame;
         window.Resize += OnResize;
+    }
+
+    private void CreateRenderTargets()
+    {
+        var swapChain = _swapChain.GetDesc();
+        _renderTarget = _renderDevice.CreateTexture(new TextureDesc
+        {
+            Name = "MSAA Color",
+            Type = ResourceDimension.Tex2d,
+            Width = swapChain.Width,
+            Height = swapChain.Height,
+            MipLevels = 1,
+            Format = swapChain.ColorBufferFormat,
+            SampleCount = (uint)MSAASamples,
+            BindFlags = BindFlags.RenderTarget
+        });
+        _renderTargetView = _renderTarget.GetDefaultView(TextureViewType.RenderTarget);
+        
+        _renderDepthView = _renderDevice.CreateTexture(new TextureDesc
+        {
+            Name        = "MSAA Depth",
+            Type        = ResourceDimension.Tex2d,
+            Width       = swapChain.Width,
+            Height      = swapChain.Height,
+            MipLevels   = 1,
+            Format      = swapChain.DepthBufferFormat,
+            SampleCount = (uint)MSAASamples,
+            BindFlags   = BindFlags.DepthStencil
+        }).GetDefaultView(TextureViewType.DepthStencil);
+    }
+    
+    private void DisposeRenderTargets()
+    {
+        _renderTargetView.Dispose();
+        _renderTarget.Dispose();
+        _renderDepthView.Dispose();
     }
 
     private int _atomsToRenderCount;
@@ -115,47 +238,65 @@ public unsafe class RenderingModule : IRenderingModule
     private void RenderSingleFrame(double deltaTime)
     {
         var stopwatch = Profiler.Start();
-        DebugTextClear();
-        _logRenderer.RenderFrame(deltaTime);
-
-        SetViewRect(ViewId.World, 0, 0,
-            FramebufferSize.X,
-            FramebufferSize.Y);
-        SetViewClear(ViewId.World, ClearFlags.Color | ClearFlags.Depth, 0x303030ff, 1.0f, 0);
-        Touch(ViewId.World);
-
+        
         Camera? activeCamera = null;
         foreach (var backstage in _backstages)
         {
             if (activeCamera != null)
                 continue;
             activeCamera = FindActiveCamera(backstage);
-            RenderCamera(ViewId.World, activeCamera);
         }
-
+        
         if (activeCamera == null)
         {
             Logger.Error("No active camera found for rendering.");
             return;
         }
-
+        
         activeCamera.UpdateFrustumPlanes();
+        
+        // var rtv = _swapChain.GetCurrentBackBufferRTV();
+        // var dsv = _swapChain.GetDepthBufferDSV();
 
+        var wvpMatrix = activeCamera.AsCameraView().ToMatrix();
+        var mapUniformBuffer = _deviceContext.MapBuffer<MatrixFloat>(_viewMatrixBuffer, MapType.Write, MapFlags.Discard);
+        mapUniformBuffer[0] = wvpMatrix.Downgrade();
+        _deviceContext.UnmapBuffer(_viewMatrixBuffer, MapType.Write);
+
+        _deviceContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
+        _deviceContext.ClearRenderTarget(_renderTargetView, new Vector4(0.35f, 0.35f, 0.35f, 1.0f), ResourceStateTransitionMode.Transition);
+        _deviceContext.ClearDepthStencil(_renderDepthView, ClearDepthStencilFlags.Depth, 1.0f, 0, ResourceStateTransitionMode.Transition);
+        
+        _infiniteInstanceBuffer.FrameStart();
+        
+        _logRenderer.RenderFrame(deltaTime);
         foreach (var backstage in _backstages)
         {
             // Collect all IRenderable entities reachable from the atom tree
             CollectAtomsToRender(activeCamera, ref _atomsToRender, ref _atomsToRenderCount, backstage);
             // Render surviving atoms
             RenderAtomTree(_atomsToRender, _atomsToRenderCount);
-
+        
             _atomsToRenderCount = 0;
             Array.Clear(_atomsToRender);
         }
-
-        SetViewRect(ViewId.UserInterface, 0, 0, FramebufferSize.X, FramebufferSize.Y);
-
-        Frame(false);
+        
+        var rtv = _swapChain.GetCurrentBackBufferRTV();
+        var rtvTexture = rtv.GetTexture();
+        
+        _deviceContext.ResolveTextureSubresource(
+            _renderTarget,
+            rtvTexture,
+            new ResolveTextureSubresourceAttribs
+            {
+                Format = _swapChain.GetDesc().ColorBufferFormat,
+                SrcTextureTransitionMode = ResourceStateTransitionMode.Transition,
+                DstTextureTransitionMode = ResourceStateTransitionMode.Transition,
+            }
+        );
+        
         stopwatch.StopAndReport(typeof(RenderingModule), ProfilingContext.RenderingPrepare);
+        _swapChain.Present(0);
     }
 
     private Camera? FindActiveCamera(Atom target)
@@ -168,7 +309,7 @@ public unsafe class RenderingModule : IRenderingModule
 
         foreach (var child in target.Children)
         {
-            var foundCamera = FindActiveCamera(child);
+            var foundCamera = FindActiveCamera(child); 
             if (foundCamera != null)
                 return foundCamera;
         }
@@ -176,20 +317,6 @@ public unsafe class RenderingModule : IRenderingModule
         return null;
     }
 
-    private static void RenderCamera(ViewId viewId, Camera? camera)
-    {
-        if (camera is null)
-            return;
-
-        Span<float> projMatrix = stackalloc float[16];
-        var cameraView = camera.AsCameraView(projMatrix);
-
-        fixed (float* viewPtr = cameraView.ViewMatrix)
-        fixed (float* projPtr = cameraView.ProjMatrix)
-        {
-            set_view_transform((ushort)viewId, viewPtr, projPtr);
-        }
-    }
 
     private static void CollectAtomsToRender(
         Camera activeCamera,
@@ -219,58 +346,13 @@ public unsafe class RenderingModule : IRenderingModule
         }
     }
 
-    private static uint CollectInstanceCount(IRenderable[] culledAtoms, int culledAtomsCount)
+    private static void RenderAtomTree(IRenderable[] atomsToRender, int atomsToRenderCount)
     {
-        uint instanceCount = 0;
-        for (var index = 0; index < culledAtomsCount; index++)
-        {
-            var atom = culledAtoms[index];
-            instanceCount += (uint)atom.GetInstanceCount();
-        }
-
-        return instanceCount;
-    }
-
-    private void RenderAtomTree(IRenderable[] atomsToRender, int atomsToRenderCount)
-    {
-        var instanceCount = CollectInstanceCount(atomsToRender, atomsToRenderCount);
-        if (instanceCount == 0)
-            return;
-
-        const ushort instanceTransformStride = 20; // 16 floats for matrix + 4 tint
-        var instanceTransformPrepBuffer = ArrayPool<float>.Shared.Rent((int)instanceCount * instanceTransformStride);
-
-        var renderContext = new RenderContext
-        {
-            ViewId = (ushort)ViewId.World,
-            InstanceTransformCount = 0,
-            InstanceTransformBuffer = _instanceTransformVertexBuffer,
-            InstanceTransformStride = instanceTransformStride,
-            InstanceTransformPrepBuffer = instanceTransformPrepBuffer,
-        };
-
         for (var index = 0; index < atomsToRenderCount; index++)
         {
             var renderable = atomsToRender[index];
-            renderable.PrepareRender(ref renderContext);
+            renderable.Render();
         }
-
-        const int bytesPerMatrix = instanceTransformStride * sizeof(float);
-        fixed (float* instanceTransformPtr = renderContext.InstanceTransformPrepBuffer)
-        {
-            var mem = copy(instanceTransformPtr, instanceCount * bytesPerMatrix);
-            update_dynamic_vertex_buffer(_instanceTransformVertexBuffer, 0, mem);
-        }
-
-        renderContext.InstanceTransformCount = 0;
-
-        for (var index = 0; index < atomsToRenderCount; index++)
-        {
-            var renderable = atomsToRender[index];
-            renderable.Render(ref renderContext);
-        }
-
-        ArrayPool<float>.Shared.Return(instanceTransformPrepBuffer);
     }
 
     private void OnResize(Vector2D<int> size)
@@ -280,48 +362,50 @@ public unsafe class RenderingModule : IRenderingModule
 
         if (width == 0 || height == 0)
             return;
-
-        Reset(width, height, GetResetFlags(), TextureFormat.Count);
-        SetViewRect(0, 0, 0, width, height);
+        
+        _swapChain.Resize((uint)size.X, (uint)size.Y, SurfaceTransform.Optimal);
+        DisposeRenderTargets();
+        CreateRenderTargets();
+        AssetManager.Shared.Pipelines.InvalidateAll();
     }
 
-    public void ToggleResetFlags(ResetFlags flags)
-    {
-        if (flags == ResetFlags.None)
-            return;
+    // public void ToggleResetFlags(Bgfx.ResetFlags flags)
+    // {
+    //     if (flags == Bgfx.ResetFlags.None)
+    //         return;
+    //
+    //     // Toggle flags
+    //     if ((_resetFlags & flags) == flags)
+    //     {
+    //         _resetFlags &= ~flags;
+    //     }
+    //     else
+    //     {
+    //         _resetFlags |= flags;
+    //     }
+    //
+    //     // Reset the renderer with the new flags
+    //     // Reset(FramebufferSize.X, FramebufferSize.Y, GetResetFlags(), Bgfx.TextureFormat.Count);
+    // }
 
-        // Toggle flags
-        if ((_resetFlags & flags) == flags)
-        {
-            _resetFlags &= ~flags;
-        }
-        else
-        {
-            _resetFlags |= flags;
-        }
-
-        // Reset the renderer with the new flags
-        Reset(FramebufferSize.X, FramebufferSize.Y, GetResetFlags(), TextureFormat.Count);
-    }
-
-    public void ToggleDebugFlags(DebugFlags flags)
-    {
-        if (flags == DebugFlags.None)
-            return;
-
-        // Toggle flags
-        if ((_debugFlags & flags) == flags)
-        {
-            _debugFlags &= ~flags;
-        }
-        else
-        {
-            _debugFlags |= flags;
-        }
-
-        // Set the new debug flags
-        SetDebug(_debugFlags);
-    }
+    // public void ToggleDebugFlags(Bgfx.DebugFlags flags)
+    // {
+    //     if (flags == Bgfx.DebugFlags.None)
+    //         return;
+    //
+    //     // Toggle flags
+    //     if ((_debugFlags & flags) == flags)
+    //     {
+    //         _debugFlags &= ~flags;
+    //     }
+    //     else
+    //     {
+    //         _debugFlags |= flags;
+    //     }
+    //
+    //     // Set the new debug flags
+    //     // SetDebug(_debugFlags);
+    // }
 
     public void ToggleLogRendering() => _logRenderer.OnToggleMode();
 
@@ -331,41 +415,16 @@ public unsafe class RenderingModule : IRenderingModule
         GameplayContext = context;
     }
 
-    public void DisconnectCallbacks()
+    public void HotShutdown()
     {
         _fontRenderer.Dispose();
         _backstages = [];
-        destroy_dynamic_vertex_buffer(_instanceTransformVertexBuffer);
         _rootWindow.Render -= RenderSingleFrame;
         _rootWindow.Resize -= OnResize;
         _atomsToRender = [];
-    }
-
-    public void Shutdown()
-    {
-        DisconnectCallbacks();
-
-        Frame(false);
-        Frame(true);
-        Frame(true);
-        Frame(true);
-        Frame(true);
-        Frame(true);
-        Frame(true);
-        Frame(true);
-        Frame(true);
-        Frame(true);
-        Reset(0, 0, ResetFlags.None, TextureFormat.Count);
-        Reset(0, 0, ResetFlags.None, TextureFormat.Count);
-        Frame(true);
-        Frame(true);
-        Frame(true);
-        Frame(true);
-        Frame(true);
-        Frame(true);
-        Frame(false);
-
-        shutdown();
-        BgfxCallbacks.Uninstall();
+        _viewMatrixBuffer.Dispose();
+        _objectIndexBuffer.Dispose();
+        _infiniteInstanceBuffer.Dispose();
+        DisposeRenderTargets();
     }
 }

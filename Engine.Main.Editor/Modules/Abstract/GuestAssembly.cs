@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using Engine.Core.Communication.Tasks;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.Contracts;
 using Engine.Core.Modules;
@@ -32,6 +33,8 @@ public abstract class GuestAssembly(string assemblyName, EngineModule module)
 
     public virtual void Destroy()
     {
+        if (Host.Assembly is not null)
+            MainThreadTask.Purge(Host.Assembly);
         Backstage?.FreeImmediately();
         Settings = null;
         Backstage = null;

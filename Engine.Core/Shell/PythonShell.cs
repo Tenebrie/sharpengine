@@ -10,6 +10,7 @@ public static class PythonShell
     }
     public static void Run(string scriptPath, string arguments = "")
     {
+        return;
         try
         {
             using var process = new Process();

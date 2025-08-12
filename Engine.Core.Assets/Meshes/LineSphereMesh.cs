@@ -1,13 +1,12 @@
 ﻿using System.Drawing;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Extensions;
 using Engine.Core.Logging;
-using static Engine.Native.Bgfx.Bgfx;
-using Transform = Engine.Core.Common.Transform;
 
 namespace Engine.Core.Assets.Meshes;
 
@@ -27,8 +26,8 @@ public class LineSphereMesh : StaticMesh
 
     private bool _isLoaded = false;
 
-    private VertexBuffer _axisColoredVertexBuffer = VertexBuffer.Invalid;
-    private VertexBuffer _colliderVertexBuffer = VertexBuffer.Invalid;
+    // private VertexBuffer _axisColoredVertexBuffer = VertexBuffer.Invalid;
+    // private VertexBuffer _colliderVertexBuffer = VertexBuffer.Invalid;
     
     private LineSphereMesh Load(Assembly callingAssembly)
     {
@@ -69,56 +68,56 @@ public class LineSphereMesh : StaticMesh
         for (var i = 0; i < indices.Count; i++)
             indicesArray[i] = (ushort)indices[i];
         
-        Layout = CreateVertexLayout([
-            new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
-            new VertexLayoutAttribute(Attrib.Color0, 4, AttribType.Uint8, true, true)
-        ]);
-        _axisColoredVertexBuffer = CreateVertexBuffer(ref vertsArray, ref Layout);
-        _colliderVertexBuffer = CreateVertexBuffer(ref colliderVertsArray, ref Layout);
-        IndexBuffer = CreateIndexBuffer(ref indicesArray);
-        AssetManager.Shared(callingAssembly).Meshes.Put("Generated/LineSphereMesh", this);
+        // Layout = CreateVertexLayout([
+            // new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
+            // new VertexLayoutAttribute(Attrib.Color0, 4, AttribType.Uint8, true, true)
+        // ]);
+        // _axisColoredVertexBuffer = CreateVertexBuffer(ref vertsArray, ref Layout);
+        // _colliderVertexBuffer = CreateVertexBuffer(ref colliderVertsArray, ref Layout);
+        // IndexBuffer = CreateIndexBuffer(ref indicesArray);
+        AssetManager.AssemblyShared(callingAssembly).Meshes.Put("Generated/LineSphereMesh", this);
         return this;
     }
     
-    public unsafe void Render(uint instanceCount, MaterialInstance material, ref RenderContext context, ColorMode color)
+    public unsafe void Render(uint instanceCount, Transform[] worldTransforms, MaterialInstance[] materials, ColorMode color)
     {
-        if (VisibleModes == ColorMode.None || (VisibleModes & color) == 0)
-        {
-            context.InstanceTransformCount += instanceCount;
-            return;
-        }
-
-        if (!_isLoaded)
-        {
-            Logger.Error("BoundingSphere is not initialized. Call Load() first.");
-            context.InstanceTransformCount += instanceCount;
-            return;
-        }
+        // if (VisibleModes == ColorMode.None || (VisibleModes & color) == 0)
+        // {
+        //     context.InstanceTransformCount += instanceCount;
+        //     return;
+        // }
+        //
+        // if (!_isLoaded)
+        // {
+        //     Logger.Error("BoundingSphere is not initialized. Call Load() first.");
+        //     context.InstanceTransformCount += instanceCount;
+        //     return;
+        // }
         
-        var encoder = encoder_begin(false);
-        SetInstanceDataBuffer(encoder, context.InstanceTransformBuffer, context.InstanceTransformCount, instanceCount);
-        context.InstanceTransformCount += instanceCount;
+        // var encoder = encoder_begin(false);
+        // SetInstanceDataBuffer(encoder, context.InstanceTransformBuffer, context.InstanceTransformCount, instanceCount);
+        // context.InstanceTransformCount += instanceCount;
         
-        if (color == ColorMode.AxisColor)
-            SetVertexBuffer(encoder, _axisColoredVertexBuffer);
-        else if (color == ColorMode.Collider)
-            SetVertexBuffer(encoder, _colliderVertexBuffer);
-        else
-            throw new ArgumentOutOfRangeException(nameof(color), color, null);
-        SetIndexBuffer(encoder, IndexBuffer);
-        SetState(encoder, StateFlags.WriteRgb | StateFlags.WriteZ | StateFlags.DepthTestLess | StateFlags.PtLines);
+        // if (color == ColorMode.AxisColor)
+            // SetVertexBuffer(encoder, _axisColoredVertexBuffer);
+        // else if (color == ColorMode.Collider)
+            // SetVertexBuffer(encoder, _colliderVertexBuffer);
+        // else
+            // throw new ArgumentOutOfRangeException(nameof(color), color, null);
+        // SetIndexBuffer(encoder, IndexBuffer);
+        // SetState(encoder, StateFlags.WriteRgb | StateFlags.WriteZ | StateFlags.DepthTestLess | StateFlags.PtLines);
         
-        Submit(encoder, context.ViewId, material.Program, 1, 0);
+        // Submit(encoder, context.ViewId, material.Program, 1, 0);
         
-        encoder_end(encoder);
+        // encoder_end(encoder);
     }
 
     public override void Dispose()
     {
         base.Dispose();
         GC.SuppressFinalize(this);
-        DestroyVertexBuffer(ref _axisColoredVertexBuffer);
-        DestroyVertexBuffer(ref _colliderVertexBuffer);
+        // DestroyVertexBuffer(ref _axisColoredVertexBuffer);
+        // DestroyVertexBuffer(ref _colliderVertexBuffer);
     }
     
     
@@ -127,5 +126,7 @@ public class LineSphereMesh : StaticMesh
     {
         public readonly Vector3Float Position = position.Downgrade();
         public readonly uint Color = color.ToAbgr();
+        
+        public static uint SizeInBytes => (uint)Unsafe.SizeOf<RenderingVertex>();
     }
 }

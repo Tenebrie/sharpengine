@@ -1,57 +1,73 @@
 ﻿using System.Reflection;
+using Diligent;
+using Engine.Core.Assets.Rendering;
+using Engine.Core.Communication.Tasks;
 using Engine.Core.Logging;
 using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Processing.Processors.Transforms;
-using static Engine.Native.Bgfx.Bgfx;
+using TextureFormat = Diligent.TextureFormat;
 
 namespace Engine.Core.Assets.Materials;
 
 public sealed class Texture : IDisposable
 {
+    public static RenderContext Context { get; set; }
+    
     public bool IsValid { get; private set; } = false;
-    public NativeTexture Handle { get; private set; }
+    // public NativeTexture Handle { get; private set; }
     public int Width { get; private set; }
     public int Height { get; private set; }
 
-    private Image<Rgba32> _baseImage = null!;
+    private readonly Image<Rgba32> _baseImage;
     private readonly IResampler _sampler = KnownResamplers.Lanczos3;
+    private readonly ITexture _textureHandle;
 
-    private Texture(byte[] data, ushort width, ushort height, bool generateMips = false)
+    private unsafe Texture(byte[] data, ushort width, ushort height, bool generateMips = false)
     {
         Width = width;
         Height = height;
-
-        Task.Run(() =>
-        {
-            try
-            {
-                InitializeAsync(data, width, height, generateMips);
-            }
-            catch (Exception e)
-            {
-                Logger.Error($"Failed to initialize texture: {e.Message}");
-                Console.Error.WriteLine(e);
-            }
-        });
-    }
-
-    private void InitializeAsync(byte[] data, ushort width, ushort height, bool generateMips = false)
-    {
+        
         _baseImage = Image.LoadPixelData<Rgba32>(data, width, height);
+        _textureHandle = Context.RenderDevice.CreateTexture(new TextureDesc
+        {
+            Type = ResourceDimension.Tex2d,
+            Width = width,
+            Height = height,
+            Format = TextureFormat.RGBA8_UNorm_sRGB,
+            BindFlags = BindFlags.ShaderResource | BindFlags.RenderTarget,
+            MipLevels = generateMips ? 0u : 1u,
+            MiscFlags = MiscTextureFlags.GenerateMips
+        });
 
-        Handle = CreateMutableTexture2D(width, height, generateMips, 1, TextureFormat.RGBA8, (ulong)TextureFlags.None);
-        UpdateTexture2D(Handle, 0, 0, data);
-        IsValid = Handle.Valid;
+        fixed (byte* pixelDataPtr = data)
+        {
+            Context.DeviceContext.UpdateTexture(
+                _textureHandle,
+                mipLevel: 0,
+                slice: 0,
+                dstBox: new Box { MaxX = width, MaxY = height },
+                new TextureSubResData { Data = (IntPtr)pixelDataPtr, Stride = (ulong)(width * 4) },
+                ResourceStateTransitionMode.Transition,
+                ResourceStateTransitionMode.Transition
+            );
+        }
 
         if (generateMips)
             Task.Run(() => GenerateMips(width, height));
+            // GenerateMips(width, height);
+    }
+
+    public ITextureView GetDefaultView()
+    {
+        return _textureHandle.GetDefaultView(TextureViewType.ShaderResource);
     }
     
     public void Update(byte[] data, int offsetX, int offsetY, int width, int height)
     {
-        UpdateTexture2D(Handle, 0, 0, offsetX, offsetY, width, height, data);
+        // UpdateTexture2D(Handle, 0, 0, offsetX, offsetY, width, height, data);
     }
     
     private void GenerateMips(ushort width, ushort height)
@@ -60,33 +76,31 @@ public sealed class Texture : IDisposable
         var mipWidth = width;
         var mipHeight = height;
         
-        var tasks = new List<Task>();
-        
         while (mipWidth > 1 && mipHeight > 1)
         {
             var currentLevel = level;
             var currentMipWidth = mipWidth;
             var currentMipHeight = mipHeight;
-            tasks.Add(Task.Run(() =>
+            Task.Run(() =>
             {
                 try
                 {
                     GenerateMipLevel(currentLevel, currentMipWidth, currentMipHeight);
-                } catch (Exception ex)
+                }
+                catch (Exception ex)
                 {
                     Logger.Error($"Failed to generate mip level {currentLevel}: {ex.Message}");
                     Console.Error.WriteLine(ex.StackTrace);
                 }
-            }));
+            });
 
             level += 1;
             mipWidth /= 2;
             mipHeight /= 2;
         }
-        Task.WaitAll(tasks.ToArray());
     }
 
-    private void GenerateMipLevel(int level, ushort parentWidth, ushort parentHeight)
+    private unsafe void GenerateMipLevel(int level, ushort parentWidth, ushort parentHeight)
     {
         using var taskHandle = BackgroundTaskManager.Start();
         var width = Math.Max(1, parentWidth / 2);
@@ -100,16 +114,30 @@ public sealed class Texture : IDisposable
         ));
 
         mipmap.CopyPixelDataTo(data);
-        UpdateTexture2D(Handle, 0, level, 0, 0, width, height, data);
+        
+        MainThreadTask.Run(() =>
+        {
+            Console.WriteLine("Writing mip level {0} with size {1}x{2}", level, width, height);
+            fixed (byte* pixelDataPtr = data)
+            {
+                Context.DeviceContext.UpdateTexture(
+                    _textureHandle,
+                    mipLevel: (uint)level,
+                    slice: 0,
+                    dstBox: new Box { MaxX = (uint)width, MaxY = (uint)height },
+                    new TextureSubResData { Data = (IntPtr)pixelDataPtr, Stride = (ulong)(width * 4) },
+                    ResourceStateTransitionMode.Transition,
+                    ResourceStateTransitionMode.Transition
+                );
+            }
+            Console.WriteLine("Done writing mip level {0}", level);
+        });
     }
     
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        if (!IsValid || !Handle.Valid)
-            return;
-        
-        DestroyTexture(Handle);
+        _textureHandle.Dispose();
     }
     
     ~Texture() => Dispose();
@@ -117,7 +145,7 @@ public sealed class Texture : IDisposable
     public static Texture CreateFromDisk(string path)
     {
         var filepath = Path.Combine("Assets", path);
-        if (AssetManager.Shared(Assembly.GetCallingAssembly()).Textures.TryGet(filepath, out var texture))
+        if (AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Textures.TryGet(filepath, out var texture))
             return texture;
         
         using var image = Image.Load<Rgba32>(filepath);
@@ -126,7 +154,7 @@ public sealed class Texture : IDisposable
         image.CopyPixelDataTo(textureData);
                
         var tex = new Texture(textureData, (ushort)image.Width, (ushort)image.Height, generateMips: true);
-        AssetManager.Shared(Assembly.GetCallingAssembly()).Textures.Put(filepath, tex);
+        AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Textures.Put(filepath, tex);
         return tex;
     }
     
@@ -137,10 +165,10 @@ public sealed class Texture : IDisposable
     
     public static Texture CreateFromImage(Image<Rgba32> image, bool generateMips = false)
     {
-        var textureData = new byte[image.Width * image.Width * 4];
+        var textureData = new byte[image.Width * image.Height * 4];
         image.CopyPixelDataTo(textureData);
         var tex = new Texture(textureData, (ushort)image.Width, (ushort)image.Height, generateMips);
-        AssetManager.Shared(Assembly.GetCallingAssembly()).Textures.Put(Guid.NewGuid().ToString(), tex);
+        AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Textures.Put(Guid.NewGuid().ToString(), tex);
 
         return tex;
     }

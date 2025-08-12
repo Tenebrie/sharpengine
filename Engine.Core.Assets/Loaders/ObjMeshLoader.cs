@@ -11,12 +11,12 @@ namespace Engine.Core.Assets.Loaders
         public Vector3 Normal = normal;
         public Color VertexColor = vertexColor;
 
-        public AssetVertex() : this(Vector3.Zero, Vector2.Zero, Vector3.Zero, Color.Aqua) {}
+        public AssetVertex() : this(Vector3.Zero, Vector2.Zero, Vector3.Zero, Color.White) {}
     }
 
     public static class ObjMeshLoader
     {
-        public static void LoadObj(string path, out AssetVertex[] vertices, out ushort[] indices)
+        public static void LoadObj(string path, out AssetVertex[] vertices, out uint[] indices)
         {
             var posList   = new List<Vector3>();
             var uvList    = new List<Vector2>();
@@ -24,9 +24,9 @@ namespace Engine.Core.Assets.Loaders
             var colorList = new List<Vector3>();
 
             // Use a tuple as the key instead of the raw token string so we can normalize
-            var vertDict  = new Dictionary<(int vi, int ti, int ni), ushort>();
+            var vertDict  = new Dictionary<(int vi, int ti, int ni), uint>();
             var vertList  = new List<AssetVertex>();
-            var idxList   = new List<ushort>();
+            var idxList   = new List<uint>();
 
             foreach (var raw in File.ReadLines(path))
             {
@@ -99,9 +99,9 @@ namespace Engine.Core.Assets.Loaders
             List<Vector2> uvList,
             List<Vector3> normList,
             List<Vector3> colorList,
-            Dictionary<(int vi, int ti, int ni), ushort> vertDict,
+            Dictionary<(int vi, int ti, int ni), uint> vertDict,
             List<AssetVertex> vertList,
-            List<ushort> idxList)
+            List<uint> idxList)
         {
             // token like "v/vt/vn", "v//vn", "v/vt", or "v"
             var comps = token.Split('/');
@@ -110,11 +110,8 @@ namespace Engine.Core.Assets.Loaders
             int ni = (comps.Length > 2 && comps[2].Length > 0) ? ResolveIndex(comps[2], normList.Count) : -1;
 
             var key = (vi, ti, ni);
-            if (!vertDict.TryGetValue(key, out ushort idx))
+            if (!vertDict.TryGetValue(key, out var idx))
             {
-                if (vertList.Count >= ushort.MaxValue)
-                    throw new InvalidOperationException("OBJ has more than 65,535 unique vertices. Split the mesh or use multiple draw calls.");
-
                 var vtx = new AssetVertex
                 {
                     Position    = posList[vi],
@@ -128,7 +125,7 @@ namespace Engine.Core.Assets.Loaders
                     )
                 };
 
-                idx = (ushort)vertList.Count;
+                idx = (uint)vertList.Count;
                 vertDict[key] = idx;
                 vertList.Add(vtx);
             }

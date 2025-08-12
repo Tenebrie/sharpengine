@@ -8,5 +8,5 @@ namespace Engine.Core.EntitySystem.Entities;
 [SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
 public partial class Atom
 {
-    public static AssetManager AssetManager => AssetManager.Shared(Assembly.GetCallingAssembly());
+    public static AssetManager AssetManager => AssetManager.AssemblyShared(Assembly.GetCallingAssembly());
 }

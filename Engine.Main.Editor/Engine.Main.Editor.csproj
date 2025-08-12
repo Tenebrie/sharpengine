@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -39,7 +40,14 @@
   </ItemGroup>
   
   <ItemGroup>
+    <Folder Include="Assets\Shaders\" />
     <Folder Include="Utilities\" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Content Include="..\ProjectRoot\Assets\Shaders\cube.vsh">
+      <Link>Assets\Shaders\cube.vsh.cs</Link>
+    </Content>
   </ItemGroup>
 
 </Project>

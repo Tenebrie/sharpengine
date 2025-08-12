@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
@@ -7,6 +8,7 @@ namespace Engine.Core.Common;
 
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
+[StructLayout(LayoutKind.Explicit, Size = 128)]
 public struct Matrix : IEquatable<Matrix>
 {
     public static Matrix Identity => new
@@ -30,10 +32,10 @@ public struct Matrix : IEquatable<Matrix>
         }
     }
 
-    [IgnoreDataMember] public Vector4 Row1;
-    [IgnoreDataMember] public Vector4 Row2;
-    [IgnoreDataMember] public Vector4 Row3;
-    [IgnoreDataMember] public Vector4 Row4;
+    [IgnoreDataMember] [FieldOffset(00)] public Vector4 Row1;
+    [IgnoreDataMember] [FieldOffset(32)] public Vector4 Row2;
+    [IgnoreDataMember] [FieldOffset(64)] public Vector4 Row3;
+    [IgnoreDataMember] [FieldOffset(96)] public Vector4 Row4;
 
     public Matrix(Vector4 row1, Vector4 row2, Vector4 row3, Vector4 row4)
     {
@@ -204,6 +206,8 @@ public struct Matrix : IEquatable<Matrix>
             span[i + offset] = (float)src[i];
     }
 
+    public MatrixFloat Downgrade() => new(Row1.Downgrade(), Row2.Downgrade(), Row3.Downgrade(), Row4.Downgrade());
+
     public Vector4 this[int i] => i switch
     {
         0 => Row1,
@@ -244,4 +248,16 @@ public struct Matrix : IEquatable<Matrix>
     public override int GetHashCode() => HashCode.Combine(Row1, Row2, Row3, Row4);
     public static bool operator ==(Matrix left, Matrix right) => left.Equals(right);
     public static bool operator !=(Matrix left, Matrix right) => !(left == right);
+    
+    /**
+     * Debug assertions
+     */
+    
+    static Matrix()
+    {
+        #if DEBUG
+            Debug.Assert(Unsafe.SizeOf<Matrix>() == 128, "Matrix layout changed!");
+            Debug.Assert(Unsafe.SizeOf<MatrixFloat>() == 64, "MatrixFloat layout changed!");
+        #endif
+    }
 }

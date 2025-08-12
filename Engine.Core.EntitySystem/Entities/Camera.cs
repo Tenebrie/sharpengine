@@ -56,13 +56,13 @@ public partial class Camera : Actor
     }
 
     private Transform _transformInverse = Transform.Identity;
-    public CameraView AsCameraView(Span<float> viewMatrix)
+    public Transform AsCameraView()
     {
+        var vp = Transform.Identity;
+        
         WorldTransform.InverseWithoutScale(ref _transformInverse);
-        _transformInverse.ToFloatSpan(ref viewMatrix);
-        var projectionMatrixSpan = new float[16].AsSpan();
-        _projMatrix.ToFloatSpan(ref projectionMatrixSpan);
-        return new CameraView(viewMatrix, projectionMatrixSpan);
+        _transformInverse.MultiplyReverse(_projMatrix, ref vp);
+        return vp;
     }
     
     public struct Plane { public Vector3 Normal; public double D; }

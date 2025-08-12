@@ -1,9 +1,6 @@
-﻿using System.Drawing;
-using Engine.Core.EntitySystem.Entities;
-using Engine.Core.Logging;
+﻿using Engine.Core.Logging;
 using Engine.Core.Profiling;
 using Engine.Module.Rendering.Abstract;
-using static Engine.Native.Bgfx.Bgfx;
 
 namespace Engine.Module.Rendering.Renderers;
 
@@ -33,8 +30,8 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
         if (_mode > LoggingMode.Count - 1)
             _mode = LoggingMode.None;
         
-        if (_mode is LoggingMode.Bgfx or LoggingMode.None)
-            Module.ToggleDebugFlags(DebugFlags.Stats | DebugFlags.Profiler);
+        // if (_mode is LoggingMode.Bgfx or LoggingMode.None)
+            // Module.ToggleDebugFlags(DebugFlags.Stats | DebugFlags.Profiler);
     }
 
     protected internal override void RenderFrame(double deltaTime)
@@ -49,7 +46,7 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
     {
         if (_mode is not LoggingMode.None)
         {
-            DebugTextWrite(0, 0, DebugColor.Black, DebugColor.DarkGray, _mode.ToString());
+            // DebugTextWrite(0, 0, DebugColor.Black, DebugColor.DarkGray, _mode.ToString());
         }
 
         var messageCount = 0;
@@ -59,7 +56,7 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
         foreach (var (message, level) in persistentMessages)
         {
             messageCount += 1;
-            DebugTextWrite(0, messageCount, DebugColor.Black, GetLogColor(level), message);
+            // DebugTextWrite(0, messageCount, DebugColor.Black, GetLogColor(level), message);
         }
 
         if (_mode is LoggingMode.None or LoggingMode.Bgfx)
@@ -95,20 +92,20 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
 
     private static void RenderLogEntry(string message, LogLevel level, int messageCount)
     {
-        DebugTextWrite(0, messageCount, DebugColor.Black, GetLogColor(level), message);
+        // DebugTextWrite(0, messageCount, DebugColor.Black, GetLogColor(level), message);
     }
     
     private void RenderFramerate()
     {
-        DebugTextWrite(Module.FramebufferSize.X / 8 - 9, 0, "FPS: " + _framerate);
-        DebugTextWrite(Module.FramebufferSize.X / 8 - 12, 1, "1%% Low: " + _onePercentLow);
+        // DebugTextWrite(Module.FramebufferSize.X / 8 - 9, 0, "FPS: " + _framerate);
+        // DebugTextWrite(Module.FramebufferSize.X / 8 - 12, 1, "1%% Low: " + _onePercentLow);
 
         var line = 2;
         var updates = Profiler.Query(ProfilingContext.BackstageUpdate | ProfilingContext.PhysicsUpdate | ProfilingContext.RenderingPrepare);
         foreach (var entry in updates)
         {
             var length = 9 + entry.TypeName.Length;
-            DebugTextWrite(Module.FramebufferSize.X / 8 - length, line++, $"{entry.TypeName}: {entry.AverageMilliseconds():F2}ms");
+            // DebugTextWrite(Module.FramebufferSize.X / 8 - length, line++, $"{entry.TypeName}: {entry.AverageMilliseconds():F2}ms");
         }
     }
  
@@ -133,17 +130,17 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
         _frameTimeAccumulator = 0.0;
     }
 
-    private static DebugColor GetLogColor(LogLevel level)
-    {
-        return level switch
-        {
-            LogLevel.Debug => DebugColor.LightGray,
-            LogLevel.Info => DebugColor.LightGreen,
-            LogLevel.Warn => DebugColor.Yellow,
-            LogLevel.Error => DebugColor.Red,
-            LogLevel.Fatal => DebugColor.Red,
-            LogLevel.Log => DebugColor.LightCyan,
-            _ => DebugColor.White
-        };
-    }
+    // private static DebugColor GetLogColor(LogLevel level)
+    // {
+        // return level switch
+        // {
+            // LogLevel.Debug => DebugColor.LightGray,
+            // LogLevel.Info => DebugColor.LightGreen,
+            // LogLevel.Warn => DebugColor.Yellow,
+            // LogLevel.Error => DebugColor.Red,
+            // LogLevel.Fatal => DebugColor.Red,
+            // LogLevel.Log => DebugColor.LightCyan,
+            // _ => DebugColor.White
+        // };
+    // }
 }

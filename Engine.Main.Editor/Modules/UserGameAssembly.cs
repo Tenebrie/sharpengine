@@ -16,7 +16,7 @@ public class UserGameAssembly() : GuestAssembly("User.Game", EngineModule.UserHo
     public override void Init()
     {
         base.Init();
-        var loadedSettings = Host.Load<IBaseEngineContract>();
+        var loadedSettings = Host.LoadAssembly<IBaseEngineContract>();
         if (loadedSettings == null)
         {
             Console.Error.WriteLine("Failed to load UserGame assembly settings.");

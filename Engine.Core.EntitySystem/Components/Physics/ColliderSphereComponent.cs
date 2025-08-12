@@ -23,15 +23,10 @@ public partial class ColliderSphereComponent : ActorComponent, IRenderable
     public void PerformCulling(Camera activeCamera) => IsOnScreen = activeCamera.SphereInFrustum(WorldTransform, WorldRadius, null);
     public int GetInstanceCount() => 1;
     
-    private Transform[] _singleComponentTransforms = new Transform[1];
-
-    public void PrepareRender(ref RenderContext renderContext)
+    private readonly Transform[] _singleComponentTransforms = new Transform[1];
+    public void Render()
     {
         _singleComponentTransforms[0] = WorldTransform;
-        LineSphereMesh.Shared.PrepareRender(1, ref _singleComponentTransforms, [WireframeMaterial.Shared], ref renderContext);
-    }
-    public void Render(ref RenderContext renderContext)
-    {
-        LineSphereMesh.Shared.Render(1, WireframeMaterial.Shared, ref renderContext, LineSphereMesh.ColorMode.Collider);
+        LineSphereMesh.Shared.Render(1, _singleComponentTransforms, [WireframeMaterial.Shared], LineSphereMesh.ColorMode.Collider);
     }
 }

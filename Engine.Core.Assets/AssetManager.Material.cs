@@ -8,8 +8,9 @@ public class MaterialAssetManager : IDisposable
 {
     private readonly Dictionary<object, Material> _cachedMaterials = new();
     private static bool _fallbackMaterialInitialized = false;
-    private static Material _fallbackMaterial = null!;
-    public static MaterialInstance FallbackMaterial { get; private set; } = null!;
+    
+    public static Material FallbackMaterial { get; private set; } = null!;
+    public static MaterialInstance FallbackMaterialInstance { get; private set; } = null!;
 
     private static class FallbackMaterialGenerator
     {
@@ -27,8 +28,8 @@ public class MaterialAssetManager : IDisposable
     {
         if (_fallbackMaterialInitialized)
             return;
-        _fallbackMaterial = FallbackMaterialGenerator.Create();
-        FallbackMaterial = _fallbackMaterial.InstantiateWithoutCache();
+        FallbackMaterial = FallbackMaterialGenerator.Create();
+        FallbackMaterialInstance = FallbackMaterial.InstantiateWithoutCache();
         _fallbackMaterialInitialized = true;
     }
     
@@ -56,10 +57,7 @@ public class MaterialAssetManager : IDisposable
             material.Dispose();
 
         if (_fallbackMaterialInitialized)
-        {
-            Console.WriteLine("Disposing fallback material");
-            _fallbackMaterial.Dispose();
-        }
+            FallbackMaterial.Dispose();
         _fallbackMaterialInitialized = false;
         _cachedMaterials.Clear();
     }

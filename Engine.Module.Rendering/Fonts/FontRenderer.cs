@@ -1,13 +1,10 @@
-﻿using System.Reflection;
-using System.Runtime.InteropServices;
-using Engine.Core.Assets;
+﻿using System.Runtime.InteropServices;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Common;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
-using static Engine.Native.Bgfx.Bgfx;
 using Color = System.Drawing.Color;
 using Point = System.Drawing.Point;
 using Rectangle = System.Drawing.Rectangle;
@@ -18,10 +15,10 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
 {
     private FontSystem _fontSystem;
     private DynamicSpriteFont _font;
-    private UniformHandle _diffuseTextureHandle;
+    // private UniformHandle _diffuseTextureHandle;
     private RenderingModule _parent;
 
-    private VertexLayout _vertexLayout;
+    // private VertexLayout _vertexLayout;
     private MaterialInstance _material = null!;
     
     public FontRenderer(RenderingModule parent)
@@ -39,12 +36,12 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
     public void Initialize()
     {
         _material = Material.CreateFromDisk("UserInterface/Font/Font").Instantiate();
-        _diffuseTextureHandle = create_uniform("s_diffuse", UniformType.Sampler, 1);
-        _vertexLayout = CreateVertexLayout([
-            new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
-            new VertexLayoutAttribute(Attrib.TexCoord0, 2, AttribType.Float, true, false),
-            new VertexLayoutAttribute(Attrib.Color0, 4, AttribType.Uint8, true, true)
-        ]);
+        // _diffuseTextureHandle = create_uniform("s_diffuse", UniformType.Sampler, 1);
+        // _vertexLayout = CreateVertexLayout([
+            // new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
+            // new VertexLayoutAttribute(Attrib.TexCoord0, 2, AttribType.Float, true, false),
+            // new VertexLayoutAttribute(Attrib.Color0, 4, AttribType.Uint8, true, true)
+        // ]);
     }
     
     public void DrawQuad(
@@ -70,13 +67,13 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
             1, 3, 2
         };
 
-        var vertexBuffer = CreateTransientVertexBuffer(ref vertices, ref _vertexLayout);
-        var indexBuffer = CreateTransientIndexBuffer(indices);
-        SetVertexBuffer(vertexBuffer);
-        SetIndexBuffer(indexBuffer);
-        SetState(StateFlags.WriteRgb | StateFlags.WriteA | StateFlags.BlendAlphaToCoverage);
-        SetTexture(0, _diffuseTextureHandle, tex.Handle, 0);
-        Submit(ViewId.UserInterface, _material.Program, 1, 0);
+        // var vertexBuffer = CreateTransientVertexBuffer(ref vertices, ref _vertexLayout);
+        // var indexBuffer = CreateTransientIndexBuffer(indices);
+        // SetVertexBuffer(vertexBuffer);
+        // SetIndexBuffer(indexBuffer);
+        // SetState(StateFlags.WriteRgb | StateFlags.WriteA | StateFlags.BlendAlphaToCoverage);
+        // SetTexture(0, _diffuseTextureHandle, tex.Handle, 0);
+        // Submit(ViewId.UserInterface, _material.Program, 1, 0);
     }
 
     public ITexture2DManager TextureManager { get; } = new MyTextureManager();
@@ -89,7 +86,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        destroy_uniform(_diffuseTextureHandle);
+        // destroy_uniform(_diffuseTextureHandle);
         _fontSystem.Dispose();
     }
     

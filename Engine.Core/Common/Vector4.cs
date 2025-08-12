@@ -249,6 +249,9 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
             Debug.Assert(Unsafe.SizeOf<Vector2>() == 32, "Vector2 layout changed!");
             Debug.Assert(Unsafe.SizeOf<Vector3>() == 32, "Vector3 layout changed!");
             Debug.Assert(Unsafe.SizeOf<Vector4>() == 32, "Vector4 layout changed!");
+            Debug.Assert(Unsafe.SizeOf<Vector2Float>() == 8, "Vector2Float layout changed!");
+            Debug.Assert(Unsafe.SizeOf<Vector3Float>() == 12, "Vector3Float layout changed!");
+            Debug.Assert(Unsafe.SizeOf<Vector4Float>() == 16, "Vector4Float layout changed!");
         #endif
     }
 }

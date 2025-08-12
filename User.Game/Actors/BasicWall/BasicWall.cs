@@ -29,6 +29,6 @@ public partial class BasicWall : Actor
     public void OnReady()
     {
         MeshComponent.Mesh = StaticMesh.CreateFromDisk("Meshes/testwall.obj");
-        MeshComponent.Material = _generatedMaterial;
+        MeshComponent.MaterialInstance = _generatedMaterial;
     }
 }

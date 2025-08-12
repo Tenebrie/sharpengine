@@ -29,7 +29,7 @@ public partial class BasicEnemy : ActorInstance
         Health -= damage;
         DamageFlashTime += damage / MaxHealth / 2;
         WhiteFlashTime = 0.05;
-        WhiteFlashMultiplier = 2.0 + damage / MaxHealth;
+        WhiteFlashMultiplier = 5.0 + damage / MaxHealth;
         if (Health <= 0)
             IsDying = true;
     }

@@ -8,8 +8,8 @@ namespace Engine.Main.Editor.Modules.Compiler;
 
 internal sealed class GuestAssemblyHost(string assemblyName)
 {
-    private readonly string _srcPath = Path.GetFullPath($"../../../../{assemblyName}");
-    private readonly string _dllPath = Path.GetFullPath($"../../../../{assemblyName}/bin/Debug/net9.0/{assemblyName}.dll");
+    private readonly string _srcPath = Path.GetFullPath($"../../../../../{assemblyName}");
+    private readonly string _dllPath = Path.GetFullPath($"../../../../../{assemblyName}/bin/x64/Debug/net9.0/{assemblyName}.dll");
     private FileSystemWatcher? _watcher;
     private readonly GuestAssemblyCompiler _compiler = GuestAssemblyCompiler.Make(assemblyName);
     private bool IsCompiling => _compiler.IsCompiling;
@@ -17,6 +17,7 @@ internal sealed class GuestAssemblyHost(string assemblyName)
     private bool _isAssemblyDirty = false;
     public bool AssemblyAwaitingReload = false;
 
+    public Assembly? Assembly;
     private GameAssemblyLoadContext? _assemblyLoadContext;
 
     /// <summary>
@@ -70,7 +71,7 @@ internal sealed class GuestAssemblyHost(string assemblyName)
 
     /* ---------- internals ---------- */
 
-    public TContract? Load<TContract>() where TContract : class
+    public TContract? LoadAssembly<TContract>() where TContract : class
     {
         var srcPdb = Path.ChangeExtension(_dllPath, ".pdb");
 
@@ -89,9 +90,17 @@ internal sealed class GuestAssemblyHost(string assemblyName)
         StartWatching();
 
         _assemblyLoadContext = new GameAssemblyLoadContext(tmpDll);
-        var asm = _assemblyLoadContext.LoadFromAssemblyPath(tmpDll);
+        Assembly = _assemblyLoadContext.LoadFromAssemblyPath(tmpDll);
 
-        var type = asm.GetTypes().Where(ImplementsContract<TContract>).ToList();
+        var type = Assembly.GetTypes().Where(ImplementsContract<TContract>).ToList();
+        return type.Count == 0 ? null : (TContract)Activator.CreateInstance(type.First())!;
+    }
+    
+    public TContract? LoadContract<TContract>() where TContract : class
+    {
+        if (Assembly == null)
+            return null;
+        var type = Assembly.GetTypes().Where(ImplementsContract<TContract>).ToList();
         return type.Count == 0 ? null : (TContract)Activator.CreateInstance(type.First())!;
     }
 

@@ -2,7 +2,7 @@
 
 namespace Engine.Core.Common;
 
-[StructLayout(LayoutKind.Explicit)]
+[StructLayout(LayoutKind.Explicit, Size = 12)]
 public struct Vector3Float(float x, float y, float z)
 {
     [FieldOffset(0)] public float X = x;

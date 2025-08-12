@@ -5,7 +5,6 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
-using Engine.Native.Bgfx;
 
 namespace User.Game.Player.Abilities.Definitions;
 
@@ -29,9 +28,9 @@ public partial class LightningStrikeEffect : Actor
         _materialInstance = _material.Instantiate()
             .LoadTexture(Texture.CreateFromDisk("Textures/lightning.png"));
         MeshComponent.Mesh = PlaneMesh.Shared;
-        MeshComponent.Material = _materialInstance;
+        MeshComponent.MaterialInstance = _materialInstance;
         MeshComponent.Transform.Position = new Vector3(-0, 0, -0.5 + 0.1);
-        MeshComponent.RenderFlags = Bgfx.StateFlags.BlendAlphaToCoverage;
+        // MeshComponent.RenderFlags = Bgfx.StateFlags.BlendAlphaToCoverage;
     }
 
     private bool _isFading = false;

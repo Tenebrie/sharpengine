@@ -1,11 +1,9 @@
 using Engine.Core.Assets;
-using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Loaders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
-using Engine.Native.Bgfx;
 
 namespace Engine.Core.EntitySystem.Components;
 
@@ -25,11 +23,16 @@ public partial class StaticMeshHolder : ActorComponent
         }
     }
 
-    private MaterialInstance? _material;
-    public MaterialInstance Material
+    private MaterialInstance? _materialInstance;
+    public Material Material
     {
-        get => _material ?? MaterialAssetManager.FallbackMaterial;
-        set => _material = value;
+        get => _materialInstance?.Material ?? MaterialAssetManager.FallbackMaterial;
+        set => _materialInstance = value.Instantiate();
+    }
+    public MaterialInstance MaterialInstance
+    {
+        get => _materialInstance ?? MaterialAssetManager.FallbackMaterialInstance;
+        set => _materialInstance = value;
     }
     [Component] public BoundingSphereComponent BoundingSphere;
 
@@ -38,5 +41,5 @@ public partial class StaticMeshHolder : ActorComponent
         BoundingSphere.Generate(vertices);
     }
 
-    public Bgfx.StateFlags RenderFlags { get; set; } = Bgfx.StateFlags.None;
+    // public Bgfx.StateFlags RenderFlags { get; set; } = Bgfx.StateFlags.None;
 }

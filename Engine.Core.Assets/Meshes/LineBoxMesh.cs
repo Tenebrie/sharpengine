@@ -1,13 +1,12 @@
 ﻿using System.Drawing;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Extensions;
 using Engine.Core.Logging;
-using static Engine.Native.Bgfx.Bgfx;
-using Transform = Engine.Core.Common.Transform;
 
 namespace Engine.Core.Assets.Meshes;
 
@@ -47,36 +46,36 @@ public class LineBoxMesh : StaticMesh
             4,5,1,  1,0,4 
         ];
         
-        Layout = CreateVertexLayout([
-            new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
-            new VertexLayoutAttribute(Attrib.Color0, 4, AttribType.Uint8, true, true)
-        ]);
-        VertexBuffer = CreateVertexBuffer(ref verts, ref Layout);
-        IndexBuffer = CreateIndexBuffer(ref indices);
-        AssetManager.Shared(callingAssembly).Meshes.Put("Generated/LineBoxMesh", this);
+        // Layout = CreateVertexLayout([
+            // new VertexLayoutAttribute(Attrib.Position, 3, AttribType.Float, true, false),
+            // new VertexLayoutAttribute(Attrib.Color0, 4, AttribType.Uint8, true, true)
+        // ]);
+        // VertexBuffer = CreateVertexBuffer(ref verts, ref Layout);
+        // IndexBuffer = CreateIndexBuffer(ref indices);
+        AssetManager.AssemblyShared(callingAssembly).Meshes.Put("Generated/LineBoxMesh", this);
         return this;
     }
     
     public unsafe void Render(uint instanceCount, Material material, ref RenderContext context)
     {
-        if (!_isLoaded)
-        {
-            Logger.Error("BoundingSphere is not initialized. Call Load() first.");
-            context.InstanceTransformCount += instanceCount;
-            return;
-        }
+        // if (!_isLoaded)
+        // {
+        //     Logger.Error("BoundingSphere is not initialized. Call Load() first.");
+        //     context.InstanceTransformCount += instanceCount;
+        //     return;
+        // }
         
-        var encoder = encoder_begin(false);
-        SetInstanceDataBuffer(encoder, context.InstanceTransformBuffer, context.InstanceTransformCount, instanceCount);
-        context.InstanceTransformCount += instanceCount;
+        // var encoder = encoder_begin(false);
+        // SetInstanceDataBuffer(encoder, context.InstanceTransformBuffer, context.InstanceTransformCount, instanceCount);
+        // context.InstanceTransformCount += instanceCount;
         
-        SetVertexBuffer(encoder, VertexBuffer);
-        SetIndexBuffer(encoder, IndexBuffer);
-        SetState(encoder, StateFlags.WriteRgb | StateFlags.WriteZ | StateFlags.DepthTestLess | StateFlags.PtLines);
+        // SetVertexBuffer(encoder, VertexBuffer);
+        // SetIndexBuffer(encoder, IndexBuffer);
+        // SetState(encoder, StateFlags.WriteRgb | StateFlags.WriteZ | StateFlags.DepthTestLess | StateFlags.PtLines);
         
-        Submit(encoder, context.ViewId, material.Program, 1, 0);
+        // Submit(encoder, context.ViewId, material.Program, 1, 0);
         
-        encoder_end(encoder);
+        // encoder_end(encoder);
     }
     
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -84,5 +83,7 @@ public class LineBoxMesh : StaticMesh
     {
         public readonly Vector3Float Position = position.Downgrade();
         public readonly uint Color = color.ToAbgr();
+        
+        public static uint SizeInBytes => (uint)Unsafe.SizeOf<RenderingVertex>();
     }
 }

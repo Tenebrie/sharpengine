@@ -2,7 +2,7 @@
 
 namespace Engine.Core.Common;
 
-[StructLayout(LayoutKind.Explicit)]
+[StructLayout(LayoutKind.Explicit, Size = 16)]
 public struct Vector4Float(float x, float y, float z, float w)
 {
     [FieldOffset(0)]  public float X = x;
@@ -15,5 +15,12 @@ public struct Vector4Float(float x, float y, float z, float w)
         var bytes = new byte[16];
         MemoryMarshal.Write(bytes, in this);
         return bytes;
+    }
+    
+    public const int SizeInBytes = 16;
+
+    public override string ToString()
+    {
+        return $"Vector4Float(X: {X}, Y: {Y}, Z: {Z}, W: {W})";
     }
 }

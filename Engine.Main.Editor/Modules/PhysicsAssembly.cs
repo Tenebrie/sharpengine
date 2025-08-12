@@ -13,7 +13,7 @@ internal class PhysicsAssembly() : GuestAssembly("Engine.Module.Physics", Engine
     public override void Init()
     {
         base.Init();
-        PhysicsModule = Host.Load<IPhysicsModule>();
+        PhysicsModule = Host.LoadAssembly<IPhysicsModule>();
         if (PhysicsModule == null)
         {
             Console.Error.WriteLine("Failed to instantiate physics module.");

@@ -10,6 +10,8 @@ internal class RenderingAssembly(IWindow window) : GuestAssembly("Engine.Module.
 {
     private bool _isInitialized = false;
     internal IRenderingModule? RenderingModule { get; set; }
+    internal IRenderingModuleBootstrap? RenderingBootstrap { get; set; }
+    internal RenderingResources Resources { get; set; }
     private readonly List<Backstage> _backstages = [];
 
     internal override bool IgnoresTimeScale => true;
@@ -17,19 +19,21 @@ internal class RenderingAssembly(IWindow window) : GuestAssembly("Engine.Module.
     public override void Init()
     {
         base.Init();
-        RenderingModule = Host.Load<IRenderingModule>();
-        if (RenderingModule == null)
+        RenderingModule = Host.LoadAssembly<IRenderingModule>();
+        RenderingBootstrap = Host.LoadContract<IRenderingModuleBootstrap>();
+        if (RenderingModule == null || RenderingBootstrap == null)
         {
             Console.Error.WriteLine("Failed to instantiate renderer.");
             return;
         }
         if (_isInitialized)
         {
-            RenderingModule.HotInitialize(window);
+            RenderingModule.HotInitialize(Resources, window);
         }
         else
         {
-            RenderingModule.Initialize(window);
+            Resources = RenderingBootstrap.Initialize(window);
+            RenderingModule.HotInitialize(Resources, window);
             _isInitialized = true;
         }
         RenderingModule.SetGameplayContext(Editor.GameplayContext);
@@ -51,7 +55,7 @@ internal class RenderingAssembly(IWindow window) : GuestAssembly("Engine.Module.
 
     public override void Destroy()
     {
-        RenderingModule?.DisconnectCallbacks();
+        RenderingModule?.HotShutdown();
         base.Destroy();
     }
 
@@ -59,6 +63,6 @@ internal class RenderingAssembly(IWindow window) : GuestAssembly("Engine.Module.
     {
         _backstages.Clear();
         base.Destroy();
-        RenderingModule?.Shutdown();
+        RenderingModule?.HotShutdown();
     }
 }

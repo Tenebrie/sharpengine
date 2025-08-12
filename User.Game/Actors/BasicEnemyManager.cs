@@ -1,14 +1,9 @@
-﻿using Engine.Core.Assets;
-using Engine.Core.Assets.Builders;
-using Engine.Core.Assets.Materials;
-using Engine.Core.Assets.Meshes;
+﻿using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Meshes.Builtins;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
-using Engine.Core.Logging;
-using Engine.Native.Bgfx;
 using User.Game.Player;
 
 namespace User.Game.Actors;
@@ -27,12 +22,12 @@ public partial class BasicEnemyManager : Actor
             AssetManager.Meshes.Put("Assets/Virtual/BasicEnemy", mesh);
         }
         InstanceManager.Mesh = mesh;
-        InstanceManager.BaseMaterial =
+        InstanceManager.Material =
             MaterialBuilder.Begin(typeof(BasicEnemyManager)).SetSamplingTexture(true).Compile();
             // .CreateFromDisk("Meshes/BillboardSprite/BillboardSprite");
             // .Instantiate()
             // .LoadTexture(Texture.CreateFromDisk("Textures/godot.png"));
-        InstanceManager.RenderFlags = Bgfx.StateFlags.BlendAlphaToCoverage;
+        // InstanceManager.RenderFlags = Bgfx.StateFlags.BlendAlphaToCoverage;
     }
 
     private int _enemiesQueued = 0;

@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.IO.Pipelines;
+using System.Reflection;
 
 namespace Engine.Core.Assets;
 
@@ -6,6 +7,7 @@ public partial class AssetManager : IDisposable
 {
     public MaterialAssetManager Materials { get; } = new();
     public MeshAssetManager Meshes { get; } = new();
+    public PipelineAssetManager Pipelines { get; } = new();
     public TextureAssetManager Textures { get; } = new();
     
     /// <summary>
@@ -14,13 +16,14 @@ public partial class AssetManager : IDisposable
     /// From userland, `Assembly.GetExecutingAssembly()` is fine.
     /// For engine code, use `Assembly.GetCallingAssembly()` in the first function called from the userland.
     /// </summary>
-    public static AssetManager Shared(Assembly assembly) => AssemblyAssetManager.GetAssetManager(assembly);
+    public static AssetManager Shared => AssemblyAssetManager.GetAssetManager(Assembly.GetExecutingAssembly());
+    public static AssetManager AssemblyShared(Assembly assembly) => AssemblyAssetManager.GetAssetManager(Assembly.GetExecutingAssembly());
 
     public void Initialize()
     {
         MaterialAssetManager.Initialize();
         MeshAssetManager.Initialize();
-        // TextureAssetManager.Initialize();
+        TextureAssetManager.Initialize();
     }
     
     public void Dispose()
@@ -28,10 +31,9 @@ public partial class AssetManager : IDisposable
         GC.SuppressFinalize(this);
         Materials.Dispose();
         Meshes.Dispose();
+        Pipelines.Dispose();
         Textures.Dispose();
     }
-    
-    ~AssetManager() => Dispose();
 }
 
 public static class AssemblyAssetManager
@@ -51,9 +53,7 @@ public static class AssemblyAssetManager
     public static void DisposeAll()
     {
         foreach (var assetManager in AssetManagers.Values)
-        {
             assetManager.Dispose();
-        }
         AssetManagers.Clear();
     }
 }

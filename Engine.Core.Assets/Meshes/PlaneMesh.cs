@@ -7,7 +7,6 @@ public class PlaneMesh : StaticMesh
 {
     private static readonly PlaneMesh Instance = new();
     public static PlaneMesh Shared => Instance.Load(Assembly.GetCallingAssembly());
-
     
     private bool _isLoaded = false;
     private PlaneMesh Load(Assembly callingAssembly)
@@ -19,7 +18,7 @@ public class PlaneMesh : StaticMesh
         var verts = TessellatedPlaneMesh.CreateVerts();
         var indices = TessellatedPlaneMesh.CreateIndices();
         LoadInternal(verts, indices, WindingOrder.Cw);
-        AssetManager.Shared(callingAssembly).Meshes.Put("Generated/PlaneMesh", this);
+        AssetManager.AssemblyShared(callingAssembly).Meshes.Put("Generated/PlaneMesh", this);
         return this;
     }
 }

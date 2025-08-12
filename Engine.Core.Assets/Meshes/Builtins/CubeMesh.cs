@@ -14,7 +14,7 @@ public class CubeMesh : StaticMesh
 
     public void Load()
     {
-        if (AssetManager.Shared(Assembly.GetCallingAssembly()).Meshes.TryGet("Generated/ColorCube", out var existingMesh))
+        if (AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Meshes.TryGet("Generated/ColorCube", out var existingMesh))
         {
             Mesh = existingMesh;
             return;
@@ -32,7 +32,7 @@ public class CubeMesh : StaticMesh
             new(new Vector3(-1,  1,  1), Vector2.Zero, Vector3.One, Color.Gray)
         ];
 
-        ushort[] indices =
+        uint[] indices =
         [
             0,1,2,  2,3,0,
             5,4,7,  7,6,5,
@@ -43,7 +43,7 @@ public class CubeMesh : StaticMesh
         ];
 
         var mesh = CreateFromMemoryWithoutCache(verts, indices, WindingOrder.Ccw);
-        AssetManager.Shared(Assembly.GetCallingAssembly()).Meshes.Put("Generated/ColorCube", mesh);
+        AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Meshes.Put("Generated/ColorCube", mesh);
         Mesh = mesh;
     }
 
@@ -61,7 +61,7 @@ public class CubeMesh : StaticMesh
             new(new Vector3(-1,  1,  1), Vector2.Zero, Vector3.One, Color.Gray)
         ];
 
-        ushort[] indices =
+        uint[] indices =
         [
             0,1,2,  2,3,0,
             5,4,7,  7,6,5,

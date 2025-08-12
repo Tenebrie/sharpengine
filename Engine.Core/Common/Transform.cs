@@ -294,4 +294,12 @@ public class Transform
     {
         result = Data * child;
     }
+    public void Multiply(in Matrix child, ref Transform result)
+    {
+        result.Data = child * Data;
+    }
+    public void MultiplyReverse(in Matrix child, ref Transform result)
+    {
+        result.Data = Data * child;
+    }
 }

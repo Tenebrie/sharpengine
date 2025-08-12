@@ -16,14 +16,22 @@ public class GuestAssemblyCompiler
     private GuestAssemblyCompiler(string assemblyName, string projectPath)
     {
         _assemblyName = assemblyName;
-        var pc = ProjectCollection.GlobalProjectCollection;
+        var globals = new Dictionary<string, string>
+        {
+            ["Configuration"]  = "Debug",
+            ["Platform"]       = "x64",
+            ["PlatformTarget"] = "x64",
+            ["Prefer32Bit"]    = "false"
+        };
+
+        var pc = new ProjectCollection(globals);
         _project = pc.LoadProject(projectPath);
         _project.SetProperty("BuildProjectReferences", "false");
     }
 
     public static GuestAssemblyCompiler Make(string assemblyName)
     {
-        var projectPath = Path.GetFullPath($@"../../../../{assemblyName}/{assemblyName}.csproj");
+        var projectPath = Path.GetFullPath($"../../../../../{assemblyName}/{assemblyName}.csproj");
         return new GuestAssemblyCompiler(assemblyName, projectPath);
     }
 
@@ -37,7 +45,7 @@ public class GuestAssemblyCompiler
         
         var request = new BuildRequestData(
             _project.CreateProjectInstance(),
-            ["Build"]
+            targetsToBuild: ["Build"]
         );
         
         var result = BuildManager.DefaultBuildManager.Build(buildParams, request);

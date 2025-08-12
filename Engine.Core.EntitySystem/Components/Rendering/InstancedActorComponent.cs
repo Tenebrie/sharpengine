@@ -2,6 +2,7 @@
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Materials.Meshes.Wireframe;
 using Engine.Core.Assets.Meshes;
+using Engine.Core.Assets.Renderers;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
@@ -9,7 +10,6 @@ using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Logging;
 using Engine.Core.Profiling;
-using Engine.Native.Bgfx;
 using JetBrains.Annotations;
 
 namespace Engine.Core.EntitySystem.Components.Rendering;
@@ -29,23 +29,20 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
         get => _staticMeshHolder.Mesh;
         set => _staticMeshHolder.Mesh = value;
     }
-    // public MaterialInstance Material
-    // {
-    //     get => _staticMeshHolder.Material;
-    //     set => _staticMeshHolder.Material = value;
-    // }
     public BoundingSphereComponent BoundingSphere
     {
         get => _staticMeshHolder.BoundingSphere;
         set => _staticMeshHolder.BoundingSphere = value;
     }
-    public Bgfx.StateFlags RenderFlags
-    {
-        get => _staticMeshHolder.RenderFlags;
-        set => _staticMeshHolder.RenderFlags = value;
-    }
+    public RenderScript RenderScript { get; set; } = RenderScript.Default;
 
-    public Material? BaseMaterial { get; set; }
+    private Material? _material = null;
+
+    public Material Material
+    {
+        get => _material ?? MaterialAssetManager.FallbackMaterial;
+        set => _material = value;
+    }
     public List<TInstance> Instances { get; } = [];
     public int InstanceCount => Instances.Count;
 
@@ -54,7 +51,7 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
     {
         var instancedActor = Activator.CreateInstance<TInstance>();
         instancedActor.Transform = instanceTransform;
-        instancedActor.MaterialInstance = BaseMaterial?.Instantiate() ?? MaterialAssetManager.FallbackMaterial;
+        instancedActor.MaterialInstance = Material?.Instantiate() ?? MaterialAssetManager.FallbackMaterialInstance;
         Instances.Add(instancedActor);
         instancedActor.ParentManager = this;
         AdoptChild(instancedActor);
@@ -62,7 +59,7 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
     
     public void RemoveInstance(ActorInstance instance)
     {
-        if (instance == null || !Instances.Contains(instance) || instance is not TInstance instancedActor)
+        if (!Instances.Contains(instance) || instance is not TInstance instancedActor)
             return;
 
         instance.QueueFree();
@@ -86,16 +83,9 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
                 IsOnScreen = true;
         }
     }
-    public int GetInstanceCount() => Instances.Count * 2;
 
-    public void PrepareRender(ref RenderContext renderContext)
+    public void Render()
     {
-        if (Mesh == null)
-        {
-            Logger.Error("InstancedActorComponent: Mesh is null, cannot render.");
-            return;
-        }
-        
         if (Instances.Count > _maxInstancesSeen)
         {
             Array.Resize(ref _transformPool, Instances.Count);
@@ -105,7 +95,7 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
             {
                 _transformPool[i] = Transform.Identity;
                 _sphereTransformPool[i] = Transform.Identity;
-                _materialPool[i] = MaterialAssetManager.FallbackMaterial;
+                _materialPool[i] = MaterialAssetManager.FallbackMaterialInstance;
             }
             _maxInstancesSeen = Instances.Count;
         }
@@ -117,21 +107,15 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
             _transformPool[i] = actor.WorldTransform;
             _materialPool[i] = actor.MaterialInstance;
         }
-
-        Mesh.PrepareRender((uint)Instances.Count, ref _transformPool, _materialPool, ref renderContext);
-        for (var i = 0; i < Instances.Count; i++)
-        {
-            var actor = Instances[i];
-            if (!IsValid(actor))
-                continue;
-            BoundingSphere.Transform.MultiplyReverse(actor.WorldTransform, ref _sphereTransformPool[i]);
-        }
-        LineSphereMesh.Shared.PrepareRender((uint)Instances.Count, ref _sphereTransformPool, [WireframeMaterial.Shared], ref renderContext);
-    }
-
-    public void Render(ref RenderContext renderContext)
-    {
-        Mesh.Render((uint)Instances.Count, _materialPool[0], ref renderContext, RenderFlags);
-        LineSphereMesh.Shared.Render((uint)Instances.Count, WireframeMaterial.Shared, ref renderContext, LineSphereMesh.ColorMode.AxisColor);
+        
+        RenderScript.Render(Instances.Count, Mesh, _transformPool, Material, _materialPool);
+        // for (var i = 0; i < Instances.Count; i++)
+        // {
+        //     var actor = Instances[i];
+        //     if (!IsValid(actor))
+        //         continue;
+        //     BoundingSphere.Transform.MultiplyReverse(actor.WorldTransform, ref _sphereTransformPool[i]);
+        // }
+        // LineSphereMesh.Shared.Render((uint)Instances.Count, _sphereTransformPool, [WireframeMaterial.Shared], LineSphereMesh.ColorMode.AxisColor);
     }
 }

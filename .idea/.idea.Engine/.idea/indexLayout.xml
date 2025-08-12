@@ -7,7 +7,6 @@
       <Path>ProjectRoot-MacOS</Path>
       <Path>ProjectRoot-Windows</Path>
       <Path>Scripts</Path>
-      <Path>Submodules</Path>
     </attachedFolders>
     <explicitIncludes />
     <explicitExcludes>

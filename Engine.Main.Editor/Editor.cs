@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Engine.Core.Assets;
+using Engine.Core.Communication.Tasks;
 using Engine.Core.EntitySystem;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Modules;
@@ -86,6 +87,7 @@ internal static class Editor
 
         MainWindow.Update += deltaTime =>
         {
+            MainThreadTask.ExecuteAllQueued();
             foreach (var guestAssembly in GuestAssemblies)
             {
                 var timeScale = guestAssembly.IgnoresTimeScale ? 1.0 : TimeScale;
