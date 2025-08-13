@@ -7,16 +7,16 @@ namespace Engine.Core.Assets;
 
 public class PipelineAssetManager : IDisposable
 {
-    private readonly Dictionary<Tuple<StaticMesh, Material>, IPipelineState> _cachedPipelines = new();
+    private readonly Dictionary<int, IPipelineState> _cachedPipelines = new();
     
-    public IPipelineState Produce(StaticMesh mesh, Material material)
+    public IPipelineState Produce(MeshPipeline mesh, MaterialPipeline material)
     {
-        var key = Tuple.Create(mesh, material);
-        if (_cachedPipelines.TryGetValue(key, out var pipeline))
+        var pipelineHash = mesh.HashCode ^ material.HashCode;
+        if (_cachedPipelines.TryGetValue(pipelineHash, out var pipeline))
             return pipeline;
 
-        pipeline = PipelineBuilder.Compose(mesh.Pipeline, material.Pipeline);
-        _cachedPipelines[key] = pipeline;
+        pipeline = PipelineBuilder.ComposeWithoutCache(mesh, material);
+        _cachedPipelines[pipelineHash] = pipeline;
         return pipeline;
     }
 
@@ -24,6 +24,7 @@ public class PipelineAssetManager : IDisposable
     {
         foreach (var pipeline in _cachedPipelines.Values)
             pipeline.Dispose();
+        _cachedPipelines.Clear();
     }
     
     public void Dispose()

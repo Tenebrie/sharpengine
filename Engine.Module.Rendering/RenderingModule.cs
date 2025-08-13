@@ -1,9 +1,10 @@
-﻿using Diligent;
+﻿using System.Diagnostics;
+using System.Drawing;
+using Diligent;
 using Engine.Core.Assets;
 using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
-using Engine.Core.Assets.Renderers;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Enum;
@@ -17,7 +18,6 @@ using Engine.Core.Profiling;
 using JetBrains.Annotations;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
-using Vector4 = System.Numerics.Vector4;
 
 namespace Engine.Module.Rendering;
 
@@ -94,9 +94,9 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
 
     public void Shutdown()
     {
-        _renderDevice.Dispose();
-        _deviceContext.Dispose();
         _swapChain.Dispose();
+        _deviceContext.Dispose();
+        _renderDevice.Dispose();
     }
 }
 
@@ -105,25 +105,27 @@ public class RenderingModule : IRenderingModule
 {
     private IWindow _rootWindow = null!;
     private List<Backstage> _backstages = [];
-    private LogRenderer _logRenderer = null!;
-    private FontRenderer _fontRenderer = null!;
+    internal LogRenderer _logRenderer = null!;
+    internal FontRenderer _fontRenderer = null!;
     
     private IRenderDevice _renderDevice = null!;
     private IDeviceContext _deviceContext = null!;
     private ISwapChain _swapChain = null!;
 
     private ITexture _renderTarget = null!;
+    private ITexture _renderDepth = null!;
     private ITextureView _renderTargetView = null!;
     private ITextureView _renderDepthView = null!;
 
     private float BaseResolutionScale => (float)_rootWindow.Size.X / _rootWindow.FramebufferSize.X;
     private float ResolutionScale => BaseResolutionScale * 1.0f;
-    internal Vector2D<int> FramebufferSize => new(
+
+    private Vector2D<int> FramebufferSize => new(
         (int)Math.Round(_rootWindow.FramebufferSize.X * ResolutionScale),
         (int)Math.Round(_rootWindow.FramebufferSize.Y * ResolutionScale)
     );
-    
-    internal int MSAASamples => 8;
+
+    private static int MsaaSamples => 8;
 
     public void Register(Backstage backstage)
     {
@@ -180,13 +182,13 @@ public class RenderingModule : IRenderingModule
         Texture.Context = renderContext;
         StaticMesh.Context = renderContext;
         Material.Context = renderContext;
-        RenderScript.Context = renderContext;
         MaterialInstance.Context = renderContext;
         PipelineBuilder.Context = renderContext;
         InfiniteInstanceBuffer.Context = renderContext;
+        RenderContext.Current = renderContext;
         
         _logRenderer = new LogRenderer(this);
-        _fontRenderer = new FontRenderer(this);
+        _fontRenderer = new FontRenderer();
         _fontRenderer.Initialize();
 
         CreateRenderTargets();
@@ -206,12 +208,12 @@ public class RenderingModule : IRenderingModule
             Height = swapChain.Height,
             MipLevels = 1,
             Format = swapChain.ColorBufferFormat,
-            SampleCount = (uint)MSAASamples,
+            SampleCount = (uint)MsaaSamples,
             BindFlags = BindFlags.RenderTarget
         });
         _renderTargetView = _renderTarget.GetDefaultView(TextureViewType.RenderTarget);
         
-        _renderDepthView = _renderDevice.CreateTexture(new TextureDesc
+        _renderDepth = _renderDevice.CreateTexture(new TextureDesc
         {
             Name        = "MSAA Depth",
             Type        = ResourceDimension.Tex2d,
@@ -219,16 +221,18 @@ public class RenderingModule : IRenderingModule
             Height      = swapChain.Height,
             MipLevels   = 1,
             Format      = swapChain.DepthBufferFormat,
-            SampleCount = (uint)MSAASamples,
+            SampleCount = (uint)MsaaSamples,
             BindFlags   = BindFlags.DepthStencil
-        }).GetDefaultView(TextureViewType.DepthStencil);
+        });
+        _renderDepthView = _renderDepth.GetDefaultView(TextureViewType.DepthStencil);
     }
     
     private void DisposeRenderTargets()
     {
-        _renderTargetView.Dispose();
-        _renderTarget.Dispose();
-        _renderDepthView.Dispose();
+        // _renderTargetView?.Dispose();
+        // _renderDepthView?.Dispose();
+        _renderTarget?.Dispose();
+        _renderDepth?.Dispose();
     }
 
     private int _atomsToRenderCount;
@@ -280,6 +284,13 @@ public class RenderingModule : IRenderingModule
             _atomsToRenderCount = 0;
             Array.Clear(_atomsToRender);
         }
+
+        for (int i = 0; i < 120; i++)
+        {
+            _fontRenderer.RenderText("Hello world!", new Vector2(i * 10 - 800, i % 10 * 100), Color.White);
+        }
+
+        _fontRenderer.Flush();
         
         var rtv = _swapChain.GetCurrentBackBufferRTV();
         var rtvTexture = rtv.GetTexture();
@@ -363,8 +374,8 @@ public class RenderingModule : IRenderingModule
         if (width == 0 || height == 0)
             return;
         
-        _swapChain.Resize((uint)size.X, (uint)size.Y, SurfaceTransform.Optimal);
         DisposeRenderTargets();
+        _swapChain.Resize((uint)size.X, (uint)size.Y, SurfaceTransform.Optimal);
         CreateRenderTargets();
         AssetManager.Shared.Pipelines.InvalidateAll();
     }
@@ -413,7 +424,7 @@ public class RenderingModule : IRenderingModule
     public void SetGameplayContext(GameplayContext context)
     {
         GameplayContext = context;
-    }
+    } 
 
     public void HotShutdown()
     {

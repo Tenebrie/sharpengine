@@ -36,7 +36,7 @@ public class MaterialInstance(Material material)
 
     private readonly Dictionary<IPipelineState, IShaderResourceBinding> _shaderBindingCache = new();
 
-    public IShaderResourceBinding ProduceResourceBinding(IPipelineState pipelineState)
+    public IShaderResourceBinding BindMaterial(IPipelineState pipelineState)
     {
         if (_shaderBindingCache.TryGetValue(pipelineState, out var shaderBinding))
             return shaderBinding;

@@ -103,7 +103,8 @@ public class MaterialBuilder(object key)
         // }
 
         // var fragBinPath = Path.Combine(outDir, "generated");
-        var material = Material.CreateFromGenerated("");
+        // TODO: Return CreateFromGenerated
+        var material = Material.CreateFromGenerated("Assets/Shaders/cube");
         if (_useCache)
             AssetManager.AssemblyShared(_assembly).Materials.Put(storageKey, material);
         return material;

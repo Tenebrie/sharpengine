@@ -34,7 +34,7 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
         get => _staticMeshHolder.BoundingSphere;
         set => _staticMeshHolder.BoundingSphere = value;
     }
-    public RenderScript RenderScript { get; set; } = RenderScript.Default;
+    public IRenderScript RenderScript { get; set; } = IRenderScript.Default;
 
     private Material? _material = null;
 

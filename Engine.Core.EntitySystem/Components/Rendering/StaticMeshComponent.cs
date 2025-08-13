@@ -35,7 +35,7 @@ public partial class StaticMeshComponent : ActorComponent, IRenderable
         get => _staticMeshHolder.BoundingSphere;
         set => _staticMeshHolder.BoundingSphere = value;
     }
-    public RenderScript RenderScript { get; set; } = RenderScript.Default;
+    public IRenderScript RenderScript { get; set; } = IRenderScript.Default;
     
     public bool IsOnScreen { get; set; }
     public void PerformCulling(Camera activeCamera) => IsOnScreen = activeCamera.SphereInFrustum(BoundingSphere, null);

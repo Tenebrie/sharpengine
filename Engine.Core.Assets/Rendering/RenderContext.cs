@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Runtime.CompilerServices;
 using Diligent;
 using Engine.Core.Common;
 
@@ -13,6 +14,8 @@ public struct RenderContext
     public required IBuffer ObjectIndexBuffer;
     public required IInstanceBuffer InstanceBuffer;
     public required IShaderSourceInputStreamFactory ShaderFactory;
+
+    public static RenderContext Current { get; set; }
 }
 
 public interface IInstanceBuffer

@@ -48,7 +48,6 @@ public class StaticMesh : IDisposable
             var v = vertices[i];
             renderVertices[i] = new RenderingVertex(v.Position, v.TexCoord, v.VertexColor, new Vector3(0, 1, 0));
         }
-        Console.WriteLine(renderVertices[0].Color);
 
         Pipeline = PipelineBuilder.PrepareMesh()
             // Position
@@ -83,6 +82,7 @@ public class StaticMesh : IDisposable
                 ValueType = ValueType.Float32,
                 IsNormalized = false,
             })
+            .WithDepthTest(true, true)
             .WithAlphaBlending(true, true)
             .WithWindingOrder(windingOrder)
             .Build();
@@ -119,6 +119,8 @@ public class StaticMesh : IDisposable
         Vertices = [];
         Indices = [];
         GC.SuppressFinalize(this);
+        if (!IsValid)
+            return;
         VertexBuffer.Dispose();
         IndexBuffer.Dispose();
         IsValid = false;

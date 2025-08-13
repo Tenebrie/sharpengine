@@ -1,4 +1,6 @@
-﻿using Engine.Core.Logging;
+﻿using System.Drawing;
+using Engine.Core.Common;
+using Engine.Core.Logging;
 using Engine.Core.Profiling;
 using Engine.Module.Rendering.Abstract;
 
@@ -97,6 +99,7 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
     
     private void RenderFramerate()
     {
+        parent._fontRenderer.RenderText("FPS: " + _framerate, new Vector2(1000, 0), Color.LightGray);
         // DebugTextWrite(Module.FramebufferSize.X / 8 - 9, 0, "FPS: " + _framerate);
         // DebugTextWrite(Module.FramebufferSize.X / 8 - 12, 1, "1%% Low: " + _onePercentLow);
 

@@ -7,12 +7,8 @@ using Engine.Core.Common;
 
 namespace Engine.Core.Assets.Renderers;
 
-public class RenderScript
+public class RenderScript : IRenderScript
 {
-    public static RenderContext Context { get; set; }
-    
-    public static RenderScript Default { get; } = new();
-    
     public void Render(
         int instanceCount,
         StaticMesh mesh,
@@ -32,25 +28,26 @@ public class RenderScript
                 Tint = materialInstances[i].Tint
             });
         }
+
+        var context = RenderContext.Current;
+        var ticket = context.InstanceBuffer.Write(instances);
         
-        var ticket = Context.InstanceBuffer.Write(instances);
-        
-        var pso = AssetManager.Shared.Pipelines.Produce(mesh, material);
-        Context.DeviceContext.SetPipelineState(pso);
+        var pso = AssetManager.Shared.Pipelines.Produce(mesh.Pipeline, material.Pipeline);
+        context.DeviceContext.SetPipelineState(pso);
         mesh.BindForRendering();
         
-        var srb = materialInstances[0].ProduceResourceBinding(pso);
+        var srb = materialInstances[0].BindMaterial(pso);
         srb.GetVariableByName(ShaderType.Vertex, ShaderVariable.InstanceData)?.Set(ticket.View, SetShaderResourceFlags.None);
         
-        var map = Context.DeviceContext.MapBuffer<uint>(Context.ObjectIndexBuffer, MapType.Write, MapFlags.Discard);
+        var map = context.DeviceContext.MapBuffer<uint>(context.ObjectIndexBuffer, MapType.Write, MapFlags.Discard);
         map[0] = (uint)ticket.StartIndex;
-        Context.DeviceContext.UnmapBuffer(Context.ObjectIndexBuffer, MapType.Write);
+        context.DeviceContext.UnmapBuffer(context.ObjectIndexBuffer, MapType.Write);
 
-        srb.GetVariableByName(ShaderType.Vertex, ShaderVariable.ObjectIndex)?.Set(Context.ObjectIndexBuffer, SetShaderResourceFlags.None);
+        srb.GetVariableByName(ShaderType.Vertex, ShaderVariable.ObjectIndex)?.Set(context.ObjectIndexBuffer, SetShaderResourceFlags.None);
 
-        Context.DeviceContext.CommitShaderResources(srb, ResourceStateTransitionMode.Transition);
+        context.DeviceContext.CommitShaderResources(srb, ResourceStateTransitionMode.Transition);
 
-        Context.DeviceContext.DrawIndexed(new DrawIndexedAttribs
+        context.DeviceContext.DrawIndexed(new DrawIndexedAttribs
         {
             NumIndices = (uint)mesh.Indices.Length,
             IndexType = mesh.IndexType,

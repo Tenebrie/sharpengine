@@ -65,9 +65,24 @@ public sealed class Texture : IDisposable
         return _textureHandle.GetDefaultView(TextureViewType.ShaderResource);
     }
     
-    public void Update(byte[] data, int offsetX, int offsetY, int width, int height)
+    public unsafe void Update(byte[] data, int minX, int minY, int maxX, int maxY)
     {
-        // UpdateTexture2D(Handle, 0, 0, offsetX, offsetY, width, height, data);
+        fixed (byte* pixelDataPtr = data)
+        {
+            Context.DeviceContext.UpdateTexture(
+                _textureHandle,
+                mipLevel: 0,
+                slice: 0,
+                dstBox: new Box
+                {
+                    MinX = (uint)minX, MaxX = (uint)maxX,
+                    MinY = (uint)minY, MaxY = (uint)maxY
+                },
+                new TextureSubResData { Data = (IntPtr)pixelDataPtr, Stride = (ulong)((maxX - minX) * 4) },
+                ResourceStateTransitionMode.Transition,
+                ResourceStateTransitionMode.Transition
+            );
+        }
     }
     
     private void GenerateMips(ushort width, ushort height)
@@ -168,7 +183,7 @@ public sealed class Texture : IDisposable
         var textureData = new byte[image.Width * image.Height * 4];
         image.CopyPixelDataTo(textureData);
         var tex = new Texture(textureData, (ushort)image.Width, (ushort)image.Height, generateMips);
-        AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Textures.Put(Guid.NewGuid().ToString(), tex);
+        // AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Textures.Put(Guid.NewGuid().ToString(), tex);
 
         return tex;
     }

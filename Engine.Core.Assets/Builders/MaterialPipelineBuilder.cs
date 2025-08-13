@@ -29,6 +29,7 @@ public static class PipelineBuilder
     {
         private GraphicsPipelineDesc _handle = new();
         private readonly List<LayoutElement> _layoutElements = [];
+        private int _hashCode = 0;
     
         public Mesh()
         {
@@ -45,6 +46,7 @@ public static class PipelineBuilder
         public Mesh WithLayoutElement(LayoutElement layout)
         {
             _layoutElements.Add(layout);
+            _hashCode ^= layout.GetHashCode();
             return this;
         }
         
@@ -56,22 +58,25 @@ public static class PipelineBuilder
                 WindingOrder.Cw => CullMode.Front,
                 _ => CullMode.Back
             };
+            _hashCode ^= windingOrder.GetHashCode();
+            return this;
+        }
+        
+        public Mesh WithDepthTest(bool enabled, bool writeEnabled)
+        {
+            _handle.DepthStencilDesc.DepthEnable = enabled;
+            _handle.DepthStencilDesc.DepthWriteEnable = writeEnabled;
+            _hashCode ^= enabled.GetHashCode() ^ writeEnabled.GetHashCode();
             return this;
         }
         
         public Mesh WithAlphaBlending(bool premultiplied = false, bool alphaToCoverage = false)
         {
-            // Depth: test on, writes off for blended geometry
-            _handle.DepthStencilDesc.DepthEnable = true;
-            
-            // TODO: Understand why this breaks the dragon
-            // _handle.DepthStencilDesc.DepthWriteEnable = false;
-
             // Blend: straight vs premultiplied alpha
             var rt0 = new RenderTargetBlendDesc
             {
                 BlendEnable      = true,
-                SrcBlend         = premultiplied ? BlendFactor.One      : BlendFactor.SrcAlpha,
+                SrcBlend         = premultiplied ? BlendFactor.One : BlendFactor.SrcAlpha,
                 DestBlend        = BlendFactor.InvSrcAlpha,
                 BlendOp          = BlendOperation.Add,
                 SrcBlendAlpha    = BlendFactor.One,
@@ -83,6 +88,7 @@ public static class PipelineBuilder
             _handle.BlendDesc.IndependentBlendEnable = false;
             _handle.BlendDesc.RenderTargets = [rt0];
             _handle.BlendDesc.AlphaToCoverageEnable = alphaToCoverage;
+            _hashCode ^= premultiplied.GetHashCode() ^ alphaToCoverage.GetHashCode();
 
             return this;
         }
@@ -90,13 +96,14 @@ public static class PipelineBuilder
         public MeshPipeline Build()
         {
             _handle.InputLayout.LayoutElements = _layoutElements.ToArray();
-            return new MeshPipeline { Desc = _handle };
+            return new MeshPipeline { Desc = _handle, HashCode = _hashCode };
         }
     }
 
     public class Material
     {
         private MaterialPipeline _handle = new();
+        private int _hashCode = 0;
 
         public Material()
         {
@@ -147,27 +154,26 @@ public static class PipelineBuilder
         public Material WithVertexShader(IShader vertexShader)
         {
             _handle.VertexShader = vertexShader;
+            _hashCode ^= vertexShader.GetHashCode();
             return this;
         }
         public Material WithPixelShader(IShader pixelShader)
         {
             _handle.PixelShader = pixelShader;
+            _hashCode ^= pixelShader.GetHashCode();
             return this;
         }
 
         public MaterialPipeline Build()
         {
-            return new MaterialPipeline
-            {
-                Desc = _handle.Desc,
-                VertexShader = _handle.VertexShader,
-                PixelShader = _handle.PixelShader
-            };
+            return _handle with { HashCode = _hashCode };
         }
     }
+    
 
-    public static IPipelineState Compose(MeshPipeline mesh, MaterialPipeline material)
+    public static IPipelineState ComposeWithoutCache(MeshPipeline mesh, MaterialPipeline material)
     {
+        Console.WriteLine("Creating PSO");
         var pipelineState = Context.RenderDevice.CreateGraphicsPipelineState(new GraphicsPipelineStateCreateInfo
         {
             PSODesc = material.Desc,
@@ -175,7 +181,9 @@ public static class PipelineBuilder
             Ps = material.PixelShader,
             GraphicsPipeline = mesh.Desc,
         });
-        pipelineState.GetStaticVariableByName(ShaderType.Vertex, "Constants").Set(Context.ViewMatrixBuffer, SetShaderResourceFlags.None);
+        if (pipelineState == null)
+            throw new InvalidOperationException("Failed to create pipeline state from mesh and material.");
+        pipelineState.GetStaticVariableByName(ShaderType.Vertex, "Constants")?.Set(Context.ViewMatrixBuffer, SetShaderResourceFlags.None);
         return pipelineState;
     }
 }
@@ -183,6 +191,7 @@ public static class PipelineBuilder
 public struct MeshPipeline
 {
     public GraphicsPipelineDesc Desc;
+    public int HashCode;
 }
 
 public struct MaterialPipeline
@@ -190,4 +199,5 @@ public struct MaterialPipeline
     public PipelineStateDesc Desc;
     public IShader VertexShader;
     public IShader PixelShader;
+    public int HashCode;
 }
