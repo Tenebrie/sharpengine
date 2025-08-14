@@ -40,6 +40,4 @@ public partial class StaticMeshHolder : ActorComponent
     {
         BoundingSphere.Generate(vertices);
     }
-
-    // public Bgfx.StateFlags RenderFlags { get; set; } = Bgfx.StateFlags.None;
 }

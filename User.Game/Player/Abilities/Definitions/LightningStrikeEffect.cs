@@ -30,7 +30,6 @@ public partial class LightningStrikeEffect : Actor
         MeshComponent.Mesh = PlaneMesh.Shared;
         MeshComponent.MaterialInstance = _materialInstance;
         MeshComponent.Transform.Position = new Vector3(-0, 0, -0.5 + 0.1);
-        // MeshComponent.RenderFlags = Bgfx.StateFlags.BlendAlphaToCoverage;
     }
 
     private bool _isFading = false;

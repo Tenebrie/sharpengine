@@ -122,7 +122,7 @@ public static class WindowStateManager
         
         // Set up window event listeners
         window.Move += _ => _isDirty = true;
-        window.Resize += _ => _isDirty = true;
+        // window.Resize += _ => _isDirty = true;
         
         // Create and start the autosave timer
         _autoSaveTimer = new Timer(AutosaveIntervalMs);

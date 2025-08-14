@@ -1,8 +1,4 @@
-﻿using Engine.Core.Assets.Materials.Meshes.Wireframe;
-using Engine.Core.Assets.Meshes;
-using Engine.Core.Assets.Rendering;
-using Engine.Core.Common;
-using Engine.Core.EntitySystem.Attributes;
+﻿using Engine.Core.Common;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
 using JetBrains.Annotations;
@@ -27,6 +23,6 @@ public partial class ColliderSphereComponent : ActorComponent, IRenderable
     public void Render()
     {
         _singleComponentTransforms[0] = WorldTransform;
-        LineSphereMesh.Shared.Render(1, _singleComponentTransforms, [WireframeMaterial.Shared], LineSphereMesh.ColorMode.Collider);
+        // LineSphereMesh.Shared.Render(1, _singleComponentTransforms, [WireframeMaterial.Shared], LineSphereMesh.ColorMode.Collider);
     }
 }

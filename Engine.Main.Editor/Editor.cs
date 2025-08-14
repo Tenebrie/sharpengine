@@ -42,7 +42,6 @@ internal static class Editor
             Title = "Custom Engine",
             Size = new Vector2D<int>(1920, 1080),
             API = new GraphicsAPI(ContextAPI.None, new APIVersion())
-
         };
         if (OperatingSystem.IsMacOS())
             opts.Size /= 2;
@@ -127,8 +126,8 @@ internal static class Editor
         guestAssembly.Reload();
         if (guestAssembly.Backstage != null)
             InitBackstage(guestAssembly.Backstage);
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
+        // GC.Collect();
+        // GC.WaitForPendingFinalizers();
 
         foreach (var assembly in GuestAssemblies)
         {

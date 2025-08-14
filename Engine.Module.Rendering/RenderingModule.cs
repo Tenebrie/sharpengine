@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Drawing;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Diligent;
 using Engine.Core.Assets;
 using Engine.Core.Assets.Builders;
@@ -30,12 +32,15 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
     private IRenderDevice _renderDevice = null!;
     private IDeviceContext _deviceContext = null!;
     private ISwapChain _swapChain = null!;
+    private IEngineFactoryD3D12 _engineFactory = null!;
+    private static IEngineFactory.MessageCallbackDelegate _messageCallback = null!;
+    private static GCHandle s_callbackRoot;
     
     public RenderingResources Initialize(IWindow window)
     {
-        using var engineFactory = Native.GetEngineFactoryD3D12();
-        SetMessageCallback(engineFactory);
-        CreateRenderDeviceAndSwapChain(engineFactory, out var renderDeviceOut, out var deviceContextOut, out var swapChainOut, window);
+        _engineFactory = Native.GetEngineFactoryD3D12();
+        SetMessageCallback(_engineFactory);
+        CreateRenderDeviceAndSwapChain(_engineFactory, out var renderDeviceOut, out var deviceContextOut, out var swapChainOut, window);
         _renderDevice = renderDeviceOut;
         _deviceContext = deviceContextOut;
         _swapChain = swapChainOut;
@@ -50,7 +55,7 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
     
     private static void SetMessageCallback(IEngineFactory engineFactory)
     {
-        engineFactory.SetMessageCallback((severity, message, function, file, line) =>
+        _messageCallback = (severity, message, function, file, line) =>
         {
             switch (severity)
             {
@@ -65,7 +70,9 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
                 default:
                     throw new ArgumentOutOfRangeException(nameof(severity), severity, null);
             }
-        });
+        };
+        s_callbackRoot = GCHandle.Alloc(_messageCallback, GCHandleType.Normal);
+        engineFactory.SetMessageCallback(_messageCallback);
     }
 
     private static void CreateRenderDeviceAndSwapChain(
@@ -103,10 +110,10 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
 [UsedImplicitly]
 public class RenderingModule : IRenderingModule
 {
-    private IWindow _rootWindow = null!;
+    internal IWindow RootWindow = null!;
     private List<Backstage> _backstages = [];
-    internal LogRenderer _logRenderer = null!;
-    internal FontRenderer _fontRenderer = null!;
+    internal LogRenderer LogRenderer = null!;
+    internal TextRenderer TextRenderer = null!;
     
     private IRenderDevice _renderDevice = null!;
     private IDeviceContext _deviceContext = null!;
@@ -117,12 +124,12 @@ public class RenderingModule : IRenderingModule
     private ITextureView _renderTargetView = null!;
     private ITextureView _renderDepthView = null!;
 
-    private float BaseResolutionScale => (float)_rootWindow.Size.X / _rootWindow.FramebufferSize.X;
+    private float BaseResolutionScale => (float)RootWindow.Size.X / RootWindow.FramebufferSize.X;
     private float ResolutionScale => BaseResolutionScale * 1.0f;
 
     private Vector2D<int> FramebufferSize => new(
-        (int)Math.Round(_rootWindow.FramebufferSize.X * ResolutionScale),
-        (int)Math.Round(_rootWindow.FramebufferSize.Y * ResolutionScale)
+        (int)Math.Round(RootWindow.FramebufferSize.X * ResolutionScale),
+        (int)Math.Round(RootWindow.FramebufferSize.Y * ResolutionScale)
     );
 
     private static int MsaaSamples => 8;
@@ -143,7 +150,7 @@ public class RenderingModule : IRenderingModule
     
     public void HotInitialize(RenderingResources resources, IWindow window)
     {
-        _rootWindow = window;
+        RootWindow = window;
         _renderDevice = resources.RenderDevice;
         _deviceContext = resources.DeviceContext;
         _swapChain = resources.SwapChain;
@@ -187,14 +194,13 @@ public class RenderingModule : IRenderingModule
         InfiniteInstanceBuffer.Context = renderContext;
         RenderContext.Current = renderContext;
         
-        _logRenderer = new LogRenderer(this);
-        _fontRenderer = new FontRenderer();
-        _fontRenderer.Initialize();
+        LogRenderer = new LogRenderer(this);
+        TextRenderer = new TextRenderer();
 
         CreateRenderTargets();
 
         window.Render += RenderSingleFrame;
-        window.Resize += OnResize;
+        window.FramebufferResize += OnFramebufferResize;
     }
 
     private void CreateRenderTargets()
@@ -266,14 +272,14 @@ public class RenderingModule : IRenderingModule
         var mapUniformBuffer = _deviceContext.MapBuffer<MatrixFloat>(_viewMatrixBuffer, MapType.Write, MapFlags.Discard);
         mapUniformBuffer[0] = wvpMatrix.Downgrade();
         _deviceContext.UnmapBuffer(_viewMatrixBuffer, MapType.Write);
-
+        
         _deviceContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
         _deviceContext.ClearRenderTarget(_renderTargetView, new Vector4(0.35f, 0.35f, 0.35f, 1.0f), ResourceStateTransitionMode.Transition);
         _deviceContext.ClearDepthStencil(_renderDepthView, ClearDepthStencilFlags.Depth, 1.0f, 0, ResourceStateTransitionMode.Transition);
         
         _infiniteInstanceBuffer.FrameStart();
         
-        _logRenderer.RenderFrame(deltaTime);
+        LogRenderer.RenderFrame(deltaTime);
         foreach (var backstage in _backstages)
         {
             // Collect all IRenderable entities reachable from the atom tree
@@ -285,12 +291,7 @@ public class RenderingModule : IRenderingModule
             Array.Clear(_atomsToRender);
         }
 
-        for (int i = 0; i < 120; i++)
-        {
-            _fontRenderer.RenderText("Hello world!", new Vector2(i * 10 - 800, i % 10 * 100), Color.White);
-        }
-
-        _fontRenderer.Flush();
+        TextRenderer.Flush();
         
         var rtv = _swapChain.GetCurrentBackBufferRTV();
         var rtvTexture = rtv.GetTexture();
@@ -366,59 +367,21 @@ public class RenderingModule : IRenderingModule
         }
     }
 
-    private void OnResize(Vector2D<int> size)
+    private void OnFramebufferResize(Vector2D<int> size)
     {
-        var width = FramebufferSize.X;
-        var height = FramebufferSize.Y;
+        var width = size.X;
+        var height = size.Y;
 
         if (width == 0 || height == 0)
             return;
         
         DisposeRenderTargets();
-        _swapChain.Resize((uint)size.X, (uint)size.Y, SurfaceTransform.Optimal);
+        _swapChain.Resize((uint)size.X, (uint)size.Y, SurfaceTransform.Identity);
         CreateRenderTargets();
         AssetManager.Shared.Pipelines.InvalidateAll();
     }
 
-    // public void ToggleResetFlags(Bgfx.ResetFlags flags)
-    // {
-    //     if (flags == Bgfx.ResetFlags.None)
-    //         return;
-    //
-    //     // Toggle flags
-    //     if ((_resetFlags & flags) == flags)
-    //     {
-    //         _resetFlags &= ~flags;
-    //     }
-    //     else
-    //     {
-    //         _resetFlags |= flags;
-    //     }
-    //
-    //     // Reset the renderer with the new flags
-    //     // Reset(FramebufferSize.X, FramebufferSize.Y, GetResetFlags(), Bgfx.TextureFormat.Count);
-    // }
-
-    // public void ToggleDebugFlags(Bgfx.DebugFlags flags)
-    // {
-    //     if (flags == Bgfx.DebugFlags.None)
-    //         return;
-    //
-    //     // Toggle flags
-    //     if ((_debugFlags & flags) == flags)
-    //     {
-    //         _debugFlags &= ~flags;
-    //     }
-    //     else
-    //     {
-    //         _debugFlags |= flags;
-    //     }
-    //
-    //     // Set the new debug flags
-    //     // SetDebug(_debugFlags);
-    // }
-
-    public void ToggleLogRendering() => _logRenderer.OnToggleMode();
+    public void ToggleLogRendering() => LogRenderer.OnToggleMode();
 
     private GameplayContext GameplayContext { get; set; } = GameplayContext.Editor;
     public void SetGameplayContext(GameplayContext context)
@@ -428,10 +391,10 @@ public class RenderingModule : IRenderingModule
 
     public void HotShutdown()
     {
-        _fontRenderer.Dispose();
+        TextRenderer.Dispose();
         _backstages = [];
-        _rootWindow.Render -= RenderSingleFrame;
-        _rootWindow.Resize -= OnResize;
+        RootWindow.Render -= RenderSingleFrame;
+        RootWindow.FramebufferResize -= OnFramebufferResize;
         _atomsToRender = [];
         _viewMatrixBuffer.Dispose();
         _objectIndexBuffer.Dispose();

@@ -27,7 +27,6 @@ public partial class BasicEnemyManager : Actor
             // .CreateFromDisk("Meshes/BillboardSprite/BillboardSprite");
             // .Instantiate()
             // .LoadTexture(Texture.CreateFromDisk("Textures/godot.png"));
-        // InstanceManager.RenderFlags = Bgfx.StateFlags.BlendAlphaToCoverage;
     }
 
     private int _enemiesQueued = 0;

@@ -1,8 +1,6 @@
 ﻿using Engine.Core.Assets.Materials;
-using Engine.Core.Assets.Materials.Meshes.Wireframe;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Renderers;
-using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;

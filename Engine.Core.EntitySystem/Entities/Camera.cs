@@ -30,14 +30,14 @@ public partial class Camera : Actor
             0, 0, (2 * far * near) / (near - far), 0
         );
         Backstage.Window.Load += OnLoad;
-        Backstage.Window.Resize += OnResize;
+        // Backstage.Window.Resize += OnResize;
     }
 
     [OnDestroy]
     internal void OnDestroy()
     {
         Backstage.Window.Load -= OnLoad;
-        Backstage.Window.Resize -= OnResize;
+        // Backstage.Window.Resize -= OnResize;
     }
 
     private void OnLoad()

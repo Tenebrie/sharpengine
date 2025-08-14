@@ -28,22 +28,23 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
     private const int BufferSizeGlyphs = 8192;
     private MeshPipeline _meshPipeline;
 
-    // private VertexLayout _vertexLayout;
     private Material _material = null!;
+    private readonly int _sampleCount;
     private readonly Dictionary<Texture, MaterialInstance> _materialInstances = [];
     private readonly Dictionary<Texture, List<RenderingVertex>> _glyphStream = [];
     
     public ITexture2DManager TextureManager { get; }
     
-    public FontRenderer()
+    public FontRenderer(FontKey key)
     {
         _fontSystem = new FontSystem(new FontSystemSettings
         {
-            TextureWidth = 2048,
-            TextureHeight = 2048
+            TextureWidth = 4096,
+            TextureHeight = 4096
         });
-        _fontSystem.AddFont(File.ReadAllBytes("Assets/Fonts/Roboto-Regular.ttf"));
-        _font = _fontSystem.GetFont(128);
+        _fontSystem.AddFont(File.ReadAllBytes($"Assets/Fonts/{key.Name}.ttf"));
+        _font = _fontSystem.GetFont(key.Size * key.SampleCount);
+        _sampleCount = key.SampleCount;
         TextureManager = new MyTextureManager(this);
     }
 
@@ -123,10 +124,10 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
 
     public void DrawQuad(
         object texture,
-        ref VertexPositionColorTexture topLeft,
-        ref VertexPositionColorTexture topRight,
-        ref VertexPositionColorTexture bottomLeft,
-        ref VertexPositionColorTexture bottomRight)
+        ref VertexPositionColorTexture topLeftVertex,
+        ref VertexPositionColorTexture topRightVertex,
+        ref VertexPositionColorTexture bottomLeftVertex,
+        ref VertexPositionColorTexture bottomRightVertex)
     {
         var sc = RenderContext.Current.SwapChain.GetDesc();
         var sx = 2f / sc.Width;
@@ -138,21 +139,39 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
             list = [];
             _glyphStream[tex] = list;
         }
+
+        var topLeft = topLeftVertex.Position / _sampleCount;
+        var width = (topRightVertex.Position - topLeftVertex.Position) / _sampleCount;
+        var height = (bottomLeftVertex.Position - topLeftVertex.Position) / _sampleCount;
+        var topRight = topLeft + width;
+        var bottomLeft = topLeft + height;
+        var bottomRight = topLeft + width + height;
         
-        list.Add(new RenderingVertex(ToNdc(topLeft.Position) / 2, topLeft.TextureCoordinate, topLeft.Color));
-        list.Add(new RenderingVertex(ToNdc(topRight.Position) / 2, topRight.TextureCoordinate, topRight.Color));
-        list.Add(new RenderingVertex(ToNdc(bottomLeft.Position) / 2, bottomLeft.TextureCoordinate, bottomLeft.Color));
-        list.Add(new RenderingVertex(ToNdc(bottomRight.Position) / 2, bottomRight.TextureCoordinate, bottomRight.Color));
+        list.Add(new RenderingVertex(ToScreenSpace(topLeft), topLeftVertex.TextureCoordinate, topLeftVertex.Color));
+        list.Add(new RenderingVertex(ToScreenSpace(topRight), topRightVertex.TextureCoordinate, topRightVertex.Color));
+        list.Add(new RenderingVertex(ToScreenSpace(bottomLeft), bottomLeftVertex.TextureCoordinate, bottomLeftVertex.Color));
+        list.Add(new RenderingVertex(ToScreenSpace(bottomRight), bottomRightVertex.TextureCoordinate, bottomRightVertex.Color));
         return;
 
-        System.Numerics.Vector3 ToNdc(System.Numerics.Vector3 p)
-            => new(p.X * sx - 1f, 1f - p.Y * sy, 0f);
+        Vector3 ToScreenSpace(Vector3 p) => new(p.X * sx - 1f, 1f - p.Y * sy, 0f);
     }
 
-    public void RenderText(string text, Vector2 position, Color color)
+    public void RenderText(string text, Vector2 position, Color color, int shadowBlur = 0)
     {
         var fsColor = new FSColor(color.R, color.G, color.B, color.A);
-        _font.DrawText(this, text, position, fsColor);
+        var renderPos = position * _sampleCount;
+        if (shadowBlur > 0)
+        {
+            var blackColor = new FSColor(0f, 0f, 0f, color.A);
+            _font.DrawText(this, text, renderPos, blackColor, effect: FontSystemEffect.Blurry, effectAmount: 4);
+        }
+
+        _font.DrawText(this, text, renderPos, fsColor);
+    }
+    
+    public Vector2 MeasureString(string text)
+    {
+        return _font.MeasureString(text) / _sampleCount;
     }
 
     public void Flush()
@@ -174,13 +193,11 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
             context.DeviceContext.SetPipelineState(pso);
 
             // Vertex buffer
-            var offset = verticesWritten;
-            var mapFlags = verticesWritten == 0 ? MapFlags.Discard : MapFlags.NoOverwrite;
-            var vertexBuffer = context.DeviceContext.MapBuffer<RenderingVertex>(_vertexBuffer, MapType.Write, mapFlags);
+            var vertexBuffer = context.DeviceContext.MapBuffer<RenderingVertex>(_vertexBuffer, MapType.Write, MapFlags.Discard);
             foreach (var vertex in vertexList)
                 vertexBuffer[verticesWritten++] = vertex;
             context.DeviceContext.UnmapBuffer(_vertexBuffer, MapType.Write);
-            context.DeviceContext.SetVertexBuffers(0, [_vertexBuffer], [(ulong)offset * RenderingVertex.SizeInBytes], ResourceStateTransitionMode.Transition);
+            context.DeviceContext.SetVertexBuffers(0, [_vertexBuffer], [0ul], ResourceStateTransitionMode.Transition);
             
             context.DeviceContext.SetIndexBuffer(_indexBuffer, 0, ResourceStateTransitionMode.Transition);
 

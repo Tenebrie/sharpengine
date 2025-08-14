@@ -13,7 +13,6 @@ public enum LoggingMode
     Info,
     Warn,
     Error,
-    Bgfx,
     Count,
 }
 
@@ -24,16 +23,17 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
     private double _frameTimeAccumulator = 0.0;
     private int _framerate = 0;
     private int _onePercentLow = 0;
-    // private double[] _backstageFrametime;
+
+    private const float RenderScale = 1.5f;
+    private const int FontSize = (int)(18.0 * RenderScale);
+    private const double Padding = 2.0 * RenderScale;
+    private const double LineHeight = 1.0 + 0.2 * RenderScale;
 
     public void OnToggleMode()
     {
         _mode += 1;
         if (_mode > LoggingMode.Count - 1)
             _mode = LoggingMode.None;
-        
-        // if (_mode is LoggingMode.Bgfx or LoggingMode.None)
-            // Module.ToggleDebugFlags(DebugFlags.Stats | DebugFlags.Profiler);
     }
 
     protected internal override void RenderFrame(double deltaTime)
@@ -48,7 +48,7 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
     {
         if (_mode is not LoggingMode.None)
         {
-            // DebugTextWrite(0, 0, DebugColor.Black, DebugColor.DarkGray, _mode.ToString());
+            DrawLogText(0, 0, Anchor.TopLeft, Color.DarkGray, _mode.ToString());
         }
 
         var messageCount = 0;
@@ -58,10 +58,10 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
         foreach (var (message, level) in persistentMessages)
         {
             messageCount += 1;
-            // DebugTextWrite(0, messageCount, DebugColor.Black, GetLogColor(level), message);
+            DrawLogText(0, messageCount, Anchor.TopLeft, GetLogColor(level), message);
         }
 
-        if (_mode is LoggingMode.None or LoggingMode.Bgfx)
+        if (_mode is LoggingMode.None)
             return;
 
         List<Tuple<string, LogLevel>> messages = [];
@@ -80,7 +80,6 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
                 Logger.ReadLevel(LogLevel.Error, out messages);
                 break;
             case LoggingMode.None:
-            case LoggingMode.Bgfx:
             case LoggingMode.Count:
             default:
                 break;
@@ -92,24 +91,57 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
         }
     }
 
-    private static void RenderLogEntry(string message, LogLevel level, int messageCount)
+    private void RenderLogEntry(string message, LogLevel level, int messageCount)
     {
-        // DebugTextWrite(0, messageCount, DebugColor.Black, GetLogColor(level), message);
+        DrawLogText(0, messageCount, Anchor.TopLeft, GetLogColor(level), message);
     }
     
     private void RenderFramerate()
     {
-        parent._fontRenderer.RenderText("FPS: " + _framerate, new Vector2(1000, 0), Color.LightGray);
-        // DebugTextWrite(Module.FramebufferSize.X / 8 - 9, 0, "FPS: " + _framerate);
-        // DebugTextWrite(Module.FramebufferSize.X / 8 - 12, 1, "1%% Low: " + _onePercentLow);
+        DrawLogText(0, 0, Anchor.TopRight, Color.White, "FPS: " + _framerate);
+        DrawLogText(0, 1, Anchor.TopRight, Color.White, "1% Low: " + _onePercentLow);
 
         var line = 2;
         var updates = Profiler.Query(ProfilingContext.BackstageUpdate | ProfilingContext.PhysicsUpdate | ProfilingContext.RenderingPrepare);
         foreach (var entry in updates)
         {
-            var length = 9 + entry.TypeName.Length;
-            // DebugTextWrite(Module.FramebufferSize.X / 8 - length, line++, $"{entry.TypeName}: {entry.AverageMilliseconds():F2}ms");
+            DrawLogText(0, line++, Anchor.TopRight, Color.White, $"{entry.TypeName}: {entry.AverageMilliseconds():F2}ms");
         }
+    }
+    
+    private bool _textMeasured = false;
+    private int _glyphWidth = 0;
+    private int _glyphHeight = 0;
+    private enum Anchor
+    {
+        TopLeft,
+        TopRight,
+        BottomLeft,
+        BottomRight
+    }
+    private void DrawLogText(int x, int y, Anchor anchor, Color color, string text)
+    {
+        if (!_textMeasured)
+        {
+            var singlyGlyphSize = Module.TextRenderer.MeasureText("RobotoMono-Bold", FontSize, "0");
+            _glyphWidth = (int)singlyGlyphSize.X;
+            _glyphHeight = (int)singlyGlyphSize.Y;
+            _textMeasured = true;
+        }
+
+        var size = Module.TextRenderer.MeasureText("RobotoMono-Bold", FontSize, text).X;
+        var offset = new Vector2(x * _glyphWidth, y * _glyphHeight * LineHeight);
+        var position = anchor switch
+        {
+            Anchor.TopLeft => new Vector2(offset.X + Padding, offset.Y),
+            Anchor.TopRight => new Vector2(Module.RootWindow.FramebufferSize.X - size - offset.X - Padding, offset.Y),
+            Anchor.BottomLeft => new Vector2(offset.X + Padding, Module.RootWindow.FramebufferSize.Y - _glyphHeight - offset.Y - Padding),
+            _ => new Vector2(
+                Module.RootWindow.FramebufferSize.X - size - offset.X - Padding,
+                Module.RootWindow.FramebufferSize.Y - _glyphHeight - offset.Y - Padding
+            )
+        };
+        Module.TextRenderer.RenderText("RobotoMono-Bold", FontSize, text, position, color);
     }
  
     private void UpdateFramerate(double deltaTime)
@@ -133,17 +165,17 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
         _frameTimeAccumulator = 0.0;
     }
 
-    // private static DebugColor GetLogColor(LogLevel level)
-    // {
-        // return level switch
-        // {
-            // LogLevel.Debug => DebugColor.LightGray,
-            // LogLevel.Info => DebugColor.LightGreen,
-            // LogLevel.Warn => DebugColor.Yellow,
-            // LogLevel.Error => DebugColor.Red,
-            // LogLevel.Fatal => DebugColor.Red,
-            // LogLevel.Log => DebugColor.LightCyan,
-            // _ => DebugColor.White
-        // };
-    // }
+    private static Color GetLogColor(LogLevel level)
+    {
+        return level switch
+        {
+            LogLevel.Debug => Color.LightGray,
+            LogLevel.Info => Color.LightGreen,
+            LogLevel.Warn => Color.Yellow,
+            LogLevel.Error => Color.Red,
+            LogLevel.Fatal => Color.Red,
+            LogLevel.Log => Color.LightCyan,
+            _ => Color.White
+        };
+    }
 }
