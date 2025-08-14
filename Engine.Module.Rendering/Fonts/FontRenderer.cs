@@ -163,7 +163,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
         if (shadowBlur > 0)
         {
             var blackColor = new FSColor(0f, 0f, 0f, color.A);
-            _font.DrawText(this, text, renderPos, blackColor, effect: FontSystemEffect.Blurry, effectAmount: 4);
+            _font.DrawText(this, text, renderPos, blackColor, effect: FontSystemEffect.Blurry, effectAmount: shadowBlur);
         }
 
         _font.DrawText(this, text, renderPos, fsColor);

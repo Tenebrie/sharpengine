@@ -141,7 +141,7 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
                 Module.RootWindow.FramebufferSize.Y - _glyphHeight - offset.Y - Padding
             )
         };
-        Module.TextRenderer.RenderText("RobotoMono-Bold", FontSize, text, position, color);
+        Module.TextRenderer.RenderText("RobotoMono-Bold", FontSize, text, position, color, 2);
     }
  
     private void UpdateFramerate(double deltaTime)

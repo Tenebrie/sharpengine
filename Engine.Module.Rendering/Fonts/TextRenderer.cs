@@ -50,10 +50,10 @@ public class TextRenderer : IDisposable
         return fontRenderer;
     }
     
-    public void RenderText(string font, int size, string text, Vector2 position, Color color)
+    public void RenderText(string font, int size, string text, Vector2 position, Color color, int shadowBlur = 0)
     {
         var fontRenderer = ProduceRenderer(font, size);
-        fontRenderer?.RenderText(text, position, color);
+        fontRenderer?.RenderText(text, position, color, shadowBlur);
     }
     
     public Vector2 MeasureText(string font, int size, string text)
