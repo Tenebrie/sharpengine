@@ -1,19 +1,22 @@
 ﻿using System.Drawing;
 using Engine.Core.Assets.Materials;
+using Engine.Core.Assets.Meshes;
 using Engine.Core.Common;
 using Engine.Core.Communication.Groups;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Physics;
+using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
 using User.Game.Services;
 
-namespace User.Game.Actors;
+namespace User.Game.Actors.BasicEnemies;
 
 public partial class BasicEnemy : ActorInstance
 {
     [DefaultGroup] public static readonly Group<BasicEnemy> All = new(); 
     [Component] public PhysicsComponent Physics;
     [Component] public ColliderSphereComponent ColliderSphere;
+    [Component] public InstancedActorComponent<SpaceshipFlamesComponent> SpaceshipFlames;
 
     public double Health { get; set; } = 200.0;
     public double MaxHealth { get; set; } = 200.0;
@@ -45,6 +48,34 @@ public partial class BasicEnemy : ActorInstance
     {
         ColliderSphere.Radius = 2;
         MaterialInstance.LoadTexture(Texture.CreateFromDisk("Textures/metal-albedo.png"));
+        
+        SpaceshipFlames.Mesh = PlaneMesh.Shared;
+        SpaceshipFlames.Material = Material.CreateFromDisk("Assets/Shaders/cube");
+
+        for (var i = 0; i < 4; i++)
+        {
+            var flames = SpaceshipFlames.CreateInstance();
+            flames.Transform.Rescale(1, 10, 10);
+            flames.Transform.Rotate(0, 180, 0);
+
+            switch (i)
+            {
+                case 0:
+                    flames.Transform.TranslateGlobal(0.93, 0.3, 3.9);
+                    flames.BumpAnimation();
+                    break;
+                case 1:
+                    flames.Transform.TranslateGlobal(-1.08, 0.3, 3.9);
+                    flames.BumpAnimation();
+                    break;
+                case 2:
+                    flames.Transform.TranslateGlobal(0.93, -0.3, 3.9);
+                    break;
+                default:
+                    flames.Transform.TranslateGlobal(-1.08, -0.3, 3.9);
+                    break;
+            }
+        }
     }
 
     [OnUpdate]

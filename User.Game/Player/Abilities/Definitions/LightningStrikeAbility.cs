@@ -3,6 +3,7 @@ using Engine.Core.EntitySystem.Services;
 using Engine.Core.Common;
 using JetBrains.Annotations;
 using User.Game.Actors;
+using User.Game.Actors.BasicEnemies;
 
 namespace User.Game.Player.Abilities.Definitions;
 

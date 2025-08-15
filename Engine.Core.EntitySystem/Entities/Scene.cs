@@ -23,6 +23,8 @@ public partial class Scene : Atom
 
     public T CreateActor<T>() where T : Actor, new()
     {
-        return AdoptChild(new T());
+        var actor = new T();
+        AdoptChild(actor);
+        return actor;
     }
 }

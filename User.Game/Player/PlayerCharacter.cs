@@ -23,7 +23,7 @@ public partial class PlayerCharacter : Actor
     private Vector3 _acceleration = Vector3.Zero;
     private Quaternion _currentRotation = Quaternion.Identity;
     private double _currentRoll = 0.0;
-    private bool inputHeldThisFrame = false;
+    private bool _inputHeldThisFrame = false;
 
     [Component] public AbilityController Abilities;
     [Component] public DragonMesh DragonMeshComponent;
@@ -42,7 +42,7 @@ public partial class PlayerCharacter : Actor
         var value = new Vector3(direction.Y, 0, -direction.X).Normalized();
         // Transform.TranslateGlobal(value * MovementSpeed * deltaTime);
         // PhysicsComponent.LinearVelocity = value * MovementSpeed * 2;
-        _acceleration = value * 5 * deltaTime;
+        _acceleration = value * 15 * deltaTime;
         
         var forwardVector = Vector3.Forward;
         var dotProduct = value.DotProduct(forwardVector);
@@ -64,23 +64,23 @@ public partial class PlayerCharacter : Actor
         );
         Transform.Rotation = _currentRotation;
         Transform.RotateAroundLocal(Vector3.Forward, _currentRoll);
-        inputHeldThisFrame = true;
+        _inputHeldThisFrame = true;
     }
 
     [OnUpdate]
     protected void OnUpdate(double deltaTime)
     {
-        if (!inputHeldThisFrame)
+        if (!_inputHeldThisFrame)
             _acceleration = Vector3.Zero;
         _velocity += _acceleration;
         if (_velocity.Length > 1.5)
             _velocity = _velocity.SetLengthIfNotZero(1.5);
         Transform.TranslateGlobal(_velocity * MovementSpeed * deltaTime);
-        if (!inputHeldThisFrame)
-            _velocity -= _velocity * deltaTime;
+        if (!_inputHeldThisFrame)
+            _velocity -= _velocity * 2.0 * deltaTime;
         
-        var wasInputHeldThisFrame = inputHeldThisFrame;
-        inputHeldThisFrame = false;
+        var wasInputHeldThisFrame = _inputHeldThisFrame;
+        _inputHeldThisFrame = false;
         if (wasInputHeldThisFrame)
             return;
      
@@ -93,14 +93,14 @@ public partial class PlayerCharacter : Actor
         Transform.Rotation = _currentRotation;
         Transform.RotateAroundLocal(Vector3.Forward, _currentRoll);
 
-        inputHeldThisFrame = true;
+        _inputHeldThisFrame = true;
     }
     
     [OnInput(InputAction.Jump)]
     protected void OnJump()
     {
-        if (Transform.Position.Y > 0)
-            return;
-        PhysicsComponent.LinearVelocity.Y = 20.0;
+        // if (Transform.Position.Y > 0)
+            // return;
+        // PhysicsComponent.LinearVelocity.Y = 20.0;
     }
 }

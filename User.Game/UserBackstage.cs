@@ -2,6 +2,7 @@
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using User.Game.Actors;
+using User.Game.Actors.BasicEnemies;
 using User.Game.Actors.BasicWall;
 using User.Game.Player;
 using User.Game.Services;
@@ -14,8 +15,17 @@ public partial class UserBackstage : Backstage
     [OnReady]
     protected void OnReady()
     {
-        var scene = new UserScene();
-        AdoptChild(scene);
+        CreateScene<UserScene>();
+    }
+}
+
+public partial class BasicEnemyScene : Scene
+{
+    [OnReady]
+    protected void OnReady()
+    {
+        var manager = CreateActor<BasicEnemyManager>();
+        var enemy = manager.InstanceManager.CreateInstance();
     }
 }
 

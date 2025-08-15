@@ -55,7 +55,7 @@ public partial class Atom
             using var stopwatch = Profiler.Start();
             try
             {
-                OnReadyCallback.Invoke();
+                OnReadyCallback?.Invoke();
             } catch (Exception e)
             {
                 Logger.Error($"Error during OnReady callback for {GetType().Name}: {e.Message}");

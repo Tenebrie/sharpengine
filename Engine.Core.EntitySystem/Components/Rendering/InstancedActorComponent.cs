@@ -71,10 +71,11 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
     
     public void PerformCulling(Camera activeCamera)
     {
-        IsOnScreen = false;
+        // TODO: Fix culling?
+        IsOnScreen = true;
         foreach (var actor in Instances)
         {
-            actor.IsOnScreen = activeCamera.SphereInFrustum(BoundingSphere, actor.Transform);
+            actor.IsOnScreen = activeCamera.SphereInFrustum(BoundingSphere, actor.WorldTransform);
             if (actor.IsOnScreen)
                 IsOnScreen = true;
         }

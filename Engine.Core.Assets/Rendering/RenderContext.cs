@@ -27,6 +27,8 @@ public struct InstanceData
 {
     public required Transform WorldTransform;
     public required Vector4Float Tint;
+    public required Vector2Float UvOffset;
+    public required Vector2Float UvScale;
 }
 
 public struct InstanceBufferTicket

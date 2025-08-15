@@ -15,7 +15,7 @@ public class InfiniteInstanceBuffer : IInstanceBuffer, IDisposable
 
     static InfiniteInstanceBuffer()
     {
-        SizePerInstance = MatrixFloat.SizeInBytes + Vector4Float.SizeInBytes;
+        SizePerInstance = MatrixFloat.SizeInBytes + Vector4Float.SizeInBytes + Vector2Float.SizeInBytes + Vector2Float.SizeInBytes;
         PageSize = 8192 * SizePerInstance;
     }
     
@@ -85,8 +85,10 @@ public class InfiniteInstanceBuffer : IInstanceBuffer, IDisposable
         {
             var offset = (_cursorPosition + i) * SizePerInstance;
             var matrix = instances[i].WorldTransform.ToMatrix().Downgrade();
-            Unsafe.WriteUnaligned(ref map[offset],  matrix);
-            Unsafe.WriteUnaligned(ref map[offset + MatrixFloat.SizeInBytes], instances[i].Tint);
+            Unsafe.WriteUnaligned(ref map[offset],  matrix);                offset += MatrixFloat.SizeInBytes;
+            Unsafe.WriteUnaligned(ref map[offset], instances[i].Tint);      offset += Vector4Float.SizeInBytes;
+            Unsafe.WriteUnaligned(ref map[offset], instances[i].UvOffset);  offset += Vector2Float.SizeInBytes;
+            Unsafe.WriteUnaligned(ref map[offset], instances[i].UvScale);
         }
         Context.DeviceContext.UnmapBuffer(ActiveBuffer, MapType.Write);
         var ticket = new InstanceBufferTicket

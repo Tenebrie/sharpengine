@@ -31,9 +31,10 @@ cbuffer g_ObjectIndex
 
 struct InstanceRecord
 {
-    // CPU writes row-major: keep row_major here to avoid transpose
     row_major float4x4 World;
-    float4              Tint;   // RGBA per-instance (you write this in C#)
+    float4 Tint;
+    float2 UvOffset;
+    float2 UvScale;
 };
 
 StructuredBuffer<InstanceRecord> g_InstanceData;
@@ -46,7 +47,7 @@ VSOut main(VSIn IN, uint instId : SV_InstanceID)
     float4 wp = mul(float4(IN.Pos, 1.0), inst.World);
     VSOut OUT;
     OUT.PosH  = mul(wp, ViewProjection);
-    OUT.UV    = IN.UV;
-    OUT.Color = IN.Col * inst.Tint;   // combine vertex color and instance tint
+    OUT.UV    = IN.UV * inst.UvScale + inst.UvOffset;
+    OUT.Color = IN.Col * inst.Tint;
     return OUT;
 }

@@ -14,7 +14,8 @@ public partial class ServiceRegistry : Atom
             return (T)service;
         }
         
-        service = AdoptChild(new T());
+        service = new T();
+        AdoptChild(service);
         Services[type] = service;
         return (T)service;
     }

@@ -1,13 +1,12 @@
 ﻿using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Meshes;
-using Engine.Core.Assets.Meshes.Builtins;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
 using User.Game.Player;
 
-namespace User.Game.Actors;
+namespace User.Game.Actors.BasicEnemies;
 
 public partial class BasicEnemyManager : Actor
 {

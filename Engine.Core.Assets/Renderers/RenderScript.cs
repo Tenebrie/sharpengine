@@ -25,7 +25,9 @@ public class RenderScript : IRenderScript
             instances.Add(new InstanceData
             {
                 WorldTransform = worldTransforms[i],
-                Tint = materialInstances[i].Tint
+                Tint = materialInstances[i].Tint,
+                UvOffset = materialInstances[i].UvOffset,
+                UvScale = materialInstances[i].UvScale
             });
         }
 

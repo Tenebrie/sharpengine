@@ -9,12 +9,12 @@ public partial class ActorInstance : Actor
     public bool IsOnScreen { get; set; }
 
     // [Parent]
-    public IInstancedActorComponent ParentManager = null!;
+    public IInstancedActorComponent? ParentManager;
     public MaterialInstance MaterialInstance = null!;
 
     [OnDestroy]
     protected void NotifyParentOnDestroy()
     {
-        ParentManager.RemoveInstance(this);
+        ParentManager?.RemoveInstance(this);
     }
 }

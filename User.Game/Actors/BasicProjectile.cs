@@ -7,6 +7,7 @@ using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
+using User.Game.Actors.BasicEnemies;
 
 namespace User.Game.Actors;
 
