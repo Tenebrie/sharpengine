@@ -5,6 +5,7 @@ using Engine.Core.Communication.Groups;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Entities;
+using User.Game.Services;
 
 namespace User.Game.Actors;
 
@@ -16,30 +17,42 @@ public partial class BasicEnemy : ActorInstance
 
     public double Health { get; set; } = 200.0;
     public double MaxHealth { get; set; } = 200.0;
-    public bool IsDying { get; set; } = false;
+    public bool IsDying { get; private set; } = false;
     public double DyingTime { get; set; } = 0.0;
     public double DamageFlashTime { get; set; } = 0.0;
     public double WhiteFlashTime { get; set; } = 0.0;
     public double WhiteFlashMultiplier { get; set; } = 1.0;
+    public Vector3 DeathDropRandom { get; set; } = (Vector3.Random - 0.5) * 2;
 
     public void DealDamage(double damage)
-    {
+    { 
         if (IsDying)
             return;
         Health -= damage;
         DamageFlashTime += damage / MaxHealth / 2;
         WhiteFlashTime = 0.05;
-        WhiteFlashMultiplier = 5.0 + damage / MaxHealth;
-        if (Health <= 0)
-            IsDying = true;
+        WhiteFlashMultiplier = 1.0 + 30.0 * (damage / MaxHealth);
+        if (Health > 0)
+            return;
+
+        IsDying = true;
+        Physics.AngularVelocity += DeathDropRandom * 0.5 * 360.0;
+        GetService<ExperienceDropService>().SpawnExperienceDrop(WorldTransform.Position, 10.0);
+    }
+    
+    [OnReady]
+    protected void OnReady()
+    {
+        ColliderSphere.Radius = 2;
+        MaterialInstance.LoadTexture(Texture.CreateFromDisk("Textures/metal-albedo.png"));
     }
 
     [OnUpdate]
-    protected void OnUpdate(double delta)
+    protected void OnUpdate(double deltaTime)
     {
         if (WhiteFlashTime > 0.0)
         {
-            WhiteFlashTime = Math.Clamp(WhiteFlashTime - delta, 0.0, 1.0);
+            WhiteFlashTime = Math.Clamp(WhiteFlashTime - deltaTime, 0.0, 1.0);
             MaterialInstance.SetTintColor(
                 Color.White, WhiteFlashMultiplier
             );
@@ -47,7 +60,7 @@ public partial class BasicEnemy : ActorInstance
         else if (DamageFlashTime > 0.0)
         {
             if (!IsDying)
-                DamageFlashTime = Math.Clamp(DamageFlashTime - delta, 0.0, 1.0);
+                DamageFlashTime = Math.Clamp(DamageFlashTime - deltaTime, 0.0, 1.0);
             MaterialInstance.SetTintColor(
                 Color.FromArgb(
                     (int)(255),
@@ -56,25 +69,24 @@ public partial class BasicEnemy : ActorInstance
             );
             MaterialInstance.SetOpacity(2.0 - DyingTime * 2.0);
         }
-        
-        if (IsDying)
+
+        if (!IsDying)
+            return;
+         
+        DyingTime += deltaTime * 0.25;
+        // Transform.Rotate(DeathDropRandom * 360.0 * deltaTime);
+        if (DyingTime >= 1.0)
         {
-            DyingTime += delta * 1.0;
-            Transform.RotateAroundGlobal(Vector3.Up, 25 * delta);
-            if (DyingTime >= 1.0)
-            {
-                QueueFree();
-                return;
-            }
-
-            MaterialInstance.SetOpacity(2.0 - DyingTime * 2.0);
+            QueueFree();
+            return;
         }
-    }
 
-    [OnReady]
-    protected void OnReady()
-    {
-        ColliderSphere.Radius = 0.5;
-        MaterialInstance.LoadTexture(Texture.CreateFromDisk("Textures/godot.png"));
+        MaterialInstance.SetTintColor(
+            Color.FromArgb(
+                (int)(255),
+                (int)(0),
+                (int)(0))
+        );
+        MaterialInstance.SetOpacity(2.0 - DyingTime * 2.0);
     }
 }

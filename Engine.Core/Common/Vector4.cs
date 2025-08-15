@@ -68,6 +68,8 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
     public static Vector4 Pitch => UnitX;
     public static Vector4 Yaw => UnitY;
     public static Vector4 Roll => UnitZ;
+    public static Vector4 Random =>
+        new(System.Random.Shared.NextDouble(), System.Random.Shared.NextDouble(), System.Random.Shared.NextDouble(), System.Random.Shared.NextDouble());
 
     /**
      * Conversion methods
@@ -157,6 +159,13 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
         
         return FromAccelerated(Avx.Add(a.ToAccelerated(), b.ToAccelerated()));
     }
+    public static Vector4 operator +(Vector4 a, double b)
+    {
+        if (!IsHardwareAccelerated)
+            return new Vector4(a.X + b, a.Y + b, a.Z + b, a.W + b);
+        
+        return FromAccelerated(Avx.Add(a.ToAccelerated(), new Vector4(b,b,b,b).ToAccelerated()));
+    }
     
     // Substraction
     public static Vector4 operator -(Vector4 a, Vector4 b)
@@ -165,6 +174,13 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
             return new Vector4(a.X - b.X, a.Y - b.Y, a.Z - b.Z, a.W - b.W);
         
         return FromAccelerated(Avx.Subtract(a.ToAccelerated(), b.ToAccelerated()));
+    }
+    public static Vector4 operator -(Vector4 a, double b)
+    {
+        if (!IsHardwareAccelerated)
+            return new Vector4(a.X - b, a.Y - b, a.Z - b, a.W - b);
+        
+        return FromAccelerated(Avx.Subtract(a.ToAccelerated(), new Vector4(b,b,b,b).ToAccelerated()));
     }
     public static Vector4 operator -(Vector4 a) => new(-a.X, -a.Y, -a.Z, -a.W);
     

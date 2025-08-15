@@ -8,6 +8,7 @@ public enum AnalyzerCode
     LifecycleMethodSignature,
     AlwaysStaticLifecycleMethod,
     NeverStaticLifecycleMethod,
+    DefaultGroupMustMatchContainingType
 }
 
 public static class ErrorCodeExtensions

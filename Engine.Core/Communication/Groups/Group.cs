@@ -16,6 +16,8 @@ public class Group<T> : IGroup, IEnumerable<T> where T : class
     private readonly List<T> _members = [];
     public List<T> Members => _members;
     
+    private T? First => _members.Count > 0 ? _members[0] : null;
+    
     private void Join(T member)
     {
         ArgumentNullException.ThrowIfNull(member);

@@ -30,7 +30,7 @@ public partial class PiercingBladeAbility : ActorComponent, IAbility
         var difference = Math.Atan2(crossProduct.Y, dotProduct);
         projectile.Transform.Rotation = QuatMakers.FromRotationRadians(0, difference, 0);
 
-        projectile.PhysicsComponent.Velocity = projectile.Transform.Basis.TransformVector(Vector3.Forward) * 200.0;
+        projectile.PhysicsComponent.LinearVelocity = projectile.Transform.Basis.TransformVector(Vector3.Forward) * 200.0;
         _cooldownRemaining = CooldownTime;
     }
 

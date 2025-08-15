@@ -25,7 +25,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
     private IBuffer _vertexBuffer = null!;
     private IBuffer _indexBuffer = null!;
 
-    private const int BufferSizeGlyphs = 8192;
+    private const int BufferSizeGlyphs = 16384;
     private MeshPipeline _meshPipeline;
 
     private Material _material = null!;
@@ -135,10 +135,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
 
         var tex = (Texture)texture;
         if (!_glyphStream.TryGetValue(tex, out var list))
-        {
-            list = [];
-            _glyphStream[tex] = list;
-        }
+            _glyphStream[tex] = list = [];
 
         var topLeft = topLeftVertex.Position / _sampleCount;
         var width = (topRightVertex.Position - topLeftVertex.Position) / _sampleCount;
@@ -210,8 +207,8 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
                 NumIndices = (uint)(vertexList.Count / 4) * 6,
                 IndexType = ValueType.UInt16,
             });
+            vertexList.Clear();
         }
-        _glyphStream.Clear();
     }
     
     private static void EnsureBufferSize(int vertexCount)
@@ -220,7 +217,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
             return;
         
         throw new ArgumentOutOfRangeException("Too many glyphs to render at once. " +
-                                              $"Maximum is {BufferSizeGlyphs}, but got {vertexCount}. " +
+                                              $"Maximum is {BufferSizeGlyphs * 4}, but got {vertexCount}. " +
                                               "It's time to implement multi-page text rendering!");
     }
     

@@ -108,8 +108,10 @@ public class WorkerPoolMember
     private static void CollectData(ref AtomHandle handle)
     {
         Transform.Copy(handle.Parent.WorldTransform, ref handle.WorldTransform);
-        handle.Velocity = handle.Component.Velocity;
+        handle.LinearVelocity = handle.Component.LinearVelocity;
+        handle.AngularVelocity = handle.Component.AngularVelocity;
         handle.SphereColliders = handle.Component.GetSphereColliders();
+        handle.GravityFactor = Convert.ToDouble(handle.Component.GravityEnabled);
         handle.HasColliders = false;
         if (handle.SphereColliders.Count == 0)
             return;
@@ -121,20 +123,20 @@ public class WorkerPoolMember
 
     private void ProcessAtomMovement(ref AtomHandle handle)
     {
-        if (handle.WorldTransform.Position.Y > 0)
-        {
-            handle.Velocity.Y -= 35.0 * _deltaTime;
-        }
+        handle.LinearVelocity.Y -= 9.8 * _deltaTime * handle.GravityFactor;
 
-        if (handle.Velocity.LengthSquared <= 0.0001)
+        if (handle.LinearVelocity.LengthSquared <= 0.0001)
         {
             handle.WorldPosition = handle.WorldTransform.Position;
             return;
         }
         
-        handle.WorldTransform.TranslateGlobal(handle.Velocity * _deltaTime);
+        handle.WorldTransform.TranslateGlobal(handle.LinearVelocity * _deltaTime);
+        handle.WorldTransform.Rotate(handle.AngularVelocity * _deltaTime);
         handle.WorldPosition = handle.WorldTransform.Position;
-        if (handle.WorldTransform.Position.Y > 0)
+        
+        // Snap to ground. TODO: Move that out?
+        if (handle.GravityFactor <= 0.0001 || handle.WorldTransform.Position.Y > 0)
         {
             handle.WorldPosition = handle.WorldTransform.Position;
             return;
@@ -142,7 +144,7 @@ public class WorkerPoolMember
         
         handle.WorldTransform.Position = new Vector3(handle.WorldTransform.Position.X, 0, handle.WorldTransform.Position.Z);
         handle.WorldPosition = handle.WorldTransform.Position;
-        handle.Velocity.Y = 0;
+        handle.LinearVelocity.Y = 0;
     }
     
     private static void CollectCollisionCandidates(ref AtomHandle handle, AtomHandle[] participants)
@@ -177,10 +179,10 @@ public class WorkerPoolMember
 
         const double restitution = 0.5;     // 0 = sticky, 1 = perfectly elastic
         const double percent     = 0.5;     // positional correction strength
-        const double slop        = 0;       // allow tiny penetration before pushing
+        const double slop        = 0.005;       // allow tiny penetration before pushing
 
         var posA = handle.WorldPosition;
-        var velA = handle.Velocity;
+        var velA = handle.LinearVelocity;
         var radiusOfA   = handle.BoundingSphereRadius;
 
         foreach (var c in handle.CollisionCandidates)
@@ -191,7 +193,7 @@ public class WorkerPoolMember
                 continue;
 
             var posB = other.WorldPosition;
-            var velB = other.Velocity;
+            var velB = other.LinearVelocity;
             var radiusOfB = other.BoundingSphereRadius;
 
             // Step 1: compute contact info
@@ -228,8 +230,8 @@ public class WorkerPoolMember
             velB -=  impulse;
 
             // Write back to handles (structs!)
-            handle.Velocity = velA;
-            other.Velocity = velB;
+            handle.LinearVelocity = velA;
+            other.LinearVelocity = velB;
         }
 
         handle.CollisionCandidates.Clear();
@@ -238,7 +240,8 @@ public class WorkerPoolMember
     private static void FlushTransform(ref AtomHandle handle)
     {
         var localTransform = handle.WorldTransform;
-        handle.Component.Velocity = handle.Velocity;
+        handle.Component.LinearVelocity = handle.LinearVelocity;
+        handle.Component.AngularVelocity = handle.AngularVelocity;
         if (handle.Parent.Parent is Spatial higherLevelParent)
             higherLevelParent.WorldTransformInverse.Multiply(localTransform, ref handle.Parent.TransformReference);
         else

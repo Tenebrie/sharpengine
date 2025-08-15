@@ -9,7 +9,9 @@ namespace Engine.Core.EntitySystem.Components.Physics;
 public partial class PhysicsComponent : ActorComponent
 {
     public long Rid = -1;
-    public Vector3 Velocity = Vector3.Zero;
+    public bool GravityEnabled = false;
+    public Vector3 LinearVelocity = Vector3.Zero;
+    public Vector3 AngularVelocity = Vector3.Zero;
 
     private Spatial GetSpatialParent()
     {

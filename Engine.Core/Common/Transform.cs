@@ -112,6 +112,10 @@ public class Transform
         Rotation *= rotation;
         return this;
     }
+    public Transform Rotate(Vector3 rotation)
+    {
+        return Rotate(rotation.X, rotation.Y, rotation.Z);
+    }
     
     public Transform RotateAroundGlobal(Vector3 axis, double angle)
     {
@@ -144,6 +148,28 @@ public class Transform
     {
         Scale *= scale;
         return this;
+    }
+    
+    public Transform LookAt(Vector3 target, Vector3 up)
+    {
+        var result = Copy(this);
+
+        // Forward vector
+        var forward = (Position - target).Normalized();
+
+        // Right vector
+        var right = up.Normalized().CrossProduct(forward).Normalized();
+
+        // Recompute up vector to ensure orthonormal basis
+        var trueUp = forward.CrossProduct(right);
+
+        // Apply to basis (keeping scale)
+        var scale = result.Scale;
+        result.Data.M11 = right.X * scale.X; result.Data.M12 = right.Y * scale.X; result.Data.M13 = right.Z * scale.X;
+        result.Data.M21 = trueUp.X * scale.Y; result.Data.M22 = trueUp.Y * scale.Y; result.Data.M23 = trueUp.Z * scale.Y;
+        result.Data.M31 = forward.X * scale.Z; result.Data.M32 = forward.Y * scale.Z; result.Data.M33 = forward.Z * scale.Z;
+
+        return result;
     }
 
     public Transform Inverse => GetInverse();

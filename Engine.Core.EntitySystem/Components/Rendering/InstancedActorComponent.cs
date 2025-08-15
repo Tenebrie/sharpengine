@@ -13,7 +13,6 @@ namespace Engine.Core.EntitySystem.Components.Rendering;
 
 public interface IInstancedActorComponent
 {
-    public void AddInstance(Transform instanceTransform);
     public void RemoveInstance(ActorInstance instance);
 }
 
@@ -44,14 +43,14 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
     public int InstanceCount => Instances.Count;
 
     [Profile]
-    public void AddInstance(Transform instanceTransform)
+    public TInstance CreateInstance()
     {
         var instancedActor = Activator.CreateInstance<TInstance>();
-        instancedActor.Transform = instanceTransform;
-        instancedActor.MaterialInstance = Material?.Instantiate() ?? MaterialAssetManager.FallbackMaterialInstance;
-        Instances.Add(instancedActor);
+        instancedActor.MaterialInstance = Material.Instantiate();
         instancedActor.ParentManager = this;
+        Instances.Add(instancedActor);
         AdoptChild(instancedActor);
+        return instancedActor;
     }
     
     public void RemoveInstance(ActorInstance instance)

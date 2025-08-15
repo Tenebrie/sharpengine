@@ -31,8 +31,9 @@ public partial class UserScene : Scene
         cameraFollower.PlayerCharacter = player;
         
         var honseTerrain = CreateActor<HonseTerrain>();
-        honseTerrain.Transform.Position = new Vector3(0, -0.05, 0);
-        const int scale = 30;
+        honseTerrain.Transform.Position = new Vector3(-100, -5000, -2000);
+        const int scale = 500;
+        honseTerrain.Transform.RotateAroundGlobal(Vector3.Up, 45);
         honseTerrain.Transform.Scale = new Vector3(scale, scale, scale);
 
         var wall = CreateActor<BasicWall>();

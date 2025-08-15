@@ -1,4 +1,5 @@
 ﻿using Engine.Core.Assets.Builders;
+using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Meshes.Builtins;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
@@ -16,24 +17,24 @@ public partial class BasicEnemyManager : Actor
     [OnReady]
     protected void OnReady()
     {
-        if (!AssetManager.Meshes.TryGet("Assets/Virtual/BasicEnemy", out var mesh))
-        {
-            mesh = TessellatedPlaneMesh.CreateWithoutCache();
-            AssetManager.Meshes.Put("Assets/Virtual/BasicEnemy", mesh);
-        }
-        InstanceManager.Mesh = mesh;
+        // if (!AssetManager.Meshes.TryGet("Assets/Virtual/BasicEnemy", out var mesh))
+        // {
+        //     mesh = TessellatedPlaneMesh.CreateWithoutCache();
+        //     AssetManager.Meshes.Put("Assets/Virtual/BasicEnemy", mesh);
+        // }
+        InstanceManager.Mesh = StaticMesh.CreateFromDisk("Meshes/invader01-crab.obj");
         InstanceManager.Material =
-            MaterialBuilder.Begin(typeof(BasicEnemyManager)).SetSamplingTexture(true).Compile();
+            MaterialBuilder.Begin(typeof(BasicEnemyManager)).SetSamplingTexture(false).Compile();
             // .CreateFromDisk("Meshes/BillboardSprite/BillboardSprite");
             // .Instantiate()
             // .LoadTexture(Texture.CreateFromDisk("Textures/godot.png"));
     }
 
     private int _enemiesQueued = 0;
-    [OnTimer(Seconds = 0.02f)]
+    [OnTimer(Seconds = 0.05f)]
     protected void SpawnEnemy()
     {
-        if (InstanceManager.InstanceCount >= 500)
+        if (InstanceManager.InstanceCount >= 300)
             return;
 
         var player = ParentScene.Actors.OfType<PlayerCharacter>().FirstOrDefault();
@@ -55,8 +56,9 @@ public partial class BasicEnemyManager : Actor
             transform.Rotation = Quaternion.Identity;
             transform.TranslateGlobal(0, Random.Shared.NextDouble() * 1.0, 0);
             // transform.RotateAroundLocal(Vector3.Right, -2);
-            transform.Rescale(5, 5, 5);
-            InstanceManager.AddInstance(transform);
+            transform.Rescale(1.5, 1.5, 1.5);
+            var instance = InstanceManager.CreateInstance();
+            instance.Transform = transform;
         }
         _enemiesQueued = 0;
     }
@@ -73,12 +75,16 @@ public partial class BasicEnemyManager : Actor
         {
             if (enemy.IsDying)
             {
-                enemy.Physics.Velocity = Vector3.Zero;
+                enemy.Physics.LinearVelocity += Vector3.Down * deltaTime * 15.0;
+                enemy.Physics.AngularVelocity -= enemy.DeathDropRandom * deltaTime * 25.0;
                 continue;
             }
-            enemy.Physics.Velocity = player.WorldTransform.Position - enemy.WorldTransform.Position;
-            enemy.Physics.Velocity = enemy.Physics.Velocity.Normalized();
-            enemy.Physics.Velocity *= movementSpeed;
+            enemy.Physics.LinearVelocity = player.WorldTransform.Position - enemy.WorldTransform.Position;
+            enemy.Physics.LinearVelocity = enemy.Physics.LinearVelocity.Normalized();
+            enemy.Physics.LinearVelocity *= movementSpeed;
+            enemy.Transform.Rotation = enemy.Transform.LookAt(
+                player.WorldTransform.Position, Vector3.Up
+            ).Rotation;
             
             var distanceToPlayer = enemy.Transform.Position.DistanceTo(player.WorldTransform.Position);
             if (distanceToPlayer < 250)

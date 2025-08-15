@@ -59,9 +59,9 @@ internal static class Editor
         GuestAssemblies =
         [
             EditorHostAssembly,
+            UserGameAssembly,
             PhysicsAssembly,
             RenderingAssembly,
-            UserGameAssembly
         ];
 
         MainWindow.Load += () =>
@@ -71,9 +71,9 @@ internal static class Editor
 
             // Setup guest assemblies
             EditorHostAssembly.Init();
+            UserGameAssembly.Init();
             PhysicsAssembly.Init();
             RenderingAssembly.Init();
-            UserGameAssembly.Init();
 
             InitBackstage(EditorHostAssembly.Backstage);
             InitBackstage(UserGameAssembly.Backstage);
@@ -126,8 +126,8 @@ internal static class Editor
         guestAssembly.Reload();
         if (guestAssembly.Backstage != null)
             InitBackstage(guestAssembly.Backstage);
-        // GC.Collect();
-        // GC.WaitForPendingFinalizers();
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
 
         foreach (var assembly in GuestAssemblies)
         {

@@ -38,8 +38,9 @@ public partial class LightningStrikeEffect : Actor
     public void OnUpdate(double deltaTime)
     {
         if (!_isFading)
-            return;
-        _opacity -= deltaTime * 3.0;
+            return; 
+        _opacity -= deltaTime * 3.0; 
+        Console.WriteLine(_materialInstance);
         _materialInstance.SetOpacity(_opacity);
     }
     

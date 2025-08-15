@@ -26,7 +26,7 @@ public enum InputAction
 
 public partial class UserInputService : Service
 {
-    private InputContext _baseContext;
+    private InputContext _baseContext = null!;
 
     [OnReady]
     protected void OnReady()

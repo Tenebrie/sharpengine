@@ -3,6 +3,7 @@ using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Modules;
 using Engine.Core.EntitySystem.Services;
+using Engine.Core.Logging;
 using Engine.Core.Profiling;
 using Engine.Module.Physics.Utilities;
 using Engine.Module.Physics.WorkerThreads;
@@ -27,19 +28,34 @@ public class PhysicsModule : IPhysicsModule
     public long Register(Spatial parent, PhysicsComponent component) => _registeredAtoms.Add(parent, component);
     public void Unregister(long rid) => _registeredAtoms.Remove(rid);
 
+    private const double PhysicsStepDuration = 0.0166666666666667;
+    private double _leftoverTime = 0.0;
     public void ProcessPhysicsFrame(double deltaTime)
     {
         var stopwatch = Profiler.Start();
         var atoms = _registeredAtoms.AsArray();
+        
+        var steps = (int)(deltaTime / PhysicsStepDuration);
+        _leftoverTime += deltaTime - steps * PhysicsStepDuration;
+        
+        steps = Math.Min(8, steps);
+        if (_leftoverTime >= PhysicsStepDuration)
+        {
+            _leftoverTime -= PhysicsStepDuration;
+            steps += 1;
+        }
 
         _revalidationServices.DisableAll();
 
-        PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.CollectData, atoms);
-        PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.InitialMove, atoms);
-        PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.CollectCollisionCandidates, atoms);
-        PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.ResolveCollisions, atoms);
-        PhysicsTaskDispatcher.Dispatch(_workerPool, deltaTime, WorkerPoolMember.PhysicsTaskType.FlushTransform, atoms);
-
+        PhysicsTaskDispatcher.Dispatch(_workerPool, PhysicsStepDuration, WorkerPoolMember.PhysicsTaskType.CollectData, atoms);
+        for (var i = 0; i < steps; i++)
+        {
+            PhysicsTaskDispatcher.Dispatch(_workerPool, PhysicsStepDuration, WorkerPoolMember.PhysicsTaskType.InitialMove, atoms);
+            PhysicsTaskDispatcher.Dispatch(_workerPool, PhysicsStepDuration, WorkerPoolMember.PhysicsTaskType.CollectCollisionCandidates, atoms);
+            PhysicsTaskDispatcher.Dispatch(_workerPool, PhysicsStepDuration, WorkerPoolMember.PhysicsTaskType.ResolveCollisions, atoms);
+        }
+        PhysicsTaskDispatcher.Dispatch(_workerPool, PhysicsStepDuration, WorkerPoolMember.PhysicsTaskType.FlushTransform, atoms);
+        
         _revalidationServices.EnableAll();
         stopwatch.StopAndReport(GetType(), ProfilingContext.PhysicsUpdate);
     }
@@ -54,7 +70,9 @@ public struct AtomHandle
     public required PhysicsComponent Component;
     public Vector3 WorldPosition;
     public Transform WorldTransform;
-    public Vector3 Velocity;
+    public Vector3 LinearVelocity;
+    public Vector3 AngularVelocity;
+    public double GravityFactor;
 
     public bool HasColliders;
     public List<ColliderSphereComponent> SphereColliders;

@@ -1,25 +1,34 @@
-﻿using Engine.Core.Common;
+﻿using System.Numerics;
 using Engine.Core.Makers;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Entities;
-using Engine.Core.EntitySystem.Services;
-using User.Game.Actors;
+using Engine.Core.Extensions;
+using Engine.Core.Logging;
 using User.Game.Player.Abilities;
 using User.Game.Player.Components;
 using User.Game.Services;
+using Vector2 = Engine.Core.Common.Vector2;
 using Vector3 = Engine.Core.Common.Vector3;
 
 namespace User.Game.Player;
 
 public partial class PlayerCharacter : Actor
 {
+    private Quaternion _desiredRotation = Quaternion.Identity;
     private const double MovementSpeed = 50.0;
-    private const double RotationSpeed = 0.12;
+    private const double RotationSpeed = 6;
+    
+    private Vector3 _velocity = Vector3.Zero;
+    private Vector3 _acceleration = Vector3.Zero;
+    private Quaternion _currentRotation = Quaternion.Identity;
+    private double _currentRoll = 0.0;
+    private bool inputHeldThisFrame = false;
 
     [Component] public AbilityController Abilities;
     [Component] public DragonMesh DragonMeshComponent;
     [Component] public PhysicsComponent PhysicsComponent;
+    [Component] public ExperienceComponent Experience;
 
     [OnInputHeld(InputAction.MoveForward,  +1.0, +0.0)]
     [OnInputHeld(InputAction.MoveBackward, -1.0, -0.0)]
@@ -31,12 +40,60 @@ public partial class PlayerCharacter : Actor
             return;
         
         var value = new Vector3(direction.Y, 0, -direction.X).Normalized();
+        // Transform.TranslateGlobal(value * MovementSpeed * deltaTime);
+        // PhysicsComponent.LinearVelocity = value * MovementSpeed * 2;
+        _acceleration = value * 5 * deltaTime;
+        
         var forwardVector = Vector3.Forward;
         var dotProduct = value.DotProduct(forwardVector);
         var crossProduct = value.CrossProduct(forwardVector);
         var difference = Math.Atan2(crossProduct.Y, dotProduct);
-        Transform.TranslateGlobal(value * MovementSpeed * deltaTime);
-        Transform.Rotation = QuatMakers.FromRotationRadians(0, difference, 0);
+        var targetRotation = QuatMakers.FromRotationRadians(0, difference, 0);
+        
+        var angle = _currentRotation.SignedAngleTo(targetRotation, Vector3.Up);
+        
+        _desiredRotation = QuatMakers.FromRotationRadians(0, difference, 0);
+        var rotationSpeed = Math.Min(RotationSpeed * deltaTime, 1.0);
+        _currentRotation = Quaternion.Slerp(_currentRotation, _desiredRotation, rotationSpeed);
+
+        var targetRoll = -angle;
+        _currentRoll = Math.Clamp(
+            _currentRoll + (targetRoll - _currentRoll) * rotationSpeed, 
+            -30,
+            30
+        );
+        Transform.Rotation = _currentRotation;
+        Transform.RotateAroundLocal(Vector3.Forward, _currentRoll);
+        inputHeldThisFrame = true;
+    }
+
+    [OnUpdate]
+    protected void OnUpdate(double deltaTime)
+    {
+        if (!inputHeldThisFrame)
+            _acceleration = Vector3.Zero;
+        _velocity += _acceleration;
+        if (_velocity.Length > 1.5)
+            _velocity = _velocity.SetLengthIfNotZero(1.5);
+        Transform.TranslateGlobal(_velocity * MovementSpeed * deltaTime);
+        if (!inputHeldThisFrame)
+            _velocity -= _velocity * deltaTime;
+        
+        var wasInputHeldThisFrame = inputHeldThisFrame;
+        inputHeldThisFrame = false;
+        if (wasInputHeldThisFrame)
+            return;
+     
+        var rotationSpeed = Math.Min(RotationSpeed * deltaTime, 1.0);
+        _currentRoll = Math.Clamp(
+            _currentRoll + (0 - _currentRoll) * rotationSpeed, 
+            -25,
+            25
+        );
+        Transform.Rotation = _currentRotation;
+        Transform.RotateAroundLocal(Vector3.Forward, _currentRoll);
+
+        inputHeldThisFrame = true;
     }
     
     [OnInput(InputAction.Jump)]
@@ -44,6 +101,6 @@ public partial class PlayerCharacter : Actor
     {
         if (Transform.Position.Y > 0)
             return;
-        PhysicsComponent.Velocity.Y = 20.0;
+        PhysicsComponent.LinearVelocity.Y = 20.0;
     }
 }

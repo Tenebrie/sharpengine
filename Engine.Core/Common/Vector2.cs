@@ -36,6 +36,7 @@ public struct Vector2(double x, double y)
     public static Vector2 Pitch => Vector4.UnitX;
     public static Vector2 Yaw => Vector4.UnitY;
     public static Vector2 Roll => Vector4.UnitZ;
+    public static Vector2 Random => Vector4.Random;
     
     public Vector3 ToVector3() => Unsafe.As<Vector2, Vector3>(ref this);
     public Vector4 ToVector4() => Unsafe.As<Vector2, Vector4>(ref this);
@@ -72,7 +73,9 @@ public struct Vector2(double x, double y)
     }
 
     public static Vector2 operator +(Vector2 a, Vector2 b) => a.Promote() + b.Promote();
+    public static Vector2 operator +(Vector2 a, double b) => a.Promote() + b;
     public static Vector2 operator -(Vector2 a, Vector2 b) => a.Promote() - b.Promote();
+    public static Vector2 operator -(Vector2 a, double b) => a.Promote() - b;
     public static Vector2 operator -(Vector2 a) => -a.Promote();
     public static Vector2 operator *(Vector2 a, double b) => a.Promote() * b;
     public static Vector2 operator *(double b, Vector2 a) => a.Promote() * b;

@@ -84,7 +84,7 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
             default:
                 break;
         }
-        foreach (var message in messages)
+        foreach (var message in messages.Take(40))
         {
             messageCount += 1;
             RenderLogEntry(message.Item1, message.Item2, messageCount);
@@ -103,7 +103,7 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
 
         var line = 2;
         var updates = Profiler.Query(ProfilingContext.BackstageUpdate | ProfilingContext.PhysicsUpdate | ProfilingContext.RenderingPrepare);
-        foreach (var entry in updates)
+        foreach (var entry in updates.Take(32))
         {
             DrawLogText(0, line++, Anchor.TopRight, Color.White, $"{entry.TypeName}: {entry.AverageMilliseconds():F2}ms");
         }
@@ -121,6 +121,8 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
     }
     private void DrawLogText(int x, int y, Anchor anchor, Color color, string text)
     {
+        if (text.Length > 512)
+            text = string.Concat(text.AsSpan(0, 512), "...");
         if (!_textMeasured)
         {
             var singlyGlyphSize = Module.TextRenderer.MeasureText("RobotoMono-Bold", FontSize, "0");

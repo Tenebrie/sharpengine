@@ -53,9 +53,18 @@ public static partial class Logger
         var str = message.ToString()!;
         Logs[level].Write(str, level);
         if (skipNewline)
-            Console.Write(str, exception);
+        {
+            Console.Write(str);
+            if (exception is not null)
+                Console.Error.Write(exception);
+        }
         else
-            Console.WriteLine(str, exception);
+        {
+            Console.WriteLine(str);
+            if (exception is not null)
+                Console.Error.WriteLine(exception);
+        }
+
         Console.Write(exception);
         
         if (level < _logLevel)
