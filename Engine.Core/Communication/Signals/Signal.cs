@@ -4,82 +4,174 @@
 // ReSharper disable UnusedType.Global
 
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 
 namespace Engine.Core.Communication.Signals;
 
-// Implemented by Atom
 public interface ISignalSubscriber
 {
-    public ref ImmutableArray<SignalSubscription> SignalSubscriptions { get; }
+    ref ImmutableArray<IDisposable> SignalSubscriptions { get; }
 }
 
-public interface IBaseSignal
+public interface ISignalSubscription : IDisposable
 {
-    public void Connect(ISignalSubscriber sub, Delegate handler);
-    public void Disconnect(Delegate handler);
 }
 
-public class BaseSignal<TDelegate> : IBaseSignal where TDelegate : Delegate
+internal sealed class SignalSubscription<TDelegate>(
+    BaseSignal<TDelegate> owner,
+    TDelegate handler,
+    BaseSignal<TDelegate>.Node node)
+    : IDisposable
+    where TDelegate : Delegate
 {
-    private TDelegate? _subs;
-    public TDelegate? Snapshot() => Volatile.Read(ref _subs);
+    private int _disposed;
 
-    public void Connect(ISignalSubscriber sub, Delegate handler)
-    {
-        ArgumentNullException.ThrowIfNull(handler);
-
-        TDelegate? prev, next;
-        do
-        {
-            prev = _subs;
-            next = (TDelegate?)Delegate.Combine(prev, handler);
-        } while (Interlocked.CompareExchange(ref _subs, next, prev) != prev);
-
-        var subscription = new SignalSubscription(this, handler);
-        ImmutableInterlocked.Update(ref sub.SignalSubscriptions,
-            arr => arr.Add(subscription));
-    }
-
-    public void Disconnect(Delegate handler)
-    {
-        ArgumentNullException.ThrowIfNull(handler);
-        TDelegate? prev, next;
-        do
-        {
-            prev = _subs;
-            next = (TDelegate?)Delegate.Remove(prev, handler);
-        } while (Interlocked.CompareExchange(ref _subs, next, prev) != prev);
-    }
-}
-
-public sealed class SignalSubscription : IDisposable
-{
-    private IBaseSignal? _signal;
-    private Delegate? _handler;
-    private bool _disposed = false;
-
-    internal SignalSubscription(IBaseSignal signal, Delegate handler)
-    {
-        _signal  = signal;
-        _handler = handler;
-    }
+    public TDelegate Handler { get; } = handler;
 
     public void Dispose()
     {
-        if (_disposed)
-            return;
-        _disposed = true;
-        var signal  = Interlocked.Exchange(ref _signal, null);
-        var handler = Interlocked.Exchange(ref _handler, null);
-        if (signal is not null && handler is not null)
-            signal.Disconnect(handler);
+        if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
+        owner.DisconnectNode(node);
+    }
+}
+
+public sealed class BaseSignal<TDelegate> where TDelegate : Delegate
+{
+    internal sealed class Node
+    {
+        public TDelegate Handler = null!;
+        public volatile bool Alive = true;
+        public Node? Next;
+    }
+
+    private readonly Lock _gate = new();
+
+    private Node? _head;
+    private int _liveCount;
+    private int _deadCount;
+    private int _version;
+
+    // Cached combined delegate + version
+    private TDelegate? _cached;
+    private int _cachedVersion;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public TDelegate? Snapshot()
+    {
+        // Fast path: read cached without locking
+        var cached = Volatile.Read(ref _cached);
+        if (cached != null && Volatile.Read(ref _cachedVersion) == Volatile.Read(ref _version))
+            return cached;
+
+        lock (_gate)
+        {
+            if (_cached != null && _cachedVersion == _version)
+                return _cached;
+
+            if (_liveCount == 0)
+            {
+                _cached = null;
+                _cachedVersion = _version;
+                return null;
+            }
+
+            // Rebuild multicast once per version change
+            var list = new List<Delegate>(_liveCount);
+            for (var p = _head; p != null; p = p.Next)
+                if (p.Alive) list.Add(p.Handler);
+
+            _cached = (TDelegate?)Delegate.Combine(list.ToArray());
+            _cachedVersion = _version;
+
+            // Optional: compact when >50% tombstones to keep traversal cheap
+            if (_deadCount > _liveCount)
+                Compact_NoThrow(); // under lock
+
+            return _cached;
+        }
+    }
+
+    public int Count => Volatile.Read(ref _liveCount);
+
+    public void Connect(ISignalSubscriber sub, TDelegate handler)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        Node n;
+        lock (_gate)
+        {
+            n = new Node { Handler = handler, Next = _head };
+            _head = n;
+            _liveCount++;
+            _version++;
+            _cached = null; // invalidate
+        }
+
+        var subscription = new SignalSubscription<TDelegate>(this, handler, n);
+        ImmutableInterlocked.Update(ref sub.SignalSubscriptions, arr => arr.Add(subscription));
+    }
+
+    // Public API: still supports handler-based disconnects
+    public void Disconnect(Delegate handler)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        lock (_gate)
+        {
+            for (var p = _head; p != null; p = p.Next)
+            {
+                if (p.Alive && DelegateEquals(p.Handler, handler))
+                {
+                    p.Alive = false;
+                    _liveCount--;
+                    _deadCount++;
+                    _version++;
+                    _cached = null; // invalidate
+                    break; // remove only one occurrence (like Delegate.Remove)
+                }
+            }
+        }
+    }
+
+    // Fast path used by SignalSubscription
+    internal void DisconnectNode(Node n)
+    {
+        // Avoid lock if already dead
+        if (!n.Alive) return;
+
+        lock (_gate)
+        {
+            if (!n.Alive) return;
+            n.Alive = false;
+            _liveCount--;
+            _deadCount++;
+            _version++;
+            _cached = null;
+        }
+    }
+
+    private static bool DelegateEquals(TDelegate a, Delegate b) => a.Equals(b);
+
+    private void Compact_NoThrow()
+    {
+        Node? newHead = null;
+        Node? tail = null;
+        for (var p = _head; p != null; p = p.Next)
+        {
+            if (!p.Alive) continue;
+            if (newHead == null)
+                newHead = tail = p;
+            else
+                tail = (tail!.Next = p);
+        }
+        if (tail != null) tail.Next = null;
+        _head = newHead;
+        _deadCount = 0;
+        // _liveCount unchanged
     }
 }
 
 public class Signal
 {
     private readonly BaseSignal<Action> _baseSignal = new();
-    
     public void Emit() => _baseSignal.Snapshot()?.Invoke();
     public void Connect(ISignalSubscriber sub, Action action) => _baseSignal.Connect(sub, action);
     public void Disconnect(Action action) => _baseSignal.Disconnect(action);
@@ -88,7 +180,6 @@ public class Signal
 public class Signal<T1>
 {
     private readonly BaseSignal<Action<T1>> _baseSignal = new();
-    public int SubscriberCount => _baseSignal.Snapshot()?.GetInvocationList().Length ?? 0;
     public void Emit(T1 v1) => _baseSignal.Snapshot()?.Invoke(v1);
     public void Connect(ISignalSubscriber sub, Action<T1> action) => _baseSignal.Connect(sub, action);
     public void Disconnect(Action<T1> action) => _baseSignal.Disconnect(action);
