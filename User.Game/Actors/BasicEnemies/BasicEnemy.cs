@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Common;
@@ -11,12 +12,13 @@ using User.Game.Services;
 
 namespace User.Game.Actors.BasicEnemies;
 
-public partial class BasicEnemy : ActorInstance
+public partial class BasicEnemy : ActorComponent
 {
     [DefaultGroup] public static readonly Group<BasicEnemy> All = new(); 
     [Component] public PhysicsComponent Physics;
     [Component] public ColliderSphereComponent ColliderSphere;
-    [Component] public InstancedActorComponent<SpaceshipFlamesComponent> SpaceshipFlames;
+    [Component] public StaticMeshComponent Mesh;
+    // [Component] public InstancedActorComponent<SpaceshipFlamesComponent> SpaceshipFlames;
 
     public double Health { get; set; } = 200.0;
     public double MaxHealth { get; set; } = 200.0;
@@ -47,14 +49,16 @@ public partial class BasicEnemy : ActorInstance
     protected void OnReady()
     {
         ColliderSphere.Radius = 2;
-        MaterialInstance.LoadTexture(Texture.CreateFromDisk("Textures/metal-albedo.png"));
+        Mesh.Mesh = StaticMesh.CreateFromDisk("Meshes/invader01-crab.obj");
+        Mesh.Material = MaterialBuilder.Begin(typeof(BasicEnemyManager)).SetSamplingTexture(false).Compile();
+        Mesh.MaterialInstance.LoadTexture(Texture.CreateFromDisk("Textures/metal-albedo.png"));
         
-        SpaceshipFlames.Mesh = PlaneMesh.Shared;
-        SpaceshipFlames.Material = Material.CreateFromDisk("Assets/Shaders/cube");
+        // SpaceshipFlames.Mesh = PlaneMesh.Shared;
+        // SpaceshipFlames.Material = Material.CreateFromDisk("Assets/Shaders/cube");
 
         for (var i = 0; i < 4; i++)
         {
-            var flames = SpaceshipFlames.CreateInstance();
+            var flames = CreateComponent<SpaceshipFlamesComponent>();
             flames.Transform.Rescale(1, 10, 10);
             flames.Transform.Rotate(0, 180, 0);
 
@@ -84,7 +88,7 @@ public partial class BasicEnemy : ActorInstance
         if (WhiteFlashTime > 0.0)
         {
             WhiteFlashTime = Math.Clamp(WhiteFlashTime - deltaTime, 0.0, 1.0);
-            MaterialInstance.SetTintColor(
+            Mesh.MaterialInstance.SetTintColor(
                 Color.White, WhiteFlashMultiplier
             );
         }
@@ -92,13 +96,13 @@ public partial class BasicEnemy : ActorInstance
         {
             if (!IsDying)
                 DamageFlashTime = Math.Clamp(DamageFlashTime - deltaTime, 0.0, 1.0);
-            MaterialInstance.SetTintColor(
+            Mesh.MaterialInstance.SetTintColor(
                 Color.FromArgb(
                     (int)(255),
                     (int)(255 * (1.0 - DamageFlashTime)),
                     (int)(255 * (1.0 - DamageFlashTime)))
             );
-            MaterialInstance.SetOpacity(2.0 - DyingTime * 2.0);
+            Mesh.MaterialInstance.SetOpacity(2.0 - DyingTime * 2.0);
         }
 
         if (!IsDying)
@@ -112,12 +116,12 @@ public partial class BasicEnemy : ActorInstance
             return;
         }
 
-        MaterialInstance.SetTintColor(
+        Mesh.MaterialInstance.SetTintColor(
             Color.FromArgb(
                 (int)(255),
                 (int)(0),
                 (int)(0))
         );
-        MaterialInstance.SetOpacity(2.0 - DyingTime * 2.0);
+        Mesh.MaterialInstance.SetOpacity(2.0 - DyingTime * 2.0);
     }
 }

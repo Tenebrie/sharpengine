@@ -10,8 +10,9 @@ namespace User.Game.Actors.BasicEnemies;
 
 public partial class BasicEnemyManager : Actor
 {
-    [Component]
-    public InstancedActorComponent<BasicEnemy> InstanceManager;
+    // [Component]
+    // public InstancedActorComponent<BasicEnemy> InstanceManager;
+    public List<BasicEnemy> Instances { get; } = [];
     
     [OnReady]
     protected void OnReady()
@@ -21,9 +22,9 @@ public partial class BasicEnemyManager : Actor
         //     mesh = TessellatedPlaneMesh.CreateWithoutCache();
         //     AssetManager.Meshes.Put("Assets/Virtual/BasicEnemy", mesh);
         // }
-        InstanceManager.Mesh = StaticMesh.CreateFromDisk("Meshes/invader01-crab.obj");
-        InstanceManager.Material =
-            MaterialBuilder.Begin(typeof(BasicEnemyManager)).SetSamplingTexture(false).Compile();
+        // InstanceManager.Mesh = StaticMesh.CreateFromDisk("Meshes/invader01-crab.obj");
+        // InstanceManager.Material =
+        //     MaterialBuilder.Begin(typeof(BasicEnemyManager)).SetSamplingTexture(false).Compile();
             // .CreateFromDisk("Meshes/BillboardSprite/BillboardSprite");
             // .Instantiate()
             // .LoadTexture(Texture.CreateFromDisk("Textures/godot.png"));
@@ -33,7 +34,7 @@ public partial class BasicEnemyManager : Actor
     [OnTimer(Seconds = 0.10f)]
     protected void SpawnEnemy()
     {
-        if (InstanceManager.InstanceCount >= 250)
+        if (GetChildren<BasicEnemy>().Count >= 250)
             return;
 
         var player = ParentScene.Actors.OfType<PlayerCharacter>().FirstOrDefault();
@@ -56,7 +57,7 @@ public partial class BasicEnemyManager : Actor
             transform.TranslateGlobal(0, Random.Shared.NextDouble() * 1.0, 0);
             // transform.RotateAroundLocal(Vector3.Right, -2);
             transform.Rescale(1.5, 1.5, 1.5);
-            var instance = InstanceManager.CreateInstance();
+            var instance = CreateComponent<BasicEnemy>();
             instance.Transform = transform;
         }
         _enemiesQueued = 0;
@@ -69,7 +70,7 @@ public partial class BasicEnemyManager : Actor
         if (player is null)
             return;
 
-        foreach (var enemy in InstanceManager.Instances)
+        foreach (var enemy in GetChildren<BasicEnemy>())
         {
             if (enemy.IsDying)
                 continue;
@@ -87,7 +88,7 @@ public partial class BasicEnemyManager : Actor
             return;
 
         const double movementSpeed = 15.0;
-        foreach (var enemy in InstanceManager.Instances)
+        foreach (var enemy in GetChildren<BasicEnemy>())
         {
             if (enemy.IsDying)
             {

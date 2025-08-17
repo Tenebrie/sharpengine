@@ -26,7 +26,7 @@ public partial class BasicEnemyScene : Scene
     protected void OnReady()
     {
         var manager = CreateActor<BasicEnemyManager>();
-        manager.InstanceManager.CreateInstance();
+        // manager.InstanceManager.CreateInstance();
     }
 }
 

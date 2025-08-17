@@ -53,7 +53,7 @@ public class Profiler
         return Instance.LastSecondMethodEntries
             .SelectMany(kvp => kvp.Value)
             .Select(kvp => kvp.Value)
-            .OrderByDescending(e => e.TotalMilliseconds())
+            .OrderByDescending(e => e.AverageMilliseconds())
             .ToArray();
     }
     
