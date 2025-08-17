@@ -18,7 +18,6 @@ public partial class BasicEnemy : ActorComponent
     [Component] public PhysicsComponent Physics;
     [Component] public ColliderSphereComponent ColliderSphere;
     [Component] public StaticMeshComponent Mesh;
-    // [Component] public InstancedActorComponent<SpaceshipFlamesComponent> SpaceshipFlames;
 
     public double Health { get; set; } = 200.0;
     public double MaxHealth { get; set; } = 200.0;

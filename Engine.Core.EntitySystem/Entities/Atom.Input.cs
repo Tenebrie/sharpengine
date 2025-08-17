@@ -4,8 +4,6 @@ using Engine.Core.Input;
 using Engine.Core.Input.Attributes;
 using Silk.NET.Input;
 using EntitySystem_Services_InputService = Engine.Core.EntitySystem.Services.InputService;
-using InputService = Engine.Core.EntitySystem.Services.InputService;
-using Services_InputService = Engine.Core.EntitySystem.Services.InputService;
 
 namespace Engine.Core.EntitySystem.Entities;
 
@@ -13,27 +11,27 @@ public partial class Atom
 {
     private void InitializeInput()
     {
-        var methods = GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        // var methods = GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         var guid = Guid.NewGuid();
 
         var inputService = GetService<EntitySystem_Services_InputService>();
         
-        var onInputActionMethods = methods
-            .Where(m => m.IsDefined(typeof(IOnInputAttribute), false))
-            .ToList();
-        var onInputActionHeldMethods = methods
-            .Where(m => m.IsDefined(typeof(IOnInputHeldAttribute), false))
-            .ToList();
-        var onInputActionReleasedMethods = methods
-            .Where(m => m.IsDefined(typeof(IOnInputReleasedAttribute), false))
-            .ToList();
+        // var onInputActionMethods = methods
+        //     .Where(m => m.IsDefined(typeof(IOnInputAttribute), false))
+        //     .ToList();
+        // var onInputActionHeldMethods = methods
+        //     .Where(m => m.IsDefined(typeof(IOnInputHeldAttribute), false))
+        //     .ToList();
+        // var onInputActionReleasedMethods = methods
+        //     .Where(m => m.IsDefined(typeof(IOnInputReleasedAttribute), false))
+        //     .ToList();
 
-        for (var index = 0; index < onInputActionMethods.Count; index++)
+        var data = ReflectionDataCache.GetValueOrDefault(GetType());
+        for (var index = 0; index < data.OnInputMethods.Count; index++)
         {
-            var method = onInputActionMethods[index];
             var groupId = guid + "-" + index;
-            
-            var attrs = (IOnInputBaseAttribute[])method.GetCustomAttributes(typeof(IOnInputAttribute), inherit: false);
+            var method = data.OnInputMethods[index].MethodInfo;
+            var attrs = data.OnInputMethods[index].Attributes;
             
             foreach (var attr in attrs)
             {
@@ -54,13 +52,11 @@ public partial class Atom
             }
         }
 
-        for (var index = 0; index < onInputActionHeldMethods.Count; index++)
+        for (var index = 0; index < data.OnInputHeldMethods.Count; index++)
         {
-            // Methods within a group are summed and invoked together.
             var groupId = guid + "-" + index;
-            var method = onInputActionHeldMethods[index];
-            
-            var attrs = (IOnInputBaseAttribute[])method.GetCustomAttributes(typeof(IOnInputHeldAttribute), inherit: false);
+            var method = data.OnInputHeldMethods[index].MethodInfo;
+            var attrs = data.OnInputHeldMethods[index].Attributes;
             
             foreach (var attr in attrs)
             {
@@ -81,12 +77,11 @@ public partial class Atom
             }
         }
 
-        for (var index = 0; index < onInputActionReleasedMethods.Count; index++)
+        for (var index = 0; index < data.OnInputReleasedMethods.Count; index++)
         {
-            var method = onInputActionReleasedMethods[index];
             var groupId = guid + "-" + index;
-            
-            var attrs = (IOnInputBaseAttribute[])method.GetCustomAttributes(typeof(IOnInputReleasedAttribute), inherit: false);
+            var method = data.OnInputReleasedMethods[index].MethodInfo;
+            var attrs = data.OnInputReleasedMethods[index].Attributes;
             
             foreach (var attr in attrs)
             {

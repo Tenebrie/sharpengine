@@ -402,12 +402,11 @@ public class RenderingModule : IRenderingModule
             })
             .ToList();
 
-        preparedRequests
-            .ForEach(req =>
-            {
-                req.RenderScript.Render(_immediateContext, req.InstanceCount, req.Mesh, req.InstanceTransforms, req.Material,
-                    req.MaterialInstances);
-            });
+        foreach (var req in preparedRequests)
+        {
+            req.RenderScript.Render(_immediateContext, req.InstanceCount, req.Mesh, req.InstanceTransforms, req.Material,
+                req.MaterialInstances);
+        }
     }
 
     private void OnFramebufferResize(Vector2D<int> size)

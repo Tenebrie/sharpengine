@@ -1,9 +1,6 @@
 ﻿using System.Drawing;
 using System.Reflection;
 using Engine.Core.Assets.Materials;
-using Engine.Core.Extensions;
-using Engine.Core.Logging;
-using Engine.Core.Shell;
 
 namespace Engine.Core.Assets.Builders;
 

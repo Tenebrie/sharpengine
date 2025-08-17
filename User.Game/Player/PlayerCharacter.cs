@@ -3,8 +3,10 @@ using Engine.Core.Makers;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.EntitySystem.Services;
 using Engine.Core.Extensions;
 using Engine.Core.Logging;
+using Silk.NET.Input;
 using User.Game.Player.Abilities;
 using User.Game.Player.Components;
 using User.Game.Services;
@@ -73,8 +75,15 @@ public partial class PlayerCharacter : Actor
         if (!_inputHeldThisFrame)
             _acceleration = Vector3.Zero;
         _velocity += _acceleration;
-        if (_velocity.Length > 1.5)
-            _velocity = _velocity.SetLengthIfNotZero(1.5);
+
+        var maxSpeed = 1.5;
+        if (GetService<InputService>().IsKeyHeld(Key.ShiftLeft))
+        {
+            maxSpeed = 4.5;
+        }
+        
+        if (_velocity.Length > maxSpeed)
+            _velocity = _velocity.SetLengthIfNotZero(maxSpeed);
         Transform.TranslateGlobal(_velocity * MovementSpeed * deltaTime);
         if (!_inputHeldThisFrame)
             _velocity -= _velocity * 2.0 * deltaTime;

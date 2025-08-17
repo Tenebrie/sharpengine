@@ -4,6 +4,7 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Logging;
 using User.Game.Player;
 
 namespace User.Game.Actors.BasicEnemies;
@@ -31,7 +32,7 @@ public partial class BasicEnemyManager : Actor
     }
 
     private int _enemiesQueued = 0;
-    [OnTimer(Seconds = 0.10f)]
+    [OnTimer(Seconds = 0.01f)]
     protected void SpawnEnemy()
     {
         if (GetChildren<BasicEnemy>().Count >= 250)
@@ -41,7 +42,7 @@ public partial class BasicEnemyManager : Actor
         if (player is null) 
             return;
 
-        _enemiesQueued += 1;
+        _enemiesQueued += 5;
         for (var i = 0; i < _enemiesQueued; i++)
         {
             var transform = Transform.Identity;

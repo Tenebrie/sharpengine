@@ -1,11 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
-using Engine.Core.EntitySystem.Attributes;
+﻿namespace Engine.Core.EntitySystem.Entities;
 
-namespace Engine.Core.EntitySystem.Entities;
-
-[SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
-[SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
 public partial class Atom
 {
     private bool HasOnTimerCallbacks { get; set; }
@@ -13,16 +7,15 @@ public partial class Atom
     
     private void InitializeTimers()
     {
-        var methods = GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        
-        var timerMethods = methods.Where(method => method.GetCustomAttribute<OnTimerAttribute>() != null).ToList();
+        var timerMethods = ReflectionDataCache.GetValueOrDefault(GetType()).OnTimerMethods;
         if (timerMethods.Count == 0)
             return;
         
-        foreach (var methodInfo in timerMethods)
+        foreach (var reflection in timerMethods)
         {
             var timer = new AtomTimer();
-            var attribute = methodInfo.GetCustomAttribute<OnTimerAttribute>(inherit: false);
+            var methodInfo = reflection.MethodInfo;
+            var attribute = reflection.Attribute;
             if (attribute is null or { Frames: < 0, Seconds: double.NaN } or { Frames: > 0, Seconds: not double.NaN })
                 throw new InvalidOperationException(
                     $"Method {methodInfo.Name} has invalid OnTimerAttribute.");

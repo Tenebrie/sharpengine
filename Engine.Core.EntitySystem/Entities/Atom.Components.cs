@@ -1,20 +1,17 @@
-﻿using System.Reflection;
-using Engine.Core.EntitySystem.Attributes;
-
-namespace Engine.Core.EntitySystem.Entities;
+﻿namespace Engine.Core.EntitySystem.Entities;
 
 public partial class Atom
 {
     private void InitializeComponents()
     {
-        var fields = GetType().GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-        
-        var componentFields = fields.Where(method => method.GetCustomAttributes<ComponentAttribute>().Any()).ToList();
-        
-        foreach (var field in componentFields.Where(field => field.GetValue(this) == null))
+        var data = ReflectionDataCache.GetValueOrDefault(GetType());
+
+        foreach (var reflection in data.ComponentFields)
         {
-            var component = CreateDefaultInstance(field.FieldType);
-            field.SetValue(this, component);
+            if (reflection.GetValue(this) != null)
+                continue;
+            var component = reflection.Factory();
+            reflection.SetValue(this, component);
             AdoptChild(component);
             if (this is Actor && component is ActorComponent actorComponent)
             {

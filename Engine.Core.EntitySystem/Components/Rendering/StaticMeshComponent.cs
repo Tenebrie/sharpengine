@@ -1,4 +1,5 @@
-﻿using Engine.Core.Assets.Materials;
+﻿using System.Runtime.CompilerServices;
+using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Renderers;
 using Engine.Core.Common;
@@ -39,6 +40,8 @@ public partial class StaticMeshComponent : ActorComponent, IRenderable
     public void PerformCulling(Camera activeCamera) => IsOnScreen = activeCamera.SphereInFrustum(BoundingSphere, null);
     
     private readonly Transform[] _singleComponentTransforms = new Transform[1];
+    
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RenderRequest Render()
     {
         _singleComponentTransforms[0] = WorldTransform;

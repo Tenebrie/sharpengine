@@ -6,9 +6,9 @@ namespace Engine.Core.Input.Contexts;
 
 public class InputContext
 {
-    private readonly Dictionary<long, InputContextEntry> _entries;
+    private readonly Dictionary<long, List<InputContextEntry>> _entries;
 
-    private InputContext(Dictionary<long, InputContextEntry> entries)
+    private InputContext(Dictionary<long, List<InputContextEntry>> entries)
     {
         _entries = entries;
     }
@@ -16,9 +16,8 @@ public class InputContext
     public List<long> Match(Key key, List<KeyModifiers> modifiers)
     {
         return _entries.Values
-            .Where(entry => entry.Keys.Contains(key) && 
-                            (modifiers.Count == 0 || 
-                             modifiers.All(m => entry.Modifiers.Contains(m))))
+            .SelectMany(list => list)
+            .Where(entry => entry.Keys.Contains(key) && entry.Modifiers.All(modifiers.Contains) && entry.Modifiers.Count == modifiers.Count)
             .Select(entry => entry.Action)
             .ToList();
     }
@@ -26,6 +25,7 @@ public class InputContext
     public List<long> Match(MouseAxis axis, List<KeyModifiers> modifiers)
     {
         return _entries.Values
+            .SelectMany(list => list)
             .Where(entry => entry.MouseAxes.Contains(axis) && 
                             (modifiers.Count == 0 || 
                              modifiers.All(m => entry.Modifiers.Contains(m))))
@@ -36,6 +36,7 @@ public class InputContext
     public List<long> Match(MouseButton button, List<KeyModifiers> modifiers)
     {
         return _entries.Values
+            .SelectMany(list => list)
             .Where(entry => entry.MouseButtons.Contains(button) && 
                             (modifiers.Count == 0 || 
                              modifiers.All(m => entry.Modifiers.Contains(m))))
@@ -45,38 +46,25 @@ public class InputContext
     
     public InputContext Combine(InputContext other)
     {
-        var combinedEntries = new Dictionary<long, InputContextEntry>(_entries);
+        var combinedEntries = new Dictionary<long, List<InputContextEntry>>(_entries);
         
         foreach (var entry in other._entries)
         {
-            if (combinedEntries.TryGetValue(entry.Key, out var existingEntry))
-            {
-                existingEntry.Keys.AddRange(entry.Value.Keys);
-            }
-            else
-            {
-                combinedEntries[entry.Key] = entry.Value;
-            }
+            combinedEntries.GetValueOrDefault(entry.Key, []).AddRange(entry.Value);
         }
         
         return new InputContext(combinedEntries);
     }
     
-    public static InputContext Empty => new(new Dictionary<long, InputContextEntry>());
+    public static InputContext Empty => new(new Dictionary<long, List<InputContextEntry>>());
 
     public static InputContext From(InputContext inputContext)
     {
-        var copiedEntries = new Dictionary<long, InputContextEntry>();
+        var copiedEntries = new Dictionary<long, List<InputContextEntry>>();
     
         foreach (var kvp in inputContext._entries)
         {
-            copiedEntries[kvp.Key] = new InputContextEntry(kvp.Key)
-            {
-                Keys = [..kvp.Value.Keys],
-                MouseAxes = [..kvp.Value.MouseAxes],
-                MouseButtons = [..kvp.Value.MouseButtons],
-                Modifiers = [..kvp.Value.Modifiers],
-            };
+            copiedEntries[kvp.Key] = kvp.Value;
         }
     
         return new InputContext(copiedEntries);
@@ -89,50 +77,65 @@ public class InputContext
 
     public class Builder<TInputAction> where TInputAction : System.Enum
     {
-        private readonly Dictionary<TInputAction, InputContextEntry> _entries = new();
+        private readonly Dictionary<TInputAction, List<InputContextEntry>> _entries = new();
 
         public Builder<TInputAction> Add(TInputAction action, Key key, List<KeyModifiers>? modifiers = null)
         {
-            if (_entries.TryGetValue(action, out var entry))
+            if (_entries.TryGetValue(action, out var list))
             {
-                entry.Keys.Add(key);
+                list.Add(new InputContextEntry(Convert.ToInt64(action))
+                {
+                    Keys = [key],
+                    Modifiers = modifiers ?? []
+                });
                 return this;
             }
 
-            _entries[action] = new InputContextEntry(Convert.ToInt64(action))
+            _entries[action] = [new InputContextEntry(Convert.ToInt64(action))
             {
                 Keys = [key],
-            };
+                Modifiers = modifiers ?? []
+            }];
             return this;
         }
 
         public Builder<TInputAction> Add(TInputAction action, MouseAxis axis, List<KeyModifiers>? modifiers = null)
         {
-            if (_entries.TryGetValue(action, out var entry))
+            if (_entries.TryGetValue(action, out var list))
             {
-                entry.MouseAxes.Add(axis);
+                list.Add(new InputContextEntry(Convert.ToInt64(action))
+                {
+                    MouseAxes = [axis],
+                    Modifiers = modifiers ?? []
+                });
                 return this;
             }
 
-            _entries[action] = new InputContextEntry(Convert.ToInt64(action))
+            _entries[action] = [new InputContextEntry(Convert.ToInt64(action))
             {
-                MouseAxes = [axis]
-            };
+                MouseAxes = [axis],
+                Modifiers = modifiers ?? []
+            }];
             return this;
         }
         
         public Builder<TInputAction> Add(TInputAction action, MouseButton button, List<KeyModifiers>? modifiers = null)
         {
-            if (_entries.TryGetValue(action, out var entry))
+            if (_entries.TryGetValue(action, out var list))
             {
-                entry.MouseButtons.Add(button);
+                list.Add(new InputContextEntry(Convert.ToInt64(action))
+                {
+                    MouseButtons = [button],
+                    Modifiers = modifiers ?? []
+                });
                 return this;
             }
 
-            _entries[action] = new InputContextEntry(Convert.ToInt64(action))
+            _entries[action] = [new InputContextEntry(Convert.ToInt64(action))
             {
-                MouseButtons = [button]
-            };
+                MouseButtons = [button],
+                Modifiers = modifiers ?? []
+            }];
             return this;
         }
 
@@ -140,24 +143,18 @@ public class InputContext
         {
             var dictionaryEntries = _entries.ToDictionary(
                 kvp => Convert.ToInt64(kvp.Key),
-                kvp => new InputContextEntry(Convert.ToInt64(kvp.Key))
-                {
-                    Keys = kvp.Value.Keys,
-                    MouseAxes = kvp.Value.MouseAxes,
-                    MouseButtons = kvp.Value.MouseButtons,
-                    Modifiers = kvp.Value.Modifiers
-                }
+                kvp => kvp.Value
             );
             return new InputContext(dictionaryEntries);
         }
     }
 }
 
-public class InputContextEntry(long action)
+public readonly struct InputContextEntry(long action)
 {
     public long Action { get; } = action;
-    public List<Key> Keys { get; internal set; } = [];
-    public List<MouseAxis> MouseAxes { get; internal set; } = [];
-    public List<MouseButton> MouseButtons { get; internal set; } = [];
-    public List<KeyModifiers> Modifiers { get; internal set; } = [];
+    public List<Key> Keys { get; internal init; } = [];
+    public List<MouseAxis> MouseAxes { get; internal init; } = [];
+    public List<MouseButton> MouseButtons { get; internal init; } = [];
+    public List<KeyModifiers> Modifiers { get; internal init; } = [];
 }

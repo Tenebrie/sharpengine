@@ -1,16 +1,12 @@
 ﻿using System.Buffers;
-using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using Engine.Core.Attributes;
-using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Services;
 using Engine.Core.Modules;
 using Engine.Core.Profiling;
+using Engine.Core.Profiling.Attributes;
 
 namespace Engine.Core.EntitySystem.Entities;
 
-[SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
-[SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
 public partial class Atom
 {
     public Action? OnCreateCallback { get; set; }
@@ -25,59 +21,60 @@ public partial class Atom
 
     public Dictionary<EngineModule, Action?> OnModuleReloadCallback { get; set; } = new();
     public Action? OnGameplayContextChangeCallback { get; set; }
-
+    
+    [Profile]
     private void InitializeLifecycle()
     {
-        var methods = GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-
-        var createMethods = methods.Where(method => method.GetCustomAttribute<OnCreateAttribute>() != null).ToList();
-        foreach (var action in createMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action), this, methodInfo)))
+        var data = ReflectionDataCache.GetValueOrDefault(GetType());
+        foreach (var reflection in data.OnCreateMethods)
         {
+            var action = Delegate.CreateDelegate(typeof(Action), this, reflection.MethodInfo);
             OnCreateCallback += (Action)action;
         }
-        var readyMethods = methods.Where(method => method.GetCustomAttribute<OnReadyAttribute>() != null).ToList();
-        foreach (var action in readyMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action), this, methodInfo)))
+
+        foreach (var reflection in data.OnReadyMethods)
         {
+            var action = Delegate.CreateDelegate(typeof(Action), this, reflection.MethodInfo);
             OnReadyCallback += (Action)action;
         }
 
-        var updateMethods = methods.Where(method => method.GetCustomAttribute<OnUpdateAttribute>() != null).ToArray();
-        var simpleUpdateMethods = updateMethods.Where(method => method.GetParameters().Length == 0).ToList();
-        var properUpdateMethods = updateMethods.Where(method => method.GetParameters().Length > 0).ToList();
-        foreach (var action in simpleUpdateMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action), this, methodInfo)))
+        foreach (var reflection in data.OnUpdateMethods.Where(reflection => reflection.ParameterCount == 0).ToList())
         {
+            var action = Delegate.CreateDelegate(typeof(Action), this, reflection.MethodInfo);
             OnUpdateCallback += DelegateHelpers.AsDoubleCallback((Action)action);
         }
-        foreach (var action in properUpdateMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action<double>), this, methodInfo)))
+
+        foreach (var reflection in data.OnUpdateMethods.Where(reflection => reflection.ParameterCount > 0).ToList())
         {
+            var action = Delegate.CreateDelegate(typeof(Action<double>), this, reflection.MethodInfo);
             OnUpdateCallback += (Action<double>)action;
         }
-        HasOnUpdateCallbacks = updateMethods.Length != 0;
 
-        var destroyMethods = methods.Where(method => method.GetCustomAttribute<OnDestroyAttribute>() != null).ToList();
-        foreach (var action in destroyMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action), this, methodInfo)))
+        HasOnUpdateCallbacks = data.OnUpdateMethods.Count > 0;
+
+        foreach (var reflection in data.OnDestroyMethods)
         {
+            var action = Delegate.CreateDelegate(typeof(Action), this, reflection.MethodInfo);
             OnDestroyCallback += (Action)action;
         }
 
-        var moduleReloadedMethods = methods.Where(method => method.GetCustomAttribute<OnModuleReloadAttribute>() != null).ToList();
-        foreach (var methodInfo in moduleReloadedMethods)
+        foreach (var reflection in data.OnModuleReloadMethods)
         {
-            var attribute = methodInfo.GetCustomAttribute<OnModuleReloadAttribute>()!;
-            var action = Delegate.CreateDelegate(typeof(Action), this, methodInfo);
-            if (OnModuleReloadCallback.ContainsKey(attribute.Module))
-                OnModuleReloadCallback[attribute.Module] += (Action)action;
+            var action = Delegate.CreateDelegate(typeof(Action), this, reflection.MethodInfo);
+            if (OnModuleReloadCallback.ContainsKey(reflection.Attribute.Module))
+                OnModuleReloadCallback[reflection.Attribute.Module] += (Action)action;
             else
-                OnModuleReloadCallback[attribute.Module] = (Action)action;
+                OnModuleReloadCallback[reflection.Attribute.Module] = (Action)action;
         }
-        var gameplayContextMethods = methods.Where(method => method.GetCustomAttribute<OnGameplayContextChangeAttribute>() != null).ToList();
-        foreach (var action in gameplayContextMethods.Select(methodInfo => Delegate.CreateDelegate(typeof(Action), this, methodInfo)))
+        
+        foreach (var reflection in data.OnGameplayContextChangeMethods)
         {
+            var action = Delegate.CreateDelegate(typeof(Action), this, reflection.MethodInfo);
             OnGameplayContextChangeCallback += (Action)action;
         }
     }
 
-    protected readonly ArrayPool<Atom> AtomPool = ArrayPool<Atom>.Create();
+    protected static readonly ArrayPool<Atom> AtomPool = ArrayPool<Atom>.Create();
     protected internal void ProcessLogicFrame(double deltaTime)
     {
         var localDelta = deltaTime * TimeScale;

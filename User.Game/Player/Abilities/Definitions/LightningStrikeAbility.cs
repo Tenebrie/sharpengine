@@ -1,6 +1,7 @@
 ﻿using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
 using Engine.Core.Common;
+using Engine.Core.Logging;
 using JetBrains.Annotations;
 using User.Game.Actors;
 using User.Game.Actors.BasicEnemies;
@@ -33,7 +34,7 @@ public partial class LightningStrikeAbility : ActorComponent, IAbility
             .ToArray();
         foreach (var hitEnemy in targets)
         {
-            var baseDamage = 220;
+            const int baseDamage = 220;
             var distanceMultiplier = 1.0 - hitEnemy.WorldTransform.Position.DistanceTo(targetPoint) / 25;
             hitEnemy.DealDamage(baseDamage * distanceMultiplier);
         }

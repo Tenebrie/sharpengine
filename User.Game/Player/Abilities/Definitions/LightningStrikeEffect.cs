@@ -40,7 +40,6 @@ public partial class LightningStrikeEffect : Actor
         if (!_isFading)
             return; 
         _opacity -= deltaTime * 3.0; 
-        Console.WriteLine(_materialInstance);
         _materialInstance.SetOpacity(_opacity);
     }
     

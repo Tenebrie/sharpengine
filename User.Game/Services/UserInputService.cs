@@ -5,7 +5,9 @@ using Engine.Core.Input.Contexts;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
+using Silk.NET.GLFW;
 using Silk.NET.Input;
+using MouseButton = Silk.NET.Input.MouseButton;
 
 namespace User.Game.Services;
 
@@ -33,12 +35,16 @@ public partial class UserInputService : Service
     {
         _baseContext = InputContext.GetBuilder<InputAction>()
             .Add(InputAction.MoveForward, Key.W)
+            .Add(InputAction.MoveForward, Key.W, [KeyModifiers.Shift])
             .Add(InputAction.MoveForward, Key.Up)
             .Add(InputAction.MoveBackward, Key.S)
+            .Add(InputAction.MoveBackward, Key.S, [KeyModifiers.Shift])
             .Add(InputAction.MoveBackward, Key.Down)
             .Add(InputAction.MoveLeft, Key.A)
+            .Add(InputAction.MoveLeft, Key.A, [KeyModifiers.Shift])
             .Add(InputAction.MoveLeft, Key.Left)
             .Add(InputAction.MoveRight, Key.D)
+            .Add(InputAction.MoveRight, Key.D, [KeyModifiers.Shift])
             .Add(InputAction.MoveRight, Key.Right)
             .Add(InputAction.Jump, Key.Space)
             .Add(InputAction.Primary, MouseButton.Left)
