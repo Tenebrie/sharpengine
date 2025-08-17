@@ -3,9 +3,9 @@ using System.Reflection;
 using AspectInjector.Broker;
 using JetBrains.Annotations;
 
-namespace Engine.Core.Profiling;
+namespace Engine.Core.Profiling.Attributes;
 
-// [Injection(typeof(ProfileAspect))]
+[Injection(typeof(ProfileAspect))]
 [AttributeUsage(AttributeTargets.Method)]
 public class ProfileAttribute : Attribute;
 

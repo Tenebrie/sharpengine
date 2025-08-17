@@ -1,6 +1,7 @@
 ﻿using Diligent;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Rendering;
+using Engine.Core.Logging;
 
 namespace Engine.Core.Assets.Builders;
 
@@ -20,9 +21,9 @@ public static class PipelineBuilder
         return new Mesh();
     }
     
-    public static Material PrepareMaterial()
+    public static Material PrepareMaterial(string key)
     {
-        return new Material();
+        return new Material(key);
     }
     
     public class Mesh
@@ -103,10 +104,11 @@ public static class PipelineBuilder
     public class Material
     {
         private MaterialPipeline _handle = new();
-        private int _hashCode = 0;
+        private readonly int _hashCode = 0;
 
-        public Material()
+        public Material(string key)
         {
+            _hashCode = key.GetHashCode();
             _handle.Desc.Name = "Common Material";
             _handle.Desc.ResourceLayout = new PipelineResourceLayoutDesc
             {
@@ -154,13 +156,11 @@ public static class PipelineBuilder
         public Material WithVertexShader(IShader vertexShader)
         {
             _handle.VertexShader = vertexShader;
-            _hashCode ^= vertexShader.GetHashCode();
             return this;
         }
         public Material WithPixelShader(IShader pixelShader)
         {
             _handle.PixelShader = pixelShader;
-            _hashCode ^= pixelShader.GetHashCode();
             return this;
         }
 

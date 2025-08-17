@@ -45,7 +45,7 @@ public class Material : IDisposable
         if (pixelShader == null)
             throw new InvalidOperationException($"Failed to create pixel shader from {shaderPath}.psh");
 
-        Pipeline = PipelineBuilder.PrepareMaterial()
+        Pipeline = PipelineBuilder.PrepareMaterial(shaderPath)
             .WithVertexShader(vertexShader)
             .WithPixelShader(pixelShader)
             .Build();

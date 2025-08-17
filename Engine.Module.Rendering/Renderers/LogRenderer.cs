@@ -2,6 +2,7 @@
 using Engine.Core.Common;
 using Engine.Core.Logging;
 using Engine.Core.Profiling;
+using Engine.Core.Profiling.Attributes;
 using Engine.Module.Rendering.Abstract;
 
 namespace Engine.Module.Rendering.Renderers;
@@ -36,14 +37,17 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
             _mode = LoggingMode.None;
     }
 
+    [Profile]
     protected internal override void RenderFrame(double deltaTime)
     {
         UpdateFramerate(deltaTime);
         
         RenderLogging();
         RenderFramerate();
+        RenderProfiler();
     }
 
+    [Profile]
     private void RenderLogging()
     {
         if (_mode is not LoggingMode.None)
@@ -96,6 +100,7 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
         DrawLogText(0, messageCount, Anchor.TopLeft, GetLogColor(level), message);
     }
     
+    [Profile]
     private void RenderFramerate()
     {
         DrawLogText(0, 0, Anchor.TopRight, Color.White, "FPS: " + _framerate);
@@ -106,6 +111,17 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
         foreach (var entry in updates.Take(32))
         {
             DrawLogText(0, line++, Anchor.TopRight, Color.White, $"{entry.TypeName}: {entry.AverageMilliseconds():F2}ms");
+        }
+    }
+    
+    [Profile]
+    private void RenderProfiler()
+    {
+        var entries = Profiler.QueryWorstOffenders().Take(10).ToList();
+        var line = 2;
+        foreach (var entry in entries)
+        {
+            DrawLogText(50, line++, Anchor.TopLeft, Color.White, $"{entry.FullName}: {entry.AverageMilliseconds():F2}ms");
         }
     }
     

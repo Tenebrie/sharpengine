@@ -30,10 +30,10 @@ public partial class BasicEnemyManager : Actor
     }
 
     private int _enemiesQueued = 0;
-    [OnTimer(Seconds = 0.05f)]
+    [OnTimer(Seconds = 0.10f)]
     protected void SpawnEnemy()
     {
-        if (InstanceManager.InstanceCount >= 300)
+        if (InstanceManager.InstanceCount >= 250)
             return;
 
         var player = ParentScene.Actors.OfType<PlayerCharacter>().FirstOrDefault();
@@ -62,8 +62,25 @@ public partial class BasicEnemyManager : Actor
         _enemiesQueued = 0;
     }
     
-    [OnUpdate]
+    [OnTimer(Seconds = 0.10f)]
     protected void OnUpdate(double deltaTime)
+    {
+        var player = ParentScene.Actors.OfType<PlayerCharacter>().FirstOrDefault();
+        if (player is null)
+            return;
+
+        foreach (var enemy in InstanceManager.Instances)
+        {
+            if (enemy.IsDying)
+                continue;
+            enemy.Transform.Rotation = enemy.Transform.LookAt(
+                player.WorldTransform.Position, Vector3.Up
+            ).Rotation;
+        }
+    }
+    
+    [OnTimer(Seconds = 0.25f)]
+    protected void OnSlowUpdate(double deltaTime)
     {
         var player = ParentScene.Actors.OfType<PlayerCharacter>().FirstOrDefault();
         if (player is null)
@@ -81,9 +98,6 @@ public partial class BasicEnemyManager : Actor
             enemy.Physics.LinearVelocity = player.WorldTransform.Position - enemy.WorldTransform.Position;
             enemy.Physics.LinearVelocity = enemy.Physics.LinearVelocity.Normalized();
             enemy.Physics.LinearVelocity *= movementSpeed;
-            enemy.Transform.Rotation = enemy.Transform.LookAt(
-                player.WorldTransform.Position, Vector3.Up
-            ).Rotation;
             
             var distanceToPlayer = enemy.Transform.Position.DistanceTo(player.WorldTransform.Position);
             if (distanceToPlayer < 250)

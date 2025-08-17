@@ -14,7 +14,8 @@ public interface IRenderingModuleBootstrap
 public struct RenderingResources
 {
     public required IRenderDevice RenderDevice;
-    public required IDeviceContext DeviceContext;
+    public required IDeviceContext ImmediateContext;
+    public required IDeviceContext[] DeferredContexts;
     public required ISwapChain SwapChain;
 }
 

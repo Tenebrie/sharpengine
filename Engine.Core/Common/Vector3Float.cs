@@ -10,4 +10,6 @@ public struct Vector3Float(float x, float y, float z)
     [FieldOffset(8)] public float Z = z;
     
     public const int SizeInBytes = 12;
+    
+    public override string ToString() => $"Vector3f({X}, {Y}, {Z})";
 }

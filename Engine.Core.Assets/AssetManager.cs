@@ -16,7 +16,7 @@ public partial class AssetManager : IDisposable
     /// From userland, `Assembly.GetExecutingAssembly()` is fine.
     /// For engine code, use `Assembly.GetCallingAssembly()` in the first function called from the userland.
     /// </summary>
-    public static AssetManager Shared => AssemblyAssetManager.GetAssetManager(Assembly.GetExecutingAssembly());
+    public static AssetManager Shared => AssemblyAssetManager.GetAssetManager();
     public static AssetManager AssemblyShared(Assembly assembly) => AssemblyAssetManager.GetAssetManager(Assembly.GetExecutingAssembly());
 
     public void Initialize()
@@ -39,14 +39,20 @@ public partial class AssetManager : IDisposable
 public static class AssemblyAssetManager
 {
     private static Dictionary<string, AssetManager> AssetManagers { get; } = new();
+
     public static AssetManager GetAssetManager(Assembly assembly)
     {
-        if (AssetManagers.TryGetValue(assembly.GetName().ToString(), out var assetManager))
+        return GetAssetManager(assembly.GetName().ToString());
+    }
+
+    public static AssetManager GetAssetManager(string name = "Shared")
+    {
+        if (AssetManagers.TryGetValue(name, out var assetManager))
             return assetManager;
 
         assetManager = new AssetManager();
         assetManager.Initialize();
-        AssetManagers[assembly.GetName().ToString()] = assetManager;
+        AssetManagers[name] = assetManager;
         return assetManager;
     }
     

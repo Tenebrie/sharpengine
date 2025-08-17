@@ -1,4 +1,6 @@
-﻿using Engine.Core.Assets.Meshes;
+﻿using Engine.Core.Assets.Materials;
+using Engine.Core.Assets.Meshes;
+using Engine.Core.Assets.Renderers;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
@@ -12,15 +14,31 @@ public partial class ColliderBoxComponent : ActorComponent, IRenderable
     public Vector3 WorldPosition => WorldTransform.Position;
     public Vector3 WorldSize => WorldTransform.Scale;
 
+    public StaticMesh Mesh => LineSphereMesh.Shared;
+    public Material Material => Material.CreateFromDisk("Assets/Shaders/cube");
+    public IRenderScript RenderScript => IRenderScript.Default;
+
     public bool IsOnScreen { get; set; }
-    public void PerformCulling(Camera activeCamera) => IsOnScreen = activeCamera.SphereInFrustum(WorldTransform, 0.7072, null);
+    // public void PerformCulling(Camera activeCamera) => IsOnScreen = activeCamera.SphereInFrustum(WorldTransform, 0.7072, null);
+    public void PerformCulling(Camera activeCamera) => IsOnScreen = false;
+    
     public int GetInstanceCount() => 1;
     
     private readonly Transform[] _singleComponentTransforms = new Transform[1];
 
-    public void Render()
+    public RenderRequest Render()
     {
         _singleComponentTransforms[0] = WorldTransform;
+        return new RenderRequest
+        {
+            Mesh = Mesh,
+            Material = Material,
+            RenderScript = RenderScript,
+
+            InstanceCount = 1,
+            InstanceTransforms = _singleComponentTransforms,
+            MaterialInstances = [Material.Instantiate()]
+        };
         // LineSphereMesh.Shared.Render(1, _singleComponentTransforms, [WireframeMaterial.Shared], LineSphereMesh.ColorMode.Collider);
     }
 }

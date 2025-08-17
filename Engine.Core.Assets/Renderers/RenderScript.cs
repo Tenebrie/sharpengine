@@ -10,6 +10,7 @@ namespace Engine.Core.Assets.Renderers;
 public class RenderScript : IRenderScript
 {
     public void Render(
+        IDeviceContext device,
         int instanceCount,
         StaticMesh mesh,
         Transform[] worldTransforms,
@@ -35,21 +36,21 @@ public class RenderScript : IRenderScript
         var ticket = context.InstanceBuffer.Write(instances);
         
         var pso = AssetManager.Shared.Pipelines.Produce(mesh.Pipeline, material.Pipeline);
-        context.DeviceContext.SetPipelineState(pso);
+        device.SetPipelineState(pso);
         mesh.BindForRendering();
         
         var srb = materialInstances[0].BindMaterial(pso);
-        srb.GetVariableByName(ShaderType.Vertex, ShaderVariable.InstanceData)?.Set(ticket.View, SetShaderResourceFlags.None);
+        srb.GetVariableByName(ShaderType.Vertex, ShaderVariable.InstanceData).Set(ticket.View, SetShaderResourceFlags.None);
         
-        var map = context.DeviceContext.MapBuffer<uint>(context.ObjectIndexBuffer, MapType.Write, MapFlags.Discard);
+        var map = device.MapBuffer<uint>(context.ObjectIndexBuffer, MapType.Write, MapFlags.Discard);
         map[0] = (uint)ticket.StartIndex;
-        context.DeviceContext.UnmapBuffer(context.ObjectIndexBuffer, MapType.Write);
+        device.UnmapBuffer(context.ObjectIndexBuffer, MapType.Write);
 
-        srb.GetVariableByName(ShaderType.Vertex, ShaderVariable.ObjectIndex)?.Set(context.ObjectIndexBuffer, SetShaderResourceFlags.None);
+        srb.GetVariableByName(ShaderType.Vertex, ShaderVariable.ObjectIndex).Set(context.ObjectIndexBuffer, SetShaderResourceFlags.None);
 
-        context.DeviceContext.CommitShaderResources(srb, ResourceStateTransitionMode.Transition);
+        device.CommitShaderResources(srb, ResourceStateTransitionMode.Transition);
 
-        context.DeviceContext.DrawIndexed(new DrawIndexedAttribs
+        device.DrawIndexed(new DrawIndexedAttribs
         {
             NumIndices = (uint)mesh.Indices.Length,
             IndexType = mesh.IndexType,

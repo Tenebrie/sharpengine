@@ -20,7 +20,7 @@ public partial class Camera : Actor
         const float fov = 60.0f * MathF.PI / 180.0f;
         var aspect = Backstage.Window.FramebufferSize.X / (float)Backstage.Window.FramebufferSize.Y;
         const float near = 0.1f;
-        const float far = 10000.0f;
+        const float far = 20000.0f;
         var f = 1.0f / MathF.Tan(fov / 2.0f);
         
         _projMatrix = new Matrix(
@@ -30,14 +30,14 @@ public partial class Camera : Actor
             0, 0, (2 * far * near) / (near - far), 0
         );
         Backstage.Window.Load += OnLoad;
-        // Backstage.Window.Resize += OnResize;
+        Backstage.Window.Resize += OnResize;
     }
 
     [OnDestroy]
     internal void OnDestroy()
     {
         Backstage.Window.Load -= OnLoad;
-        // Backstage.Window.Resize -= OnResize;
+        Backstage.Window.Resize -= OnResize;
     }
 
     private void OnLoad()

@@ -1,0 +1,70 @@
+// ==== Hardcoded params ====
+static const float2 WIND_DIR   = float2(0.3, 0.1); // normalized
+static const float  TIME       = 10.0;             // seconds (replace with your anim time var if needed)
+static const float  SCALE      = 12.5;              // UV scale for clouds
+static const float  DENSITY    = 0.7;              // opacity
+static const float3 SUN_DIR    = float3(0.4, 0.3, 0.85); // normalized sun direction
+static const float  BRIGHTNESS = 1.0;              // sun brightness
+
+// ==== Noise functions ====
+float hash(float2 p)
+{
+    return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);
+}
+
+float noise(float2 p)
+{
+    float2 i = floor(p);
+    float2 f = frac(p);
+
+    float a = hash(i);
+    float b = hash(i + float2(1, 0));
+    float c = hash(i + float2(0, 1));
+    float d = hash(i + float2(1, 1));
+
+    float2 u = f * f * (3.0 - 2.0 * f);
+    return lerp(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+}
+
+float fbm(float2 p)
+{
+    float sum = 0.0;
+    float amp = 0.5;
+    for (int i = 0; i < 5; i++)
+    {
+        sum += amp * noise(p);
+        p *= 2.0;
+        amp *= 0.5;
+    }
+    return sum;
+}
+
+struct PSIn
+{
+    float4 PosH  : SV_Position;
+    float2 UV    : TEXCOORD0;
+    float4 Color : COLOR0;
+};
+
+float4 main(PSIn IN) : SV_Target
+{
+    // Scroll UVs with wind
+    float2 uv = IN.UV * SCALE + WIND_DIR * TIME * 0.02;
+
+    // Base cloud mask
+    float base = fbm(uv);
+    float mask = smoothstep(0.5, 0.7, base);
+
+    // Fake lighting from sun dir
+    float gradX = fbm(uv + float2(0.01, 0)) - fbm(uv - float2(0.01, 0));
+    float gradY = fbm(uv + float2(0, 0.01)) - fbm(uv - float2(0, 0.01));
+    float3 n = normalize(float3(-gradX, -gradY, 1.0));
+    float light = saturate(dot(n, normalize(SUN_DIR)));
+
+    // Final color
+    float alpha = mask * DENSITY;
+    float3 cloudColor = lerp(float3(0.8, 0.8, 0.8), float3(1.0, 1.0, 1.0), light);
+    cloudColor *= BRIGHTNESS;
+
+    return float4(cloudColor, alpha);
+}

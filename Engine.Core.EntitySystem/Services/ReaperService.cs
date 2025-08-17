@@ -1,5 +1,6 @@
 ﻿using Engine.Core.EntitySystem.Entities;
 using Engine.Core.Profiling;
+using Engine.Core.Profiling.Attributes;
 
 namespace Engine.Core.EntitySystem.Services;
 

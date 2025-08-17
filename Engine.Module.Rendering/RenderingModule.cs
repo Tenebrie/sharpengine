@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -17,6 +18,7 @@ using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.EntitySystem.Modules;
 using Engine.Core.Logging;
 using Engine.Core.Profiling;
+using Engine.Core.Profiling.Attributes;
 using JetBrains.Annotations;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
@@ -30,24 +32,32 @@ namespace Engine.Module.Rendering;
 public class RenderingModuleBootstrap : IRenderingModuleBootstrap
 {
     private IRenderDevice _renderDevice = null!;
-    private IDeviceContext _deviceContext = null!;
+    private IDeviceContext _immediateContext = null!;
+    private IDeviceContext[] _deferredContexts = [];
     private ISwapChain _swapChain = null!;
     private IEngineFactoryD3D12 _engineFactory = null!;
     private static IEngineFactory.MessageCallbackDelegate _messageCallback = null!;
-    private static GCHandle s_callbackRoot;
+    private static GCHandle _sCallbackRoot;
     
     public RenderingResources Initialize(IWindow window)
     {
         _engineFactory = Native.GetEngineFactoryD3D12();
         SetMessageCallback(_engineFactory);
-        CreateRenderDeviceAndSwapChain(_engineFactory, out var renderDeviceOut, out var deviceContextOut, out var swapChainOut, window);
+        CreateRenderDeviceAndSwapChain(
+            _engineFactory,
+            out var renderDeviceOut,
+            out _immediateContext,
+            out _deferredContexts,
+            out var swapChainOut,
+            window
+        );
         _renderDevice = renderDeviceOut;
-        _deviceContext = deviceContextOut;
         _swapChain = swapChainOut;
 
         return new RenderingResources
         {
-            DeviceContext = _deviceContext,
+            ImmediateContext = _immediateContext,
+            DeferredContexts = _deferredContexts,
             RenderDevice = _renderDevice,
             SwapChain = _swapChain,
         };
@@ -71,38 +81,42 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
                     throw new ArgumentOutOfRangeException(nameof(severity), severity, null);
             }
         };
-        s_callbackRoot = GCHandle.Alloc(_messageCallback, GCHandleType.Normal);
+        _sCallbackRoot = GCHandle.Alloc(_messageCallback, GCHandleType.Normal);
         engineFactory.SetMessageCallback(_messageCallback);
     }
 
     private static void CreateRenderDeviceAndSwapChain(
         IEngineFactoryD3D12 engineFactory,
         out IRenderDevice renderDevice,
-        out IDeviceContext deviceContext,
+        out IDeviceContext immediateContext,
+        out IDeviceContext[] deferredContexts,
         out ISwapChain swapChain,
         IWindow window)
     {
         engineFactory.CreateDeviceAndContextsD3D12(new EngineD3D12CreateInfo
         {
-            EnableValidation = true
+            EnableValidation = true,
+            NumDeferredContexts = 8
         }, out renderDevice, out IDeviceContext[] contextsOut);
+        
+        immediateContext = contextsOut[0];
+        deferredContexts = contextsOut.Skip(1).ToArray();
+        
         swapChain = engineFactory.CreateSwapChainD3D12(
             renderDevice,
-            contextsOut[0],
+            immediateContext,
             new SwapChainDesc(),
             new FullScreenModeDesc(),
             new Win32NativeWindow
             {
                 Wnd = window.Native!.Win32!.Value.Hwnd
             });
-
-        deviceContext = contextsOut[0];
     }
 
     public void Shutdown()
     {
         _swapChain.Dispose();
-        _deviceContext.Dispose();
+        _immediateContext.Dispose();
         _renderDevice.Dispose();
     }
 }
@@ -116,7 +130,8 @@ public class RenderingModule : IRenderingModule
     internal TextRenderer TextRenderer = null!;
     
     private IRenderDevice _renderDevice = null!;
-    private IDeviceContext _deviceContext = null!;
+    private IDeviceContext _immediateContext = null!;
+    private IDeviceContext[] _deferredContexts = [];
     private ISwapChain _swapChain = null!;
 
     private ITexture _renderTarget = null!;
@@ -152,7 +167,8 @@ public class RenderingModule : IRenderingModule
     {
         RootWindow = window;
         _renderDevice = resources.RenderDevice;
-        _deviceContext = resources.DeviceContext;
+        _immediateContext = resources.ImmediateContext;
+        _deferredContexts = resources.DeferredContexts;
         _swapChain = resources.SwapChain;
         
         _viewMatrixBuffer = resources.RenderDevice.CreateBuffer(new BufferDesc
@@ -177,7 +193,7 @@ public class RenderingModule : IRenderingModule
         _infiniteInstanceBuffer = new InfiniteInstanceBuffer();
         var renderContext = new RenderContext
         {
-            DeviceContext = _deviceContext,
+            DeviceContext = _immediateContext,
             RenderDevice = _renderDevice,
             SwapChain = _swapChain,
             ViewMatrixBuffer = _viewMatrixBuffer,
@@ -199,7 +215,7 @@ public class RenderingModule : IRenderingModule
 
         CreateRenderTargets();
 
-        window.Render += RenderSingleFrame;
+        window.Render += RenderSingleFrameSync;
         window.FramebufferResize += OnFramebufferResize;
     }
 
@@ -244,8 +260,13 @@ public class RenderingModule : IRenderingModule
     private int _atomsToRenderCount;
     private IRenderable[] _atomsToRender = [];
 
+    private void RenderSingleFrameSync(double deltaTime)
+    {
+        RenderSingleFrame(deltaTime).GetAwaiter().GetResult();
+    }
+
     [Profile]
-    private void RenderSingleFrame(double deltaTime)
+    private async Task RenderSingleFrame(double deltaTime)
     {
         var stopwatch = Profiler.Start();
         
@@ -269,13 +290,13 @@ public class RenderingModule : IRenderingModule
         // var dsv = _swapChain.GetDepthBufferDSV();
 
         var wvpMatrix = activeCamera.AsCameraView().ToMatrix();
-        var mapUniformBuffer = _deviceContext.MapBuffer<MatrixFloat>(_viewMatrixBuffer, MapType.Write, MapFlags.Discard);
+        var mapUniformBuffer = _immediateContext.MapBuffer<MatrixFloat>(_viewMatrixBuffer, MapType.Write, MapFlags.Discard);
         mapUniformBuffer[0] = wvpMatrix.Downgrade();
-        _deviceContext.UnmapBuffer(_viewMatrixBuffer, MapType.Write);
+        _immediateContext.UnmapBuffer(_viewMatrixBuffer, MapType.Write);
         
-        _deviceContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
-        _deviceContext.ClearRenderTarget(_renderTargetView, new Vector4(0.35f, 0.35f, 0.35f, 1.0f), ResourceStateTransitionMode.Transition);
-        _deviceContext.ClearDepthStencil(_renderDepthView, ClearDepthStencilFlags.Depth, 1.0f, 0, ResourceStateTransitionMode.Transition);
+        _immediateContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
+        _immediateContext.ClearRenderTarget(_renderTargetView, new Vector4(0.35f, 0.35f, 0.35f, 1.0f), ResourceStateTransitionMode.Transition);
+        _immediateContext.ClearDepthStencil(_renderDepthView, ClearDepthStencilFlags.Depth, 1.0f, 0, ResourceStateTransitionMode.Transition);
         
         _infiniteInstanceBuffer.FrameStart();
         
@@ -296,7 +317,7 @@ public class RenderingModule : IRenderingModule
         var rtv = _swapChain.GetCurrentBackBufferRTV();
         var rtvTexture = rtv.GetTexture();
         
-        _deviceContext.ResolveTextureSubresource(
+        _immediateContext.ResolveTextureSubresource(
             _renderTarget,
             rtvTexture,
             new ResolveTextureSubresourceAttribs
@@ -329,7 +350,6 @@ public class RenderingModule : IRenderingModule
         return null;
     }
 
-
     private static void CollectAtomsToRender(
         Camera activeCamera,
         ref IRenderable[] entitiesToRender,
@@ -358,13 +378,36 @@ public class RenderingModule : IRenderingModule
         }
     }
 
-    private static void RenderAtomTree(IRenderable[] atomsToRender, int atomsToRenderCount)
+    private void RenderAtomTree(IRenderable[] atomsToRender, int atomsToRenderCount)
     {
-        for (var index = 0; index < atomsToRenderCount; index++)
-        {
-            var renderable = atomsToRender[index];
-            renderable.Render();
-        }
+        // var newAtomsList = new List<IRenderable>(atomsToRenderCount);
+
+        var preparedRequests = atomsToRender
+            .Take(atomsToRenderCount)
+            .Select(renderable => renderable.Render())
+            .GroupBy(r => new
+            {
+                r.Mesh,
+                r.Material,
+                r.RenderScript
+            })
+            .Select(g => new RenderRequest
+            {
+                Mesh = g.Key.Mesh,
+                Material = g.Key.Material,
+                RenderScript = g.Key.RenderScript,
+                InstanceCount = g.Sum(renderable => renderable.InstanceCount),
+                InstanceTransforms = g.SelectMany(req => req.InstanceTransforms).ToArray(),
+                MaterialInstances = g.SelectMany(req => req.MaterialInstances).ToArray(),
+            })
+            .ToList();
+
+        preparedRequests
+            .ForEach(req =>
+            {
+                req.RenderScript.Render(_immediateContext, req.InstanceCount, req.Mesh, req.InstanceTransforms, req.Material,
+                    req.MaterialInstances);
+            });
     }
 
     private void OnFramebufferResize(Vector2D<int> size)
@@ -393,7 +436,7 @@ public class RenderingModule : IRenderingModule
     {
         TextRenderer.Dispose();
         _backstages = [];
-        RootWindow.Render -= RenderSingleFrame;
+        RootWindow.Render -= RenderSingleFrameSync;
         RootWindow.FramebufferResize -= OnFramebufferResize;
         _atomsToRender = [];
         _viewMatrixBuffer.Dispose();

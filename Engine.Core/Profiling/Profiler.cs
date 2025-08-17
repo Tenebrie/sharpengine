@@ -38,35 +38,6 @@ public class Profiler
         stopwatch.Start();
         return stopwatch;
     }
-    //
-    // public static void GenerateReport()
-    // {
-    //     return;
-    //     Logger.Debug("Profiler Report:");
-    //     foreach (var (ownerType, contextDictionary) in Instance.LifecycleEntries)
-    //     {
-    //         Logger.Debug($"Owner Type: {ownerType.Name}");
-    //         foreach (var (context, profilerEntry) in contextDictionary)
-    //         {
-    //             var averageDuration = $"Average: {profilerEntry.AverageMilliseconds()} ms";
-    //             var totalDuration = $"Total: {profilerEntry.TotalMilliseconds()} ms ({profilerEntry.TotalMilliseconds() / 30.0}%)";
-    //             var callCount = $"Calls: {profilerEntry.Count()}";
-    //             Logger.Debug($"  Context: {context}, {averageDuration}, {totalDuration}, {callCount}");
-    //         }
-    //     }
-    //     
-    //     foreach (var (ownerType, methodDictionary) in Instance.MethodEntries)
-    //     {
-    //         Logger.Debug($"Owner Type: {ownerType.Name}");
-    //         foreach (var (methodName, profilerEntry) in methodDictionary)
-    //         {
-    //             var averageDuration = $"Average: {profilerEntry.AverageMilliseconds()} ms";
-    //             var totalDuration = $"Total: {profilerEntry.TotalMilliseconds()} ms ({profilerEntry.TotalMilliseconds() / 30.0}%)";
-    //             var callCount = $"Calls: {profilerEntry.Count()}";
-    //             Logger.Debug($"  Method: {methodName}, {averageDuration}, {totalDuration}, {callCount}");
-    //         }
-    //     }
-    // }
 
     public static ProfilerEntry[] Query(ProfilingContext context)
     {
@@ -74,6 +45,15 @@ public class Profiler
             .SelectMany(kvp => kvp.Value)
             .Where(kvp => context.HasFlag(kvp.Key))
             .Select(kvp => kvp.Value)
+            .ToArray();
+    }
+    
+    public static ProfilerEntry[] QueryWorstOffenders()
+    {
+        return Instance.LastSecondMethodEntries
+            .SelectMany(kvp => kvp.Value)
+            .Select(kvp => kvp.Value)
+            .OrderByDescending(e => e.TotalMilliseconds())
             .ToArray();
     }
     
@@ -95,7 +75,8 @@ public class Profiler
         {
             profilerEntry = new ProfilerEntry
             {
-                TypeName = ownerType.Name
+                TypeName = ownerType.Name,
+                MethodName = "Context: " + context
             };
             contextDictionary[context] = profilerEntry;
         }
@@ -114,7 +95,8 @@ public class Profiler
         {
             profilerEntry = new ProfilerEntry
             {
-                TypeName = ownerType.Name
+                TypeName = ownerType.Name,
+                MethodName = methodName
             };
             contextDictionary[methodName] = profilerEntry;
         }
@@ -165,6 +147,8 @@ public class ProfilerEntry
     }
 
     public string TypeName { get; internal set; } = string.Empty;
+    public string MethodName { get; internal set; } = string.Empty;
+    public string FullName => $"{TypeName}.{MethodName}";
     public double AverageMilliseconds() => TotalMilliseconds() / _ptr;
     public double TotalMilliseconds() => _durations.Sum() / 1000.0;
     public double Count() => _ptr;

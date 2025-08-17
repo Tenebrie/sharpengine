@@ -1,4 +1,6 @@
-﻿using JetBrains.Annotations;
+﻿using AspectInjector.Broker;
+using Engine.Core.Profiling.Attributes;
+using JetBrains.Annotations;
 
 namespace Engine.Core.EntitySystem.Attributes;
 
@@ -10,7 +12,7 @@ namespace Engine.Core.EntitySystem.Attributes;
 /// </list>
 /// </summary>
 [MeansImplicitUse]
-// [Injection(typeof(ProfileAspect))]
+[Injection(typeof(ProfileAspect))]
 [AttributeUsage(AttributeTargets.Method)]
 public sealed class OnTimerAttribute : Attribute
 {

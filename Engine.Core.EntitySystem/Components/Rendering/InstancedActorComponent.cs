@@ -7,6 +7,7 @@ using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Profiling;
+using Engine.Core.Profiling.Attributes;
 using JetBrains.Annotations;
 
 namespace Engine.Core.EntitySystem.Components.Rendering;
@@ -81,7 +82,7 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
         }
     }
 
-    public void Render()
+    public RenderRequest Render()
     {
         if (Instances.Count > _maxInstancesSeen)
         {
@@ -105,7 +106,17 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
             _materialPool[i] = actor.MaterialInstance;
         }
         
-        RenderScript.Render(Instances.Count, Mesh, _transformPool, Material, _materialPool);
+        return new RenderRequest
+        {
+            Mesh = Mesh,
+            Material = Material,
+            RenderScript = RenderScript,
+
+            InstanceCount = Instances.Count,
+            InstanceTransforms = _transformPool,
+            MaterialInstances = _materialPool
+        };
+        // RenderScript.Render(Instances.Count, Mesh, _transformPool, Material, _materialPool);
         // for (var i = 0; i < Instances.Count; i++)
         // {
         //     var actor = Instances[i];

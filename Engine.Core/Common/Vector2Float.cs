@@ -9,4 +9,6 @@ public struct Vector2Float(float x, float y)
     [FieldOffset(4)] public float Y = y;
     
     public const int SizeInBytes = 8;
+    
+    public override string ToString() => $"Vector2f({X}, {Y})";
 }

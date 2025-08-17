@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Engine.Core.Common;
 using Engine.Core.Logging;
+using Engine.Core.Profiling.Attributes;
 using Color = System.Drawing.Color;
 
 namespace Engine.Module.Rendering.Fonts;
@@ -23,6 +24,7 @@ public class TextRenderer : IDisposable
 {
     private readonly Dictionary<FontKey, FontRenderer> _fonts = new();
 
+    [Profile]
     private FontRenderer? ProduceRenderer(string font, int size)
     {
         var key = new FontKey
@@ -50,18 +52,21 @@ public class TextRenderer : IDisposable
         return fontRenderer;
     }
     
+    [Profile]
     public void RenderText(string font, int size, string text, Vector2 position, Color color, int shadowBlur = 0)
     {
         var fontRenderer = ProduceRenderer(font, size);
         fontRenderer?.RenderText(text, position, color, shadowBlur);
     }
     
+    [Profile]
     public Vector2 MeasureText(string font, int size, string text)
     {
         var fontRenderer = ProduceRenderer(font, size);
         return fontRenderer?.MeasureString(text) ?? Vector2.Zero;
     }
 
+    [Profile]
     public void Flush()
     {
         foreach (var font in _fonts.Values)

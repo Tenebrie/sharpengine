@@ -15,7 +15,7 @@ public class PlaneMesh : StaticMesh
             return this;
         _isLoaded = true;
 
-        var verts = TessellatedPlaneMesh.CreateVerts();
+        var verts = TessellatedPlaneMesh.CreateVertices();
         var indices = TessellatedPlaneMesh.CreateIndices();
         LoadInternal(verts, indices, WindingOrder.Cw);
         AssetManager.AssemblyShared(callingAssembly).Meshes.Put("Generated/PlaneMesh", this);

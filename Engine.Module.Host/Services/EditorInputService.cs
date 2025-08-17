@@ -118,6 +118,13 @@ public partial class EditorInputService : Service
         HostBackstage.RootSupervisor.SetGameplayTimeScale(_isGameSuspended ? 0.0 : 1.0);
     }
     
+    [OnKeyInput(Key.F7, 1)]
+    [OnKeyInputReleased(Key.F7, 0)]
+    protected void OnToggleGameSuspended(int value)
+    {
+        HostBackstage.RootSupervisor.SetGameplayTimeScale(value == 1 ? 10.0 : _isGameSuspended ? 0.0 : 1.0);
+    }
+    
     [OnKeyInput(Key.F11)]
     protected void OnReload()
     {

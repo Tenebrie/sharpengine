@@ -19,8 +19,5 @@ public struct Vector4Float(float x, float y, float z, float w)
     
     public const int SizeInBytes = 16;
 
-    public override string ToString()
-    {
-        return $"Vector4Float(X: {X}, Y: {Y}, Z: {Z}, W: {W})";
-    }
+    public override string ToString() => $"Vector4f(X: {X}, Y: {Y}, Z: {Z}, W: {W})";
 }

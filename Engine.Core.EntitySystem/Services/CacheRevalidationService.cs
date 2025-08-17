@@ -1,6 +1,8 @@
 ﻿using Engine.Core.DataStructures;
 using Engine.Core.EntitySystem.Attributes;
+using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Logging;
 
 namespace Engine.Core.EntitySystem.Services;
 
@@ -13,7 +15,7 @@ public partial class CacheRevalidationService : Service
     
     internal void InvalidateTransform(Spatial atom)
     {
-        if (Disabled)
+        if (Disabled || atom.GetChild<PhysicsComponent>() != null)
             return;
         _transformInvalidatedAtoms.Add(atom);
     }
@@ -33,7 +35,7 @@ public partial class CacheRevalidationService : Service
         {
             if (!IsValid(atom))
                 continue;
-
+        
             Backstage.PhysicsModule?.RevalidateWorldTransform(atom);
         }
     }
