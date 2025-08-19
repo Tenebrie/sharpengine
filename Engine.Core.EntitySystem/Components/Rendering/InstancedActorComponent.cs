@@ -21,7 +21,7 @@ public interface IInstancedActorComponent
 public partial class InstancedActorComponent<TInstance> : ActorComponent, IInstancedActorComponent, IRenderable where TInstance : ActorInstance, new()
 {
     [Component] private StaticMeshHolder _staticMeshHolder;
-    public StaticMesh Mesh
+    public StaticMesh StaticMesh
     {
         get => _staticMeshHolder.Mesh;
         set => _staticMeshHolder.Mesh = value;
@@ -108,7 +108,7 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
         
         return new RenderRequest
         {
-            Mesh = Mesh,
+            Mesh = StaticMesh,
             Material = Material,
             RenderScript = RenderScript,
 

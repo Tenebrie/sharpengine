@@ -14,8 +14,8 @@ public partial class ColliderBoxComponent : ActorComponent, IRenderable
     public Vector3 WorldPosition => WorldTransform.Position;
     public Vector3 WorldSize => WorldTransform.Scale;
 
-    public StaticMesh Mesh => LineSphereMesh.Shared;
-    public Material Material => Material.CreateFromDisk("Assets/Shaders/cube");
+    public StaticMesh StaticMesh => LineSphereMesh.Shared;
+    public Material Material => Material.CreateFromDisk("Shaders/cube");
     public IRenderScript RenderScript => IRenderScript.Default;
 
     public bool IsOnScreen { get; set; }
@@ -31,7 +31,7 @@ public partial class ColliderBoxComponent : ActorComponent, IRenderable
         _singleComponentTransforms[0] = WorldTransform;
         return new RenderRequest
         {
-            Mesh = Mesh,
+            Mesh = StaticMesh,
             Material = Material,
             RenderScript = RenderScript,
 

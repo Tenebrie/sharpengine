@@ -1,7 +1,6 @@
 ﻿using System.Drawing;
 using Diligent;
 using Engine.Core.Assets.Builders;
-using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Extensions;
 
@@ -16,8 +15,6 @@ public class MaterialInstance(Material material)
     public Vector2Float UvOffset = Vector2.Zero.Downgrade();
     public Vector2Float UvScale = Vector2.One.Downgrade();
     
-    public static RenderContext Context { get; set; }
-
     public MaterialInstance LoadTexture(Texture texture)
     {
         _texture = texture;
@@ -48,6 +45,11 @@ public class MaterialInstance(Material material)
         UvOffset = offset.Downgrade();
         return this;
     }
+    public MaterialInstance SetUvScale(double scale)
+    {
+        UvScale = new Vector2(scale, scale).Downgrade();
+        return this;
+    }
     public MaterialInstance SetUvScale(Vector2 scale)
     {
         UvScale = scale.Downgrade();
@@ -63,6 +65,7 @@ public class MaterialInstance(Material material)
         
         var srb = pipelineState.CreateShaderResourceBinding(true);
         BindTexture(srb);
+        BindConstantBuffers(srb);
         _shaderBindingCache[pipelineState] = srb;
         return srb;
     }
@@ -70,11 +73,25 @@ public class MaterialInstance(Material material)
     private void BindTexture(IShaderResourceBinding srb)
     {
         var sampler = srb.GetVariableByName(ShaderType.Pixel, ShaderVariable.AlbedoSampler);
-        if (sampler is null || !SamplingTexture)
+        if (sampler is null)
             return;
+        if (!SamplingTexture)
+        {
+            sampler.Set(null, SetShaderResourceFlags.None);
+            return;
+        }
         var textureToBind = _texture ?? TextureAssetManager.FallbackTexture;
         var textureSrv = textureToBind.GetDefaultView();
         sampler.Set(textureSrv, SetShaderResourceFlags.None);
+    }
+    
+    private void BindConstantBuffers(IShaderResourceBinding srb)
+    {
+        foreach (var (name, buffer) in Material.ConstantBuffers)
+        {
+            srb.GetVariableByName(ShaderType.Vertex, name)?.Set(buffer, SetShaderResourceFlags.None);
+            srb.GetVariableByName(ShaderType.Pixel, name)?.Set(buffer, SetShaderResourceFlags.None);
+        }
     }
 
     private void InvalidateCache()

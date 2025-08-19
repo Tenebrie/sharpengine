@@ -21,8 +21,8 @@ public partial class BasicEnemyManager : Actor
         //     mesh = TessellatedPlaneMesh.CreateWithoutCache();
         //     AssetManager.Meshes.Put("Assets/Virtual/BasicEnemy", mesh);
         // }
-        InstanceManager.Mesh = StaticMesh.CreateFromDisk("Meshes/invader01-crab.obj");
-        InstanceManager.Material = MaterialBuilder.Begin(typeof(BasicEnemyManager)).Compile();
+        InstanceManager.StaticMesh = StaticMesh.CreateFromDisk("Meshes/invader01-crab.obj");
+        InstanceManager.Material = MaterialBuilder.BeginFromFilesystem("Shaders/cube").Compile();
         // InstanceManager.Material =
         //     MaterialBuilder.Begin(typeof(BasicEnemyManager)).SetSamplingTexture(false).Compile();
             // .CreateFromDisk("Meshes/BillboardSprite/BillboardSprite");

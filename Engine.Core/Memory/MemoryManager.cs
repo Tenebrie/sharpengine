@@ -74,7 +74,6 @@ public static class MemoryManager
 
         private ArrayHandle Allocate<T>(int size)
         {
-            Console.WriteLine("Alloc" + " " + size);
             var roundedSize = RoundUpToPow2(size);
             var entry = new ArrayHandle
             {

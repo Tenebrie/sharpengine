@@ -206,8 +206,6 @@ public class RenderingModule : IRenderingModule
         
         Texture.Context = renderContext;
         StaticMesh.Context = renderContext;
-        Material.Context = renderContext;
-        MaterialInstance.Context = renderContext;
         PipelineBuilder.Context = renderContext;
         InfiniteInstanceBuffer.Context = renderContext;
         RenderContext.Current = renderContext;

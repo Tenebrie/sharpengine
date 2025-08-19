@@ -4,7 +4,7 @@ using Engine.Core.Logging;
 
 namespace Engine.Core.EntitySystem.Entities;
 
-public partial class Backstage : Scene
+public partial class Backstage
 {
     private void RunAssemblyStaticInit()
     {

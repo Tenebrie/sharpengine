@@ -16,7 +16,7 @@ public class MaterialAssetManager : IDisposable
     {
         internal static Material Create()
         {
-            return MaterialBuilder.Begin("FallbackMaterial")
+            return MaterialBuilder.BeginFromFilesystem("Shaders/cube")
                 .SetCacheAutomatically(false)
                 .Compile();
         }

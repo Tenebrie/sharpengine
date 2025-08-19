@@ -8,7 +8,7 @@ namespace Engine.Core.EntitySystem.Interfaces;
 
 public interface IRenderable
 {
-    public StaticMesh Mesh { get; }
+    public StaticMesh StaticMesh { get; }
     public Material Material { get; }
     public IRenderScript RenderScript { get; }
     public bool IsOnScreen { get; set; }

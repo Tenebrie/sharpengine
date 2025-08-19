@@ -23,8 +23,8 @@ public partial class BasicProjectile : Actor
     protected void OnReady()
     {
         ProjectileCreated.Emit(this);
-        MeshComponent.Mesh = StaticMesh.CreateFromDisk("Meshes/projectile-sword.obj");
-        MeshComponent.MaterialInstance = Material.CreateFromDisk("Assets/Shaders/cube").Instantiate();
+        MeshComponent.StaticMesh = StaticMesh.CreateFromDisk("Meshes/projectile-sword.obj");
+        MeshComponent.MaterialInstance = Material.CreateFromDisk("Shaders/cube").Instantiate();
         MeshComponent.Transform.Rotation = QuatMakers.FromRotation(0, -90, 0);
     }
 

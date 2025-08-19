@@ -17,8 +17,7 @@ public partial class LightningStrikeEffect : Actor
     [OnPrepareResources]
     public static void OnPrepareResources()
     {
-        _material = MaterialBuilder.Begin(typeof(LightningStrikeEffect))
-            .Compile();
+        _material = Material.CreateFromDisk("Shaders/cube");
     }
 
     [OnReady]
@@ -26,7 +25,7 @@ public partial class LightningStrikeEffect : Actor
     {
         _materialInstance = _material.Instantiate()
             .LoadTexture(Texture.CreateFromDisk("Textures/lightning.png"));
-        MeshComponent.Mesh = PlaneMesh.Shared;
+        MeshComponent.StaticMesh = PlaneMesh.Shared;
         MeshComponent.MaterialInstance = _materialInstance;
         MeshComponent.Transform.Position = new Vector3(-0, 0, -0.5 + 0.1);
     }

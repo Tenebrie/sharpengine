@@ -143,7 +143,8 @@ public static class PipelineBuilder
                             MinFilter = FilterType.Anisotropic, MagFilter = FilterType.Anisotropic,
                             MipFilter = FilterType.Linear,
                             MaxAnisotropy = 16,
-                            AddressU = TextureAddressMode.Clamp, AddressV = TextureAddressMode.Clamp,
+                            AddressU = TextureAddressMode.Clamp,
+                            AddressV = TextureAddressMode.Clamp,
                             AddressW = TextureAddressMode.Clamp
                         },
                         SamplerOrTextureName = ShaderVariable.AlbedoSampler,

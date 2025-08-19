@@ -1,123 +1,224 @@
-﻿using System.Drawing;
-using System.Reflection;
+﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
+using Diligent;
 using Engine.Core.Assets.Materials;
+using Engine.Core.Assets.Rendering;
 
 namespace Engine.Core.Assets.Builders;
 
-public enum MaterialDomain
+public struct ConstantBufferDesc
 {
-    Mesh,
-    UserInterface,
+    public string Name;
+    public ReadOnlyMemory<byte> DefaultValue;
+    public int SizeInBytes;
 }
 
-public class MaterialBuilder(object key)
+public class MaterialBuilder
 {
-    private Assembly _assembly = null!;
-    private MaterialDomain _domain = MaterialDomain.Mesh;
-    private bool _isSamplingTexture = false;
+    private string? _shaderPath = null;
     private bool _useCache = true;
-
-    public static MaterialBuilder Begin(object key)
-    {
-        return BeginInternal(key.ToString()!)
-            .SetAssembly(Assembly.GetExecutingAssembly());
-    }
-
-    public static MaterialBuilder Begin<T>()
-    {
-        return BeginInternal(typeof(T).ToString())
-            .SetAssembly(Assembly.GetCallingAssembly());
-    }
-
-    private static MaterialBuilder BeginInternal(object key) => new(key);
+    private MaterialPipeline _pipeline = new();
+    private readonly List<ConstantBufferDesc> _constantBuffers = [];
     
-    private MaterialBuilder SetAssembly(Assembly assembly)
+    private readonly IncrementalHashWriter _incrementalHash = new();
+
+    public static MaterialBuilder BeginFromFilesystem(string path)
     {
-        _assembly = assembly;
+        return new MaterialBuilder().SetShaderPath(path);
+    }
+
+    private MaterialBuilder()
+    {
+        _pipeline.Desc.Name = "Unnamed Material";
+        _pipeline.Desc.ResourceLayout = new PipelineResourceLayoutDesc
+        {
+            DefaultVariableType = ShaderResourceVariableType.Static,
+            Variables =
+            [
+                new ShaderResourceVariableDesc
+                {
+                    ShaderStages = ShaderType.Pixel,
+                    Name = ShaderVariable.AlbedoSampler,
+                    Type = ShaderResourceVariableType.Mutable
+                },
+                new ShaderResourceVariableDesc
+                {
+                    ShaderStages = ShaderType.Vertex,
+                    Name = ShaderVariable.ObjectIndex,
+                    Type = ShaderResourceVariableType.Dynamic
+                },
+                new ShaderResourceVariableDesc
+                {
+                    ShaderStages = ShaderType.Vertex,
+                    Name = ShaderVariable.InstanceData,
+                    Type = ShaderResourceVariableType.Dynamic
+                }
+            ],
+            ImmutableSamplers =
+            [
+                new ImmutableSamplerDesc
+                {
+                    Desc = new SamplerDesc
+                    {
+                        MinFilter = FilterType.Anisotropic, MagFilter = FilterType.Anisotropic,
+                        MipFilter = FilterType.Linear,
+                        MaxAnisotropy = 16,
+                        AddressU = TextureAddressMode.Clamp,
+                        AddressV = TextureAddressMode.Clamp,
+                        AddressW = TextureAddressMode.Clamp
+                    },
+                    SamplerOrTextureName = ShaderVariable.AlbedoSampler,
+                    ShaderStages = ShaderType.Pixel
+                }
+            ]
+        };
+    }
+    
+    private MaterialBuilder SetShaderPath(string shaderPath)
+    {
+        _shaderPath = shaderPath;
+        _incrementalHash.Write("ShaderPath", shaderPath);
         return this;
     }
-    public MaterialBuilder SetDomain(MaterialDomain domain)
-    {
-        _domain = domain;
-        return this;
-    }
+    
     public MaterialBuilder SetCacheAutomatically(bool cache)
     {
         _useCache = cache;
         return this;
     }
 
-    private int GetHash()
+    public MaterialBuilder SetTextureMode(TextureAddressMode addressMode)
     {
-        return HashCode.Combine(_domain, _isSamplingTexture);
+        _pipeline.Desc.ResourceLayout.ImmutableSamplers[0].Desc.AddressU = addressMode;
+        _pipeline.Desc.ResourceLayout.ImmutableSamplers[0].Desc.AddressV = addressMode;
+        _pipeline.Desc.ResourceLayout.ImmutableSamplers[0].Desc.AddressW = addressMode;
+        _incrementalHash.Write(addressMode);
+        return this;
+    }
+
+    public MaterialBuilder WithUniformPixelBuffer<T>(string name, in T defaultValue) where T : unmanaged
+    {
+        _pipeline.Desc.ResourceLayout.Variables = _pipeline.Desc.ResourceLayout.Variables.Append(
+            new ShaderResourceVariableDesc
+            {
+                ShaderStages = ShaderType.Pixel,
+                Name = name,
+                Type = ShaderResourceVariableType.Mutable
+            }
+        ).ToArray();
+        var desc = new ConstantBufferDesc
+        {
+            Name = name,
+            DefaultValue = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref Unsafe.AsRef(in defaultValue), 1)).ToArray(),
+            SizeInBytes = Unsafe.SizeOf<T>()
+        };
+        _constantBuffers.Add(desc);
+        _incrementalHash.Write("ConstantBuffer", typeof(T).GUID.ToString("N"));
+        return this;
     }
 
     public Material Compile()
     {
-        var hash = GetHash();
-        var storageKey = $"Generated.{key}.{hash}";
-        if (_useCache && AssetManager.AssemblyShared(_assembly).Materials.TryGet(storageKey, out var existingMaterial))
+        if (_shaderPath == null)
+            throw new InvalidOperationException("Shader path must be set before compiling the material.");
+        
+        var hash = _incrementalHash.Current();
+        var storageKey = $"Generated.{hash}";
+        if (_useCache && AssetManager.Shared.Materials.TryGet(storageKey, out var existingMaterial))
             return existingMaterial;
         
-        // var vertSource = BuildVertShaderSource();
-        // var fragSource = BuildFragShaderSource();
-        // var varyingSource = ReadTemplateFile("varying.def.sc");
+        if (RenderContext.Current.ShaderFactory == null)
+            throw new InvalidOperationException("Shader factory is not initialized. Cannot compile material without shaders.");
         
-        // var tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        var vertexShader = RenderContext.Current.RenderDevice.CreateShader(new ShaderCreateInfo
+        {
+            FilePath = $"Assets/{_shaderPath}.vsh",
+            ShaderSourceStreamFactory = RenderContext.Current.ShaderFactory,
+            Desc = new ShaderDesc
+            {
+                Name = $"VertexShader {_shaderPath}",
+                ShaderType = ShaderType.Vertex,
+                UseCombinedTextureSamplers = true
+            },
+            SourceLanguage = ShaderSourceLanguage.Hlsl
+        }, out _);
+        if (vertexShader == null)
+            throw new InvalidOperationException($"Failed to create vertex shader from Assets/{_shaderPath}.vsh");
         
-        // var srcDir = Path.Combine(tempDir, "src");
-        // var outDir = Path.Combine(tempDir, "out");
-        // Directory.CreateDirectory(srcDir);
-        // Directory.CreateDirectory(outDir);
+        var pixelShader = RenderContext.Current.RenderDevice.CreateShader(new ShaderCreateInfo
+        {
+            FilePath = $"Assets/{_shaderPath}.psh",
+            ShaderSourceStreamFactory = RenderContext.Current.ShaderFactory,
+            Desc = new ShaderDesc
+            {
+                Name = $"PixelShader {_shaderPath}",
+                ShaderType = ShaderType.Pixel,
+                UseCombinedTextureSamplers = true
+            },
+            SourceLanguage = ShaderSourceLanguage.Hlsl
+        }, out _);
+        if (pixelShader == null)
+            throw new InvalidOperationException($"Failed to create pixel shader from Assets/{_shaderPath}.psh");
         
-        // var vertShaderPath = Path.Combine(srcDir, "generated.vert.glsl");
-        // var fragShaderPath = Path.Combine(srcDir, "generated.frag.glsl");
-        // var varyingFilePath = Path.Combine(srcDir, "varying.def.sc");
-        // File.WriteAllText(fragShaderPath, fragSource);
-        // File.WriteAllText(vertShaderPath, vertSource);
-        // File.WriteAllText(varyingFilePath, varyingSource);
+        _pipeline.VertexShader = vertexShader;
+        _pipeline.PixelShader = pixelShader;
+        _pipeline.HashCode = hash.GetHashCode();
         
-        // try
-        // {
-            // PythonShell.RunEngineScript("build-shaders.py", $"--src {srcDir} --out {outDir}");
-        // }
-        // catch (Exception e)
-        // {
-            // Logger.ErrorF("Failed to compile material shaders: {0}", e.Message);
-            // Console.WriteLine("Generated vert shader at: " + vertShaderPath);
-            // Console.WriteLine("Generated frag shader at: " + fragShaderPath);
-        // }
-
-        // var fragBinPath = Path.Combine(outDir, "generated");
-        // TODO: Return CreateFromGenerated
-        var material = Material.CreateFromGenerated("Assets/Shaders/cube");
+        var constantBuffers =  _constantBuffers.Select(bufferDesc =>
+        {
+            var buffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
+            {
+                Name = $"ConstantBuffer {bufferDesc.Name}",
+                BindFlags = BindFlags.UniformBuffer,
+                Size = (ulong)bufferDesc.SizeInBytes,
+                Usage = Usage.Dynamic,
+                CPUAccessFlags = CpuAccessFlags.Write,
+            });
+            if (buffer == null)
+                throw new InvalidOperationException($"Failed to create constant buffer for {bufferDesc.Name}");
+            var map = RenderContext.Current.DeviceContext.MapBuffer<byte>(buffer, MapType.Write, MapFlags.Discard);
+            bufferDesc.DefaultValue.Span.CopyTo(map);
+            RenderContext.Current.DeviceContext.UnmapBuffer(buffer, MapType.Write);
+            return (bufferDesc.Name, buffer);
+        }).ToDictionary();
+        
+        // var material = Material.CreateFromGenerated("Assets/Shaders/cube");
+        var material = new Material(_pipeline, constantBuffers);
         if (_useCache)
-            AssetManager.AssemblyShared(_assembly).Materials.Put(storageKey, material);
+            AssetManager.Shared.Materials.Put(storageKey, material);
         return material;
     }
 
-    private string BuildFragShaderSource()
+    public MaterialInstance Instantiate()
     {
-        var baseShader = $"{System.Enum.GetName(_domain)}.tfrag.glsl";
-        var template = ReadTemplateFile(baseShader);
-        
-        template = template.Replace("$base_color", _isSamplingTexture ? "texture2D(s_diffuse, v_uv0)" : "vec4(1.0, 1.0, 1.0, 1.0)");
-        return template;
+        return Compile().Instantiate();
     }
+}
 
-    private string BuildVertShaderSource()
+internal class IncrementalHashWriter
+{
+    private readonly IncrementalHash _incrementalHash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+    
+    internal void Write(byte[] data)
     {
-        var baseShader = $"{System.Enum.GetName(_domain)}.tvert.glsl";
-        var template = ReadTemplateFile(baseShader);
-        return template;
+        _incrementalHash.AppendData(data);
     }
-
-    private static string ReadTemplateFile(string fileName)
+    internal void Write(string label, string data)
     {
-        var asm = Assembly.GetExecutingAssembly();
-        var resourceName = $"Engine.Core.Assets.Builders.Templates.{fileName}";
-        using var stream = asm.GetManifestResourceStream(resourceName);
-        using var reader = new StreamReader(stream!);
-        return reader.ReadToEnd();
+        var bytes = Encoding.UTF8.GetBytes(label);
+        _incrementalHash.AppendData(bytes);
+        bytes = Encoding.UTF8.GetBytes(data);
+        _incrementalHash.AppendData(bytes);
+    }
+    internal void Write(TextureAddressMode textureMode)
+    {
+        Write("TextureMode", System.Enum.GetName(textureMode)!);
+    }
+    
+    internal string Current()
+    {
+        return Convert.ToBase64String(_incrementalHash.GetCurrentHash());
     }
 }

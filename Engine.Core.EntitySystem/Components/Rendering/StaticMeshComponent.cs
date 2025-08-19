@@ -14,7 +14,7 @@ namespace Engine.Core.EntitySystem.Components.Rendering;
 public partial class StaticMeshComponent : ActorComponent, IRenderable
 {
     [Component] private StaticMeshHolder _staticMeshHolder;
-    public StaticMesh Mesh
+    public StaticMesh StaticMesh
     {
         get => _staticMeshHolder.Mesh;
         set => _staticMeshHolder.Mesh = value;
@@ -49,7 +49,7 @@ public partial class StaticMeshComponent : ActorComponent, IRenderable
         if (!_hasRenderRequest)
             _renderRequest = new RenderRequest
             {
-                Mesh = Mesh,
+                Mesh = StaticMesh,
                 Material = Material,
                 RenderScript = RenderScript,
 

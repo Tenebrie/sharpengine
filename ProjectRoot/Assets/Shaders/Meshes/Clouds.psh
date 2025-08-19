@@ -1,10 +1,11 @@
-// ==== Hardcoded params ====
-static const float2 WIND_DIR   = float2(0.3, 0.1); // normalized
-static const float  TIME       = 10.0;             // seconds (replace with your anim time var if needed)
-static const float  SCALE      = 12.5;              // UV scale for clouds
-static const float  DENSITY    = 0.7;              // opacity
-static const float3 SUN_DIR    = float3(0.4, 0.3, 0.85); // normalized sun direction
-static const float  BRIGHTNESS = 1.0;              // sun brightness
+cbuffer CloudParams
+{
+    float2 WindDir;
+    float Time;
+    float Density;
+    float3 SunDir;
+    float Brightness;
+};
 
 // ==== Noise functions ====
 float hash(float2 p)
@@ -49,7 +50,7 @@ struct PSIn
 float4 main(PSIn IN) : SV_Target
 {
     // Scroll UVs with wind
-    float2 uv = IN.UV * SCALE + WIND_DIR * TIME * 0.02;
+    float2 uv = IN.UV + WindDir * Time * 0.02;
 
     // Base cloud mask
     float base = fbm(uv);
@@ -59,12 +60,12 @@ float4 main(PSIn IN) : SV_Target
     float gradX = fbm(uv + float2(0.01, 0)) - fbm(uv - float2(0.01, 0));
     float gradY = fbm(uv + float2(0, 0.01)) - fbm(uv - float2(0, 0.01));
     float3 n = normalize(float3(-gradX, -gradY, 1.0));
-    float light = saturate(dot(n, normalize(SUN_DIR)));
+    float light = saturate(dot(n, normalize(SunDir)));
 
     // Final color
-    float alpha = mask * DENSITY;
+    float alpha = mask * Density;
     float3 cloudColor = lerp(float3(0.8, 0.8, 0.8), float3(1.0, 1.0, 1.0), light);
-    cloudColor *= BRIGHTNESS;
+    cloudColor *= Brightness;
 
     return float4(cloudColor, alpha);
 }

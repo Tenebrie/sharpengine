@@ -18,8 +18,8 @@ public partial class ColliderSphereComponent : ActorComponent, IRenderable
     }
     public double WorldRadius => WorldTransform.Scale.X;
     
-    public StaticMesh Mesh => LineSphereMesh.Shared;
-    public Material Material => Material.CreateFromDisk("Assets/Shaders/cube");
+    public StaticMesh StaticMesh => LineSphereMesh.Shared;
+    public Material Material => Material.CreateFromDisk("Shaders/cube");
     public IRenderScript RenderScript => IRenderScript.Default;
 
     public bool IsOnScreen { get; set; }
@@ -33,7 +33,7 @@ public partial class ColliderSphereComponent : ActorComponent, IRenderable
         _singleComponentTransforms[0] = WorldTransform;
         return new RenderRequest
         {
-            Mesh = Mesh,
+            Mesh = StaticMesh,
             Material = Material,
             RenderScript = RenderScript,
 

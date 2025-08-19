@@ -18,15 +18,13 @@ public partial class BasicWall : Actor
     [OnPrepareResources]
     public static void PrepareResources()
     {
-        _generatedMaterial = MaterialBuilder.Begin<BasicWall>()
-            .Compile()
-            .Instantiate();
+        _generatedMaterial = MaterialBuilder.BeginFromFilesystem("Shaders/cube").Instantiate();
     }
 
     [OnReady]
     public void OnReady()
     {
-        MeshComponent.Mesh = StaticMesh.CreateFromDisk("Meshes/testwall.obj");
+        MeshComponent.StaticMesh = StaticMesh.CreateFromDisk("Meshes/testwall.obj");
         MeshComponent.MaterialInstance = _generatedMaterial;
     }
 }

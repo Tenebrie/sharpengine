@@ -50,7 +50,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
 
     public unsafe void Initialize()
     {
-        _material = Material.CreateFromDisk("UserInterface/Text");
+        _material = Material.CreateFromDisk("Shaders/UserInterface/Text");
         
         _meshPipeline = PipelineBuilder.PrepareMesh()
             // Position
