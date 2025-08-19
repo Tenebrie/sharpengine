@@ -24,6 +24,7 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
     private double _frameTimeAccumulator = 0.0;
     private int _framerate = 0;
     private int _onePercentLow = 0;
+    private List<ProfilerEntry> _profilerEntries = [];
 
     private const float RenderScale = 1.5f;
     private const int FontSize = (int)(18.0 * RenderScale);
@@ -37,7 +38,6 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
             _mode = LoggingMode.None;
     }
 
-    [Profile]
     protected internal override void RenderFrame(double deltaTime)
     {
         UpdateFramerate(deltaTime);
@@ -47,7 +47,6 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
         RenderProfiler();
     }
 
-    [Profile]
     private void RenderLogging()
     {
         if (_mode is not LoggingMode.None)
@@ -99,22 +98,27 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
     {
         DrawLogText(0, messageCount, Anchor.TopLeft, GetLogColor(level), message);
     }
-    
-    [Profile]
+
+    private int _lastSeenProfilerBufferIndex = -1;
     private void RenderFramerate()
     {
         DrawLogText(0, 0, Anchor.TopRight, Color.White, "FPS: " + _framerate);
         DrawLogText(0, 1, Anchor.TopRight, Color.White, "1% Low: " + _onePercentLow);
 
-        var line = 2;
-        var updates = Profiler.Query(ProfilingContext.BackstageUpdate | ProfilingContext.PhysicsUpdate | ProfilingContext.RenderingPrepare);
-        foreach (var entry in updates.Take(32))
+        if (_lastSeenProfilerBufferIndex != Profiler.CurrentBufferIndex)
         {
+            _profilerEntries = Profiler.Query(ProfilingContext.BackstageUpdate | ProfilingContext.PhysicsUpdate | ProfilingContext.RenderingPrepare).ToList();
+            _lastSeenProfilerBufferIndex = Profiler.CurrentBufferIndex;
+        }
+        var line = 2;
+        const int maxEntriesRendered = 32;
+        for (var i = 0; i < Math.Min(_profilerEntries.Count, maxEntriesRendered); i++)
+        {
+            var entry = _profilerEntries[i];
             DrawLogText(0, line++, Anchor.TopRight, Color.White, $"{entry.TypeName}: {entry.AverageMilliseconds():F2}ms");
         }
     }
     
-    [Profile]
     private void RenderProfiler()
     {
         var entries = Profiler.QueryWorstOffenders().Take(10).ToList();
@@ -141,9 +145,9 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
             text = string.Concat(text.AsSpan(0, 512), "...");
         if (!_textMeasured)
         {
-            var singlyGlyphSize = Module.TextRenderer.MeasureText("RobotoMono-Bold", FontSize, "0");
-            _glyphWidth = (int)singlyGlyphSize.X;
-            _glyphHeight = (int)singlyGlyphSize.Y;
+            var singleGlyphSize = Module.TextRenderer.MeasureText("RobotoMono-Bold", FontSize, "0");
+            _glyphWidth = (int)singleGlyphSize.X;
+            _glyphHeight = (int)singleGlyphSize.Y;
             _textMeasured = true;
         }
 

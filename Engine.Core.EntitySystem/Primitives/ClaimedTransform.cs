@@ -44,6 +44,12 @@ public class ClaimedTransform : Transform
         }
     }
 
+    public override void LookAt(Vector3 target, Vector3 up)
+    {
+        base.LookAt(target, up);
+        InvalidateCache();
+    }
+
     public static Transform Claim(Transform baseTransform, Spatial forOwner) => new ClaimedTransform(forOwner, baseTransform);
 
     private void InvalidateCache()

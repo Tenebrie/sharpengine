@@ -14,7 +14,6 @@ public class MaterialBuilder(object key)
 {
     private Assembly _assembly = null!;
     private MaterialDomain _domain = MaterialDomain.Mesh;
-    private Color _tintColor = Color.White;
     private bool _isSamplingTexture = false;
     private bool _useCache = true;
 
@@ -42,16 +41,6 @@ public class MaterialBuilder(object key)
         _domain = domain;
         return this;
     }
-    public MaterialBuilder SetTintColor(Color color)
-    {
-        _tintColor = color;
-        return this;
-    }
-    public MaterialBuilder SetSamplingTexture(bool sampling)
-    {
-        _isSamplingTexture = sampling;
-        return this;
-    }
     public MaterialBuilder SetCacheAutomatically(bool cache)
     {
         _useCache = cache;
@@ -60,7 +49,7 @@ public class MaterialBuilder(object key)
 
     private int GetHash()
     {
-        return HashCode.Combine(_tintColor, _domain, _isSamplingTexture);
+        return HashCode.Combine(_domain, _isSamplingTexture);
     }
 
     public Material Compile()
@@ -113,11 +102,6 @@ public class MaterialBuilder(object key)
         var template = ReadTemplateFile(baseShader);
         
         template = template.Replace("$base_color", _isSamplingTexture ? "texture2D(s_diffuse, v_uv0)" : "vec4(1.0, 1.0, 1.0, 1.0)");
-        // var r = (_tintColor.R / 255f).ToInvariantString();
-        // var g = (_tintColor.G / 255f).ToInvariantString();
-        // var b = (_tintColor.B / 255f).ToInvariantString();
-        // var a = (_tintColor.A / 255f).ToInvariantString();
-        // template = template.Replace("$tint", $"vec4({r}, {g}, {b}, {a})");
         return template;
     }
 

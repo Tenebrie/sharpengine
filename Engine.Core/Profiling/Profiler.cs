@@ -20,17 +20,19 @@ public enum ProfilingContext
 public class Profiler
 {
     private int _currentBufferIndex = 0;
-    private readonly Dictionary<Type, Dictionary<string, ProfilerEntry>>[] _methodEntriesBuffers = [new(), new()];
-    private readonly Dictionary<Type, Dictionary<ProfilingContext, ProfilerEntry>>[] _lifecycleEntriesBuffers = [new(), new()];
+    private readonly Dictionary<string, Dictionary<string, ProfilerEntry>>[] _methodEntriesBuffers = [new(), new()];
+    private readonly Dictionary<string, Dictionary<ProfilingContext, ProfilerEntry>>[] _lifecycleEntriesBuffers = [new(), new()];
 
-    private Dictionary<Type, Dictionary<string, ProfilerEntry>> MethodEntries => _methodEntriesBuffers[_currentBufferIndex];
-    private Dictionary<Type, Dictionary<ProfilingContext, ProfilerEntry>> LifecycleEntries => _lifecycleEntriesBuffers[_currentBufferIndex];
-    private Dictionary<Type, Dictionary<string, ProfilerEntry>> LastSecondMethodEntries => _methodEntriesBuffers[1 - _currentBufferIndex];
-    private Dictionary<Type, Dictionary<ProfilingContext, ProfilerEntry>> LastSecondLifecycleEntries => _lifecycleEntriesBuffers[1 - _currentBufferIndex];
+    private Dictionary<string, Dictionary<string, ProfilerEntry>> MethodEntries => _methodEntriesBuffers[_currentBufferIndex];
+    private Dictionary<string, Dictionary<ProfilingContext, ProfilerEntry>> LifecycleEntries => _lifecycleEntriesBuffers[_currentBufferIndex];
+    private Dictionary<string, Dictionary<string, ProfilerEntry>> LastSecondMethodEntries => _methodEntriesBuffers[1 - _currentBufferIndex];
+    private Dictionary<string, Dictionary<ProfilingContext, ProfilerEntry>> LastSecondLifecycleEntries => _lifecycleEntriesBuffers[1 - _currentBufferIndex];
 
     private static readonly DefaultObjectPoolProvider PoolProvider = new();
     private static readonly ObjectPool<ProfilingStopwatch> Pool = PoolProvider.Create<ProfilingStopwatch>();
     private static Profiler Instance { get; } = new();
+    
+    public static int CurrentBufferIndex => Instance._currentBufferIndex;
     
     public static ProfilingStopwatch Start()
     {
@@ -38,7 +40,7 @@ public class Profiler
         stopwatch.Start();
         return stopwatch;
     }
-
+    
     public static ProfilerEntry[] Query(ProfilingContext context)
     {
         return Instance.LastSecondLifecycleEntries
@@ -60,16 +62,28 @@ public class Profiler
     public static void SwapBuffers()
     {
         Instance._currentBufferIndex = 1 - Instance._currentBufferIndex;
-        Instance.MethodEntries.Clear();
-        Instance.LifecycleEntries.Clear();
+        foreach (var instanceMethodEntry in Instance.MethodEntries)
+        {
+            foreach (var profilerEntry in instanceMethodEntry.Value.Values)
+            {
+                profilerEntry.Clear();
+            }
+        }
+        foreach (var instanceLifecycleEntry in Instance.LifecycleEntries)
+        {
+            foreach (var profilerEntry in instanceLifecycleEntry.Value.Values)
+            {
+                profilerEntry.Clear();
+            }
+        }
     }
     
     internal static void ReportByContext(ProfilingStopwatch stopwatch, Type ownerType, ProfilingContext context)
     {
-        if (!Instance.LifecycleEntries.TryGetValue(ownerType, out var contextDictionary))
+        if (!Instance.LifecycleEntries.TryGetValue(ownerType.Name, out var contextDictionary))
         {
             contextDictionary = new Dictionary<ProfilingContext, ProfilerEntry>();
-            Instance.LifecycleEntries[ownerType] = contextDictionary;
+            Instance.LifecycleEntries[ownerType.Name] = contextDictionary;
         }
         if (!contextDictionary.TryGetValue(context, out var profilerEntry))
         {
@@ -86,10 +100,10 @@ public class Profiler
     
     internal static void ReportByMethodName(ProfilingStopwatch stopwatch, Type ownerType, string methodName)
     {
-        if (!Instance.MethodEntries.TryGetValue(ownerType, out var contextDictionary))
+        if (!Instance.MethodEntries.TryGetValue(ownerType.Name, out var contextDictionary))
         {
             contextDictionary = new Dictionary<string, ProfilerEntry>();
-            Instance.MethodEntries[ownerType] = contextDictionary;
+            Instance.MethodEntries[ownerType.Name] = contextDictionary;
         }
         if (!contextDictionary.TryGetValue(methodName, out var profilerEntry))
         {
@@ -144,6 +158,12 @@ public class ProfilerEntry
     internal void RecordDuration(double duration)
     {
         _durations[_ptr++ % 10000] = duration;
+    }
+    
+    internal void Clear()
+    {
+        _ptr = 0;
+        Array.Clear(_durations, 0, _durations.Length);
     }
 
     public string TypeName { get; internal set; } = string.Empty;

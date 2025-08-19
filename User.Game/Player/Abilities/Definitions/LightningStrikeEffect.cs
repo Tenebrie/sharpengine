@@ -18,7 +18,6 @@ public partial class LightningStrikeEffect : Actor
     public static void OnPrepareResources()
     {
         _material = MaterialBuilder.Begin(typeof(LightningStrikeEffect))
-            .SetSamplingTexture(true)
             .Compile();
     }
 

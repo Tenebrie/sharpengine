@@ -13,7 +13,6 @@ public partial class Atom
 {
     private static readonly Dictionary<Type, ReflectionData> ReflectionDataCache = new();
     
-    [Profile]
     private void InitializeReflection()
     {
         if (ReflectionDataCache.ContainsKey(GetType()))

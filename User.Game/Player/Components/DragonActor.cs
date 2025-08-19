@@ -17,7 +17,7 @@ public partial class DragonMesh : Actor
     protected void OnReady()
     {
         MeshComponent.Mesh = StaticMesh.CreateFromDisk("Meshes/decimated_dragon32.obj");
-        MeshComponent.MaterialInstance = MaterialBuilder.Begin(typeof(DragonMesh)).SetSamplingTexture(false).Compile()
+        MeshComponent.MaterialInstance = MaterialBuilder.Begin(typeof(DragonMesh)).Compile()
             .Instantiate();
 
         MeshComponent.Transform.TranslateLocal(0, 3.20, 0);

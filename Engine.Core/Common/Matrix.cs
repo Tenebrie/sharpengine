@@ -18,6 +18,14 @@ public struct Matrix : IEquatable<Matrix>
         0.0, 0.0, 1.0, 0.0,
         0.0, 0.0, 0.0, 1.0
     );
+    
+    public void ResetToIdentity()
+    {
+        M11 = 1.0; M12 = 0.0; M13 = 0.0; M14 = 0.0;
+        M21 = 0.0; M22 = 1.0; M23 = 0.0; M24 = 0.0;
+        M31 = 0.0; M32 = 0.0; M33 = 1.0; M34 = 0.0;
+        M41 = 0.0; M42 = 0.0; M43 = 0.0; M44 = 1.0;
+    }
 
     public static Matrix Copy(Matrix instance) => new(instance.Row1, instance.Row2, instance.Row3, instance.Row4);
 

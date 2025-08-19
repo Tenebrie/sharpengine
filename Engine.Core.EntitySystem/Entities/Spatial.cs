@@ -1,10 +1,14 @@
 ﻿using Engine.Core.Common;
+using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Primitives;
+using Microsoft.Extensions.ObjectPool;
 
 namespace Engine.Core.EntitySystem.Entities;
 
 public abstract partial class Spatial : Atom
 {
+    private static readonly ObjectPool<Transform> SharedTransformPool = new DefaultObjectPool<Transform>(new DefaultPooledObjectPolicy<Transform>(), 1000);
+    
     private Transform _transform = null!;
     public Transform Transform
     {
@@ -16,13 +20,13 @@ public abstract partial class Spatial : Atom
 
     protected Spatial()
     {
-        Transform = Transform.Identity;
+        Transform = SharedTransformPool.Get();
     }
 
     private bool _cachedWorldTransformValid = false;
-    private Transform _cachedWorldTransform = Transform.Identity;
+    private Transform _cachedWorldTransform = SharedTransformPool.Get();
     private bool _cachedWorldTransformInverseValid = false;
-    private Transform _cachedWorldTransformInverse = Transform.Identity;
+    private Transform _cachedWorldTransformInverse = SharedTransformPool.Get();
     public Transform WorldTransform
     {
         get
@@ -55,6 +59,21 @@ public abstract partial class Spatial : Atom
     {
         _cachedWorldTransformValid = false;
         _cachedWorldTransformInverseValid = false;
+    }
+
+    [OnDestroy]
+    protected void OnDestroy()
+    {
+        _transform.ResetToIdentity();
+        _cachedWorldTransform.ResetToIdentity();
+        _cachedWorldTransformInverse.ResetToIdentity();
+        
+        SharedTransformPool.Return(_transform);
+        SharedTransformPool.Return(_cachedWorldTransform);
+        SharedTransformPool.Return(_cachedWorldTransformInverse);
+        _transform = null!;
+        _cachedWorldTransform = null!;
+        _cachedWorldTransformInverse = null!;
     }
 }
 

@@ -11,11 +11,11 @@ public partial class Atom
     {
         // Instance groups
         var data = ReflectionDataCache.GetValueOrDefault(GetType());
-        var instanceGroupList = data.DefaultGroupFields.Where(reflection => !reflection.IsStatic).ToList();
-        var staticGroupList = data.DefaultGroupFields.Where(reflection => reflection.IsStatic).ToList();
         
-        foreach (var reflection in instanceGroupList)
+        foreach (var reflection in data.DefaultGroupFields)
         {
+            if (reflection.IsStatic)
+                continue;
             var group = reflection.GetValue(this);
             if (group is null)
             {
@@ -28,8 +28,10 @@ public partial class Atom
         }
         
         // Static groups
-        foreach (var reflection in staticGroupList)
+        foreach (var reflection in data.DefaultGroupFields)
         {
+            if (!reflection.IsStatic)
+                continue;
             var group = reflection.GetValue(null);
             if (group is null)
                 throw new Exception("Static group field " + reflection.FieldInfo.Name + " is null. Ensure it is initialized properly.");

@@ -65,7 +65,7 @@ internal static class Editor
             RenderingAssembly,
         ];
         
-        GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+        GCSettings.LatencyMode = GCLatencyMode.LowLatency;
 
         MainWindow.Load += () =>
         {

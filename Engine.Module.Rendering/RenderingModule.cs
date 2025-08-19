@@ -267,7 +267,6 @@ public class RenderingModule : IRenderingModule
         RenderSingleFrame(deltaTime).GetAwaiter().GetResult();
     }
 
-    [Profile]
     private Task RenderSingleFrame(double deltaTime)
     {
         var stopwatch = Profiler.Start();

@@ -18,8 +18,6 @@ public class MaterialAssetManager : IDisposable
         {
             return MaterialBuilder.Begin("FallbackMaterial")
                 .SetCacheAutomatically(false)
-                .SetTintColor(System.Drawing.Color.Purple)
-                .SetSamplingTexture(false)
                 .Compile();
         }
     }

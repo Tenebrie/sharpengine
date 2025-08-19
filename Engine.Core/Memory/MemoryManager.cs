@@ -91,10 +91,9 @@ public static class MemoryManager
 
         public void FreeAll()
         {
-            var activePool = _activePool.ToArray();
-            foreach (var bucket in activePool)
+            foreach (var bucket in _activePool)
             {
-                foreach (var arrayHandle in bucket.ToArray())
+                foreach (var arrayHandle in bucket)
                 {
                     arrayHandle.MarkAsFree();
                 }

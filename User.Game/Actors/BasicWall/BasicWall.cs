@@ -19,8 +19,6 @@ public partial class BasicWall : Actor
     public static void PrepareResources()
     {
         _generatedMaterial = MaterialBuilder.Begin<BasicWall>()
-            .SetTintColor(Color.Bisque)
-            .SetSamplingTexture(false)
             .Compile()
             .Instantiate();
     }

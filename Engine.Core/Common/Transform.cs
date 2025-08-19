@@ -67,7 +67,7 @@ public class Transform
         }
     }
 
-    protected Transform()
+    public Transform()
     {
         Data = Matrix.Identity;
     }
@@ -80,6 +80,8 @@ public class Transform
         
         Data = translationMatrix * rotationMatrix * scaleMatrix;
     }
+    
+    public void ResetToIdentity() { Data.ResetToIdentity(); }
     
     public Transform TranslateLocal(double x, double y, double z)
     {
@@ -150,10 +152,8 @@ public class Transform
         return this;
     }
     
-    public Transform LookAt(Vector3 target, Vector3 up)
+    public virtual void LookAt(Vector3 target, Vector3 up)
     {
-        var result = Copy(this);
-
         // Forward vector
         var forward = (Position - target).Normalized();
 
@@ -164,12 +164,10 @@ public class Transform
         var trueUp = forward.CrossProduct(right);
 
         // Apply to basis (keeping scale)
-        var scale = result.Scale;
-        result.Data.M11 = right.X * scale.X; result.Data.M12 = right.Y * scale.X; result.Data.M13 = right.Z * scale.X;
-        result.Data.M21 = trueUp.X * scale.Y; result.Data.M22 = trueUp.Y * scale.Y; result.Data.M23 = trueUp.Z * scale.Y;
-        result.Data.M31 = forward.X * scale.Z; result.Data.M32 = forward.Y * scale.Z; result.Data.M33 = forward.Z * scale.Z;
-
-        return result;
+        var scale = Scale;
+        Data.M11 = right.X * scale.X; Data.M12 = right.Y * scale.X; Data.M13 = right.Z * scale.X;
+        Data.M21 = trueUp.X * scale.Y; Data.M22 = trueUp.Y * scale.Y; Data.M23 = trueUp.Z * scale.Y;
+        Data.M31 = forward.X * scale.Z; Data.M32 = forward.Y * scale.Z; Data.M33 = forward.Z * scale.Z;
     }
 
     public Transform Inverse => GetInverse();

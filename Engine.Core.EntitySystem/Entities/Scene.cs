@@ -2,17 +2,24 @@
 
 public partial class Scene : Atom
 {
+    private List<Actor> _actors = [];
     public List<Actor> Actors
     {
         get
         {
-            List<Actor> actors = [];
-            FindActors(this, ref actors);
-            return actors;
+            FindActors(ref _actors);
+            return _actors;
         }
     }
     
-    private void FindActors(Atom atom, ref List<Actor> actors)
+    public void FindActors(ref List<Actor> actors)
+    {
+        actors.Clear();
+        foreach (var child in Children)
+            FindActors(child, ref actors);
+    }
+    
+    private static void FindActors(Atom atom, ref List<Actor> actors)
     {
         if (atom is Actor actor)
             actors.Add(actor);
