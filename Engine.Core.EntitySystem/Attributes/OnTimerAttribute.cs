@@ -12,7 +12,7 @@ namespace Engine.Core.EntitySystem.Attributes;
 /// </list>
 /// </summary>
 [MeansImplicitUse]
-[Injection(typeof(ProfileAspect))]
+// [Injection(typeof(ProfileAspect))]
 [AttributeUsage(AttributeTargets.Method)]
 public sealed class OnTimerAttribute : Attribute
 {

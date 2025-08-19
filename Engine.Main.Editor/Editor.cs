@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime;
 using Engine.Core.Assets;
 using Engine.Core.Communication.Tasks;
 using Engine.Core.EntitySystem;
@@ -63,6 +64,8 @@ internal static class Editor
             PhysicsAssembly,
             RenderingAssembly,
         ];
+        
+        GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
 
         MainWindow.Load += () =>
         {

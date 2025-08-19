@@ -20,7 +20,7 @@ public struct RenderContext
 
 public interface IInstanceBuffer
 {
-    public InstanceBufferTicket Write(List<InstanceData> instances);
+    public InstanceBufferTicket Write(int instanceCount, InstanceData[] instances);
 }
 
 public struct InstanceData

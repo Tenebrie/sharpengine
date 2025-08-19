@@ -8,6 +8,7 @@ using Engine.Core.Assets;
 using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
+using Engine.Core.Assets.Renderers;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Enum;
@@ -17,6 +18,7 @@ using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.EntitySystem.Modules;
 using Engine.Core.Logging;
+using Engine.Core.Memory;
 using Engine.Core.Profiling;
 using Engine.Core.Profiling.Attributes;
 using JetBrains.Annotations;
@@ -266,7 +268,7 @@ public class RenderingModule : IRenderingModule
     }
 
     [Profile]
-    private async Task RenderSingleFrame(double deltaTime)
+    private Task RenderSingleFrame(double deltaTime)
     {
         var stopwatch = Profiler.Start();
         
@@ -281,7 +283,7 @@ public class RenderingModule : IRenderingModule
         if (activeCamera == null)
         {
             Logger.Error("No active camera found for rendering.");
-            return;
+            return Task.CompletedTask;
         }
         
         activeCamera.UpdateFrustumPlanes();
@@ -330,6 +332,7 @@ public class RenderingModule : IRenderingModule
         
         stopwatch.StopAndReport(typeof(RenderingModule), ProfilingContext.RenderingPrepare);
         _swapChain.Present(0);
+        return Task.CompletedTask;
     }
 
     private Camera? FindActiveCamera(Atom target)
@@ -378,35 +381,88 @@ public class RenderingModule : IRenderingModule
         }
     }
 
+    private readonly Dictionary<int, MergedRenderRequest> _renderRequestPool = new();
+    
+    private struct MergedRenderRequest
+    {
+        public required StaticMesh Mesh;
+        public required Material Material;
+        public required IRenderScript RenderScript;
+    
+        public required int InstanceCount;
+        public required MemoryManager.ArrayHandle InstanceTransforms;
+        public required MemoryManager.ArrayHandle MaterialInstances;
+    
+        public int HashCode => Mesh.GetHashCode() ^ Material.GetHashCode() ^ RenderScript.GetHashCode();
+
+        public static MergedRenderRequest Create(RenderRequest request)
+        {
+            var req = new MergedRenderRequest
+            {
+                Mesh = request.Mesh,
+                Material = request.Material,
+                RenderScript = request.RenderScript,
+                InstanceCount = request.InstanceCount,
+                InstanceTransforms =
+                    MemoryManager.ProduceArray<Transform>(MemoryDomain.Rendering, request.InstanceCount),
+                MaterialInstances =
+                    MemoryManager.ProduceArray<MaterialInstance>(MemoryDomain.Rendering, request.InstanceCount),
+            };
+
+            req.MaterialInstances = MemoryManager.MergeArrays(MemoryDomain.Rendering, req.MaterialInstances,
+                request.InstanceCount, request.MaterialInstances);
+            req.InstanceTransforms = MemoryManager.MergeArrays(MemoryDomain.Rendering, req.InstanceTransforms,
+                request.InstanceCount, request.InstanceTransforms);
+            return req;
+        }
+    }
+
     private void RenderAtomTree(IRenderable[] atomsToRender, int atomsToRenderCount)
     {
-        // var newAtomsList = new List<IRenderable>(atomsToRenderCount);
+        _renderRequestPool.Clear();
 
-        var preparedRequests = atomsToRender
-            .Take(atomsToRenderCount)
-            .Select(renderable => renderable.Render())
-            .GroupBy(r => new
-            {
-                r.Mesh,
-                r.Material,
-                r.RenderScript
-            })
-            .Select(g => new RenderRequest
-            {
-                Mesh = g.Key.Mesh,
-                Material = g.Key.Material,
-                RenderScript = g.Key.RenderScript,
-                InstanceCount = g.Sum(renderable => renderable.InstanceCount),
-                InstanceTransforms = g.SelectMany(req => req.InstanceTransforms).ToArray(),
-                MaterialInstances = g.SelectMany(req => req.MaterialInstances).ToArray(),
-            })
-            .ToList();
-
-        foreach (var req in preparedRequests)
+        for (var i = 0; i < atomsToRenderCount; i++)
         {
-            req.RenderScript.Render(_immediateContext, req.InstanceCount, req.Mesh, req.InstanceTransforms, req.Material,
-                req.MaterialInstances);
+            var renderable = atomsToRender[i];
+            var request = renderable.Render();
+            if (!_renderRequestPool.TryGetValue(request.HashCode, out var mergedRequest))
+            {
+                _renderRequestPool[request.HashCode] = MergedRenderRequest.Create(request);
+                continue;
+            }
+            
+            mergedRequest.MaterialInstances = MemoryManager.MergeArrays(MemoryDomain.Rendering,
+                mergedRequest.MaterialInstances,
+                request.InstanceCount, request.MaterialInstances
+            );
+            mergedRequest.InstanceTransforms = MemoryManager.MergeArrays(MemoryDomain.Rendering,
+                mergedRequest.InstanceTransforms,
+                request.InstanceCount, request.InstanceTransforms
+            );
+            mergedRequest.InstanceCount += request.InstanceCount;
+            _renderRequestPool[request.HashCode] = mergedRequest;
         }
+        
+        // var preparedRequests = atomsToRender
+        //     .Take(atomsToRenderCount)
+        //     .Select(renderable => renderable.Render())
+        //     .GroupBy(r => r.HashCode)
+        //     .Select(g => new RenderRequest
+        //     {
+        //         Mesh = g.First().Mesh,
+        //         Material = g.First().Material,
+        //         RenderScript = g.First().RenderScript,
+        //         InstanceCount = g.Sum(renderable => renderable.InstanceCount),
+        //         InstanceTransforms = g.SelectMany(req => req.InstanceTransforms).ToArray(),
+        //         MaterialInstances = g.SelectMany(req => req.MaterialInstances).ToArray(),
+        //     });
+        
+        foreach (var req in _renderRequestPool.Values)
+        {
+            req.RenderScript.Render(_immediateContext, req.InstanceCount, req.Mesh, (Transform[])req.InstanceTransforms.Array, req.Material,
+                (MaterialInstance[])req.MaterialInstances.Array);
+        }
+        MemoryManager.FreeDomain(MemoryDomain.Rendering);
     }
 
     private void OnFramebufferResize(Vector2D<int> size)

@@ -173,7 +173,6 @@ public static class PipelineBuilder
 
     public static IPipelineState ComposeWithoutCache(MeshPipeline mesh, MaterialPipeline material)
     {
-        Console.WriteLine("Creating PSO");
         var pipelineState = Context.RenderDevice.CreateGraphicsPipelineState(new GraphicsPipelineStateCreateInfo
         {
             PSODesc = material.Desc,

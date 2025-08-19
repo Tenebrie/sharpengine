@@ -12,16 +12,28 @@ public partial class PerformanceMonitoringService : Service
     private int _lastGen2 = 0; 
 
     [OnTimer(Seconds = 1)]
-    protected void OnCheckGC()   
+    protected void OnCheckGC()
     { 
         // baseline snapshot
         var g0 = GC.CollectionCount(0); 
         var g1 = GC.CollectionCount(1);
         var g2 = GC.CollectionCount(2);
+        
+        Console.WriteLine("GC Report:  " + $"g0: {g0}  g1: {g1}  g2: {g2}");
+        var heapBytes = GC.GetTotalMemory(false);
+        Console.WriteLine("Heap Size: " + $"{heapBytes / 1024.0 / 1024.0:0.00} MB");
 
         var g0Diff = g0 - _lastGen0;
         var g1Diff = g1 - _lastGen1;
         var g2Diff = g2 - _lastGen2;
+        
+        var info = GC.GetGCMemoryInfo();
+        Console.WriteLine(
+            $"LOH  : {info.GenerationInfo[3].SizeAfterBytes / 1024 / 1024,5} MB  | " +
+            $"Gen2 : {info.GenerationInfo[2].SizeAfterBytes / 1024 / 1024,5} MB  | " +
+            $"Gen1 : {info.GenerationInfo[1].SizeAfterBytes / 1024 / 1024,5} MB  | " +
+            $"Gen0 : {info.GenerationInfo[0].SizeAfterBytes / 1024 / 1024,5} MB");
+        
         // if (g0Diff > 1 || g1Diff > 1 || g2Diff > 1)
             // Logger.Debug($"GC Report:  g0: {g0Diff}  g1: {g1Diff}  g2: {g2Diff}");
         

@@ -13,7 +13,6 @@ public partial class ReaperService : Service
         CondemnedAtoms.Add(atom);
     }
     
-    [Profile]
     public void Reap()
     {
         // ReSharper disable once ForCanBeConvertedToForeach

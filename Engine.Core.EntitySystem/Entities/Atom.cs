@@ -11,7 +11,20 @@ namespace Engine.Core.EntitySystem.Entities;
 [SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
 public partial class Atom
 {
-    public Backstage Backstage { get; internal set; } = null!;
+    private Backstage? _backstage;
+    public Backstage Backstage
+    {
+        get
+        {
+            if (_backstage != null)
+                return _backstage;
+            if (this is Backstage backstage)
+                return backstage;
+            throw new NullReferenceException("Atom is not registered in a Backstage.");
+        }
+        internal set => _backstage = value;
+    }
+
     public Atom? Parent { get; internal set; }
     public List<Atom> Children { get; } = [];
     
@@ -22,49 +35,18 @@ public partial class Atom
     
     internal void Initialize()
     {
-        var totalStopwatch = new Stopwatch();
-        totalStopwatch.Start();
+        if (_isInitialized)
+            throw new InvalidOperationException("Atom is already initialized.");
         // Initialize the atom internals first. Children will be created, but not adopted until later.
-        var stopwatch1 = new Stopwatch(); stopwatch1.Start();
         InitializeReflection();
-        stopwatch1.Stop();
-        var stopwatch2 = new Stopwatch(); stopwatch2.Start();
         InitializeSignals();
-        stopwatch2.Stop();
-        var stopwatch3 = new Stopwatch(); stopwatch3.Start();
         InitializeGroups();
-        stopwatch3.Stop();
-        var stopwatch4 = new Stopwatch(); stopwatch4.Start();
         InitializeComponents();
-        stopwatch4.Stop();
-        var stopwatch5 = new Stopwatch(); stopwatch5.Start();
         InitializeLifecycle();
-        stopwatch5.Stop();
-        var stopwatch6 = new Stopwatch(); stopwatch6.Start();
+        
         // Timers after lifecycle
         InitializeTimers();
-        stopwatch6.Stop();
-        var stopwatch7 = new Stopwatch(); stopwatch7.Start();
         InitializeInput();
-        stopwatch7.Stop();
-        totalStopwatch.Stop();
-        
-        var longestStopwatch = new[]
-        {
-            (0, stopwatch1.Elapsed.TotalMicroseconds),
-            (1, stopwatch2.Elapsed.TotalMicroseconds),
-            (2, stopwatch3.Elapsed.TotalMicroseconds),
-            (3, stopwatch4.Elapsed.TotalMicroseconds),
-            (4, stopwatch5.Elapsed.TotalMicroseconds),
-            (5, stopwatch6.Elapsed.TotalMicroseconds),
-            (6, stopwatch7.Elapsed.TotalMicroseconds)
-        }.OrderByDescending(x => x.TotalMicroseconds).First();
-        if (totalStopwatch.Elapsed.TotalMicroseconds > 25)
-        {
-            Console.WriteLine("Longest stopwatch was {0} with {1}us", longestStopwatch.Item1, longestStopwatch.Item2);
-            Console.WriteLine("Total initialization time for {0} was {1}us", GetType().Name,
-                totalStopwatch.Elapsed.TotalMicroseconds);
-        }
 
         if (OnCreateCallback != null)
         {
@@ -108,10 +90,7 @@ public partial class Atom
     {
         Children.Add(atom);
         atom.Parent = this;
-        if (this is Backstage backstage)
-            atom.Backstage = backstage;
-        else
-            atom.Backstage = Backstage;
+        atom.Backstage = Backstage;
         if (_isInitialized)
             atom.Initialize();
         return atom;

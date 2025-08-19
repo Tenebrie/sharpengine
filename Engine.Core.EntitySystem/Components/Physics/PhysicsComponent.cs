@@ -1,4 +1,5 @@
-﻿using Engine.Core.Attributes;
+﻿using System.Buffers;
+using Engine.Core.Attributes;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
@@ -41,8 +42,9 @@ public partial class PhysicsComponent : ActorComponent
         physicsModule?.Unregister(Rid);
     }
 
+    private readonly List<ColliderSphereComponent> _sphereColliders = []; 
     public List<ColliderSphereComponent> GetSphereColliders()
     {
-        return GetSpatialParent().GetChildren<ColliderSphereComponent>();
+        return GetSpatialParent().GetChildren(_sphereColliders);
     }
 }

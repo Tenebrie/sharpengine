@@ -58,23 +58,11 @@ public partial class Atom
         }
         return result;
     }
-    
-    private static Atom CreateDefaultInstance(Type type)
+    public List<T> GetChildren<T>(List<T> destination) where T : Atom
     {
-        if (type is not { IsClass: true })
-            throw new Exception("Type " + type.Name + " is not a valid component type (components must be classes).");
-        
-        if (type is not { IsAbstract: false })
-            throw new Exception("Type " + type.Name + " is not a valid component type (components must not be abstract).");
-        
-        var constructor = type.GetConstructor(Type.EmptyTypes);
-        if (constructor == null)
-            throw new Exception("Type " + type.Name + " is not a valid component type (components must have a parameterless constructor).");
-        
-        var newInstance = Activator.CreateInstance(type);
-        if (newInstance is not Atom atom)
-            throw new Exception("Type " + type.Name + " is not a valid component type (components must inherit from Atom).");
-        
-        return atom;
+        destination.Clear();
+        foreach (var child in Children)
+            if (child is T t) destination.Add(t);
+        return destination;
     }
 }

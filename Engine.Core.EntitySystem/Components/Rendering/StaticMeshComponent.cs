@@ -40,21 +40,26 @@ public partial class StaticMeshComponent : ActorComponent, IRenderable
     public void PerformCulling(Camera activeCamera) => IsOnScreen = activeCamera.SphereInFrustum(BoundingSphere, null);
     
     private readonly Transform[] _singleComponentTransforms = new Transform[1];
+    private bool _hasRenderRequest = false;
+    private RenderRequest _renderRequest;
     
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RenderRequest Render()
     {
         _singleComponentTransforms[0] = WorldTransform;
-        return new RenderRequest
-        {
-            Mesh = Mesh,
-            Material = Material,
-            RenderScript = RenderScript,
+        if (!_hasRenderRequest)
+            _renderRequest = new RenderRequest
+            {
+                Mesh = Mesh,
+                Material = Material,
+                RenderScript = RenderScript,
 
-            InstanceCount = 1,
-            InstanceTransforms = _singleComponentTransforms,
-            MaterialInstances = [MaterialInstance]
-        };
+                InstanceCount = 1,
+                InstanceTransforms = _singleComponentTransforms,
+                MaterialInstances = [MaterialInstance]
+            };
+        
+        _hasRenderRequest = true;
+        return _renderRequest;
         // RenderScript.Render(1, Mesh, _singleComponentTransforms, Material, [MaterialInstance]);
         // _singleComponentTransforms[0] = BoundingSphere.WorldTransform;
         // LineSphereMesh.Shared.Render(1, _singleComponentTransforms, [WireframeMaterial.Shared], LineSphereMesh.ColorMode.AxisColor);

@@ -132,7 +132,6 @@ public sealed class Texture : IDisposable
         
         MainThreadTask.Run(() =>
         {
-            Console.WriteLine("Writing mip level {0} with size {1}x{2}", level, width, height);
             fixed (byte* pixelDataPtr = data)
             {
                 Context.DeviceContext.UpdateTexture(
@@ -145,7 +144,6 @@ public sealed class Texture : IDisposable
                     ResourceStateTransitionMode.Transition
                 );
             }
-            Console.WriteLine("Done writing mip level {0}", level);
         });
     }
     
@@ -163,14 +161,19 @@ public sealed class Texture : IDisposable
         if (AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Textures.TryGet(filepath, out var texture))
             return texture;
         
+        texture = CreateFromDisktWithoutCache(filepath);
+        AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Textures.Put(filepath, texture);
+        return texture;
+    }
+
+    private static Texture CreateFromDisktWithoutCache(string filepath)
+    {
         using var image = Image.Load<Rgba32>(filepath);
                 
         var textureData = new byte[image.Width * image.Height * 4];
         image.CopyPixelDataTo(textureData);
                
-        var tex = new Texture(textureData, (ushort)image.Width, (ushort)image.Height, generateMips: true);
-        AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Textures.Put(filepath, tex);
-        return tex;
+        return new Texture(textureData, (ushort)image.Width, (ushort)image.Height, generateMips: true);
     }
     
     public static Texture CreateFromBytes(byte[] data, ushort width, ushort height, bool generateMips = false)

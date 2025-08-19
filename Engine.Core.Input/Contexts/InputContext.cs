@@ -50,7 +50,9 @@ public class InputContext
         
         foreach (var entry in other._entries)
         {
-            combinedEntries.GetValueOrDefault(entry.Key, []).AddRange(entry.Value);
+            var sourceEntry = combinedEntries.GetValueOrDefault(entry.Key, []);
+            sourceEntry.AddRange(entry.Value);
+            combinedEntries[entry.Key] = sourceEntry;
         }
         
         return new InputContext(combinedEntries);

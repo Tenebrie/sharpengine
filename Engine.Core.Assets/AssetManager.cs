@@ -17,7 +17,7 @@ public partial class AssetManager : IDisposable
     /// For engine code, use `Assembly.GetCallingAssembly()` in the first function called from the userland.
     /// </summary>
     public static AssetManager Shared => AssemblyAssetManager.GetAssetManager();
-    public static AssetManager AssemblyShared(Assembly assembly) => AssemblyAssetManager.GetAssetManager(Assembly.GetExecutingAssembly());
+    public static AssetManager AssemblyShared(Assembly assembly) => AssemblyAssetManager.GetAssetManager();
 
     public void Initialize()
     {

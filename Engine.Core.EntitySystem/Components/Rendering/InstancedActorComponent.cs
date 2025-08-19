@@ -14,7 +14,7 @@ namespace Engine.Core.EntitySystem.Components.Rendering;
 
 public interface IInstancedActorComponent
 {
-    public void RemoveInstance(ActorInstance instance);
+    public void DestroyInstance(ActorInstance instance);
 }
 
 [UsedImplicitly]
@@ -41,9 +41,9 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
         set => _material = value;
     }
     public List<TInstance> Instances { get; } = [];
+    private readonly List<TInstance> _deadInstances = [];
     public int InstanceCount => Instances.Count;
 
-    [Profile]
     public TInstance CreateInstance()
     {
         var instancedActor = Activator.CreateInstance<TInstance>();
@@ -54,7 +54,7 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
         return instancedActor;
     }
     
-    public void RemoveInstance(ActorInstance instance)
+    public void DestroyInstance(ActorInstance instance)
     {
         if (!Instances.Contains(instance) || instance is not TInstance instancedActor)
             return;

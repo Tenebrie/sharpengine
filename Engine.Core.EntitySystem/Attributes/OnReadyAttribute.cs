@@ -5,7 +5,7 @@ using JetBrains.Annotations;
 namespace Engine.Core.EntitySystem.Attributes;
 
 [MeansImplicitUse]
-[Injection(typeof(ProfileAspect))]
+// [Injection(typeof(ProfileAspect))]
 [AttributeUsage(AttributeTargets.Method)]
 public sealed class OnReadyAttribute : Attribute
 {

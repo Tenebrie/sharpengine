@@ -23,25 +23,23 @@ public class StaticMesh : IDisposable
 {
     public bool IsValid { get; private set; }
 
-    private WindingOrder WindingOrder { get; set; } = WindingOrder.Cw;
-
     public static RenderContext Context { get; set; }
-    public IBuffer VertexBuffer = null!;
-    public IBuffer IndexBuffer = null!;
+    private IBuffer _vertexBuffer = null!;
+    private IBuffer[] _vertexBufferArray = [];
+    private IBuffer _indexBuffer = null!;
     public MeshPipeline Pipeline { get; private set; }
 
     public AssetVertex[] Vertices { get; private set; } = [];
-    public uint[] Indices { get; set; } = [];
+    public uint[] Indices { get; private set; } = [];
 
     public Signal<AssetVertex[]> OnMeshLoaded { get; } = new();
-    public ValueType IndexType => ValueType.UInt32;
+    public static ValueType IndexType => ValueType.UInt32;
 
     protected void LoadInternal(AssetVertex[] vertices, uint[] indices, WindingOrder windingOrder)
     {
         Vertices = vertices;
         Indices = indices;
 
-        WindingOrder = windingOrder;
         var renderVertices = new RenderingVertex[vertices.Length];
         for (var i = 0; i < vertices.Length; i++)
         {
@@ -87,15 +85,16 @@ public class StaticMesh : IDisposable
             .WithWindingOrder(windingOrder)
             .Build();
 
-        VertexBuffer = Context.RenderDevice.CreateBuffer(new BufferDesc
+        _vertexBuffer = Context.RenderDevice.CreateBuffer(new BufferDesc
         {
             Name = "StaticMesh vertex buffer",
             Usage = Usage.Immutable,
             BindFlags = BindFlags.VertexBuffer,
             Size = RenderingVertex.SizeInBytes * (uint)vertices.Length
         }, renderVertices);
+        _vertexBufferArray = [_vertexBuffer];
 
-        IndexBuffer = Context.RenderDevice.CreateBuffer(new BufferDesc
+        _indexBuffer = Context.RenderDevice.CreateBuffer(new BufferDesc
         {
             Name = "StaticMesh index buffer",
             Usage = Usage.Immutable,
@@ -108,10 +107,11 @@ public class StaticMesh : IDisposable
         OnMeshLoaded.Emit(vertices);
     }
 
+    private readonly ulong[] _vertexOffsets = [0ul];
     public void BindForRendering()
     {
-        Context.DeviceContext.SetVertexBuffers(0, [VertexBuffer], [0ul], ResourceStateTransitionMode.Transition);
-        Context.DeviceContext.SetIndexBuffer(IndexBuffer, 0, ResourceStateTransitionMode.Transition);
+        Context.DeviceContext.SetVertexBuffers(0, _vertexBufferArray, _vertexOffsets, ResourceStateTransitionMode.Transition);
+        Context.DeviceContext.SetIndexBuffer(_indexBuffer, 0, ResourceStateTransitionMode.Transition);
     }
     
     public virtual void Dispose()
@@ -121,8 +121,8 @@ public class StaticMesh : IDisposable
         GC.SuppressFinalize(this);
         if (!IsValid)
             return;
-        VertexBuffer.Dispose();
-        IndexBuffer.Dispose();
+        _vertexBuffer.Dispose();
+        _indexBuffer.Dispose();
         IsValid = false;
     }
 

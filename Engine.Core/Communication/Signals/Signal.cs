@@ -50,6 +50,14 @@ public sealed class BaseSignal<TDelegate> where TDelegate : Delegate
     private int _liveCount;
     private int _deadCount;
     private int _version;
+    private int _compactEvents;
+    
+    public void ReadStatus(out int liveCount, out int deadCount, out int compactEvents)
+    {
+        liveCount = Volatile.Read(ref _liveCount);
+        deadCount = Volatile.Read(ref _deadCount);
+        compactEvents = Volatile.Read(ref _compactEvents);
+    }
 
     // Cached combined delegate + version
     private TDelegate? _cached;
@@ -110,7 +118,6 @@ public sealed class BaseSignal<TDelegate> where TDelegate : Delegate
         ImmutableInterlocked.Update(ref sub.SignalSubscriptions, arr => arr.Add(subscription));
     }
 
-    // Public API: still supports handler-based disconnects
     public void Disconnect(Delegate handler)
     {
         ArgumentNullException.ThrowIfNull(handler);
@@ -131,7 +138,6 @@ public sealed class BaseSignal<TDelegate> where TDelegate : Delegate
         }
     }
 
-    // Fast path used by SignalSubscription
     internal void DisconnectNode(Node n)
     {
         // Avoid lock if already dead
@@ -145,6 +151,8 @@ public sealed class BaseSignal<TDelegate> where TDelegate : Delegate
             _deadCount++;
             _version++;
             _cached = null;
+            if (_deadCount > _liveCount)
+                Compact_NoThrow();
         }
     }
 
@@ -160,21 +168,22 @@ public sealed class BaseSignal<TDelegate> where TDelegate : Delegate
             if (newHead == null)
                 newHead = tail = p;
             else
-                tail = (tail!.Next = p);
+                tail = tail!.Next = p;
         }
         if (tail != null) tail.Next = null;
         _head = newHead;
         _deadCount = 0;
+        _compactEvents += 1;
         // _liveCount unchanged
     }
 }
 
 public class Signal
 {
-    private readonly BaseSignal<Action> _baseSignal = new();
-    public void Emit() => _baseSignal.Snapshot()?.Invoke();
-    public void Connect(ISignalSubscriber sub, Action action) => _baseSignal.Connect(sub, action);
-    public void Disconnect(Action action) => _baseSignal.Disconnect(action);
+    public readonly BaseSignal<Action> Base = new();
+    public void Emit() => Base.Snapshot()?.Invoke();
+    public void Connect(ISignalSubscriber sub, Action action) => Base.Connect(sub, action);
+    public void Disconnect(Action action) => Base.Disconnect(action);
 }
 
 public class Signal<T1>

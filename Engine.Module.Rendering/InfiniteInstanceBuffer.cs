@@ -61,9 +61,9 @@ public class InfiniteInstanceBuffer : IInstanceBuffer, IDisposable
         _activePage = 0;
     }
 
-    public InstanceBufferTicket Write(List<InstanceData> instances)
+    public InstanceBufferTicket Write(int instanceCount, InstanceData[] instances)
     {
-        var bytesWrittenAfterSubmit = (_cursorPosition + instances.Count) * (long)SizePerInstance;
+        var bytesWrittenAfterSubmit = (_cursorPosition + instanceCount) * (long)SizePerInstance;
         var spaceRemaining = PageSize - bytesWrittenAfterSubmit;
         var mapFlags = MapFlags.NoOverwrite;
         if (spaceRemaining < 0)
@@ -81,7 +81,7 @@ public class InfiniteInstanceBuffer : IInstanceBuffer, IDisposable
             mapFlags
         );
 
-        for (var i = 0; i < instances.Count; i++)
+        for (var i = 0; i < instanceCount; i++)
         {
             var offset = (_cursorPosition + i) * SizePerInstance;
             var matrix = instances[i].WorldTransform.ToMatrix().Downgrade();
@@ -95,10 +95,10 @@ public class InfiniteInstanceBuffer : IInstanceBuffer, IDisposable
         {
             View = ActiveBufferView,
             StartIndex = _cursorPosition,
-            Count = instances.Count,
+            Count = instanceCount,
         };
             
-        _cursorPosition += instances.Count;
+        _cursorPosition += instanceCount;
         return ticket;
     }
 

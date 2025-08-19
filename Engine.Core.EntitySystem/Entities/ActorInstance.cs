@@ -15,6 +15,6 @@ public partial class ActorInstance : Actor
     [OnDestroy]
     protected void NotifyParentOnDestroy()
     {
-        ParentManager?.RemoveInstance(this);
+        ParentManager?.DestroyInstance(this);
     }
 }

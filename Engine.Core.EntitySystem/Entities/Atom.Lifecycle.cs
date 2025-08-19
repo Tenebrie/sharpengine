@@ -9,20 +9,19 @@ namespace Engine.Core.EntitySystem.Entities;
 
 public partial class Atom
 {
-    public Action? OnCreateCallback { get; set; }
-    public Action? OnReadyCallback { get; set; }
+    private Action? OnCreateCallback { get; set; }
+    private Action? OnReadyCallback { get; set; }
 
-    public bool IsTicking => HasOnUpdateCallbacks || HasOnTimerCallbacks;
+    private bool IsTicking => HasOnUpdateCallbacks || HasOnTimerCallbacks;
     public double TimeScale { get; set; } = 1.0;
     private bool HasOnUpdateCallbacks { get; set; }
-    public Action<double>? OnUpdateCallback { get; set; }
+    private Action<double>? OnUpdateCallback { get; set; }
 
     public Action? OnDestroyCallback { get; set; }
 
-    public Dictionary<EngineModule, Action?> OnModuleReloadCallback { get; set; } = new();
-    public Action? OnGameplayContextChangeCallback { get; set; }
+    private Dictionary<EngineModule, Action?> OnModuleReloadCallback { get; } = new();
+    private Action? OnGameplayContextChangeCallback { get; set; }
     
-    [Profile]
     private void InitializeLifecycle()
     {
         var data = ReflectionDataCache.GetValueOrDefault(GetType());
@@ -74,7 +73,7 @@ public partial class Atom
         }
     }
 
-    protected static readonly ArrayPool<Atom> AtomPool = ArrayPool<Atom>.Create();
+    private static readonly ArrayPool<Atom> AtomPool = ArrayPool<Atom>.Create();
     protected internal void ProcessLogicFrame(double deltaTime)
     {
         var localDelta = deltaTime * TimeScale;
@@ -103,7 +102,7 @@ public partial class Atom
         }
     }
 
-    protected internal void ProcessModuleReload(EngineModule module)
+    protected void ProcessModuleReload(EngineModule module)
     {
         var callback = OnModuleReloadCallback.GetValueOrDefault(module);
         callback?.Invoke();
@@ -124,7 +123,7 @@ public partial class Atom
         }
     }
 
-    protected internal void ProcessGameplayContextChanged()
+    protected void ProcessGameplayContextChanged()
     {
         OnGameplayContextChangeCallback?.Invoke();
 
@@ -197,8 +196,8 @@ public partial class Atom
         Backstage = null!;
     }
 
-    public bool IsBeingDestroyed { get; internal set; }
-    public bool IsFinalized { get; internal set; }
+    public bool IsBeingDestroyed { get; private set; }
+    private bool IsFinalized { get; set; }
     public void QueueFree()
     {
         if (IsBeingDestroyed)

@@ -1,14 +1,18 @@
-﻿using Diligent;
+﻿using System.Buffers;
+using Diligent;
 using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
+using Microsoft.Extensions.ObjectPool;
 
 namespace Engine.Core.Assets.Renderers;
 
 public class RenderScript : IRenderScript
 {
+    private static InstanceData[] _instanceDataPool = [];
+
     public void Render(
         IDeviceContext device,
         int instanceCount,
@@ -19,21 +23,23 @@ public class RenderScript : IRenderScript
     {
         if (instanceCount <= 0)
             return;
+
+        if (_instanceDataPool.Length < instanceCount)
+            Array.Resize(ref _instanceDataPool, instanceCount);
         
-        var instances = new List<InstanceData>(instanceCount);
         for (var i = 0; i < instanceCount; i++)
         {
-            instances.Add(new InstanceData
+            _instanceDataPool[i] = new InstanceData
             {
                 WorldTransform = worldTransforms[i],
                 Tint = materialInstances[i].Tint,
                 UvOffset = materialInstances[i].UvOffset,
                 UvScale = materialInstances[i].UvScale
-            });
+            };
         }
 
         var context = RenderContext.Current;
-        var ticket = context.InstanceBuffer.Write(instances);
+        var ticket = context.InstanceBuffer.Write(instanceCount, _instanceDataPool);
         
         var pso = AssetManager.Shared.Pipelines.Produce(mesh.Pipeline, material.Pipeline);
         device.SetPipelineState(pso);
@@ -53,7 +59,7 @@ public class RenderScript : IRenderScript
         device.DrawIndexed(new DrawIndexedAttribs
         {
             NumIndices = (uint)mesh.Indices.Length,
-            IndexType = mesh.IndexType,
+            IndexType = StaticMesh.IndexType,
             NumInstances = (uint)ticket.Count
         });
     }

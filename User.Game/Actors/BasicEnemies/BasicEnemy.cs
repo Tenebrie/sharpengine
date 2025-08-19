@@ -12,12 +12,12 @@ using User.Game.Services;
 
 namespace User.Game.Actors.BasicEnemies;
 
-public partial class BasicEnemy : ActorComponent
+public partial class BasicEnemy : ActorInstance
 {
     [DefaultGroup] public static readonly Group<BasicEnemy> All = new(); 
     [Component] public PhysicsComponent Physics;
     [Component] public ColliderSphereComponent ColliderSphere;
-    [Component] public StaticMeshComponent Mesh;
+    // [Component] public StaticMeshComponent Mesh;
 
     public double Health { get; set; } = 200.0;
     public double MaxHealth { get; set; } = 200.0;
@@ -48,9 +48,7 @@ public partial class BasicEnemy : ActorComponent
     protected void OnReady()
     {
         ColliderSphere.Radius = 2;
-        Mesh.Mesh = StaticMesh.CreateFromDisk("Meshes/invader01-crab.obj");
-        Mesh.Material = MaterialBuilder.Begin(typeof(BasicEnemyManager)).SetSamplingTexture(false).Compile();
-        Mesh.MaterialInstance.LoadTexture(Texture.CreateFromDisk("Textures/metal-albedo.png"));
+        MaterialInstance.LoadTexture(Texture.CreateFromDisk("Textures/metal-albedo.png"));
         
         // SpaceshipFlames.Mesh = PlaneMesh.Shared;
         // SpaceshipFlames.Material = Material.CreateFromDisk("Assets/Shaders/cube");
@@ -87,7 +85,7 @@ public partial class BasicEnemy : ActorComponent
         if (WhiteFlashTime > 0.0)
         {
             WhiteFlashTime = Math.Clamp(WhiteFlashTime - deltaTime, 0.0, 1.0);
-            Mesh.MaterialInstance.SetTintColor(
+            MaterialInstance.SetTintColor(
                 Color.White, WhiteFlashMultiplier
             );
         }
@@ -95,13 +93,13 @@ public partial class BasicEnemy : ActorComponent
         {
             if (!IsDying)
                 DamageFlashTime = Math.Clamp(DamageFlashTime - deltaTime, 0.0, 1.0);
-            Mesh.MaterialInstance.SetTintColor(
+            MaterialInstance.SetTintColor(
                 Color.FromArgb(
                     (int)(255),
                     (int)(255 * (1.0 - DamageFlashTime)),
                     (int)(255 * (1.0 - DamageFlashTime)))
             );
-            Mesh.MaterialInstance.SetOpacity(2.0 - DyingTime * 2.0);
+            MaterialInstance.SetOpacity(2.0 - DyingTime * 2.0);
         }
 
         if (!IsDying)
@@ -115,12 +113,12 @@ public partial class BasicEnemy : ActorComponent
             return;
         }
 
-        Mesh.MaterialInstance.SetTintColor(
+        MaterialInstance.SetTintColor(
             Color.FromArgb(
                 (int)(255),
                 (int)(0),
                 (int)(0))
         );
-        Mesh.MaterialInstance.SetOpacity(2.0 - DyingTime * 2.0);
+        MaterialInstance.SetOpacity(2.0 - DyingTime * 2.0);
     }
 }
