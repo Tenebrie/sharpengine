@@ -1,9 +1,11 @@
 ﻿using Engine.Core.Assets.Builders;
+using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Logging;
 using User.Game.Player;
 
 namespace User.Game.Actors.BasicEnemies;
@@ -22,7 +24,10 @@ public partial class BasicEnemyManager : Actor
         //     AssetManager.Meshes.Put("Assets/Virtual/BasicEnemy", mesh);
         // }
         InstanceManager.StaticMesh = StaticMesh.CreateFromDisk("Meshes/invader01-crab.obj");
-        InstanceManager.Material = MaterialBuilder.BeginFromFilesystem("Shaders/cube").Compile();
+        InstanceManager.Material = MaterialBuilder
+            .BeginFromFilesystem("Shaders/cube")
+            .SetTexture(Texture.CreateFromDisk("Textures/metal-albedo.png"))
+            .Compile();
         // InstanceManager.Material =
         //     MaterialBuilder.Begin(typeof(BasicEnemyManager)).SetSamplingTexture(false).Compile();
             // .CreateFromDisk("Meshes/BillboardSprite/BillboardSprite");
@@ -31,7 +36,7 @@ public partial class BasicEnemyManager : Actor
     }
     
     private int _enemiesQueued = 0;
-    [OnTimer(Seconds = 0.01f)]
+    [OnTimer(Seconds = 1.0f)]
     protected void SpawnEnemy()
     {
         const int maxEnemies = 500;
@@ -42,8 +47,9 @@ public partial class BasicEnemyManager : Actor
         if (player is null) 
             return;
         
-        _enemiesQueued += Math.Min(5, maxEnemies - InstanceManager.InstanceCount - _enemiesQueued);
-        var enemiesSpawned = Math.Min(_enemiesQueued, 2500);
+        Logger.Info("Spawning");
+        _enemiesQueued += Math.Min(1, maxEnemies - InstanceManager.InstanceCount - _enemiesQueued);
+        var enemiesSpawned = Math.Min(_enemiesQueued, 3);
         for (var i = 0; i < enemiesSpawned; i++)
         {
             var instance = InstanceManager.CreateInstance();

@@ -34,8 +34,8 @@ public partial class BasicEnemy : ActorInstance
             return;
         Health -= damage;
         DamageFlashTime += damage / MaxHealth / 2;
-        WhiteFlashTime = 0.05;
-        WhiteFlashMultiplier = 1.0 + 30.0 * (damage / MaxHealth);
+        WhiteFlashTime = 0.08;
+        WhiteFlashMultiplier = 1.0 + 50.0 * (damage / MaxHealth);
         if (Health > 0)
             return;
 
@@ -48,7 +48,6 @@ public partial class BasicEnemy : ActorInstance
     protected void OnReady()
     {
         ColliderSphere.Radius = 2;
-        MaterialInstance.LoadTexture(Texture.CreateFromDisk("Textures/metal-albedo.png"));
         
         // SpaceshipFlames.Mesh = PlaneMesh.Shared;
         // SpaceshipFlames.Material = Material.CreateFromDisk("Assets/Shaders/cube");
@@ -112,6 +111,9 @@ public partial class BasicEnemy : ActorInstance
             QueueFree();
             return;
         }
+        
+        if (WhiteFlashTime > 0.0)
+            return;
 
         MaterialInstance.SetTintColor(
             Color.FromArgb(

@@ -1,4 +1,5 @@
-﻿using Engine.Core.Assets.Materials;
+﻿using Engine.Core.Assets.Builders;
+using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
@@ -22,9 +23,9 @@ public partial class SpaceshipFlamesComponent : ActorComponent
     protected void OnReady()
     {
         Mesh.StaticMesh = PlaneMesh.Shared;
-        Mesh.MaterialInstance = Material.CreateFromDisk("Shaders/cube")
+        Mesh.MaterialInstance = MaterialBuilder.BeginFromFilesystem("Shaders/cube")
+            .SetTexture(Texture.CreateFromDisk("Textures/spaceship-flame.png"))
             .Instantiate()
-            .LoadTexture(Texture.CreateFromDisk("Textures/spaceship-flame.png"))
             .SetUvOffset(new Vector2(0, 0))
             .SetUvScale(new Vector2(1, 1));
     }

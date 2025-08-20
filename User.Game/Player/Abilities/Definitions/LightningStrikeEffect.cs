@@ -17,14 +17,16 @@ public partial class LightningStrikeEffect : Actor
     [OnPrepareResources]
     public static void OnPrepareResources()
     {
-        _material = Material.CreateFromDisk("Shaders/cube");
+        _material = MaterialBuilder
+            .BeginFromFilesystem("Shaders/cube")
+            .SetTexture(Texture.CreateFromDisk("Textures/lightning.png"))
+            .Compile();
     }
 
     [OnReady]
     public void OnReady()
     {
-        _materialInstance = _material.Instantiate()
-            .LoadTexture(Texture.CreateFromDisk("Textures/lightning.png"));
+        _materialInstance = _material.Instantiate();
         MeshComponent.StaticMesh = PlaneMesh.Shared;
         MeshComponent.MaterialInstance = _materialInstance;
         MeshComponent.Transform.Position = new Vector3(-0, 0, -0.5 + 0.1);

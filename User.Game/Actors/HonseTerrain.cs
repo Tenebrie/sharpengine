@@ -6,7 +6,6 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
-using User.Game.Player;
 
 namespace User.Game.Actors;
 
@@ -21,9 +20,9 @@ public partial class HonseTerrain : Actor
         Mesh.StaticMesh = StaticMesh.CreateFromDisk("Meshes/terrain-plain.obj");
         Mesh.MaterialInstance = MaterialBuilder.BeginFromFilesystem("Shaders/cube")
             .SetTextureMode(TextureAddressMode.Wrap)
+            .SetTexture(Texture.CreateFromDisk("Textures/honse-terrain-looped.png"))
             .Instantiate()
-            .SetUvScale(2.5)
-            .LoadTexture(Texture.CreateFromDisk("Textures/honse-terrain-looped.png"));
+            .SetUvScale(2.5);
     }
 
     [OnUpdate]

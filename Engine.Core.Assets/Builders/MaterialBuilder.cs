@@ -17,6 +17,7 @@ public struct ConstantBufferDesc
 
 public class MaterialBuilder
 {
+    private Texture? _texture = null;
     private string? _shaderPath = null;
     private bool _useCache = true;
     private MaterialPipeline _pipeline = new();
@@ -74,6 +75,13 @@ public class MaterialBuilder
                 }
             ]
         };
+    }
+    
+    public MaterialBuilder SetTexture(Texture texture)
+    {
+        _texture = texture;
+        _incrementalHash.Write("Texture", texture.GetHashCode().ToString());
+        return this;
     }
     
     private MaterialBuilder SetShaderPath(string shaderPath)
@@ -185,7 +193,7 @@ public class MaterialBuilder
         }).ToDictionary();
         
         // var material = Material.CreateFromGenerated("Assets/Shaders/cube");
-        var material = new Material(_pipeline, constantBuffers);
+        var material = new Material(_pipeline, _texture, constantBuffers);
         if (_useCache)
             AssetManager.Shared.Materials.Put(storageKey, material);
         return material;

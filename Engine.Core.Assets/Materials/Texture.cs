@@ -64,7 +64,12 @@ public sealed class Texture : IDisposable
     {
         return _textureHandle.GetDefaultView(TextureViewType.ShaderResource);
     }
-    
+
+    public override int GetHashCode()
+    {
+        return _baseImage.GetHashCode();
+    }
+
     public unsafe void Update(byte[] data, int minX, int minY, int maxX, int maxY)
     {
         fixed (byte* pixelDataPtr = data)

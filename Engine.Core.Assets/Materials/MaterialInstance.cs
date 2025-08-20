@@ -6,28 +6,12 @@ using Engine.Core.Extensions;
 
 namespace Engine.Core.Assets.Materials;
 
-public class MaterialInstance(Material material)
+public class MaterialInstance(Material material) : IDisposable
 {
     public Material Material = material;
-    private Texture? _texture;
-    public bool SamplingTexture = true;
     public Vector4Float Tint = Vector4.One.Downgrade();
     public Vector2Float UvOffset = Vector2.Zero.Downgrade();
     public Vector2Float UvScale = Vector2.One.Downgrade();
-    
-    public MaterialInstance LoadTexture(Texture texture)
-    {
-        _texture = texture;
-        InvalidateCache();
-        return this;
-    }
-
-    public MaterialInstance SetSamplingTexture(bool sampling)
-    {
-        SamplingTexture = sampling;
-        InvalidateCache();
-        return this;
-    }
     
     public MaterialInstance SetTintColor(Color color, double multiplier = 1.0)
     {
@@ -75,12 +59,7 @@ public class MaterialInstance(Material material)
         var sampler = srb.GetVariableByName(ShaderType.Pixel, ShaderVariable.AlbedoSampler);
         if (sampler is null)
             return;
-        if (!SamplingTexture)
-        {
-            sampler.Set(null, SetShaderResourceFlags.None);
-            return;
-        }
-        var textureToBind = _texture ?? TextureAssetManager.FallbackTexture;
+        var textureToBind = Material.Texture ?? TextureAssetManager.FallbackTexture;
         var textureSrv = textureToBind.GetDefaultView();
         sampler.Set(textureSrv, SetShaderResourceFlags.None);
     }
@@ -94,10 +73,16 @@ public class MaterialInstance(Material material)
         }
     }
 
-    private void InvalidateCache()
+    public void InvalidateCache()
     {
         foreach (var shaderResourceBinding in _shaderBindingCache)
             shaderResourceBinding.Value.Dispose();
         _shaderBindingCache.Clear();
+    }
+    
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        Material.RemoveInstance(this);
     }
 }

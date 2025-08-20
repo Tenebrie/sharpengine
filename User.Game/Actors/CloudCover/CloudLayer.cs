@@ -42,7 +42,6 @@ public partial class CloudLayer : Actor
         RegisterService<CloudLayerService>();
         MeshComponent.StaticMesh = PlaneMesh.Shared;
         MeshComponent.MaterialInstance = _material.Instantiate()
-            .SetSamplingTexture(false)
             .SetUvScale(25.0)
             .SetTintColor(Color.PaleGoldenrod);
     }

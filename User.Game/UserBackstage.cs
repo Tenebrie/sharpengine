@@ -47,7 +47,7 @@ public partial class UserScene : Scene
         // honseTerrain.Transform.RotateAroundGlobal(Vector3.Up, 45);
         honseTerrain.Transform.Scale = new Vector3(scale, scale, scale);
 
-        // CreateActor<BasicEnemyManager>();
+        CreateActor<BasicEnemyManager>();
         var cloudLayer = CreateActor<CloudLayer>();
         cloudLayer.Transform.Position = new Vector3(0, -1000, 0);
         cloudLayer.LayerHeight = -1500;

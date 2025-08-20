@@ -183,7 +183,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
             if (!_materialInstances.TryGetValue(texture, out var materialInstance))
             {
                 _materialInstances[texture] = materialInstance = _material.Instantiate();
-                materialInstance.LoadTexture(texture);
+                materialInstance.Material.UpdateTexture(texture);
             }
             
             var pso = AssetManager.Shared.Pipelines.Produce(_meshPipeline, _material.Pipeline);
