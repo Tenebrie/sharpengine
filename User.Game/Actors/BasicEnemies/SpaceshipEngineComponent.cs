@@ -8,7 +8,7 @@ using Engine.Core.EntitySystem.Entities;
 
 namespace User.Game.Actors.BasicEnemies;
 
-public partial class SpaceshipFlamesComponent : ActorComponent
+public partial class SpaceshipEngineComponent : ActorComponent
 {
     [Component] protected StaticMeshComponent Mesh;
     

@@ -135,16 +135,16 @@ public class WorkerPoolMember
         handle.WorldTransform.Rotate(handle.AngularVelocity * _deltaTime);
         handle.WorldPosition = handle.WorldTransform.Position;
         
-        // Snap to ground. TODO: Move that out?
-        if (handle.GravityFactor <= 0.0001 || handle.WorldTransform.Position.Y > 0)
-        {
-            handle.WorldPosition = handle.WorldTransform.Position;
-            return;
-        }
-        
-        handle.WorldTransform.Position = new Vector3(handle.WorldTransform.Position.X, 0, handle.WorldTransform.Position.Z);
         handle.WorldPosition = handle.WorldTransform.Position;
-        handle.LinearVelocity.Y = 0;
+        // if (handle.GravityFactor <= 0.0001 || handle.WorldTransform.Position.Y > 0)
+        // {
+        //     
+        //     return;
+        // }
+        //
+        // handle.WorldTransform.Position = new Vector3(handle.WorldTransform.Position.X, 0, handle.WorldTransform.Position.Z);
+        // handle.WorldPosition = handle.WorldTransform.Position;
+        // handle.LinearVelocity.Y = 0;
     }
     
     private static void CollectCollisionCandidates(ref AtomHandle handle, AtomHandle[] participants)

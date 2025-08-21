@@ -1,12 +1,8 @@
 ﻿using System.Drawing;
-using Engine.Core.Assets.Builders;
-using Engine.Core.Assets.Materials;
-using Engine.Core.Assets.Meshes;
 using Engine.Core.Common;
 using Engine.Core.Communication.Groups;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Physics;
-using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
 using User.Game.Services;
 
@@ -17,8 +13,9 @@ public partial class BasicEnemy : ActorInstance
     [DefaultGroup] public static readonly Group<BasicEnemy> All = new(); 
     [Component] public PhysicsComponent Physics;
     [Component] public ColliderSphereComponent ColliderSphere;
-    // [Component] public StaticMeshComponent Mesh;
-
+    [Component] public SpaceshipEngineComponent LeftEngine;
+    [Component] public SpaceshipEngineComponent RightEngine;
+    
     public double Health { get; set; } = 200.0;
     public double MaxHealth { get; set; } = 200.0;
     public bool IsDying { get; private set; } = false;
@@ -27,7 +24,7 @@ public partial class BasicEnemy : ActorInstance
     public double WhiteFlashTime { get; set; } = 0.0;
     public double WhiteFlashMultiplier { get; set; } = 1.0;
     public Vector3 DeathDropRandom { get; set; } = (Vector3.Random - 0.5) * 2;
-
+    
     public void DealDamage(double damage)
     { 
         if (IsDying)
@@ -40,6 +37,7 @@ public partial class BasicEnemy : ActorInstance
             return;
 
         IsDying = true;
+        Physics.GravityEnabled = true;
         Physics.AngularVelocity += DeathDropRandom * 0.5 * 360.0;
         GetService<ExperienceDropService>().SpawnExperienceDrop(WorldTransform.Position, 10.0);
     }
@@ -52,9 +50,9 @@ public partial class BasicEnemy : ActorInstance
         // SpaceshipFlames.Mesh = PlaneMesh.Shared;
         // SpaceshipFlames.Material = Material.CreateFromDisk("Assets/Shaders/cube");
 
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 2; i++)
         {
-            var flames = CreateComponent<SpaceshipFlamesComponent>();
+            var flames = CreateComponent<SpaceshipEngineComponent>();
             flames.Transform.Rescale(1, 10, 10);
             flames.Transform.Rotate(0, 180, 0);
 
@@ -68,12 +66,12 @@ public partial class BasicEnemy : ActorInstance
                     flames.Transform.TranslateGlobal(-1.08, 0.3, 3.9);
                     flames.BumpAnimation();
                     break;
-                case 2:
-                    flames.Transform.TranslateGlobal(0.93, -0.3, 3.9);
-                    break;
-                default:
-                    flames.Transform.TranslateGlobal(-1.08, -0.3, 3.9);
-                    break;
+                // case 2:
+                //     flames.Transform.TranslateGlobal(0.93, -0.3, 3.9);
+                //     break;
+                // default:
+                //     flames.Transform.TranslateGlobal(-1.08, -0.3, 3.9);
+                //     break;
             }
         }
     }

@@ -36,8 +36,10 @@ public class GuestAssemblyCompiler
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private void Compile()
+    private void Compile(bool filesChanged)
     {
+        if (filesChanged)
+            _project.MarkDirty();
         var buildParams = new BuildParameters(ProjectCollection.GlobalProjectCollection)
         {
             Loggers = [new ConsoleLogger(LoggerVerbosity.Minimal)]
@@ -65,7 +67,7 @@ public class GuestAssemblyCompiler
             : "Build failed!");
     }
 
-    public Task CompileAsync(Action onSuccess)
+    public Task CompileAsync(bool filesChanged, Action onSuccess)
     {
         Logger.Info("Starting hot reload for assembly " + _assemblyName);
         IsCompiling = true;
@@ -73,7 +75,7 @@ public class GuestAssemblyCompiler
         {
             try
             {
-                Compile();
+                Compile(filesChanged);
                 onSuccess.Invoke();
                 IsCompiling = false;
             }

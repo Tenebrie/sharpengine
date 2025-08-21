@@ -15,6 +15,7 @@ internal sealed class GuestAssemblyHost(string assemblyName)
     private bool IsCompiling => _compiler.IsCompiling;
     private bool _assemblyLoaded = false;
     private bool _isAssemblyDirty = false;
+    private bool _isAssemblyStructureDirty = false;
     public bool AssemblyAwaitingReload = false;
 
     public Assembly? Assembly;
@@ -34,7 +35,6 @@ internal sealed class GuestAssemblyHost(string assemblyName)
 
         BuildGuestAsync();
         return false;
-
     }
 
     private void StartWatching()
@@ -47,15 +47,23 @@ internal sealed class GuestAssemblyHost(string assemblyName)
                 IncludeSubdirectories = true,
                 NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName
             };
-        _watcher.Changed += OnSourceChanged;
+        _watcher.Changed += OnSourceChangedIncrementally;
         _watcher.Created += OnSourceChanged;
         _watcher.Renamed += OnSourceChanged;
+        _watcher.Deleted += OnSourceChanged;
         _watcher.EnableRaisingEvents = true;
     }
     
+    private void OnSourceChangedIncrementally(object sender, FileSystemEventArgs e)
+    {
+        _isAssemblyDirty = true;
+        Logger.Debug("Source file updated: " + e.FullPath);
+    }
+
     private void OnSourceChanged(object sender, FileSystemEventArgs e)
     {
         _isAssemblyDirty = true;
+        _isAssemblyStructureDirty = true;
         Logger.Debug("Source file changed: " + e.FullPath);
     }
 
@@ -63,7 +71,7 @@ internal sealed class GuestAssemblyHost(string assemblyName)
     {
         _isAssemblyDirty = false;
         AssemblyAwaitingReload = false;
-        _compiler.CompileAsync(() =>
+        _compiler.CompileAsync(_isAssemblyStructureDirty, () =>
         {
             AssemblyAwaitingReload = true;
         });
@@ -112,9 +120,10 @@ internal sealed class GuestAssemblyHost(string assemblyName)
         if (_watcher is not null)
         {
             _watcher.EnableRaisingEvents = false;
-            _watcher.Changed -= OnSourceChanged;
+            _watcher.Changed -= OnSourceChangedIncrementally;
             _watcher.Created -= OnSourceChanged;
             _watcher.Renamed -= OnSourceChanged;
+            _watcher.Deleted -= OnSourceChanged;
             _watcher.Dispose();
             _watcher = null;
         }
