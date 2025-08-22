@@ -18,7 +18,7 @@ public partial class BasicWall : Actor
     [OnPrepareResources]
     public static void PrepareResources()
     {
-        _generatedMaterial = MaterialBuilder.BeginFromFilesystem("Shaders/cube").Instantiate();
+        _generatedMaterial = MaterialBuilder.CreateFromDisk("Shaders/cube").Instantiate();
     }
 
     [OnReady]

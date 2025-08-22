@@ -3,7 +3,7 @@ using Engine.Core.Logging;
 
 namespace Engine.Core.Communication.Tasks;
 
-public class MainThreadTask
+public static class MainThreadTask
 {
     private static List<QueuedTask> _queue = [];
     public static void Run(Action action)

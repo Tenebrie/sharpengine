@@ -17,7 +17,7 @@ public enum LoggingMode
     Count,
 }
 
-public class LogRenderer(RenderingModule parent): Renderer(parent)
+public class LogRenderer(RenderingHost parent): Renderer(parent)
 {
     private LoggingMode _mode = LoggingMode.Recent;
     private readonly List<double> _frameTimes = [];
@@ -107,7 +107,10 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
 
         if (_lastSeenProfilerBufferIndex != Profiler.CurrentBufferIndex)
         {
-            _profilerEntries = Profiler.Query(ProfilingContext.BackstageUpdate | ProfilingContext.PhysicsUpdate | ProfilingContext.RenderingPrepare).ToList();
+            _profilerEntries = Profiler
+                .Query(ProfilingContext.BackstageUpdate | ProfilingContext.PhysicsUpdate | ProfilingContext.RenderingPrepare)
+                .OrderBy(p => p.FullName)
+                .ToList();
             _lastSeenProfilerBufferIndex = Profiler.CurrentBufferIndex;
         }
         var line = 2;
@@ -145,25 +148,25 @@ public class LogRenderer(RenderingModule parent): Renderer(parent)
             text = string.Concat(text.AsSpan(0, 512), "...");
         if (!_textMeasured)
         {
-            var singleGlyphSize = Module.TextRenderer.MeasureText("RobotoMono-Bold", FontSize, "0");
+            var singleGlyphSize = Host.TextRenderer.MeasureText("RobotoMono-Bold", FontSize, "0");
             _glyphWidth = (int)singleGlyphSize.X;
             _glyphHeight = (int)singleGlyphSize.Y;
             _textMeasured = true;
         }
 
-        var size = Module.TextRenderer.MeasureText("RobotoMono-Bold", FontSize, text).X;
+        var size = Host.TextRenderer.MeasureText("RobotoMono-Bold", FontSize, text).X;
         var offset = new Vector2(x * _glyphWidth, y * _glyphHeight * LineHeight);
         var position = anchor switch
         {
             Anchor.TopLeft => new Vector2(offset.X + Padding, offset.Y),
-            Anchor.TopRight => new Vector2(Module.RootWindow.FramebufferSize.X - size - offset.X - Padding, offset.Y),
-            Anchor.BottomLeft => new Vector2(offset.X + Padding, Module.RootWindow.FramebufferSize.Y - _glyphHeight - offset.Y - Padding),
+            Anchor.TopRight => new Vector2(Host.RootWindow.FramebufferSize.X - size - offset.X - Padding, offset.Y),
+            Anchor.BottomLeft => new Vector2(offset.X + Padding, Host.RootWindow.FramebufferSize.Y - _glyphHeight - offset.Y - Padding),
             _ => new Vector2(
-                Module.RootWindow.FramebufferSize.X - size - offset.X - Padding,
-                Module.RootWindow.FramebufferSize.Y - _glyphHeight - offset.Y - Padding
+                Host.RootWindow.FramebufferSize.X - size - offset.X - Padding,
+                Host.RootWindow.FramebufferSize.Y - _glyphHeight - offset.Y - Padding
             )
         };
-        Module.TextRenderer.RenderText("RobotoMono-Bold", FontSize, text, position, color, 2);
+        Host.TextRenderer.RenderText("RobotoMono-Bold", FontSize, text, position, color, 2);
     }
  
     private void UpdateFramerate(double deltaTime)

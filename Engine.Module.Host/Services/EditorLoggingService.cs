@@ -6,11 +6,11 @@ namespace Engine.Module.Host.Services;
 
 public partial class EditorLoggingService : Service
 {
-    private HostBackstage HostBackstage => (HostBackstage)Backstage;
+    private WorkspaceHost WorkspaceHost => (WorkspaceHost)Backstage;
     
     [OnKeyInput(Key.F3)]
     protected void OnToggleRendererDebug()
     {
-        HostBackstage.RenderingModule?.ToggleLogRendering();
+        WorkspaceHost.RenderingModule?.ToggleLogRendering();
     }
 }

@@ -2,8 +2,8 @@
 
 public enum EngineModule
 {
-    EditorHost,
-    Physics,
-    Rendering,
-    UserHost,
+    Gameplay,  // User's game code
+    Physics,   // Physics engine
+    Rendering, // Rendering engine
+    Workspace, // Editor workspace
 }

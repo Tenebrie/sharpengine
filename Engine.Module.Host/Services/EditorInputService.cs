@@ -7,6 +7,7 @@ using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
+using Engine.Core.Modules;
 using Silk.NET.Input;
 
 namespace Engine.Module.Host.Services;
@@ -39,7 +40,7 @@ public enum DebugRenderingMode
 
 public partial class EditorInputService : Service
 {
-    private HostBackstage HostBackstage => (HostBackstage)Backstage;
+    private WorkspaceHost WorkspaceHost => (WorkspaceHost)Backstage;
     
     private InputContext _baseContext = null!;
     private InputContext _cameraControlContext = null!;
@@ -94,13 +95,13 @@ public partial class EditorInputService : Service
     [OnKeyInput(Key.F5)]
     protected void OnToggleGameplayContext()
     {
-        switch (HostBackstage.GameplayContext)
+        switch (WorkspaceHost.GameplayContext)
         {
             case GameplayContext.Editor:
-                HostBackstage.RootSupervisor.SetGameplayContext(GameplayContext.EmbeddedPlay);
+                WorkspaceHost.Hypervisor.SetGameplayContext(GameplayContext.EmbeddedPlay);
                 break;
             case GameplayContext.EmbeddedPlay:
-                HostBackstage.RootSupervisor.SetGameplayContext(GameplayContext.Editor);
+                WorkspaceHost.Hypervisor.SetGameplayContext(GameplayContext.Editor);
                 break;
             case GameplayContext.StandalonePlay:
             default:
@@ -115,27 +116,29 @@ public partial class EditorInputService : Service
     protected void OnToggleGameSuspended()
     {
         _isGameSuspended = !_isGameSuspended;
-        HostBackstage.RootSupervisor.SetGameplayTimeScale(_isGameSuspended ? 0.0 : 1.0);
+        WorkspaceHost.Hypervisor.SetTimeScale(EngineModule.Gameplay, _isGameSuspended ? 0.0 : 1.0);
+        WorkspaceHost.Hypervisor.SetTimeScale(EngineModule.Physics, _isGameSuspended ? 0.0 : 1.0);
     }
     
     [OnKeyInput(Key.F7, 1)]
     [OnKeyInputReleased(Key.F7, 0)]
     protected void OnToggleGameSuspended(int value)
     {
-        HostBackstage.RootSupervisor.SetGameplayTimeScale(value == 1 ? 10.0 : _isGameSuspended ? 0.0 : 1.0);
+        WorkspaceHost.Hypervisor.SetTimeScale(EngineModule.Gameplay, value == 1 ? 10.0 : _isGameSuspended ? 0.0 : 1.0);
+        WorkspaceHost.Hypervisor.SetTimeScale(EngineModule.Physics, value == 1 ? 10.0 : _isGameSuspended ? 0.0 : 1.0);
     }
     
     [OnKeyInput(Key.F11)]
     protected void OnReload()
     {
-        HostBackstage.RootSupervisor.ReloadUserGame();
+        WorkspaceHost.Hypervisor.ReloadEngineModule(EngineModule.Gameplay);
     }
     
     [OnInput(InputAction.HoldToControlCamera)]
     [OnInputReleased(InputAction.HoldToControlCamera)]
     protected void RecalculateActiveContext()
     {
-        if (HostBackstage.GameplayContext != GameplayContext.Editor)
+        if (WorkspaceHost.GameplayContext != GameplayContext.Editor)
         {
             GetService<InputService>().InputContext = InputContext.Empty;
             return;

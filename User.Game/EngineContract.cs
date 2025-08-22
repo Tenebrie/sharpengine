@@ -1,5 +1,5 @@
 ﻿using Engine.Core.Contracts;
-using Engine.Core.Contracts.Attributes;
+using Engine.Core.Modules.Attributes;
 
 namespace User.Game;
 

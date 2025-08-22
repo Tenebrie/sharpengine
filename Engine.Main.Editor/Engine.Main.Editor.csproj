@@ -33,21 +33,13 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\Engine.Core.Input\Engine.Core.Input.csproj" />
-    <ProjectReference Include="..\Engine.Core.Contracts\Engine.Core.Contracts.csproj" />
+    <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
     <ProjectReference Include="..\Engine.Core.EntitySystem\Engine.Core.EntitySystem.csproj" />
     <ProjectReference Include="..\Engine.Tooling.Roslyn\Engine.Tooling.Roslyn.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
   </ItemGroup>
   
   <ItemGroup>
     <Folder Include="Assets\Shaders\" />
-    <Folder Include="Utilities\" />
   </ItemGroup>
   
-  <ItemGroup>
-    <Content Include="..\ProjectRoot\Assets\Shaders\cube.vsh">
-      <Link>Assets\Shaders\cube.vsh.cs</Link>
-    </Content>
-  </ItemGroup>
-
 </Project>

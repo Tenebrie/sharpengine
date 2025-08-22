@@ -1,68 +1,52 @@
-﻿using Engine.Core.EntitySystem.Entities;
-using Engine.Core.EntitySystem.Modules;
+﻿using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Main.Editor.Modules.Abstract;
-using Silk.NET.Windowing;
 
 namespace Engine.Main.Editor.Modules;
 
-internal class RenderingAssembly(IWindow window) : GuestAssembly("Engine.Module.Rendering", EngineModule.Rendering)
+internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", EngineModule.Rendering)
 {
     private bool _isInitialized = false;
-    internal IRenderingModule? RenderingModule { get; set; }
-    internal IRenderingModuleBootstrap? RenderingBootstrap { get; set; }
-    internal RenderingResources Resources { get; set; }
-    private readonly List<Backstage> _backstages = [];
+    internal IRenderingHost? RenderingHost { get; private set; }
+    private IRenderingModuleBootstrap? RenderingBootstrap { get; set; }
+    private RenderingResources Resources { get; set; }
+    
+    internal override IModularHost? GetHost() => RenderingHost;
 
-    internal override bool IgnoresTimeScale => true;
-
-    public override void Init()
+    public override void Load()
     {
-        base.Init();
-        RenderingModule = Host.LoadAssembly<IRenderingModule>();
-        RenderingBootstrap = Host.LoadContract<IRenderingModuleBootstrap>();
-        if (RenderingModule == null || RenderingBootstrap == null)
+        base.Load();
+        RenderingHost = Loader.LoadAssembly<IRenderingHost>();
+        RenderingBootstrap = Loader.LoadContract<IRenderingModuleBootstrap>();
+        if (RenderingHost == null || RenderingBootstrap == null)
         {
-            Console.Error.WriteLine("Failed to instantiate renderer.");
+            Logger.Error("RenderingAssembly: Failed to instantiate the host or bootstrapper.");
             return;
         }
+        RenderingHost.Hypervisor = Editor.Hypervisor.Instance;
+        RenderingBootstrap.Hypervisor = Editor.Hypervisor.Instance;
         if (_isInitialized)
         {
-            RenderingModule.HotInitialize(Resources, window);
+            RenderingHost.HotInitialize(Resources);
         }
         else
         {
-            Resources = RenderingBootstrap.Initialize(window);
-            RenderingModule.HotInitialize(Resources, window);
+            Resources = RenderingBootstrap.Initialize();
+            RenderingHost.HotInitialize(Resources);
             _isInitialized = true;
         }
-        RenderingModule.SetGameplayContext(Editor.GameplayContext);
-        foreach (var backstage in _backstages)
-            RenderingModule.Register(backstage);
     }
 
-    internal void Register(Backstage backstage)
+    protected override void Unload()
     {
-        _backstages.Add(backstage);
-        RenderingModule?.Register(backstage);
-    }
-
-    internal void Unregister(Backstage backstage)
-    {
-        _backstages.Remove(backstage);
-        RenderingModule?.Unregister(backstage);
+        RenderingHost?.HotShutdown();
+        base.Unload();
     }
 
     public override void Destroy()
     {
-        RenderingModule?.HotShutdown();
+        RenderingHost?.HotShutdown();
+        RenderingBootstrap?.Shutdown();
         base.Destroy();
-    }
-
-    public void DestroyPermanently()
-    {
-        _backstages.Clear();
-        base.Destroy();
-        RenderingModule?.HotShutdown();
     }
 }

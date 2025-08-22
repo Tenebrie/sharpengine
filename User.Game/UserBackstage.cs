@@ -3,7 +3,6 @@ using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using User.Game.Actors;
 using User.Game.Actors.BasicEnemies;
-using User.Game.Actors.BasicWall;
 using User.Game.Actors.CloudCover;
 using User.Game.Player;
 using User.Game.Services;
@@ -11,7 +10,7 @@ using User.Game.Services;
 namespace User.Game;
 
 [MainBackstage]
-public partial class UserBackstage : Backstage
+public partial class UserBackstage : GameplayHostBackstage
 {
     [OnReady]
     protected void OnReady()

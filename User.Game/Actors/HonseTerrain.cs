@@ -18,11 +18,11 @@ public partial class HonseTerrain : Actor
     protected void OnReady() 
     {
         Mesh.StaticMesh = StaticMesh.CreateFromDisk("Meshes/terrain-plain.obj");
-        Mesh.MaterialInstance = MaterialBuilder.BeginFromFilesystem("Shaders/cube")
+        Mesh.MaterialInstance = MaterialBuilder.CreateFromDisk("Shaders/cube")
             .SetTextureMode(TextureAddressMode.Wrap)
             .SetTexture(Texture.CreateFromDisk("Textures/honse-terrain-looped.png"))
             .Instantiate()
-            .SetUvScale(2.5);
+            .SetUvScale(4.5);
     }
 
     [OnUpdate]

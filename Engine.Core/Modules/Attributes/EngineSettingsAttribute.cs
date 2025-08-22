@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 
-namespace Engine.Core.Contracts.Attributes;
+namespace Engine.Core.Modules.Attributes;
 
 /**
  * Informative attribute.

@@ -1,11 +1,12 @@
 ﻿using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Primitives;
+using Engine.Core.Modules.EntitySystem;
 using Microsoft.Extensions.ObjectPool;
 
 namespace Engine.Core.EntitySystem.Entities;
 
-public abstract partial class Spatial : Atom
+public abstract partial class Spatial : Atom, ISpatial
 {
     private static readonly ObjectPool<Transform> SharedTransformPool = new DefaultObjectPool<Transform>(new DefaultPooledObjectPolicy<Transform>(), 1000);
     

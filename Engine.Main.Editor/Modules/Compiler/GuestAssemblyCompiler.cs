@@ -3,6 +3,7 @@ using Engine.Core.Logging;
 using Microsoft.Build.Evaluation;
 using Microsoft.Build.Execution;
 using Microsoft.Build.Framework;
+using Microsoft.Build.Graph;
 using Microsoft.Build.Logging;
 
 namespace Engine.Main.Editor.Modules.Compiler;
@@ -12,20 +13,32 @@ public class GuestAssemblyCompiler
     private readonly string _assemblyName;
     public bool IsCompiling = false;
     private readonly Project _project;
+    private readonly ProjectCollection _projectCollection;
+    private readonly Dictionary<string, string> _globals;
+    private readonly BuildParameters _buildParams;
     
     private GuestAssemblyCompiler(string assemblyName, string projectPath)
     {
         _assemblyName = assemblyName;
-        var globals = new Dictionary<string, string>
+        _globals = new Dictionary<string, string>
         {
+            #if DEBUG
             ["Configuration"]  = "Debug",
+            #elif RELEASE
+            ["Configuration"]  = "Release",
+            #endif
             ["Platform"]       = "x64",
             ["PlatformTarget"] = "x64",
             ["Prefer32Bit"]    = "false"
         };
+        
+        _projectCollection = new ProjectCollection(_globals);
+        _project = _projectCollection.LoadProject(projectPath);
+        _buildParams = new BuildParameters(_projectCollection)
+        {
+            Loggers = [ new ConsoleLogger(LoggerVerbosity.Quiet) ]
+        };
 
-        var pc = new ProjectCollection(globals);
-        _project = pc.LoadProject(projectPath);
         _project.SetProperty("BuildProjectReferences", "false");
     }
 
@@ -40,17 +53,10 @@ public class GuestAssemblyCompiler
     {
         if (filesChanged)
             _project.MarkDirty();
-        var buildParams = new BuildParameters(ProjectCollection.GlobalProjectCollection)
-        {
-            Loggers = [new ConsoleLogger(LoggerVerbosity.Minimal)]
-        };
         
-        var request = new BuildRequestData(
-            _project.CreateProjectInstance(),
-            targetsToBuild: ["Build"]
-        );
-        
-        var result = BuildManager.DefaultBuildManager.Build(buildParams, request);
+        var graph = new ProjectGraph(_project.FullPath, _globals, _projectCollection);
+        var request = new GraphBuildRequestData(graph, ["Build"]);
+        var result = BuildManager.DefaultBuildManager.Build(_buildParams, request);
 
         if (result.OverallResult == BuildResultCode.Failure)
         {

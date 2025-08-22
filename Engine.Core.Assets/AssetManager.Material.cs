@@ -16,7 +16,7 @@ public class MaterialAssetManager : IDisposable
     {
         internal static Material Create()
         {
-            return MaterialBuilder.BeginFromFilesystem("Shaders/cube")
+            return MaterialBuilder.CreateFromDisk("Shaders/cube")
                 .SetCacheAutomatically(false)
                 .Compile();
         }

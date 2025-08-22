@@ -65,7 +65,7 @@ public partial class LightningStrikeAbility : ActorComponent, IAbility
         var cameraUp = camera.WorldTransform.Basis.Up;
         
         // Get window size for aspect ratio
-        var windowSize = Backstage.GetWindow().Size;
+        var windowSize = Backstage.Window.Size;
         var aspectRatio = windowSize.X / (double)windowSize.Y;
         
         // Calculate field of view (assuming 60 degrees as seen in Camera.cs)

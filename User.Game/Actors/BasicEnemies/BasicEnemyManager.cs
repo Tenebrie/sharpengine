@@ -25,7 +25,7 @@ public partial class BasicEnemyManager : Actor
         // }
         InstanceManager.StaticMesh = StaticMesh.CreateFromDisk("Meshes/invader01-crab.obj");
         InstanceManager.Material = MaterialBuilder
-            .BeginFromFilesystem("Shaders/cube")
+            .CreateFromDisk("Shaders/cube")
             .SetTexture(Texture.CreateFromDisk("Textures/metal-albedo.png"))
             .Compile();
         // InstanceManager.Material =

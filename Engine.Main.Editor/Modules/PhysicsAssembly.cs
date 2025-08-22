@@ -1,24 +1,25 @@
-﻿using Engine.Core.EntitySystem.Modules;
+﻿using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Main.Editor.Modules.Abstract;
 
 namespace Engine.Main.Editor.Modules;
 
-internal class PhysicsAssembly() : GuestAssembly("Engine.Module.Physics", EngineModule.Physics)
+internal class PhysicsAssembly() : ModularAssembly("Engine.Module.Physics", EngineModule.Physics)
 {
-    internal IPhysicsModule? PhysicsModule { get; private set; }
+    internal IPhysicsHost? PhysicsModule { get; private set; }
     
-    internal override bool IgnoresTimeScale => false;
-
-    public override void Init()
+    internal override IModularHost? GetHost() => PhysicsModule;
+    
+    public override void Load()
     {
-        base.Init();
-        PhysicsModule = Host.LoadAssembly<IPhysicsModule>();
+        base.Load();
+        PhysicsModule = Loader.LoadAssembly<IPhysicsHost>();
         if (PhysicsModule == null)
         {
-            Console.Error.WriteLine("Failed to instantiate physics module.");
+            Logger.Error("PhysicsAssembly: Failed to instantiate the host.");
             return;
         }
+        PhysicsModule.Hypervisor = Editor.Hypervisor.Instance;
         PhysicsModule.Initialize();
     }
     
@@ -27,10 +28,10 @@ internal class PhysicsAssembly() : GuestAssembly("Engine.Module.Physics", Engine
         PhysicsModule?.ProcessPhysicsFrame(deltaTime);
         return base.Update(deltaTime);
     }
-    
-    public override void Destroy()
+
+    protected override void Unload()
     {
-        PhysicsModule!.Shutdown();
-        base.Destroy();
+        PhysicsModule?.Shutdown();
+        base.Unload();
     }
 }

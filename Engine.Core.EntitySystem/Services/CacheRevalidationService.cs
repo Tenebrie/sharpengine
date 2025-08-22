@@ -2,11 +2,11 @@
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Entities;
-using Engine.Core.Logging;
+using Engine.Core.Modules.EntitySystem;
 
 namespace Engine.Core.EntitySystem.Services;
 
-public partial class CacheRevalidationService : Service
+public partial class CacheRevalidationService : Service, ICacheRevalidationService
 {
     private readonly ThreadLocalHashSet<Spatial> _transformInvalidatedAtoms = new();
     private HashSet<Spatial> _collectedAtoms = [];
@@ -43,6 +43,7 @@ public partial class CacheRevalidationService : Service
     [OnDestroy]
     protected void OnDestroy()
     {
+        Backstage.PhysicsModule?.UnregisterService(this);
         _transformInvalidatedAtoms.Dispose();
     }
 }

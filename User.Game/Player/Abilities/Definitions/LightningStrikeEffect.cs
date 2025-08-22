@@ -18,7 +18,7 @@ public partial class LightningStrikeEffect : Actor
     public static void OnPrepareResources()
     {
         _material = MaterialBuilder
-            .BeginFromFilesystem("Shaders/cube")
+            .CreateFromDisk("Shaders/cube")
             .SetTexture(Texture.CreateFromDisk("Textures/lightning.png"))
             .Compile();
     }

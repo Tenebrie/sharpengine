@@ -25,7 +25,7 @@ public class MaterialBuilder
     
     private readonly IncrementalHashWriter _incrementalHash = new();
 
-    public static MaterialBuilder BeginFromFilesystem(string path)
+    public static MaterialBuilder CreateFromDisk(string path)
     {
         return new MaterialBuilder().SetShaderPath(path);
     }
@@ -77,6 +77,8 @@ public class MaterialBuilder
         };
     }
     
+    public MaterialBuilder SetTexture(string texturePath) => SetTexture(Texture.CreateFromDisk(texturePath));
+
     public MaterialBuilder SetTexture(Texture texture)
     {
         _texture = texture;

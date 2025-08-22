@@ -1,6 +1,7 @@
 ﻿using System.Buffers;
 using System.Reflection;
 using Engine.Core.EntitySystem.Services;
+using Engine.Core.Enum;
 using Engine.Core.Modules;
 using Engine.Core.Profiling;
 using Engine.Core.Profiling.Attributes;
@@ -123,7 +124,7 @@ public partial class Atom
         }
     }
 
-    protected void ProcessGameplayContextChanged()
+    protected void ProcessGameplayContextChanged(GameplayContext context)
     {
         OnGameplayContextChangeCallback?.Invoke();
 
@@ -135,7 +136,7 @@ public partial class Atom
                 buffer[i] = Children[i];
 
             for (var i = 0; i < count; i++)
-                buffer[i].ProcessGameplayContextChanged();
+                buffer[i].ProcessGameplayContextChanged(context);
         }
         finally
         {

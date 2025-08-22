@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using Engine.Core.Assets;
 using Engine.Core.Logging;
+using Engine.Core.Modules.EntitySystem;
 using Engine.Core.Profiling;
 using JetBrains.Annotations;
 

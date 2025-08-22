@@ -1,13 +1,13 @@
-﻿using System.Buffers;
-using Engine.Core.Attributes;
+﻿using Engine.Core.Attributes;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.Modules;
+using Engine.Core.Modules.EntitySystem;
 
 namespace Engine.Core.EntitySystem.Components.Physics;
 
-public partial class PhysicsComponent : ActorComponent
+public partial class PhysicsComponent : ActorComponent, IPhysicsComponent
 {
     public long Rid = -1;
     public bool GravityEnabled = false;

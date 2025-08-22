@@ -23,7 +23,7 @@ public partial class PiercingBladeAbility : ActorComponent, IAbility
         
         var forwardVector = Vector3.Forward;
         var mousePos = GetService<InputService>().GetMousePosition();
-        var window = Backstage.GetWindow().Size;
+        var window = Backstage.Window.Size;
         var value = new Vector3(mousePos.X - window.X / 2.0, 0, mousePos.Y - window.Y / 2.0).Normalized();
         var dotProduct = value.DotProduct(forwardVector);
         var crossProduct = value.CrossProduct(forwardVector);

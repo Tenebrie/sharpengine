@@ -21,8 +21,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core.Assets", "Engin
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core.Input", "Engine.Core.Input\Engine.Core.Input.csproj", "{A24103E5-EF8B-44CA-932B-1BBC3B1C2831}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core.Contracts", "Engine.Core.Contracts\Engine.Core.Contracts.csproj", "{B24426C3-8D41-4AD6-91F8-E30020D4983B}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Module.Host", "Engine.Module.Host\Engine.Module.Host.csproj", "{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Tooling.Shaderslang", "Engine.Tooling.Shaderslang\Engine.Tooling.Shaderslang.csproj", "{CFD65829-1AAC-429D-8955-962B68293F51}"
@@ -73,10 +71,6 @@ Global
 		{A24103E5-EF8B-44CA-932B-1BBC3B1C2831}.Debug|x64.Build.0 = Debug|x64
 		{A24103E5-EF8B-44CA-932B-1BBC3B1C2831}.Release|x64.ActiveCfg = Release|x64
 		{A24103E5-EF8B-44CA-932B-1BBC3B1C2831}.Release|x64.Build.0 = Release|x64
-		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Debug|x64.ActiveCfg = Debug|x64
-		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Debug|x64.Build.0 = Debug|x64
-		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Release|x64.ActiveCfg = Release|x64
-		{B24426C3-8D41-4AD6-91F8-E30020D4983B}.Release|x64.Build.0 = Release|x64
 		{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}.Debug|x64.ActiveCfg = Debug|x64
 		{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}.Debug|x64.Build.0 = Debug|x64
 		{42C14F0D-BBF3-4BEB-8376-29B1EFB69AC3}.Release|x64.ActiveCfg = Release|x64

@@ -1,9 +1,9 @@
 ﻿using Engine.Core.Common;
 using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Entities;
-using Engine.Core.EntitySystem.Modules;
-using Engine.Core.EntitySystem.Services;
-using Engine.Core.Logging;
+using Engine.Core.Enum;
+using Engine.Core.Modules;
+using Engine.Core.Modules.EntitySystem;
 using Engine.Core.Profiling;
 using Engine.Module.Physics.Utilities;
 using Engine.Module.Physics.WorkerThreads;
@@ -12,20 +12,29 @@ using JetBrains.Annotations;
 namespace Engine.Module.Physics;
 
 [UsedImplicitly]
-public class PhysicsModule : IPhysicsModule
+public class PhysicsHost : IPhysicsHost
 {
+    public required IRootHypervisor Hypervisor { get; set; }
+    
     private readonly AtomRegistrationHandler _registeredAtoms = new();
     private readonly CacheRevalidationServiceHandler _revalidationServices = new();
 
     private readonly WorkerPool _workerPool = new();
 
-    public void RegisterService(CacheRevalidationService service) => _revalidationServices.Add(service);
-    public void UnregisterService(CacheRevalidationService service) => _revalidationServices.Remove(service);
+    public void RegisterService(ICacheRevalidationService service) => _revalidationServices.Add(service);
+    public void UnregisterService(ICacheRevalidationService service) => _revalidationServices.Remove(service);
 
     public void Initialize() => _workerPool.Initialize();
     public void Shutdown() => _workerPool.Shutdown();
 
-    public long Register(Spatial parent, PhysicsComponent component) => _registeredAtoms.Add(parent, component);
+    public long Register(ISpatial maskedParent, IPhysicsComponent maskedComponent)
+    {
+        if (maskedParent is not Spatial parent)
+            throw new ArgumentException("Unable to unmask a Spatial"); 
+        if (maskedComponent is not PhysicsComponent component)
+            throw new ArgumentException("Unable to unmask a PhysicsComponent");
+        return _registeredAtoms.Add(parent, component);
+    }
     public void Unregister(long rid) => _registeredAtoms.Remove(rid);
 
     private const double PhysicsStepDuration = 0.0166666666666667;
@@ -59,8 +68,15 @@ public class PhysicsModule : IPhysicsModule
         _revalidationServices.EnableAll();
         stopwatch.StopAndReport(GetType(), ProfilingContext.PhysicsUpdate);
     }
+    public void RevalidateWorldTransform(ISpatial atom)
+    {
+        if (atom is not Spatial spatial)
+            throw new ArgumentException("Unable to unmask a Spatial", nameof(atom));
+        WorkerPoolMember.RevalidateWorldTransform(spatial);
+    }
 
-    public void RevalidateWorldTransform(Spatial atom) => WorkerPoolMember.RevalidateWorldTransform(atom);
+    public void NotifyModuleReloaded(EngineModule module) {}
+    public void NotifyGameplayContextChanged(GameplayContext context) {}
 }
 
 public struct AtomHandle

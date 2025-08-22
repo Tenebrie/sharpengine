@@ -23,7 +23,7 @@ public partial class SpaceshipEngineComponent : ActorComponent
     protected void OnReady()
     {
         Mesh.StaticMesh = PlaneMesh.Shared;
-        Mesh.MaterialInstance = MaterialBuilder.BeginFromFilesystem("Shaders/cube")
+        Mesh.MaterialInstance = MaterialBuilder.CreateFromDisk("Shaders/cube")
             .SetTexture(Texture.CreateFromDisk("Textures/spaceship-flame.png"))
             .Instantiate()
             .SetUvOffset(new Vector2(0, 0))

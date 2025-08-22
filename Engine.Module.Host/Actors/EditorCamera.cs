@@ -45,7 +45,7 @@ public partial class EditorCamera : Camera
     [OnInput(InputAction.CameraRotateYaw,   +0.0, +1.0)]
     protected void OnCameraRotate(Vector2 direction)
     {
-        var screenSize = Backstage.GetWindow().Size;
+        var screenSize = Backstage.Window.Size;
         _pitch += direction.X / screenSize.X * RotationSpeed;
         _yaw += direction.Y / screenSize.X * RotationSpeed;
         Transform.Rotation = Transform.Identity

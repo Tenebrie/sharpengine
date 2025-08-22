@@ -22,7 +22,7 @@ public partial class CloudLayer : Actor
     protected static void OnPrepareResources()
     {
         _material = MaterialBuilder
-            .BeginFromFilesystem("Shaders/Meshes/Clouds")
+            .CreateFromDisk("Shaders/Meshes/Clouds")
             .WithUniformPixelBuffer("CloudParams", new CloudParams(
                 position: new Vector2(0.0, 0.0),
                 time: 0.0,

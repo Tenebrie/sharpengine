@@ -1,7 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Diagnostics;
-using System.Drawing;
-using System.Runtime.CompilerServices;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using Diligent;
 using Engine.Core.Assets;
@@ -16,11 +13,10 @@ using Engine.Module.Rendering.Fonts;
 using Engine.Module.Rendering.Renderers;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
-using Engine.Core.EntitySystem.Modules;
 using Engine.Core.Logging;
 using Engine.Core.Memory;
+using Engine.Core.Modules;
 using Engine.Core.Profiling;
-using Engine.Core.Profiling.Attributes;
 using JetBrains.Annotations;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
@@ -33,6 +29,7 @@ namespace Engine.Module.Rendering;
 [UsedImplicitly]
 public class RenderingModuleBootstrap : IRenderingModuleBootstrap
 {
+    public required IRootHypervisor Hypervisor { get; set; }
     private IRenderDevice _renderDevice = null!;
     private IDeviceContext _immediateContext = null!;
     private IDeviceContext[] _deferredContexts = [];
@@ -41,7 +38,7 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
     private static IEngineFactory.MessageCallbackDelegate _messageCallback = null!;
     private static GCHandle _sCallbackRoot;
     
-    public RenderingResources Initialize(IWindow window)
+    public RenderingResources Initialize()
     {
         _engineFactory = Native.GetEngineFactoryD3D12();
         SetMessageCallback(_engineFactory);
@@ -51,7 +48,7 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
             out _immediateContext,
             out _deferredContexts,
             out var swapChainOut,
-            window
+            Hypervisor.Window
         );
         _renderDevice = renderDeviceOut;
         _swapChain = swapChainOut;
@@ -117,6 +114,9 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
 
     public void Shutdown()
     {
+        _swapChain.Present(0);
+        
+        AssemblyAssetManager.DisposeAll();
         _swapChain.Dispose();
         _immediateContext.Dispose();
         _renderDevice.Dispose();
@@ -124,11 +124,10 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
 }
 
 [UsedImplicitly]
-public class RenderingModule : IRenderingModule
+public class RenderingHost : IRenderingHost
 {
-    internal IWindow RootWindow = null!;
     private List<Backstage> _backstages = [];
-    internal LogRenderer LogRenderer = null!;
+    private LogRenderer _logRenderer = null!;
     internal TextRenderer TextRenderer = null!;
     
     private IRenderDevice _renderDevice = null!;
@@ -141,6 +140,9 @@ public class RenderingModule : IRenderingModule
     private ITextureView _renderTargetView = null!;
     private ITextureView _renderDepthView = null!;
 
+    public IRootHypervisor Hypervisor { get; set; } = null!;
+    internal IWindow RootWindow => Hypervisor.Window;
+
     private float BaseResolutionScale => (float)RootWindow.Size.X / RootWindow.FramebufferSize.X;
     private float ResolutionScale => BaseResolutionScale * 1.0f;
 
@@ -150,24 +152,27 @@ public class RenderingModule : IRenderingModule
     );
 
     private static int MsaaSamples => 8;
-
-    public void Register(Backstage backstage)
-    {
-        _backstages.Add(backstage);
-    }
-
-    public void Unregister(Backstage backstage)
-    {
-        _backstages.Remove(backstage);
-    }
+    //
+    // public void Register(IBackstage maskedBackstage)
+    // {
+    //     if (maskedBackstage is not Backstage backstage)
+    //         throw new ArgumentException("Unable to unmask a Backstage.", nameof(maskedBackstage));
+    //     _backstages.Add(backstage);
+    // }
+    //
+    // public void Unregister(IBackstage maskedBackstage)
+    // {
+    //     if (maskedBackstage is not Backstage backstage)
+    //         throw new ArgumentException("Unable to unmask a Backstage.", nameof(maskedBackstage));
+    //     _backstages.Remove(backstage);
+    // }
 
     private IBuffer _viewMatrixBuffer = null!;
     private IBuffer _objectIndexBuffer = null!;
     private InfiniteInstanceBuffer _infiniteInstanceBuffer = null!;
     
-    public void HotInitialize(RenderingResources resources, IWindow window)
+    public void HotInitialize(RenderingResources resources)
     {
-        RootWindow = window;
         _renderDevice = resources.RenderDevice;
         _immediateContext = resources.ImmediateContext;
         _deferredContexts = resources.DeferredContexts;
@@ -210,13 +215,13 @@ public class RenderingModule : IRenderingModule
         InfiniteInstanceBuffer.Context = renderContext;
         RenderContext.Current = renderContext;
         
-        LogRenderer = new LogRenderer(this);
+        _logRenderer = new LogRenderer(this);
         TextRenderer = new TextRenderer();
 
         CreateRenderTargets();
 
-        window.Render += RenderSingleFrameSync;
-        window.FramebufferResize += OnFramebufferResize;
+        RootWindow.Render += RenderSingleFrameSync;
+        RootWindow.FramebufferResize += OnFramebufferResize;
     }
 
     private void CreateRenderTargets()
@@ -249,10 +254,9 @@ public class RenderingModule : IRenderingModule
         _renderDepthView = _renderDepth.GetDefaultView(TextureViewType.DepthStencil);
     }
     
+    [SuppressMessage("ReSharper", "ConditionalAccessQualifierIsNonNullableAccordingToAPIContract")]
     private void DisposeRenderTargets()
     {
-        // _renderTargetView?.Dispose();
-        // _renderDepthView?.Dispose();
         _renderTarget?.Dispose();
         _renderDepth?.Dispose();
     }
@@ -265,53 +269,41 @@ public class RenderingModule : IRenderingModule
         RenderSingleFrame(deltaTime).GetAwaiter().GetResult();
     }
 
-    private Task RenderSingleFrame(double deltaTime)
+    public void RenderEngineLoadingScreen()
+    {
+        _immediateContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
+        _immediateContext.ClearRenderTarget(_renderTargetView, new Vector4(0.0, 0.0, 0.0, 1.0), ResourceStateTransitionMode.Transition);
+        _immediateContext.ClearDepthStencil(_renderDepthView, ClearDepthStencilFlags.Depth, 1.0f, 0, ResourceStateTransitionMode.Transition);
+        
+        SplashRenderer.RenderOnce();
+
+        var rtv = _swapChain.GetCurrentBackBufferRTV();
+        var rtvTexture = rtv.GetTexture();
+        
+        _immediateContext.ResolveTextureSubresource(
+            _renderTarget,
+            rtvTexture,
+            new ResolveTextureSubresourceAttribs
+            {
+                Format = _swapChain.GetDesc().ColorBufferFormat,
+                SrcTextureTransitionMode = ResourceStateTransitionMode.Transition,
+                DstTextureTransitionMode = ResourceStateTransitionMode.Transition,
+            }
+        );
+        
+        _swapChain.Present(0);
+    }
+
+    private async Task RenderSingleFrame(double deltaTime)
     {
         var stopwatch = Profiler.Start();
-        
-        Camera? activeCamera = null;
-        foreach (var backstage in _backstages)
-        {
-            if (activeCamera != null)
-                continue;
-            activeCamera = FindActiveCamera(backstage);
-        }
-        
-        if (activeCamera == null)
-        {
-            Logger.Error("No active camera found for rendering.");
-            return Task.CompletedTask;
-        }
-        
-        activeCamera.UpdateFrustumPlanes();
-        
-        // var rtv = _swapChain.GetCurrentBackBufferRTV();
-        // var dsv = _swapChain.GetDepthBufferDSV();
-
-        var wvpMatrix = activeCamera.AsCameraView().ToMatrix();
-        var mapUniformBuffer = _immediateContext.MapBuffer<MatrixFloat>(_viewMatrixBuffer, MapType.Write, MapFlags.Discard);
-        mapUniformBuffer[0] = wvpMatrix.Downgrade();
-        _immediateContext.UnmapBuffer(_viewMatrixBuffer, MapType.Write);
+        FrameCounter.Increment();
         
         _immediateContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
         _immediateContext.ClearRenderTarget(_renderTargetView, new Vector4(0.35f, 0.35f, 0.35f, 1.0f), ResourceStateTransitionMode.Transition);
         _immediateContext.ClearDepthStencil(_renderDepthView, ClearDepthStencilFlags.Depth, 1.0f, 0, ResourceStateTransitionMode.Transition);
-        
-        _infiniteInstanceBuffer.FrameStart();
-        
-        LogRenderer.RenderFrame(deltaTime);
-        foreach (var backstage in _backstages)
-        {
-            // Collect all IRenderable entities reachable from the atom tree
-            CollectAtomsToRender(activeCamera, ref _atomsToRender, ref _atomsToRenderCount, backstage);
-            // Render surviving atoms
-            RenderAtomTree(_atomsToRender, _atomsToRenderCount);
-        
-            _atomsToRenderCount = 0;
-            Array.Clear(_atomsToRender);
-        }
 
-        TextRenderer.Flush();
+        await InvokeRenderers(deltaTime);
         
         var rtv = _swapChain.GetCurrentBackBufferRTV();
         var rtvTexture = rtv.GetTexture();
@@ -327,8 +319,52 @@ public class RenderingModule : IRenderingModule
             }
         );
         
-        stopwatch.StopAndReport(typeof(RenderingModule), ProfilingContext.RenderingPrepare);
+        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingPrepare);
         _swapChain.Present(0);
+    }
+
+    private Task InvokeRenderers(double deltaTime)
+    {
+        Camera? activeCamera = null;
+        foreach (var backstage in _backstages)
+        {
+            if (activeCamera != null)
+                continue;
+            activeCamera = FindActiveCamera(backstage);
+        }
+        
+        if (activeCamera == null)
+        {
+            Logger.Error("No active camera found for rendering.");
+        }
+        else
+        {
+            activeCamera.UpdateFrustumPlanes();
+        
+            var wvpMatrix = activeCamera.AsCameraView().ToMatrix();
+            var mapUniformBuffer = _immediateContext.MapBuffer<MatrixFloat>(_viewMatrixBuffer, MapType.Write, MapFlags.Discard);
+            mapUniformBuffer[0] = wvpMatrix.Downgrade();
+            _immediateContext.UnmapBuffer(_viewMatrixBuffer, MapType.Write);
+        }
+        
+        _infiniteInstanceBuffer.FrameStart();
+        
+        _logRenderer.RenderFrame(deltaTime);
+        if (activeCamera != null)
+        {
+            foreach (var backstage in _backstages)
+            {
+                // Collect all IRenderable entities reachable from the atom tree
+                CollectAtomsToRender(activeCamera, ref _atomsToRender, ref _atomsToRenderCount, backstage);
+                // Render surviving atoms
+                RenderAtomTree(_atomsToRender, _atomsToRenderCount);
+
+                _atomsToRenderCount = 0;
+                Array.Clear(_atomsToRender);
+            }
+        }
+
+        TextRenderer.Flush();
         return Task.CompletedTask;
     }
 
@@ -390,8 +426,6 @@ public class RenderingModule : IRenderingModule
         public required MemoryManager.ArrayHandle InstanceTransforms;
         public required MemoryManager.ArrayHandle MaterialInstances;
     
-        public int HashCode => Mesh.GetHashCode() ^ Material.GetHashCode() ^ RenderScript.GetHashCode();
-
         public static MergedRenderRequest Create(RenderRequest request)
         {
             var req = new MergedRenderRequest
@@ -440,20 +474,6 @@ public class RenderingModule : IRenderingModule
             _renderRequestPool[request.HashCode] = mergedRequest;
         }
         
-        // var preparedRequests = atomsToRender
-        //     .Take(atomsToRenderCount)
-        //     .Select(renderable => renderable.Render())
-        //     .GroupBy(r => r.HashCode)
-        //     .Select(g => new RenderRequest
-        //     {
-        //         Mesh = g.First().Mesh,
-        //         Material = g.First().Material,
-        //         RenderScript = g.First().RenderScript,
-        //         InstanceCount = g.Sum(renderable => renderable.InstanceCount),
-        //         InstanceTransforms = g.SelectMany(req => req.InstanceTransforms).ToArray(),
-        //         MaterialInstances = g.SelectMany(req => req.MaterialInstances).ToArray(),
-        //     });
-        
         foreach (var req in _renderRequestPool.Values)
         {
             req.RenderScript.Render(_immediateContext, req.InstanceCount, req.Mesh, (Transform[])req.InstanceTransforms.Array, req.Material,
@@ -476,13 +496,9 @@ public class RenderingModule : IRenderingModule
         AssetManager.Shared.Pipelines.InvalidateAll();
     }
 
-    public void ToggleLogRendering() => LogRenderer.OnToggleMode();
+    public void ToggleLogRendering() => _logRenderer.OnToggleMode();
 
-    private GameplayContext GameplayContext { get; set; } = GameplayContext.Editor;
-    public void SetGameplayContext(GameplayContext context)
-    {
-        GameplayContext = context;
-    } 
+    private GameplayContext GameplayContext => Hypervisor.GameplayContext;
 
     public void HotShutdown()
     {
@@ -496,4 +512,14 @@ public class RenderingModule : IRenderingModule
         _infiniteInstanceBuffer.Dispose();
         DisposeRenderTargets();
     }
+
+    public void NotifyModuleReloaded(EngineModule module)
+    {
+        _backstages.Clear();
+        if (Hypervisor.GameplayModule is Backstage gameplayHost)
+            _backstages.Add(gameplayHost);
+        if (Hypervisor.WorkspaceModule is Backstage workspaceHost)
+            _backstages.Add(workspaceHost);
+    }
+    public void NotifyGameplayContextChanged(GameplayContext context) {}
 }

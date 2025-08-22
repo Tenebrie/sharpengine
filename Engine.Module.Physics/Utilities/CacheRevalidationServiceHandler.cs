@@ -1,13 +1,14 @@
 ﻿using Engine.Core.EntitySystem.Services;
+using Engine.Core.Modules.EntitySystem;
 
 namespace Engine.Module.Physics.Utilities;
 
 public class CacheRevalidationServiceHandler
 {
-    private readonly List<CacheRevalidationService> _revalidationServices = [];
+    private readonly List<ICacheRevalidationService> _revalidationServices = [];
 
-    public void Add(CacheRevalidationService service) => _revalidationServices.Add(service);
-    public void Remove(CacheRevalidationService service) => _revalidationServices.Remove(service);
+    public void Add(ICacheRevalidationService service) => _revalidationServices.Add(service);
+    public void Remove(ICacheRevalidationService service) => _revalidationServices.Remove(service);
 
     public void DisableAll()
     {

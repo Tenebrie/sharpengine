@@ -2,8 +2,8 @@
 using Silk.NET.Windowing;
 using System.Text.Json;
 using Engine.Core.Logging;
-using Engine.Hypervisor.Editor.Windowing;
 using Timer = System.Timers.Timer;
+using Silk.NET.GLFW;
 
 namespace Engine.Main.Editor;
 
@@ -51,7 +51,7 @@ public static class WindowStateManager
 
         if (_isDirty)
         {
-            var windowScale = window.Monitor?.Index == 0 ? Vector2D<float>.One : GarbageFixes.GetPrimaryMonitorScale();
+            var windowScale = window.Monitor?.Index == 0 ? Vector2D<float>.One : GetPrimaryMonitorScale();
             var scaledSize = new Vector2D<int>(
                 (int)(window.FramebufferSize.X * windowScale.X),
                 (int)(window.FramebufferSize.Y * windowScale.Y)
@@ -147,5 +147,16 @@ public static class WindowStateManager
         
         _currentWindow = null;
     }
-}
 
+    private static unsafe Vector2D<float> GetPrimaryMonitorScale()
+    {
+        var api     = Glfw.GetApi();
+        var monitor = api.GetPrimaryMonitor();
+
+        float sx = 1f, sy = 1f;
+        if (monitor != null)
+            api.GetMonitorContentScale(monitor, out sx, out sy);
+
+        return new Vector2D<float>(sx, sy);
+    }
+}

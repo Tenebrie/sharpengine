@@ -64,17 +64,19 @@ public class Profiler
         Instance._currentBufferIndex = 1 - Instance._currentBufferIndex;
         foreach (var instanceMethodEntry in Instance.MethodEntries)
         {
+            var outdatedEntries = instanceMethodEntry.Value.Where(v => v.Value.Count() == 0).ToList();
+            foreach (var outdatedEntry in outdatedEntries)
+                instanceMethodEntry.Value.Remove(outdatedEntry.Key);
             foreach (var profilerEntry in instanceMethodEntry.Value.Values)
-            {
                 profilerEntry.Clear();
-            }
         }
         foreach (var instanceLifecycleEntry in Instance.LifecycleEntries)
         {
+            var outdatedEntries = instanceLifecycleEntry.Value.Where(v => v.Value.Count() == 0).ToList();
+            foreach (var outdatedEntry in outdatedEntries)
+                instanceLifecycleEntry.Value.Remove(outdatedEntry.Key);
             foreach (var profilerEntry in instanceLifecycleEntry.Value.Values)
-            {
                 profilerEntry.Clear();
-            }
         }
     }
     
