@@ -7,7 +7,6 @@ namespace Engine.Main.Editor.Modules;
 
 public class WorkspaceAssembly() : ModularAssembly("Engine.Module.Host", EngineModule.Workspace)
 {
-    private double _updatesPausedFor = 0.0;
     internal IWorkspaceHost? HostBackstage { get; private set; }
     private IBaseEngineContract? Contract { get; set; }
     
@@ -16,7 +15,7 @@ public class WorkspaceAssembly() : ModularAssembly("Engine.Module.Host", EngineM
     public override void Load()
     {
         base.Load();
-        Contract = Loader.LoadAssembly<IBaseEngineContract>();
+        Contract = Loader.ProduceContract<IBaseEngineContract>();
         if (Contract == null)
         {
             Logger.Error("WorkspaceAssembly: Failed to load entry point settings.");
@@ -30,12 +29,6 @@ public class WorkspaceAssembly() : ModularAssembly("Engine.Module.Host", EngineM
 
     public override bool Update(double deltaTime)
     {
-        if (_updatesPausedFor > 0.0)
-        {
-            _updatesPausedFor -= deltaTime;
-            return base.Update(deltaTime);
-        }
-
         if (HostBackstage == null)
             return base.Update(deltaTime);
 
@@ -47,13 +40,12 @@ public class WorkspaceAssembly() : ModularAssembly("Engine.Module.Host", EngineM
         {
             Logger.Error($"Error during OnUpdate: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
-            _updatesPausedFor = 3.0;
             return false;
         }
         return base.Update(deltaTime);
     }
 
-    protected override void Unload()
+    public override void Unload()
     {
         HostBackstage?.FreeImmediately();
         base.Unload();

@@ -15,8 +15,8 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\Engine.Core.Assets\Engine.Core.Assets.csproj" />
     <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
+    <ProjectReference Include="..\Engine.Core.Assets\Engine.Core.Assets.csproj" />
     <ProjectReference Include="..\Engine.Core.Input\Engine.Core.Input.csproj" />
     <ProjectReference Include="..\Engine.Tooling.Roslyn\Engine.Tooling.Roslyn.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
   </ItemGroup>
@@ -25,10 +25,6 @@
     <Reference Include="JetBrains.Annotations">
       <HintPath>..\..\..\Software\JetBrains Rider 2025.1.1\lib\ReSharperHost\JetBrains.Annotations.dll</HintPath>
     </Reference>
-  </ItemGroup>
-  
-  <ItemGroup>
-    <Folder Include="Modules\" />
   </ItemGroup>
 
 </Project>

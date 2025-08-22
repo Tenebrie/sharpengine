@@ -3,6 +3,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using Engine.Core.Logging;
+using Engine.Main.Editor.Modules.Abstract;
 
 namespace Engine.Main.Editor.Modules.Compiler;
 
@@ -12,7 +13,7 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
     private readonly string _dllPath = Path.GetFullPath($"../../../../../{assemblyName}/bin/x64/Debug/net9.0/{assemblyName}.dll");
     private FileSystemWatcher? _watcher;
     private readonly GuestAssemblyCompiler _compiler = GuestAssemblyCompiler.Make(assemblyName);
-    private bool IsCompiling => _compiler.IsCompiling;
+    public bool IsCompiling => _compiler.IsCompiling;
     private bool _assemblyLoaded = false;
     private bool _isAssemblyDirty = false;
     private bool _isAssemblyStructureDirty = false;
@@ -21,11 +22,13 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
     public Assembly? Assembly;
     private GameAssemblyLoadContext? _assemblyLoadContext;
 
+    private double _debounceTimer = 0.0;
+    
     /// <summary>
     /// Run a per-frame update, triggering a build if the assembly is dirty.
     /// </summary>
     /// <returns>Whether the assembly needs a reload</returns>
-    internal bool Update()
+    internal bool Update(double deltaTime)
     {
         if (IsCompiling)
             return false;
@@ -33,18 +36,24 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
         if (!_isAssemblyDirty)
             return AssemblyAwaitingReload;
 
+        if (_debounceTimer > 0.0)
+        {
+            _debounceTimer -= deltaTime;
+            if (_debounceTimer > 0.0)
+                return false;
+        }
         BuildGuestAsync();
         return false;
     }
-
+    
     private void StartWatching()
     {
         Logger.Debug("Watching for changes in: " + _srcPath);
         _watcher = new FileSystemWatcher(_srcPath, "*.cs")
-            {
-                IncludeSubdirectories = true,
-                NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName
-            };
+        {
+            IncludeSubdirectories = true,
+            NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.FileName
+        };
         _watcher.Changed += OnSourceChangedIncrementally;
         _watcher.Created += OnSourceChanged;
         _watcher.Renamed += OnSourceChanged;
@@ -54,34 +63,34 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
     
     private void OnSourceChangedIncrementally(object sender, FileSystemEventArgs e)
     {
+        _debounceTimer = 0.05;
         _isAssemblyDirty = true;
         Logger.Debug("Source file updated: " + e.FullPath);
     }
 
     private void OnSourceChanged(object sender, FileSystemEventArgs e)
     {
+        _debounceTimer = 0.05;
         _isAssemblyDirty = true;
         _isAssemblyStructureDirty = true;
         Logger.Debug("Source file changed: " + e.FullPath);
     }
 
-    private void BuildGuestAsync()
+    internal Task BuildGuestAsync()
     {
         _isAssemblyDirty = false;
         AssemblyAwaitingReload = false;
-        _compiler.CompileAsync(_isAssemblyStructureDirty, () =>
+        return _compiler.CompileAsync(_isAssemblyStructureDirty, () =>
         {
             AssemblyAwaitingReload = true;
         });
     }
 
-    /* ---------- internals ---------- */
-
-    public TContract? LoadAssembly<TContract>() where TContract : class
+    public void LoadAssembly()
     {
         var srcPdb = Path.ChangeExtension(_dllPath, ".pdb");
 
-        var cacheDir = Path.Combine(Path.GetTempPath(), "CustomEngine/EnginePlugins");
+        var cacheDir = Path.Combine(Path.GetTempPath(), "CustomEngine\\EnginePlugins");
         Directory.CreateDirectory(cacheDir);
 
         var stamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmssfff");
@@ -95,16 +104,8 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
         _assemblyLoaded = true;
         StartWatching();
 
-        _assemblyLoadContext = new GameAssemblyLoadContext(tmpDll);
+        _assemblyLoadContext = new GameAssemblyLoadContext(_dllPath, tmpDll);
         Assembly = _assemblyLoadContext.LoadFromAssemblyPath(tmpDll);
-        
-        foreach (var type1 in Assembly.GetReferencedAssemblies().Where(name => name.ToString().StartsWith("Engine.", StringComparison.Ordinal)))
-        {
-            Console.WriteLine(type1);
-        }
-
-        var type = Assembly.GetTypes().Where(ImplementsContract<TContract>).ToList();
-        return type.Count == 0 ? null : (TContract)Activator.CreateInstance(type.First())!;
     }
 
     public static void CleanTempFolder()
@@ -115,7 +116,7 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
         Directory.Delete(cacheDir, true);
     }
     
-    public TContract? LoadContract<TContract>() where TContract : class
+    public TContract? ProduceContract<TContract>() where TContract : class
     {
         if (Assembly == null)
             return null;
@@ -158,18 +159,37 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
     }
 }
 
-internal sealed class GameAssemblyLoadContext(string mainDll)
-    : AssemblyLoadContext(Path.GetFileNameWithoutExtension(mainDll), isCollectible: true)
+internal sealed class GameAssemblyLoadContext(string sourceDllPath, string loadedDllPath)
+    : AssemblyLoadContext(Path.GetFileNameWithoutExtension(loadedDllPath), isCollectible: true)
 {
-    private readonly AssemblyDependencyResolver _resolver = new(mainDll);
+    private readonly AssemblyDependencyResolver _resolver = new(sourceDllPath);
 
-    protected override Assembly? Load(AssemblyName name)
+    protected override Assembly? Load(AssemblyName assemblyName)
     {
-        // Share all engine assemblies
-        // if (name.Name?.StartsWith("Engine.", StringComparison.Ordinal) == true || name.Name?.StartsWith("System.", StringComparison.Ordinal) == true)
-            // return null;
+        var name = assemblyName.Name!;
 
-        var path = _resolver.ResolveAssemblyToPath(name);
-        return path is null ? null : LoadFromAssemblyPath(path);
+        // Core is already loaded implicitly
+        if (name == "Engine.Core")
+            return null;
+
+        if (name.StartsWith("User."))
+            throw new Exception("User assemblies must not be referenced directly.");
+        if (!name.StartsWith("Engine."))
+            return LoadExternal(assemblyName);
+        return AssemblyRepository.LoadLibrary(name).Loader.Assembly;
+    }
+
+    private Assembly? LoadExternal(AssemblyName assemblyName)
+    {
+        var name = assemblyName.Name!;
+        if (AssemblyRepository.ExternalAssemblies.TryGetValue(name, out var externalAssembly))
+            return externalAssembly;
+        var path = _resolver.ResolveAssemblyToPath(assemblyName);
+        if (path == null)
+            return null;
+
+        var newAssembly = LoadFromAssemblyPath(path);
+        AssemblyRepository.ExternalAssemblies[name] = newAssembly;
+        return newAssembly;
     }
 }

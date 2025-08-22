@@ -16,8 +16,8 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
     public override void Load()
     {
         base.Load();
-        RenderingHost = Loader.LoadAssembly<IRenderingHost>();
-        RenderingBootstrap = Loader.LoadContract<IRenderingModuleBootstrap>();
+        RenderingHost = Loader.ProduceContract<IRenderingHost>();
+        RenderingBootstrap = Loader.ProduceContract<IRenderingModuleBootstrap>();
         if (RenderingHost == null || RenderingBootstrap == null)
         {
             Logger.Error("RenderingAssembly: Failed to instantiate the host or bootstrapper.");
@@ -37,8 +37,9 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
         }
     }
 
-    protected override void Unload()
+    public override void Unload()
     {
+        Console.WriteLine("HOT UNLOAD");
         RenderingHost?.HotShutdown();
         base.Unload();
     }
@@ -46,7 +47,8 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
     public override void Destroy()
     {
         RenderingHost?.HotShutdown();
-        RenderingBootstrap?.Shutdown();
+        if (_isInitialized)
+            RenderingBootstrap?.Shutdown();
         base.Destroy();
     }
 }

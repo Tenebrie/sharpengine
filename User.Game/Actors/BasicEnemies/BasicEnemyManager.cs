@@ -47,7 +47,6 @@ public partial class BasicEnemyManager : Actor
         if (player is null) 
             return;
         
-        Logger.Info("Spawning");
         _enemiesQueued += Math.Min(1, maxEnemies - InstanceManager.InstanceCount - _enemiesQueued);
         var enemiesSpawned = Math.Min(_enemiesQueued, 3);
         for (var i = 0; i < enemiesSpawned; i++)

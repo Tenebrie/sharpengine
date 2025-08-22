@@ -25,11 +25,11 @@ public partial class PhysicsComponent : ActorComponent, IPhysicsComponent
     [OnCreate]
     [OnModuleReload(EngineModule.Physics)]
     protected void OnRegisterOnPhysicsServer()
-    {
+    { 
         var parent = GetSpatialParent();
         var physicsModule = Backstage.PhysicsModule;
         if (physicsModule == null)
-            return;
+            return; 
         Rid = physicsModule.Register(parent, this);
     }
     

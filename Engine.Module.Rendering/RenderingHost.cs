@@ -55,6 +55,7 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
 
         return new RenderingResources
         {
+            EngineFactory = _engineFactory,
             ImmediateContext = _immediateContext,
             DeferredContexts = _deferredContexts,
             RenderDevice = _renderDevice,
@@ -114,6 +115,11 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
 
     public void Shutdown()
     {
+        if (_swapChain == null)
+        {
+            Console.Error.WriteLine("SwapChain is already null. Something is wrong :(");
+            return;
+        }
         _swapChain.Present(0);
         
         AssemblyAssetManager.DisposeAll();
@@ -335,7 +341,7 @@ public class RenderingHost : IRenderingHost
         
         if (activeCamera == null)
         {
-            Logger.Error("No active camera found for rendering.");
+            // Logger.Error("No active camera found for rendering.");
         }
         else
         {

@@ -13,7 +13,7 @@ internal class PhysicsAssembly() : ModularAssembly("Engine.Module.Physics", Engi
     public override void Load()
     {
         base.Load();
-        PhysicsModule = Loader.LoadAssembly<IPhysicsHost>();
+        PhysicsModule = Loader.ProduceContract<IPhysicsHost>();
         if (PhysicsModule == null)
         {
             Logger.Error("PhysicsAssembly: Failed to instantiate the host.");
@@ -29,7 +29,7 @@ internal class PhysicsAssembly() : ModularAssembly("Engine.Module.Physics", Engi
         return base.Update(deltaTime);
     }
 
-    protected override void Unload()
+    public override void Unload()
     {
         PhysicsModule?.Shutdown();
         base.Unload();

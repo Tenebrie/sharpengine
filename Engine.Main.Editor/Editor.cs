@@ -20,10 +20,10 @@ internal static class Editor
     private static IWindow MainWindow { get; set; } = null!;
     private static IInputContext MainInputContext { get; set; } = null!;
 
-    private static GameplayAssembly GameplayAssembly { get; set; } = null!;
-    private static PhysicsAssembly PhysicsAssembly { get; set; } = null!;
-    private static RenderingAssembly RenderingAssembly { get; set; } = null!;
-    private static WorkspaceAssembly WorkspaceAssembly { get; set; } = null!;
+    internal static GameplayAssembly GameplayAssembly { get; set; } = null!;
+    internal static PhysicsAssembly PhysicsAssembly { get; set; } = null!;
+    internal static RenderingAssembly RenderingAssembly { get; set; } = null!;
+    internal static WorkspaceAssembly WorkspaceAssembly { get; set; } = null!;
 
     private static List<ModularAssembly> GuestAssemblies { get; set; } = [];
 
@@ -77,6 +77,19 @@ internal static class Editor
             PhysicsAssembly.Load();
             WorkspaceAssembly.Load();
             
+            // foreach (var node in AssemblyRepository.References.Values)
+            // {
+            //     Console.WriteLine(node.Name + ": ");
+            //     foreach (var nodeDep in node.Dependencies)
+            //     {
+            //         Console.WriteLine(" <- " + nodeDep);
+            //     }
+            //     foreach (var nodeDepOf in node.IsDependencyOf)
+            //     {
+            //         Console.WriteLine(" -> " + nodeDepOf);
+            //     }
+            // }
+            
             foreach (var reloadedAssembly in GuestAssemblies)
             {
                 GuestAssemblies.ForEachTry(
@@ -94,9 +107,31 @@ internal static class Editor
         MainWindow.Update += deltaTime =>
         {
             MainThreadTask.ExecuteAllQueued();
+            
+            foreach (var libraryAssembly in AssemblyRepository.LibraryAssemblies.Values)
+            {
+                libraryAssembly.Update(deltaTime);
+            }
+
+            bool dependenciesInvalidated;
+            do
+            {
+                dependenciesInvalidated = false;
+                foreach (var libraryAssembly in AssemblyRepository.LibraryAssemblies.Values)
+                {
+                    var reloadNeeded = libraryAssembly.NeedsReload();
+                    dependenciesInvalidated |= reloadNeeded;
+                    if (!reloadNeeded)
+                        continue;
+                    libraryAssembly.Reload();
+                }
+            } while (dependenciesInvalidated);
+
             foreach (var guestAssembly in GuestAssemblies)
             {
                 var needsReload = guestAssembly.Update(deltaTime * guestAssembly.TimeScale);
+                if (needsReload)
+                    Console.WriteLine("RELOADING MODULE " + guestAssembly.Name);
                 if (needsReload)
                     ReloadAssembly(guestAssembly);
             }
@@ -124,24 +159,11 @@ internal static class Editor
     private static void ReloadAssembly(ModularAssembly modularAssembly)
     {
         modularAssembly.Reload();
-        // GC.Collect();
-        // GC.WaitForPendingFinalizers();
 
         GuestAssemblies.ForEachTry(
             assembly => assembly.GetHost()?.NotifyModuleReloaded(modularAssembly.Module),
             (assembly, exception) => Logger.Error($"Failed to notify about module reload: {assembly}", exception)
         );
-        // foreach (var assembly in GuestAssemblies)
-        // {
-        //     try
-        //     {
-        //         assembly.Host?.NotifyModuleReloaded(modularAssembly.Module);
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         Logger.Error($"Failed to notify backstage of module reload: {modularAssembly.Module}", e);
-        //     }
-        // }
     }
 
     private static ModularAssembly FindModularAssembly(EngineModule module)

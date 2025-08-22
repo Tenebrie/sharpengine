@@ -14,6 +14,7 @@ public interface IRenderingModuleBootstrap
 
 public struct RenderingResources
 {
+    public required IEngineFactoryD3D12 EngineFactory;
     public required IRenderDevice RenderDevice;
     public required IDeviceContext ImmediateContext;
     public required IDeviceContext[] DeferredContexts;

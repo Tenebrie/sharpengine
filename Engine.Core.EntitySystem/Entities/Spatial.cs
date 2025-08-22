@@ -14,7 +14,7 @@ public abstract partial class Spatial : Atom, ISpatial
     public Transform Transform
     {
         get => _transform;
-        set => _transform = ClaimedTransform.Claim(value, this);
+        set => _transform = ClaimedTransform.Claim(value, this); 
     }
     
     public ref Transform TransformReference => ref _transform;
@@ -27,10 +27,10 @@ public abstract partial class Spatial : Atom, ISpatial
     private bool _cachedWorldTransformValid = false;
     private Transform _cachedWorldTransform = SharedTransformPool.Get();
     private bool _cachedWorldTransformInverseValid = false;
-    private Transform _cachedWorldTransformInverse = SharedTransformPool.Get();
+    private Transform _cachedWorldTransformInverse = SharedTransformPool.Get(); 
     public Transform WorldTransform
-    {
-        get
+    { 
+        get 
         {
             if (_cachedWorldTransformValid)
                 return _cachedWorldTransform;
@@ -39,10 +39,10 @@ public abstract partial class Spatial : Atom, ISpatial
                 return Transform;
             
             parent.WorldTransform.Multiply(Transform, ref _cachedWorldTransform);
-            _cachedWorldTransformValid = true;
-            return _cachedWorldTransform;
+            _cachedWorldTransformValid = true; 
+            return _cachedWorldTransform; 
         }
-    }
+    } 
     public Transform WorldTransformInverse
     {
         get
@@ -58,12 +58,12 @@ public abstract partial class Spatial : Atom, ISpatial
     
     internal void InvalidateWorldTransform()
     {
-        _cachedWorldTransformValid = false;
+        _cachedWorldTransformValid = false; 
         _cachedWorldTransformInverseValid = false;
     }
-
+ 
     [OnDestroy]
-    protected void OnDestroy()
+    protected void OnSpatialDestroy() 
     {
         _transform.ResetToIdentity();
         _cachedWorldTransform.ResetToIdentity();
