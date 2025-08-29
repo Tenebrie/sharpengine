@@ -9,7 +9,7 @@ namespace Engine.Core.EntitySystem.Entities;
 
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 [SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
-public partial class Atom
+public partial class Atom : IAtom
 {
     private Backstage? _backstage;
     public Backstage Backstage

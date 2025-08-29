@@ -14,5 +14,9 @@ public interface IBackstage : IModularHost
     public void TriggerLogicFrameUpdate(double deltaTime);
 }
 
+public interface IAtom;
 public interface ISpatial;
 public interface IPhysicsComponent;
+
+public interface IOnCreateAttribute;
+public interface IOnPrepareResourcesAttribute;

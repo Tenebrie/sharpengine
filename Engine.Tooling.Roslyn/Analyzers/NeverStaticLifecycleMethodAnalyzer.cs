@@ -26,6 +26,8 @@ public sealed class NeverStaticLifecycleMethodAnalyzer : DiagnosticAnalyzer
 
     private static readonly ImmutableHashSet<string> NeverStaticAttributeNames =
         ImmutableHashSet.Create(StringComparer.Ordinal,
+            "OnCreateAttribute",
+            "OnReadyAttribute",
             "OnDestroyAttribute",
             "OnModuleReloadAttribute",
             "OnGameplayContextChangeAttribute",

@@ -21,15 +21,15 @@ public abstract partial class Spatial : Atom, ISpatial
 
     protected Spatial()
     {
-        Transform = SharedTransformPool.Get();
+        Transform = SharedTransformPool.Get();  
     }
 
-    private bool _cachedWorldTransformValid = false;
+    private bool _cachedWorldTransformValid = false;   
     private Transform _cachedWorldTransform = SharedTransformPool.Get();
     private bool _cachedWorldTransformInverseValid = false;
     private Transform _cachedWorldTransformInverse = SharedTransformPool.Get(); 
-    public Transform WorldTransform
-    { 
+    public Transform WorldTransform 
+    {    
         get 
         {
             if (_cachedWorldTransformValid)
@@ -40,19 +40,19 @@ public abstract partial class Spatial : Atom, ISpatial
             
             parent.WorldTransform.Multiply(Transform, ref _cachedWorldTransform);
             _cachedWorldTransformValid = true; 
-            return _cachedWorldTransform; 
+            return _cachedWorldTransform;   
         }
     } 
     public Transform WorldTransformInverse
     {
-        get
+        get 
         {
-            if (_cachedWorldTransformInverseValid)
+            if (_cachedWorldTransformInverseValid) 
                 return _cachedWorldTransform;
-
+ 
             WorldTransform.GetInverse(ref _cachedWorldTransformInverse);
-            _cachedWorldTransformInverseValid = true;
-            return _cachedWorldTransformInverse;
+            _cachedWorldTransformInverseValid = true; 
+            return _cachedWorldTransformInverse;   
         }
     }
     
@@ -66,18 +66,18 @@ public abstract partial class Spatial : Atom, ISpatial
     protected void OnSpatialDestroy() 
     {
         _transform.ResetToIdentity();
-        _cachedWorldTransform.ResetToIdentity();
+        _cachedWorldTransform.ResetToIdentity();        
         _cachedWorldTransformInverse.ResetToIdentity();
         
-        SharedTransformPool.Return(_transform);
+        SharedTransformPool.Return(_transform); 
         SharedTransformPool.Return(_cachedWorldTransform);
         SharedTransformPool.Return(_cachedWorldTransformInverse);
         _transform = null!;
-        _cachedWorldTransform = null!;
-        _cachedWorldTransformInverse = null!;
-    }
-}
-
+        _cachedWorldTransform = null!;   
+        _cachedWorldTransformInverse = null!;   
+    }   
+}        
+ 
 public static class SpatialExternals
 {
     public static void InvalidateWorldTransform(Spatial spatial) => spatial.InvalidateWorldTransform();

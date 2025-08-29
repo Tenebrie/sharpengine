@@ -3,6 +3,7 @@ using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Services;
 using Engine.Core.EntitySystem.Utilities;
 using Engine.Core.Enum;
+using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Silk.NET.Windowing;
 
@@ -32,7 +33,6 @@ public partial class Backstage : Scene
     {
         AdoptChild(ServiceRegistry);
         ServiceRegistry.Preload<CacheRevalidationService>();
-        RunAssemblyStaticInit();
     }
 
     [OnUpdate]

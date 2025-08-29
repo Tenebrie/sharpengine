@@ -82,6 +82,7 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
         AssemblyAwaitingReload = false;
         return _compiler.CompileAsync(_isAssemblyStructureDirty, () =>
         {
+            Logger.Info("SETTING ITSELF TO TRUE");
             AssemblyAwaitingReload = true;
         });
     }
@@ -96,6 +97,7 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
         var stamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmssfff");
         var tmpDll = Path.Combine(cacheDir, $"{assemblyName}_{stamp}.dll");
         var tmpPdb = Path.ChangeExtension(tmpDll, ".pdb");
+        Logger.Info(tmpDll);
 
         File.Copy(_dllPath, tmpDll, overwrite: true);
         if (File.Exists(srcPdb))
@@ -176,7 +178,10 @@ internal sealed class GameAssemblyLoadContext(string sourceDllPath, string loade
             throw new Exception("User assemblies must not be referenced directly.");
         if (!name.StartsWith("Engine."))
             return LoadExternal(assemblyName);
-        return AssemblyRepository.LoadLibrary(name).Loader.Assembly;
+        var t = AssemblyRepository.LoadLibrary(name);
+        if (t.Loader.Assembly == null)
+            throw new Exception("Assembly not found: " + name);
+        return t.Loader.Assembly;
     }
 
     private Assembly? LoadExternal(AssemblyName assemblyName)

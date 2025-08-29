@@ -39,8 +39,8 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
 
     public override void Unload()
     {
-        Console.WriteLine("HOT UNLOAD");
         RenderingHost?.HotShutdown();
+        RenderingHost = null;
         base.Unload();
     }
 

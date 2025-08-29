@@ -29,6 +29,11 @@ public class WorkspaceAssembly() : ModularAssembly("Engine.Module.Host", EngineM
 
     public override bool Update(double deltaTime)
     {
+        if (SkipNextUpdate)
+        {
+            SkipNextUpdate = false;
+            return false;
+        }
         if (HostBackstage == null)
             return base.Update(deltaTime);
 
@@ -48,6 +53,7 @@ public class WorkspaceAssembly() : ModularAssembly("Engine.Module.Host", EngineM
     public override void Unload()
     {
         HostBackstage?.FreeImmediately();
+        HostBackstage = null;
         base.Unload();
     }
 }

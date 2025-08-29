@@ -1,17 +1,19 @@
 ﻿using System.Reflection;
+using Engine.Core.Logging;
+using Engine.Core.Modules.EntitySystem;
 
 namespace Engine.Core.EntitySystem.Entities;
 
 public partial class Atom
 {
-    private static bool IsAtomType(Type type)
-    {
+    private static bool IsAtomType(Type type) 
+    {   
         return type is { IsClass: true, IsAbstract: false } &&
-               type != typeof(Atom) &&
-               typeof(Atom).IsAssignableFrom(type);
+                      type != typeof(IAtom) &&
+                      typeof(IAtom).IsAssignableFrom(type);
     }
 
-    protected Type[] GetAssemblyAtomTypes()
+    protected Type[] GetAssemblyAtomTypes() 
     {
         var ownAssembly = GetType().Assembly;
         Assembly[] assemblies = [ownAssembly];

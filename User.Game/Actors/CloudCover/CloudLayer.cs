@@ -13,11 +13,11 @@ using Engine.Core.Extensions;
 namespace User.Game.Actors.CloudCover;
 
 public partial class CloudLayer : Actor
-{
-    [Component] protected StaticMeshComponent MeshComponent;
+{ 
+    [Component] protected StaticMeshComponent MeshComponent; 
 
     private static Material _material = null!;
-
+    
     [OnPrepareResources]
     protected static void OnPrepareResources()
     {

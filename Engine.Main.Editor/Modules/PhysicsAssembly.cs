@@ -25,6 +25,11 @@ internal class PhysicsAssembly() : ModularAssembly("Engine.Module.Physics", Engi
     
     public override bool Update(double deltaTime)
     {
+        if (SkipNextUpdate)
+        {
+            SkipNextUpdate = false;
+            return false;
+        }
         PhysicsModule?.ProcessPhysicsFrame(deltaTime);
         return base.Update(deltaTime);
     }
@@ -32,6 +37,7 @@ internal class PhysicsAssembly() : ModularAssembly("Engine.Module.Physics", Engi
     public override void Unload()
     {
         PhysicsModule?.Shutdown();
+        PhysicsModule = null;
         base.Unload();
     }
 }

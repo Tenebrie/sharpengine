@@ -112,28 +112,39 @@ internal static class Editor
             {
                 libraryAssembly.Update(deltaTime);
             }
+            foreach (var guestAssembly in GuestAssemblies)
+            {
+                guestAssembly.Update(deltaTime * guestAssembly.TimeScale);
+            }
 
+            var allAssemblies = AssemblyRepository.LibraryAssemblies.Values.ToList();
+            allAssemblies.Add(RenderingAssembly);
+            allAssemblies.Add(GameplayAssembly);
+            allAssemblies.Add(PhysicsAssembly);
+            allAssemblies.Add(WorkspaceAssembly);
+            
             bool dependenciesInvalidated;
             do
             {
                 dependenciesInvalidated = false;
-                foreach (var libraryAssembly in AssemblyRepository.LibraryAssemblies.Values)
+                foreach (var libraryAssembly in allAssemblies)
                 {
                     var reloadNeeded = libraryAssembly.NeedsReload();
                     dependenciesInvalidated |= reloadNeeded;
                     if (!reloadNeeded)
                         continue;
-                    libraryAssembly.Reload();
+                    dependenciesInvalidated = AssemblyRepository.InvalidateDependencies(libraryAssembly.Name);
                 }
             } while (dependenciesInvalidated);
-
-            foreach (var guestAssembly in GuestAssemblies)
+            
+            var reloadedModules = AssemblyRepository.ReloadAllAwaiting();
+            foreach (var reloadedModule in reloadedModules)
             {
-                var needsReload = guestAssembly.Update(deltaTime * guestAssembly.TimeScale);
-                if (needsReload)
-                    Console.WriteLine("RELOADING MODULE " + guestAssembly.Name);
-                if (needsReload)
-                    ReloadAssembly(guestAssembly);
+                reloadedModule.SkipNextUpdate = true;
+                GuestAssemblies.ForEachTry(
+                    assembly => assembly.GetHost()?.NotifyModuleReloaded(reloadedModule.Module),
+                    (assembly, exception) => Logger.Error($"Failed to notify about module reload: {assembly}", exception)
+                );
             }
         };
 
