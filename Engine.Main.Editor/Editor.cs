@@ -20,10 +20,10 @@ internal static class Editor
     private static IWindow MainWindow { get; set; } = null!;
     private static IInputContext MainInputContext { get; set; } = null!;
 
-    internal static GameplayAssembly GameplayAssembly { get; set; } = null!;
-    internal static PhysicsAssembly PhysicsAssembly { get; set; } = null!;
-    internal static RenderingAssembly RenderingAssembly { get; set; } = null!;
-    internal static WorkspaceAssembly WorkspaceAssembly { get; set; } = null!;
+    internal static GameplayAssembly GameplayAssembly { get; private set; } = null!;
+    internal static PhysicsAssembly PhysicsAssembly { get; private set; } = null!;
+    internal static RenderingAssembly RenderingAssembly { get; private set; } = null!;
+    internal static WorkspaceAssembly WorkspaceAssembly { get; private set; } = null!;
 
     private static List<ModularAssembly> GuestAssemblies { get; set; } = [];
 
@@ -77,19 +77,6 @@ internal static class Editor
             PhysicsAssembly.Load();
             WorkspaceAssembly.Load();
             
-            // foreach (var node in AssemblyRepository.References.Values)
-            // {
-            //     Console.WriteLine(node.Name + ": ");
-            //     foreach (var nodeDep in node.Dependencies)
-            //     {
-            //         Console.WriteLine(" <- " + nodeDep);
-            //     }
-            //     foreach (var nodeDepOf in node.IsDependencyOf)
-            //     {
-            //         Console.WriteLine(" -> " + nodeDepOf);
-            //     }
-            // }
-            
             foreach (var reloadedAssembly in GuestAssemblies)
             {
                 GuestAssemblies.ForEachTry(
@@ -104,6 +91,13 @@ internal static class Editor
             Logger.Info("Engine startup complete.");
         };
 
+        /*
+         * TODO: Hot reload works well as long as it doesn't require a rebuild downstream.
+         * Definitely needs to be supported. If, say, EntitySystem is rebuilt, then
+         * all downstream dependencies (Gameplay, Physics, etc) need to be rebuilt too.
+         *
+         * Works otherwise though.
+         */
         MainWindow.Update += deltaTime =>
         {
             MainThreadTask.ExecuteAllQueued();
