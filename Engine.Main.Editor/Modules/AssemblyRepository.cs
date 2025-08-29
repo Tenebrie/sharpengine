@@ -1,23 +1,24 @@
 ﻿using System.Reflection;
 using Engine.Core.Logging;
 using Engine.Main.Editor.Modules.Abstract;
+// ReSharper disable InvertIf
 
 namespace Engine.Main.Editor.Modules;
 
 public class AssemblyReferenceNode
 {
-    public required string Name { get; set; }
+    public required string Name { get; init; }
     public required List<string> Dependencies { get; set; }
-    public required HashSet<string> IsDependencyOf { get; set; }
+    public required HashSet<string> IsDependencyOf { get; init; }
 }
 
 public static class AssemblyRepository
 {
     public static Dictionary<string, LibraryAssembly> LibraryAssemblies { get; } = new();
     public static Dictionary<string, Assembly> ExternalAssemblies { get; } = new();
-    
-    public static Dictionary<string, AssemblyReferenceNode> References { get; } = new();
-    public static HashSet<string> AssembliesAwaitingReload { get; } = [];
+
+    private static Dictionary<string, AssemblyReferenceNode> References { get; } = new();
+    private static HashSet<string> AssembliesAwaitingReload { get; } = [];
 
     public static LibraryAssembly LoadLibrary(string name)
     {
@@ -104,6 +105,7 @@ public static class AssemblyRepository
         throw new Exception("Failed to resolve assembly reload priorities, circular dependency detected.");
     }
 
+    private static int _runsWithoutGarbageCollection = 0;
     public static List<ModularAssembly> ReloadAllAwaiting()
     {
         if (AssembliesAwaitingReload.Count == 0)
@@ -133,7 +135,14 @@ public static class AssemblyRepository
             assembly.Load();
         }
         AssembliesAwaitingReload.Clear();
-        
+
+        if (_runsWithoutGarbageCollection++ >= 10)
+        {
+            _runsWithoutGarbageCollection = 0;
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
+
         return sortedAssemblies.Where(assembly => assembly is ModularAssembly).Cast<ModularAssembly>().ToList();
     }
 }

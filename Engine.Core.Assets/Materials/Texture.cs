@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Buffers;
+using System.Reflection;
 using Diligent;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Communication.Tasks;
@@ -155,6 +156,7 @@ public sealed class Texture : IDisposable
     public void Dispose()
     {
         GC.SuppressFinalize(this);
+        _baseImage.Dispose();
         _textureHandle.Dispose();
     }
     
@@ -166,12 +168,12 @@ public sealed class Texture : IDisposable
         if (AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Textures.TryGet(filepath, out var texture))
             return texture;
         
-        texture = CreateFromDisktWithoutCache(filepath);
+        texture = CreateFromDiskWithoutCache(filepath);
         AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Textures.Put(filepath, texture);
         return texture;
     }
 
-    private static Texture CreateFromDisktWithoutCache(string filepath)
+    private static Texture CreateFromDiskWithoutCache(string filepath)
     {
         using var image = Image.Load<Rgba32>(filepath);
                 
@@ -188,11 +190,10 @@ public sealed class Texture : IDisposable
     
     public static Texture CreateFromImage(Image<Rgba32> image, bool generateMips = false)
     {
-        var textureData = new byte[image.Width * image.Height * 4];
+        var textureData = ArrayPool<byte>.Shared.Rent(image.Width * image.Height * 4);
         image.CopyPixelDataTo(textureData);
         var tex = new Texture(textureData, (ushort)image.Width, (ushort)image.Height, generateMips);
-        // AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Textures.Put(Guid.NewGuid().ToString(), tex);
-
+        ArrayPool<byte>.Shared.Return(textureData);
         return tex;
     }
 }

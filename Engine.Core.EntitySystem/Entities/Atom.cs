@@ -16,7 +16,7 @@ public partial class Atom : IAtom
     {
         get
         {
-            if (_backstage != null)
+            if (_backstage != null) 
                 return _backstage;
             if (this is Backstage backstage)
                 return backstage;

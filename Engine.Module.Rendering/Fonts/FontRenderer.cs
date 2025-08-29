@@ -32,8 +32,9 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
     private readonly int _sampleCount;
     private readonly Dictionary<Texture, MaterialInstance> _materialInstances = [];
     private readonly Dictionary<Texture, List<RenderingVertex>> _glyphStream = [];
-    
-    public ITexture2DManager TextureManager { get; }
+
+    public ITexture2DManager TextureManager => _myTextureManager;
+    private readonly MyTextureManager _myTextureManager;
     
     public FontRenderer(FontKey key)
     {
@@ -45,7 +46,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
         _fontSystem.AddFont(File.ReadAllBytes($"Assets/Fonts/{key.Name}.ttf"));
         _font = _fontSystem.GetFont(key.Size * key.SampleCount);
         _sampleCount = key.SampleCount;
-        TextureManager = new MyTextureManager(this);
+        _myTextureManager = new MyTextureManager(this);
     }
 
     public unsafe void Initialize()
@@ -225,6 +226,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
     {
         GC.SuppressFinalize(this);
         _fontSystem.Dispose();
+        _myTextureManager.Dispose();
         if (!_isValid)
             return;
         _vertexBuffer.Dispose();
@@ -247,12 +249,15 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
     }
 }
 
-public class MyTextureManager(FontRenderer renderer) : ITexture2DManager
+public class MyTextureManager(FontRenderer renderer) : ITexture2DManager, IDisposable
 {
+    private readonly List<Texture> _textures = [];
     public object CreateTexture(int width, int height)
     {
         using var image = new Image<Rgba32>(width, height);
-        return Texture.CreateFromImage(image);
+        var newTexture = Texture.CreateFromImage(image);
+        _textures.Add(newTexture);
+        return newTexture;
     }
 
     public Point GetTextureSize(object texture)
@@ -266,6 +271,14 @@ public class MyTextureManager(FontRenderer renderer) : ITexture2DManager
         var tex = (Texture)texture;
         tex.Update(data, bounds.Left, bounds.Top, bounds.Right, bounds.Bottom);
         renderer.Invalidate(tex);
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+        foreach (var texture in _textures)
+            texture.Dispose();
+        _textures.Clear();
     }
 }
 
