@@ -116,25 +116,23 @@ internal static class Editor
             allAssemblies.Add(GameplayAssembly);
             allAssemblies.Add(PhysicsAssembly);
             allAssemblies.Add(WorkspaceAssembly);
-            
-            bool dependenciesInvalidated;
+
+            int awaitingCount;
             do
             {
-                dependenciesInvalidated = false;
+                awaitingCount = AssemblyRepository.AssembliesAwaitingReload.Count;
                 foreach (var libraryAssembly in allAssemblies)
                 {
                     var reloadNeeded = libraryAssembly.NeedsReload();
-                    dependenciesInvalidated |= reloadNeeded;
                     if (!reloadNeeded)
                         continue;
-                    dependenciesInvalidated = AssemblyRepository.InvalidateDependencies(libraryAssembly.Name);
+                    AssemblyRepository.InvalidateDependencies(libraryAssembly.Name);
                 }
-            } while (dependenciesInvalidated);
+            } while (awaitingCount < AssemblyRepository.AssembliesAwaitingReload.Count);
             
             var reloadedModules = AssemblyRepository.ReloadAllAwaiting();
             foreach (var reloadedModule in reloadedModules)
             {
-                reloadedModule.SkipNextUpdate = true;
                 GuestAssemblies.ForEachTry(
                     assembly => assembly.GetHost()?.NotifyModuleReloaded(reloadedModule.Module),
                     (assembly, exception) => Logger.Error($"Failed to notify about module reload: {assembly}", exception)

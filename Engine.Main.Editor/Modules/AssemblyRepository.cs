@@ -18,7 +18,7 @@ public static class AssemblyRepository
     public static Dictionary<string, Assembly> ExternalAssemblies { get; } = new();
 
     private static Dictionary<string, AssemblyReferenceNode> References { get; } = new();
-    private static HashSet<string> AssembliesAwaitingReload { get; } = [];
+    public static HashSet<string> AssembliesAwaitingReload { get; } = [];
 
     public static LibraryAssembly LoadLibrary(string name)
     {
@@ -57,7 +57,6 @@ public static class AssemblyRepository
             return false;
 
         var anyInvalidated = false;
-        Logger.Info("Invalidating deps for " + assemblyName);
         AssembliesAwaitingReload.Add(assemblyName);
         foreach (var depName in node.IsDependencyOf)
         {
@@ -81,6 +80,10 @@ public static class AssemblyRepository
 
     private static void UpdateReloadPriority(List<LibraryAssembly> assemblies)
     {
+        foreach (var assembly in assemblies)
+        {
+            assembly.ReloadPriority = assembly.ImplicitReloadPriority;
+        }
         var currentIteration = 0;
         while (currentIteration++ < 32)
         {
@@ -94,7 +97,6 @@ public static class AssemblyRepository
                         continue;
                     
                     changed = true;
-                    Logger.Warn("Bumping " + deeperAssemblyName);
                     deeperAssembly.ReloadPriority = higherAssembly.ReloadPriority + 1;
                 }
             }
@@ -123,17 +125,11 @@ public static class AssemblyRepository
             .Where(assembly => assembly.NeedsReload())
             .OrderByDescending(assembly => assembly.ReloadPriority)
             .ToList();
-        var reversedSortedAssemblies = sortedAssemblies.AsEnumerable().Reverse().ToList();
-        foreach (var assembly in reversedSortedAssemblies)
-        {
-            assembly.Unload();
-        }
-        Logger.Info("Load order: " + string.Join(", ", sortedAssemblies.Select(a => a.Name + " (priority " + a.ReloadPriority + ")")));
-        Logger.Info("Unload order: " + string.Join(", ", reversedSortedAssemblies.Select(a => a.Name + " (priority " + a.ReloadPriority + ")")));
+        Logger.ShowPersistent(LogLevel.Warn, "AssembliesReloadNotice", $"Reloading {sortedAssemblies.Count} projects...");
+        Logger.Debug("Reloading projects:\n  - " + string.Join("\n  - ", sortedAssemblies.Select(a => a.Name + " (priority " + a.ReloadPriority + ")")));
+        Editor.RenderingAssembly.RenderingHost?.RenderSingleFrame(0);
         foreach (var assembly in sortedAssemblies)
-        {
-            assembly.Load();
-        }
+            assembly.Reload();
         AssembliesAwaitingReload.Clear();
 
         if (_runsWithoutGarbageCollection++ >= 10)
@@ -143,6 +139,7 @@ public static class AssemblyRepository
             GC.WaitForPendingFinalizers();
         }
 
+        Logger.ClearPersistent("AssembliesReloadNotice");
         return sortedAssemblies.Where(assembly => assembly is ModularAssembly).Cast<ModularAssembly>().ToList();
     }
 }

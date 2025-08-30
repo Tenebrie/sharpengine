@@ -40,6 +40,7 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
     
     public RenderingResources Initialize()
     {
+        Logger.Info("INITIALIZE RENDERING MODULE");
         _engineFactory = Native.GetEngineFactoryD3D12();
         SetMessageCallback(_engineFactory);
         CreateRenderDeviceAndSwapChain(
@@ -158,20 +159,6 @@ public class RenderingHost : IRenderingHost
     );
 
     private static int MsaaSamples => 8;
-    //
-    // public void Register(IBackstage maskedBackstage)
-    // {
-    //     if (maskedBackstage is not Backstage backstage)
-    //         throw new ArgumentException("Unable to unmask a Backstage.", nameof(maskedBackstage));
-    //     _backstages.Add(backstage);
-    // }
-    //
-    // public void Unregister(IBackstage maskedBackstage)
-    // {
-    //     if (maskedBackstage is not Backstage backstage)
-    //         throw new ArgumentException("Unable to unmask a Backstage.", nameof(maskedBackstage));
-    //     _backstages.Remove(backstage);
-    // }
 
     private IBuffer _viewMatrixBuffer = null!;
     private IBuffer _objectIndexBuffer = null!;
@@ -215,10 +202,6 @@ public class RenderingHost : IRenderingHost
             ShaderFactory = engineFactory.CreateDefaultShaderSourceStreamFactory("Assets/Shaders")
         };
         
-        Texture.Context = renderContext;
-        StaticMesh.Context = renderContext;
-        PipelineBuilder.Context = renderContext;
-        InfiniteInstanceBuffer.Context = renderContext;
         RenderContext.Current = renderContext;
         
         _logRenderer = new LogRenderer(this);
@@ -300,10 +283,10 @@ public class RenderingHost : IRenderingHost
         _swapChain.Present(0);
     }
 
-    private async Task RenderSingleFrame(double deltaTime)
+    public async Task RenderSingleFrame(double deltaTime)
     {
         var stopwatch = Profiler.Start();
-        FrameCounter.Increment();
+        FrameCounter.Increment(); 
         
         _immediateContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
         _immediateContext.ClearRenderTarget(_renderTargetView, new Vector4(0.35f, 0.35f, 0.35f, 1.0f), ResourceStateTransitionMode.Transition);
@@ -326,7 +309,7 @@ public class RenderingHost : IRenderingHost
         );
         
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingPrepare);
-        _swapChain.Present(0);
+        _swapChain.Present(1);
     }
 
     private Task InvokeRenderers(double deltaTime)
@@ -433,14 +416,14 @@ public class RenderingHost : IRenderingHost
         public required MemoryManager.ArrayHandle MaterialInstances;
     
         public static MergedRenderRequest Create(RenderRequest request)
-        {
-            var req = new MergedRenderRequest
+        { 
+            var req = new MergedRenderRequest  
             {
-                Mesh = request.Mesh,
-                Material = request.Material,
+                Mesh = request.Mesh, 
+                Material = request.Material, 
                 RenderScript = request.RenderScript,
                 InstanceCount = request.InstanceCount,
-                InstanceTransforms =
+                InstanceTransforms = 
                     MemoryManager.ProduceArray<Transform>(MemoryDomain.Rendering, request.InstanceCount),
                 MaterialInstances =
                     MemoryManager.ProduceArray<MaterialInstance>(MemoryDomain.Rendering, request.InstanceCount),
@@ -456,7 +439,7 @@ public class RenderingHost : IRenderingHost
 
     private void RenderAtomTree(IRenderable[] atomsToRender, int atomsToRenderCount)
     {
-        _renderRequestPool.Clear();
+        _renderRequestPool.Clear(); 
 
         for (var i = 0; i < atomsToRenderCount; i++)
         {
@@ -507,25 +490,29 @@ public class RenderingHost : IRenderingHost
     private GameplayContext GameplayContext => Hypervisor.GameplayContext;
 
     public void HotShutdown()
-    {
-        TextRenderer.Dispose();
-        _backstages = [];
+    { 
         RootWindow.Render -= RenderSingleFrameSync;
         RootWindow.FramebufferResize -= OnFramebufferResize;
+        _immediateContext.SetPipelineState(null);
+        _immediateContext.Flush();
+        _renderDevice.IdleGPU();
+        AssetManager.Shared.Pipelines.InvalidateAll();
+        TextRenderer.Dispose();
+        _backstages = [];
         _atomsToRender = [];
         _viewMatrixBuffer.Dispose();
         _objectIndexBuffer.Dispose();
         _infiniteInstanceBuffer.Dispose();
-        DisposeRenderTargets();
+        DisposeRenderTargets();     
     }
 
     public void NotifyModuleReloaded(EngineModule module)
     {
         _backstages.Clear();
-        if (Hypervisor.GameplayModule is Backstage gameplayHost)
+        if (Hypervisor.GameplayModule is Backstage gameplayHost)             
             _backstages.Add(gameplayHost);
         if (Hypervisor.WorkspaceModule is Backstage workspaceHost)
             _backstages.Add(workspaceHost);
-    }
+    }  
     public void NotifyGameplayContextChanged(GameplayContext context) {}
 }

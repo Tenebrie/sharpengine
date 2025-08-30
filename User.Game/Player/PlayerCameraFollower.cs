@@ -10,7 +10,7 @@ namespace User.Game.Player;
 public partial class PlayerCameraFollower : Actor
 {
     [Component] public MainCamera MainCameraComponent;
-    [Component] public PhysicsComponent Physics;
+    // [Component] public PhysicsComponent Physics;
     
     public PlayerCharacter PlayerCharacter { get; set; }
 
@@ -25,5 +25,6 @@ public partial class PlayerCameraFollower : Actor
     protected void OnUpdate(double deltaTime)
     {
         Transform.Position += (PlayerCharacter.Transform.Position - Transform.Position) * deltaTime * 3.0f;
+        // Physics.LinearVelocity = (PlayerCharacter.Transform.Position - Transform.Position) * 3.0f;
     }
 }

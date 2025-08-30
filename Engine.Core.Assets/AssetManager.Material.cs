@@ -43,9 +43,10 @@ public class MaterialAssetManager : IDisposable
         _cachedMaterials[key] = material;
     }
 
-    public void RegisterInstance(MaterialInstance _)
+    public void InvalidateInstanceCaches()
     {
-        // NOOP
+        foreach (var material in _cachedMaterials.Values)
+            material.InvalidateInstancesCache();
     }
     
     public void Dispose()

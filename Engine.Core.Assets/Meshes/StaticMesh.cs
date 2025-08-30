@@ -23,7 +23,6 @@ public class StaticMesh : IDisposable
 {
     public bool IsValid { get; private set; }
 
-    public static RenderContext Context { get; set; }
     private IBuffer _vertexBuffer = null!;
     private IBuffer[] _vertexBufferArray = [];
     private IBuffer _indexBuffer = null!;
@@ -85,7 +84,7 @@ public class StaticMesh : IDisposable
             .WithWindingOrder(windingOrder)
             .Build();
 
-        _vertexBuffer = Context.RenderDevice.CreateBuffer(new BufferDesc
+        _vertexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
             Name = "StaticMesh vertex buffer",
             Usage = Usage.Immutable,
@@ -94,7 +93,7 @@ public class StaticMesh : IDisposable
         }, renderVertices);
         _vertexBufferArray = [_vertexBuffer];
 
-        _indexBuffer = Context.RenderDevice.CreateBuffer(new BufferDesc
+        _indexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
             Name = "StaticMesh index buffer",
             Usage = Usage.Immutable,
@@ -110,8 +109,8 @@ public class StaticMesh : IDisposable
     private readonly ulong[] _vertexOffsets = [0ul];
     public void BindForRendering()
     {
-        Context.DeviceContext.SetVertexBuffers(0, _vertexBufferArray, _vertexOffsets, ResourceStateTransitionMode.Transition);
-        Context.DeviceContext.SetIndexBuffer(_indexBuffer, 0, ResourceStateTransitionMode.Transition);
+        RenderContext.Current.DeviceContext.SetVertexBuffers(0, _vertexBufferArray, _vertexOffsets, ResourceStateTransitionMode.Transition);
+        RenderContext.Current.DeviceContext.SetIndexBuffer(_indexBuffer, 0, ResourceStateTransitionMode.Transition);
     }
     
     public virtual void Dispose()

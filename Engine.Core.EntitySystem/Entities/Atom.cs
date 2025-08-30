@@ -18,7 +18,7 @@ public partial class Atom : IAtom
         {
             if (_backstage != null) 
                 return _backstage;
-            if (this is Backstage backstage)
+            if (this is Backstage backstage)       
                 return backstage;
             throw new NullReferenceException("Atom is not registered in a Backstage.");
         }
@@ -52,12 +52,12 @@ public partial class Atom : IAtom
         {
             using var stopwatch = Profiler.Start();
             try
-            {
+            { 
                 OnCreateCallback.Invoke();
             } catch (Exception e)
             {
                 Logger.Error($"Error during OnCreateCallback callback for {GetType().Name}: {e.Message}");
-                Console.Error.WriteLine(e);
+                Console.Error.WriteLine(e);  
             }
 
             stopwatch.StopAndReport(GetType(), ProfilingContext.OnCreateCallback);
@@ -65,7 +65,7 @@ public partial class Atom : IAtom
         
         _isInitialized = true;
         
-        // Adopt and init children.
+        // Adopt and init children.  
         InitializeChildren();
 
         if (OnReadyCallback != null)
@@ -88,12 +88,21 @@ public partial class Atom : IAtom
 
     public T AdoptChild<T>(T atom) where T : Atom, new()
     {
+        atom.Parent?.OrphanChild(atom);
         Children.Add(atom);
         atom.Parent = this;
         atom.Backstage = Backstage;
-        if (_isInitialized)
-            atom.Initialize();
+        if (_isInitialized && !atom._isInitialized)
+            atom.Initialize(); 
         return atom;
+    }
+    
+    public void OrphanChild(Atom atom)
+    {
+        if (atom.Parent != this)
+            throw new InvalidOperationException("Atom is not a child of this parent.");
+        Children.Remove(atom);
+        atom.Parent = null;
     }
 
     public T GetService<T>() where T : Service, new()

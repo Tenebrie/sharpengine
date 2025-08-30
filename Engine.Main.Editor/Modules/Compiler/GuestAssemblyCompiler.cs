@@ -49,7 +49,7 @@ public class GuestAssemblyCompiler
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private void Compile(bool filesChanged)
+    private bool Compile(bool filesChanged)
     {
         if (filesChanged)
             _project.MarkDirty();
@@ -61,34 +61,35 @@ public class GuestAssemblyCompiler
         if (result.OverallResult == BuildResultCode.Failure)
         {
             Logger.ShowPersistent("FailedToCompile",
-                "Unable to hot reload assembly, some changes require restarting the editor.");
+                "Build failed. Keeping the previous assembly loaded.");
         }
         else
         {
             Logger.ClearPersistent("FailedToCompile");
         }
 
-        Logger.Debug(result.OverallResult == BuildResultCode.Success
-            ? "In-process build succeeded"
-            : "Build failed!");
+        var isSuccess = result.OverallResult == BuildResultCode.Success;
+        Logger.Debug(isSuccess
+            ? "Build succeeded for assembly " + _assemblyName
+            : "Build failed for assembly " + _assemblyName);
+        return isSuccess;
     }
 
-    public Task CompileAsync(bool filesChanged, Action onSuccess)
+    public Task CompileAsync(bool filesChanged, Action onSuccess, Action onFinish)
     {
-        Logger.Info("Starting hot reload for assembly " + _assemblyName);
+        // Logger.Info("Starting hot reload for assembly " + _assemblyName);
         IsCompiling = true;
         return Task.Run(() =>
         {
             try
             {
-                Compile(filesChanged);
-                onSuccess.Invoke();
-                IsCompiling = false;
+                if (Compile(filesChanged))
+                    onSuccess.Invoke();
             }
-            catch (Exception)
+            finally
             {
                 IsCompiling = false;
-                throw;
+                onFinish.Invoke();
             }
         });
     }

@@ -7,6 +7,7 @@ using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
+using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Silk.NET.Input;
 
@@ -132,6 +133,49 @@ public partial class EditorInputService : Service
     protected void OnReload()
     {
         WorkspaceHost.Hypervisor.ReloadEngineModule(EngineModule.Gameplay);
+    }
+    
+    private int _framesToAdvanceRemaining = 0;
+    [OnKeyInput(Key.Period)]
+    protected void OnAdvanceOneFrame()
+    {
+        _keyHeldAccumulator = 0;
+        WorkspaceHost.Hypervisor.SetTimeScale(EngineModule.Gameplay, 1.0);
+        WorkspaceHost.Hypervisor.SetTimeScale(EngineModule.Physics, 1.0);
+        _framesToAdvanceRemaining = 2;
+    }
+    
+    [OnKeyInputReleased(Key.Period)]
+    protected void OnStopAdvancingFrames()
+    {
+        WorkspaceHost.Hypervisor.SetTimeScale(EngineModule.Gameplay, 0.0);
+        WorkspaceHost.Hypervisor.SetTimeScale(EngineModule.Physics, 0.0);
+        _framesToAdvanceRemaining = 0;
+    }
+
+    private double _keyHeldAccumulator = 0.0;
+    [OnKeyInputHeld(Key.Period)]
+    protected void OnHoldToAdvanceFrames(double deltaTime)
+    {
+        _keyHeldAccumulator += deltaTime;
+        if (_keyHeldAccumulator < 0.15)
+            return;
+        WorkspaceHost.Hypervisor.SetTimeScale(EngineModule.Gameplay, 1.0);
+        WorkspaceHost.Hypervisor.SetTimeScale(EngineModule.Physics, 1.0);
+        _framesToAdvanceRemaining = 2;
+        _keyHeldAccumulator = 0;
+    }
+
+    [OnUpdate]
+    protected void OnStopAfterOneFrame()
+    {
+        if (_framesToAdvanceRemaining == 0)
+            return;
+        _framesToAdvanceRemaining -= 1;
+        if (_framesToAdvanceRemaining > 0)
+            return;
+        WorkspaceHost.Hypervisor.SetTimeScale(EngineModule.Gameplay, 0.0);
+        WorkspaceHost.Hypervisor.SetTimeScale(EngineModule.Physics, 0.0);
     }
     
     [OnInput(InputAction.HoldToControlCamera)]

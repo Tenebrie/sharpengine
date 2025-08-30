@@ -9,6 +9,7 @@ internal class PhysicsAssembly() : ModularAssembly("Engine.Module.Physics", Engi
     internal IPhysicsHost? PhysicsModule { get; private set; }
     
     internal override IModularHost? GetHost() => PhysicsModule;
+    internal override int ImplicitReloadPriority => 1;
     
     public override void Load()
     {
@@ -25,11 +26,6 @@ internal class PhysicsAssembly() : ModularAssembly("Engine.Module.Physics", Engi
     
     public override bool Update(double deltaTime)
     {
-        if (SkipNextUpdate)
-        {
-            SkipNextUpdate = false;
-            return false;
-        }
         PhysicsModule?.ProcessPhysicsFrame(deltaTime);
         return base.Update(deltaTime);
     }

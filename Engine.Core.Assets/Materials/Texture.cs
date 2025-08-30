@@ -15,7 +15,6 @@ namespace Engine.Core.Assets.Materials;
 
 public sealed class Texture : IDisposable
 {
-    public static RenderContext Context { get; set; }
     
     public bool IsValid { get; private set; } = false;
     // public NativeTexture Handle { get; private set; }
@@ -32,7 +31,7 @@ public sealed class Texture : IDisposable
         Height = height;
         
         _baseImage = Image.LoadPixelData<Rgba32>(data, width, height);
-        _textureHandle = Context.RenderDevice.CreateTexture(new TextureDesc
+        _textureHandle = RenderContext.Current.RenderDevice.CreateTexture(new TextureDesc
         {
             Type = ResourceDimension.Tex2d,
             Width = width,
@@ -45,7 +44,7 @@ public sealed class Texture : IDisposable
 
         fixed (byte* pixelDataPtr = data)
         {
-            Context.DeviceContext.UpdateTexture(
+            RenderContext.Current.DeviceContext.UpdateTexture(
                 _textureHandle,
                 mipLevel: 0,
                 slice: 0,
@@ -75,7 +74,7 @@ public sealed class Texture : IDisposable
     {
         fixed (byte* pixelDataPtr = data)
         {
-            Context.DeviceContext.UpdateTexture(
+            RenderContext.Current.DeviceContext.UpdateTexture(
                 _textureHandle,
                 mipLevel: 0,
                 slice: 0,
@@ -140,7 +139,7 @@ public sealed class Texture : IDisposable
         {
             fixed (byte* pixelDataPtr = data)
             {
-                Context.DeviceContext.UpdateTexture(
+                RenderContext.Current.DeviceContext.UpdateTexture(
                     _textureHandle,
                     mipLevel: (uint)level,
                     slice: 0,

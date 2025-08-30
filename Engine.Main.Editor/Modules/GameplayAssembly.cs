@@ -29,11 +29,6 @@ public class GameplayAssembly() : ModularAssembly("User.Game", EngineModule.Game
 
     public override bool Update(double deltaTime)
     {
-        if (SkipNextUpdate)
-        {
-            SkipNextUpdate = false;
-            return false;
-        }
         if (HostBackstage == null)
             return base.Update(deltaTime);
 

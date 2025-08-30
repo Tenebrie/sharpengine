@@ -76,15 +76,36 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
         Logger.Debug("Source file changed: " + e.FullPath);
     }
 
-    internal Task BuildGuestAsync()
+    private static int _assembliesBuilding = 0;
+    private static int _assembliesDoneBuilding = 0;
+
+    private Task BuildGuestAsync()
     {
         _isAssemblyDirty = false;
         AssemblyAwaitingReload = false;
-        return _compiler.CompileAsync(_isAssemblyStructureDirty, () =>
+        _assembliesBuilding += 1;
+        UpdateLoggerState();
+        return _compiler.CompileAsync(_isAssemblyStructureDirty, 
+        () =>
         {
-            Logger.Info("SETTING ITSELF TO TRUE");
             AssemblyAwaitingReload = true;
+        }, () =>
+        {
+            _assembliesDoneBuilding += 1;
+            if (_assembliesDoneBuilding < _assembliesBuilding)
+                return;
+            _assembliesBuilding = 0;
+            _assembliesDoneBuilding = 0;
+            UpdateLoggerState();
         });
+    }
+
+    private static void UpdateLoggerState()
+    {
+        if (_assembliesBuilding == 0)
+            Logger.ClearPersistent("AssembliesBuildNotice");
+        else
+            Logger.ShowPersistent(LogLevel.Warn, "AssembliesBuildNotice", $"Building projects: {_assembliesDoneBuilding} / {_assembliesBuilding}");
     }
 
     public void LoadAssembly()
@@ -97,7 +118,6 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
         var stamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmssfff");
         var tmpDll = Path.Combine(cacheDir, $"{assemblyName}_{stamp}.dll");
         var tmpPdb = Path.ChangeExtension(tmpDll, ".pdb");
-        Logger.Info(tmpDll);
 
         File.Copy(_dllPath, tmpDll, overwrite: true);
         if (File.Exists(srcPdb))

@@ -25,6 +25,7 @@ public interface IRenderingHost : IModularHost
 {
     public void HotInitialize(RenderingResources resources);
     public void RenderEngineLoadingScreen();
+    public Task RenderSingleFrame(double deltaTime);
     public void ToggleLogRendering();
     public void HotShutdown();
 }

@@ -14,8 +14,6 @@ public static class ShaderVariable
 
 public static class PipelineBuilder
 {
-    public static RenderContext Context { get; set; }
-    
     public static Mesh PrepareMesh()
     {
         return new Mesh();
@@ -39,8 +37,8 @@ public static class PipelineBuilder
             _handle.DepthStencilDesc = new DepthStencilStateDesc { DepthEnable = true };
             _handle.NumRenderTargets = 1;
             _handle.SmplDesc.Count = 8;
-            _handle.RTVFormats = [Context.SwapChain.GetDesc().ColorBufferFormat];
-            _handle.DSVFormat = Context.SwapChain.GetDesc().DepthBufferFormat;
+            _handle.RTVFormats = [RenderContext.Current.SwapChain.GetDesc().ColorBufferFormat];
+            _handle.DSVFormat = RenderContext.Current.SwapChain.GetDesc().DepthBufferFormat;
             _handle.InputLayout = new InputLayoutDesc();
         }
     
@@ -174,7 +172,7 @@ public static class PipelineBuilder
 
     public static IPipelineState ComposeWithoutCache(MeshPipeline mesh, MaterialPipeline material)
     {
-        var pipelineState = Context.RenderDevice.CreateGraphicsPipelineState(new GraphicsPipelineStateCreateInfo
+        var pipelineState = RenderContext.Current.RenderDevice.CreateGraphicsPipelineState(new GraphicsPipelineStateCreateInfo
         {
             PSODesc = material.Desc,
             Vs = material.VertexShader,
@@ -183,7 +181,7 @@ public static class PipelineBuilder
         });
         if (pipelineState == null)
             throw new InvalidOperationException("Failed to create pipeline state from mesh and material.");
-        pipelineState.GetStaticVariableByName(ShaderType.Vertex, "Constants")?.Set(Context.ViewMatrixBuffer, SetShaderResourceFlags.None);
+        pipelineState.GetStaticVariableByName(ShaderType.Vertex, "Constants")?.Set(RenderContext.Current.ViewMatrixBuffer, SetShaderResourceFlags.None);
         return pipelineState;
     }
 }

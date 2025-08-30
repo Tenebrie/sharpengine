@@ -8,7 +8,7 @@ namespace Engine.Module.Host;
 
 public partial class WorkspaceHost : Backstage, IWorkspaceHost
 {
-    [OnReady]
+    [OnReady] 
     protected void OnReady()
     {
         CreateActor<EditorCamera>();

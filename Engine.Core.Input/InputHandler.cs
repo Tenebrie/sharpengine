@@ -22,7 +22,7 @@ public partial class InputHandler
         {
             var parameterSum = new Vector3();
             foreach (var action in handler)
-            {
+            {   
                 parameterSum.X += action.X;
                 parameterSum.Y += action.Y;
                 parameterSum.Z += action.Z;
@@ -51,7 +51,7 @@ public partial class InputHandler
         return modifiers;
     }
 
-    public void ClearSubscriptions(object owner)
+    public void ClearSubscriptions(object owner) 
     {
         Prune(OnInputEvent, owner);
         Prune(OnInputHeldEvent, owner);
@@ -69,7 +69,7 @@ public partial class InputHandler
             }
         }
     }
-    
+     
     public readonly Dictionary<long, List<BoundHeldAction>> OnInputEvent = new();
     public readonly Dictionary<long, List<BoundHeldAction>> OnInputHeldEvent = new();
     public readonly Dictionary<long, List<BoundHeldAction>> OnInputReleasedEvent = new();

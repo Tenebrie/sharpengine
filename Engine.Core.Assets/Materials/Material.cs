@@ -54,6 +54,12 @@ public class Material(MaterialPipeline pipeline, Texture? texture, Dictionary<st
         AssetManager.Shared.Materials.Put(shaderPath, newMaterial);
         return newMaterial;
     }
+    
+    public void InvalidateInstancesCache()
+    {
+        foreach (var instance in Instances)
+            instance.InvalidateCache();
+    }
 
     public void Dispose()
     {

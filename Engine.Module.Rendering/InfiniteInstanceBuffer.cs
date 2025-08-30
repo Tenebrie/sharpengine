@@ -8,8 +8,6 @@ namespace Engine.Module.Rendering;
 
 public class InfiniteInstanceBuffer : IInstanceBuffer, IDisposable
 {
-    public static RenderContext Context { get; set; }
-
     private static readonly int SizePerInstance;
     private static readonly int PageSize;
 
@@ -29,7 +27,7 @@ public class InfiniteInstanceBuffer : IInstanceBuffer, IDisposable
 
     private void AllocateBuffer()
     {
-        var buffer = Context.RenderDevice.CreateBuffer(new BufferDesc
+        var buffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
             Name = "SharedInstanceTransformBuffer",
             Size = (ulong)PageSize,
@@ -75,7 +73,7 @@ public class InfiniteInstanceBuffer : IInstanceBuffer, IDisposable
         if (_cursorPosition == 0)
             mapFlags = MapFlags.Discard;
         
-        var map = Context.DeviceContext.MapBuffer<byte>(
+        var map = RenderContext.Current.DeviceContext.MapBuffer<byte>(
             ActiveBuffer,
             MapType.Write,
             mapFlags
@@ -90,7 +88,7 @@ public class InfiniteInstanceBuffer : IInstanceBuffer, IDisposable
             Unsafe.WriteUnaligned(ref map[offset], instances[i].UvOffset);  offset += Vector2Float.SizeInBytes;
             Unsafe.WriteUnaligned(ref map[offset], instances[i].UvScale);
         }
-        Context.DeviceContext.UnmapBuffer(ActiveBuffer, MapType.Write);
+        RenderContext.Current.DeviceContext.UnmapBuffer(ActiveBuffer, MapType.Write);
         var ticket = new InstanceBufferTicket
         {
             View = ActiveBufferView,

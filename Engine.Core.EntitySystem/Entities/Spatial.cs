@@ -58,7 +58,7 @@ public abstract partial class Spatial : Atom, ISpatial
     
     internal void InvalidateWorldTransform()
     {
-        _cachedWorldTransformValid = false; 
+        _cachedWorldTransformValid = false;
         _cachedWorldTransformInverseValid = false;
     }
  

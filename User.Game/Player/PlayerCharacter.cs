@@ -29,7 +29,7 @@ public partial class PlayerCharacter : Actor
 
     [Component] public AbilityController Abilities;
     [Component] public DragonMesh DragonMeshComponent;
-    [Component] public PhysicsComponent PhysicsComponent;
+    // [Component] public PhysicsComponent PhysicsComponent;
     [Component] public ExperienceComponent Experience;
 
     [OnInputHeld(InputAction.MoveForward,  +1.0, +0.0)]
@@ -85,6 +85,7 @@ public partial class PlayerCharacter : Actor
         if (_velocity.Length > maxSpeed)
             _velocity = _velocity.SetLengthIfNotZero(maxSpeed);
         Transform.TranslateGlobal(_velocity * MovementSpeed * deltaTime);
+        // PhysicsComponent.LinearVelocity = _velocity * MovementSpeed;
         if (!_inputHeldThisFrame)
             _velocity -= _velocity * 2.0 * deltaTime;
         

@@ -165,6 +165,7 @@ public static partial class Logger
         {
             var keyString = key.ToString();
             var messageString = message?.ToString();
+            Debug("Persistent log updated: " + keyString + " -> " + messageString);
             if (keyString is null || messageString is null)
                 return;
             lock (_mutex)
@@ -173,8 +174,11 @@ public static partial class Logger
         
         internal void Clear(object key)
         {
+            bool isRemoved;
             lock (_mutex)
-                _log.Remove(key.ToString()!);
+                isRemoved = _log.Remove(key.ToString()!);
+            if (isRemoved)
+                Debug("Persistent log cleared: " + key);
         }
         
         internal List<Tuple<string, LogLevel>> ReadAll()

@@ -68,6 +68,7 @@ public class PhysicsHost : IPhysicsHost
         _revalidationServices.EnableAll();
         stopwatch.StopAndReport(GetType(), ProfilingContext.PhysicsUpdate);
     }
+
     public void RevalidateWorldTransform(ISpatial atom)
     {
         if (atom is not Spatial spatial)

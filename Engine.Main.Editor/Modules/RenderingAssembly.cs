@@ -12,6 +12,7 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
     private RenderingResources Resources { get; set; }
     
     internal override IModularHost? GetHost() => RenderingHost;
+    internal override int ImplicitReloadPriority => 1;
 
     public override void Load()
     {

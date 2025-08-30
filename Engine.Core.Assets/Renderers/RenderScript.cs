@@ -42,7 +42,7 @@ public class RenderScript : IRenderScript
         var ticket = context.InstanceBuffer.Write(instanceCount, _instanceDataPool);
         
         var pso = AssetManager.Shared.Pipelines.Produce(mesh.Pipeline, material.Pipeline);
-        device.SetPipelineState(pso);
+        device.SetPipelineState(pso); 
         mesh.BindForRendering();
         
         var srb = materialInstances[0].BindMaterial(pso);
