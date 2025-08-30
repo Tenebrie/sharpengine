@@ -77,7 +77,6 @@ public class GuestAssemblyCompiler
 
     public Task CompileAsync(bool filesChanged, Action onSuccess, Action onFinish)
     {
-        // Logger.Info("Starting hot reload for assembly " + _assemblyName);
         IsCompiling = true;
         return Task.Run(() =>
         {

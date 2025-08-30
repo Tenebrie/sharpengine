@@ -1,9 +1,6 @@
-﻿using System.Diagnostics;
-using System.Reflection;
-using System.Runtime.CompilerServices;
+﻿using System.Reflection;
 using System.Runtime.Loader;
 using Engine.Core.Logging;
-using Engine.Main.Editor.Modules.Abstract;
 
 namespace Engine.Main.Editor.Modules.Compiler;
 
@@ -79,7 +76,7 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
     private static int _assembliesBuilding = 0;
     private static int _assembliesDoneBuilding = 0;
 
-    private Task BuildGuestAsync()
+    public Task BuildGuestAsync()
     {
         _isAssemblyDirty = false;
         AssemblyAwaitingReload = false;
@@ -92,6 +89,10 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
         }, () =>
         {
             _assembliesDoneBuilding += 1;
+            foreach (var dependentAssembly in AssemblyRepository.GetDependencies(assemblyName))
+            {
+                dependentAssembly.Rebuild();
+            }
             if (_assembliesDoneBuilding < _assembliesBuilding)
                 return;
             _assembliesBuilding = 0;

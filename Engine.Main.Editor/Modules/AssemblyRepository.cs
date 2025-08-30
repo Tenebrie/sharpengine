@@ -108,6 +108,27 @@ public static class AssemblyRepository
     }
 
     private static int _runsWithoutGarbageCollection = 0;
+
+    private static List<LibraryAssembly> GetSortedAssemblies()
+    {
+        var allAssemblies = LibraryAssemblies.Values.ToList();
+        allAssemblies.Add(Editor.RenderingAssembly);
+        allAssemblies.Add(Editor.GameplayAssembly);
+        allAssemblies.Add(Editor.PhysicsAssembly);
+        allAssemblies.Add(Editor.WorkspaceAssembly);
+        UpdateReloadPriority(allAssemblies);
+        return allAssemblies
+            .OrderByDescending(assembly => assembly.ReloadPriority)
+            .ToList();
+    }
+
+    public static List<LibraryAssembly> GetDependencies(string assemblyName)
+    {
+        if (!References.TryGetValue(assemblyName, out var node))
+            return [];
+        return GetSortedAssemblies().Where(assembly => node.Dependencies.Contains(assembly.Name)).ToList();
+    }
+    
     public static List<ModularAssembly> ReloadAllAwaiting()
     {
         if (AssembliesAwaitingReload.Count == 0)
@@ -121,14 +142,13 @@ public static class AssemblyRepository
 
         UpdateReloadPriority(allAssemblies);
         
-        var sortedAssemblies = allAssemblies
+        var assembliesToReload = GetSortedAssemblies()
             .Where(assembly => assembly.NeedsReload())
-            .OrderByDescending(assembly => assembly.ReloadPriority)
             .ToList();
-        Logger.ShowPersistent(LogLevel.Warn, "AssembliesReloadNotice", $"Reloading {sortedAssemblies.Count} projects...");
-        Logger.Debug("Reloading projects:\n  - " + string.Join("\n  - ", sortedAssemblies.Select(a => a.Name + " (priority " + a.ReloadPriority + ")")));
+        Logger.ShowPersistent(LogLevel.Warn, "AssembliesReloadNotice", $"Reloading {assembliesToReload.Count} projects...");
+        Logger.Debug("Reloading projects:\n  - " + string.Join("\n  - ", assembliesToReload.Select(a => a.Name + " (priority " + a.ReloadPriority + ")")));
         Editor.RenderingAssembly.RenderingHost?.RenderSingleFrame(0);
-        foreach (var assembly in sortedAssemblies)
+        foreach (var assembly in assembliesToReload)
             assembly.Reload();
         AssembliesAwaitingReload.Clear();
 
@@ -140,6 +160,6 @@ public static class AssemblyRepository
         }
 
         Logger.ClearPersistent("AssembliesReloadNotice");
-        return sortedAssemblies.Where(assembly => assembly is ModularAssembly).Cast<ModularAssembly>().ToList();
+        return assembliesToReload.Where(assembly => assembly is ModularAssembly).Cast<ModularAssembly>().ToList();
     }
 }
