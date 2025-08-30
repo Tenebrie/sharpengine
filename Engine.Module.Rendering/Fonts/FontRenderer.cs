@@ -44,9 +44,8 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
             TextureWidth = 4096,
             TextureHeight = 4096
         });
-        Logger.Info("Loading font from " + $"Assets/Fonts/{key.Name}.ttf");
-        Logger.Info("Current Path: " + Directory.GetCurrentDirectory());
         
+        // TODO: Resolve path manually because C# changes the project-wide working directory randomly T_T
         _fontSystem.AddFont(File.ReadAllBytes($"Assets/Fonts/{key.Name}.ttf"));
         _font = _fontSystem.GetFont(key.Size * key.SampleCount);
         _sampleCount = key.SampleCount;

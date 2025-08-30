@@ -96,7 +96,6 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
         return _compiler.CompileAsync(_isAssemblyStructureDirty,
         () =>
         {
-            Logger.Info("Success!");
             AssemblyAwaitingReload = true;
         }, () =>
         {

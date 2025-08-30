@@ -169,7 +169,6 @@ public static class AssemblyRepository
                 }
             }
             Logger.ClearPersistent("AssembliesBuildNotice");
-            Logger.Info("Done building assemblies.");
 
             _isRebuildingCascading = false;
         });

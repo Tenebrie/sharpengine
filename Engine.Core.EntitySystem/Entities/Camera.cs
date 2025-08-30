@@ -152,7 +152,7 @@ public partial class Camera : Actor
         // Instance transform provided, multiply it with the sphere's transform
         instanceTransform.Multiply(worldTransform, ref _instanceWorldTransform);
         
-        // ReSharper disable once LoopCanBeConvertedToQuery - introduces an allocation
+        // ReSharper disable once LoopCanBeConvertedToQuery - introduces an allocation 
         foreach (var p in _planes)
         {
             if (p.Normal.DotProduct(_instanceWorldTransform.Position) + p.D < -_instanceWorldTransform.Scale.X)
