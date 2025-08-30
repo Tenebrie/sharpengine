@@ -32,7 +32,6 @@ public class PipelineAssetManager : IDisposable
     
     public void Dispose()
     {
-        Logger.Info("ENTERING DISPOSE");
         GC.SuppressFinalize(this);
         InvalidateAll();
     }
