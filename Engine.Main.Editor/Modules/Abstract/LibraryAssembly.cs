@@ -42,11 +42,6 @@ public class LibraryAssembly(string assemblyName)
         Load();
     }
 
-    public void Rebuild()
-    {
-        Loader.BuildGuestAsync();
-    }
-
     public virtual void Unload()
     {
         Loader.AssemblyAwaitingReload = false;

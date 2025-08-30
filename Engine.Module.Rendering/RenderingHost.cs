@@ -40,7 +40,6 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
     
     public RenderingResources Initialize()
     {
-        Logger.Info("INITIALIZE RENDERING MODULE");
         _engineFactory = Native.GetEngineFactoryD3D12();
         SetMessageCallback(_engineFactory);
         CreateRenderDeviceAndSwapChain(

@@ -109,7 +109,7 @@ public static class AssemblyRepository
 
     private static int _runsWithoutGarbageCollection = 0;
 
-    private static List<LibraryAssembly> GetSortedAssemblies()
+    public static List<LibraryAssembly> GetSortedAssemblies()
     {
         var allAssemblies = LibraryAssemblies.Values.ToList();
         allAssemblies.Add(Editor.RenderingAssembly);
@@ -124,9 +124,13 @@ public static class AssemblyRepository
 
     public static List<LibraryAssembly> GetDependencies(string assemblyName)
     {
+        return GetSortedAssemblies().Where(assembly => assembly.Dependencies.Contains(assemblyName)).ToList();
+    }
+    public static List<LibraryAssembly> GetAssembliesDependingOn(string assemblyName)
+    {
         if (!References.TryGetValue(assemblyName, out var node))
             return [];
-        return GetSortedAssemblies().Where(assembly => node.Dependencies.Contains(assembly.Name)).ToList();
+        return GetSortedAssemblies().Where(assembly => node.IsDependencyOf.Contains(assembly.Name)).ToList();
     }
     
     public static List<ModularAssembly> ReloadAllAwaiting()

@@ -16,6 +16,7 @@ public class GuestAssemblyCompiler
     private readonly ProjectCollection _projectCollection;
     private readonly Dictionary<string, string> _globals;
     private readonly BuildParameters _buildParams;
+    public bool HasErrors = false;
     
     private GuestAssemblyCompiler(string assemblyName, string projectPath)
     {
@@ -53,20 +54,10 @@ public class GuestAssemblyCompiler
     {
         if (filesChanged)
             _project.MarkDirty();
-        
+
         var graph = new ProjectGraph(_project.FullPath, _globals, _projectCollection);
         var request = new GraphBuildRequestData(graph, ["Build"]);
         var result = BuildManager.DefaultBuildManager.Build(_buildParams, request);
-
-        if (result.OverallResult == BuildResultCode.Failure)
-        {
-            Logger.ShowPersistent("FailedToCompile",
-                "Build failed. Keeping the previous assembly loaded.");
-        }
-        else
-        {
-            Logger.ClearPersistent("FailedToCompile");
-        }
 
         var isSuccess = result.OverallResult == BuildResultCode.Success;
         Logger.Debug(isSuccess
@@ -82,8 +73,14 @@ public class GuestAssemblyCompiler
         {
             try
             {
-                if (Compile(filesChanged))
+                HasErrors = !Compile(filesChanged);
+                if (!HasErrors)
                     onSuccess.Invoke();
+            }
+            catch
+            {
+                HasErrors = true;
+                throw;
             }
             finally
             {

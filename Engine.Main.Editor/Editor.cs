@@ -130,7 +130,7 @@ internal static class Editor
                 }
             } while (awaitingCount < AssemblyRepository.AssembliesAwaitingReload.Count);
             
-            if (allAssemblies.Any(assembly => assembly.Loader.IsCompiling))
+            if (allAssemblies.Any(assembly => assembly.Loader.IsCompiling || assembly.Loader.HasErrors))
                 return;
             
             var reloadedModules = AssemblyRepository.ReloadAllAwaiting();

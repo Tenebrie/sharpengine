@@ -10,7 +10,8 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
     private readonly string _dllPath = Path.GetFullPath($"../../../../../{assemblyName}/bin/x64/Debug/net9.0/{assemblyName}.dll");
     private FileSystemWatcher? _watcher;
     private readonly GuestAssemblyCompiler _compiler = GuestAssemblyCompiler.Make(assemblyName);
-    public bool IsCompiling => _compiler.IsCompiling;
+    public bool IsCompiling = false;
+    public bool HasErrors => _compiler.HasErrors;
     private bool _assemblyLoaded = false;
     private bool _isAssemblyDirty = false;
     private bool _isAssemblyStructureDirty = false;
@@ -73,40 +74,45 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
         Logger.Debug("Source file changed: " + e.FullPath);
     }
 
-    private static int _assembliesBuilding = 0;
-    private static int _assembliesDoneBuilding = 0;
-
     public Task BuildGuestAsync()
     {
+        Logger.Debug("Building assembly: " + assemblyName);
         _isAssemblyDirty = false;
         AssemblyAwaitingReload = false;
-        _assembliesBuilding += 1;
+        IsCompiling = true;
         UpdateLoggerState();
-        return _compiler.CompileAsync(_isAssemblyStructureDirty, 
+        return _compiler.CompileAsync(_isAssemblyStructureDirty,
         () =>
         {
             AssemblyAwaitingReload = true;
+            Task.Run(async () =>
+            {
+                foreach (var dependentAssembly in AssemblyRepository.GetAssembliesDependingOn(assemblyName))
+                {
+                    dependentAssembly.Loader._isAssemblyStructureDirty = true;
+                    await dependentAssembly.Loader.BuildGuestAsync();
+                }
+            });
         }, () =>
         {
-            _assembliesDoneBuilding += 1;
-            foreach (var dependentAssembly in AssemblyRepository.GetDependencies(assemblyName))
-            {
-                dependentAssembly.Rebuild();
-            }
-            if (_assembliesDoneBuilding < _assembliesBuilding)
-                return;
-            _assembliesBuilding = 0;
-            _assembliesDoneBuilding = 0;
+            IsCompiling = false;
+            _isAssemblyStructureDirty = false;
             UpdateLoggerState();
         });
     }
 
     private static void UpdateLoggerState()
     {
-        if (_assembliesBuilding == 0)
-            Logger.ClearPersistent("AssembliesBuildNotice");
+        if (AssemblyRepository.GetSortedAssemblies().Any(assembly => assembly.Loader.IsCompiling))
+            Logger.ShowPersistent(LogLevel.Warn, "AssembliesBuildNotice", "Building projects...");
         else
-            Logger.ShowPersistent(LogLevel.Warn, "AssembliesBuildNotice", $"Building projects: {_assembliesDoneBuilding} / {_assembliesBuilding}");
+            Logger.ClearPersistent("AssembliesBuildNotice");
+        
+        if (AssemblyRepository.GetSortedAssemblies().Any(assembly => assembly.Loader.HasErrors))
+            Logger.ShowPersistent("FailedToCompile",
+                "Build failed. Keeping the previous assembly loaded.");
+        else
+            Logger.ClearPersistent("FailedToCompile");
     }
 
     public void LoadAssembly()
