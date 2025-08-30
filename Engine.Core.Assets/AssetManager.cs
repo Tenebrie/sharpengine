@@ -1,5 +1,4 @@
-﻿using System.IO.Pipelines;
-using System.Reflection;
+﻿using System.Reflection;
 
 namespace Engine.Core.Assets;
 

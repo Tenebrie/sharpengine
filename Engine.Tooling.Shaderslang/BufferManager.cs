@@ -18,10 +18,10 @@ public class DocumentManager
     
     public void UpdateBuffer(DocumentUri document, string buffer)
     {
-        _buffers.AddOrUpdate(document, buffer, (k, v) => buffer);
+        _buffers.AddOrUpdate(document, buffer, (_, _) => buffer);
     }
 
-    public string? GetBuffer(DocumentUri document)
+    public string GetBuffer(DocumentUri document)
     {
         var val = _buffers.GetValueOrDefault(document);
         if (val is null)

@@ -4,7 +4,6 @@ using Engine.Core.EntitySystem.Services;
 using Engine.Core.Enum;
 using Engine.Core.Modules;
 using Engine.Core.Profiling;
-using Engine.Core.Profiling.Attributes;
 
 namespace Engine.Core.EntitySystem.Entities;
 

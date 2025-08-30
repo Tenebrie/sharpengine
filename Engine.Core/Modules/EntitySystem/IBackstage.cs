@@ -1,7 +1,4 @@
-﻿using Silk.NET.Input;
-using Silk.NET.Windowing;
-
-namespace Engine.Core.Modules.EntitySystem;
+﻿namespace Engine.Core.Modules.EntitySystem;
 
 public interface IHostBackstage : IBackstage;
 

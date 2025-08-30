@@ -14,28 +14,28 @@ public abstract partial class Spatial : Atom, ISpatial
     public Transform Transform
     {
         get => _transform;
-        set => _transform = ClaimedTransform.Claim(value, this); 
+        set => _transform = ClaimedTransform.Claim(value, this);
     }
     
     public ref Transform TransformReference => ref _transform;
 
     protected Spatial()
     {
-        Transform = SharedTransformPool.Get(); 
+        Transform = SharedTransformPool.Get();
     }
 
-    private bool _cachedWorldTransformValid = false;   
+    private bool _cachedWorldTransformValid = false;
     private Transform _cachedWorldTransform = SharedTransformPool.Get();
     private bool _cachedWorldTransformInverseValid = false;
-    private Transform _cachedWorldTransformInverse = SharedTransformPool.Get(); 
-    public Transform WorldTransform 
-    {    
-        get 
+    private Transform _cachedWorldTransformInverse = SharedTransformPool.Get();
+    public Transform WorldTransform
+    {
+        get
         {
             if (_cachedWorldTransformValid)
                 return _cachedWorldTransform;
 
-            if (Parent is not Spatial parent)
+            if (Parent is not Spatial parent)     
                 return Transform;
             
             parent.WorldTransform.Multiply(Transform, ref _cachedWorldTransform);

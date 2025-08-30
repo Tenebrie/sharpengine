@@ -92,7 +92,7 @@ public partial class BasicEnemy : ActorInstance
                 DamageFlashTime = Math.Clamp(DamageFlashTime - deltaTime, 0.0, 1.0);
             MaterialInstance.SetTintColor(
                 Color.FromArgb(
-                    (int)(255),
+                    255,
                     (int)(255 * (1.0 - DamageFlashTime)),
                     (int)(255 * (1.0 - DamageFlashTime)))
             );
@@ -114,10 +114,7 @@ public partial class BasicEnemy : ActorInstance
             return;
 
         MaterialInstance.SetTintColor(
-            Color.FromArgb(
-                (int)(255),
-                (int)(0),
-                (int)(0))
+            Color.FromArgb( 255, 0, 0)
         );
         MaterialInstance.SetOpacity(2.0 - DyingTime * 2.0);
     }

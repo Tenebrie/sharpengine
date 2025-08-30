@@ -1,5 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using Engine.Core.Assets.Materials;
+﻿using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Renderers;
 using Engine.Core.Common;
@@ -40,28 +39,25 @@ public partial class StaticMeshComponent : ActorComponent, IRenderable
     public void PerformCulling(Camera activeCamera) => IsOnScreen = activeCamera.SphereInFrustum(BoundingSphere, null);
     
     private readonly Transform[] _singleComponentTransforms = new Transform[1];
-    private bool _hasRenderRequest = false;
-    private RenderRequest _renderRequest;
+    private RenderRequest? _renderRequest;
     
     public RenderRequest Render()
     {
         _singleComponentTransforms[0] = WorldTransform;
-        if (!_hasRenderRequest)
-            _renderRequest = new RenderRequest
-            {
-                Mesh = StaticMesh,
-                Material = Material,
-                RenderScript = RenderScript,
-
-                InstanceCount = 1,
-                InstanceTransforms = _singleComponentTransforms,
-                MaterialInstances = [MaterialInstance]
-            };
+        if (_renderRequest != null)
+            return (RenderRequest)_renderRequest;
         
-        _hasRenderRequest = true;
-        return _renderRequest;
-        // RenderScript.Render(1, Mesh, _singleComponentTransforms, Material, [MaterialInstance]);
-        // _singleComponentTransforms[0] = BoundingSphere.WorldTransform;
-        // LineSphereMesh.Shared.Render(1, _singleComponentTransforms, [WireframeMaterial.Shared], LineSphereMesh.ColorMode.AxisColor);
+        _renderRequest = new RenderRequest
+        {
+            Mesh = StaticMesh,
+            Material = Material,
+            RenderScript = RenderScript,
+
+            InstanceCount = 1,
+            InstanceTransforms = _singleComponentTransforms,
+            MaterialInstances = [MaterialInstance]
+        };
+        
+        return (RenderRequest)_renderRequest;
     }
 }

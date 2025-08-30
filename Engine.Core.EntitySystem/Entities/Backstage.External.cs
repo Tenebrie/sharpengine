@@ -4,7 +4,6 @@ using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Core.Modules.EntitySystem;
 using Engine.Core.Profiling;
-using Silk.NET.Input;
 using Silk.NET.Windowing;
 
 namespace Engine.Core.EntitySystem.Entities;

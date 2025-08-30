@@ -1,5 +1,4 @@
 ﻿using Engine.Core.Common;
-using Engine.Core.Logging;
 
 namespace Engine.Core.Extensions;
 
@@ -58,8 +57,8 @@ public static class QuatExtensions
         var vLenSq = vx * vx + vy * vy + vz * vz;
 
         // Degenerate / identity: no reliable axis; choose any
-        const double EPS = 1e-12;
-        if (vLenSq < EPS)
+        const double eps = 1e-12;
+        if (vLenSq < eps)
         {
             axis = new Vector3(1, 0, 0);
             angle = 0.0;

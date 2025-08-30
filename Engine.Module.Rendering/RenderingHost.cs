@@ -2,7 +2,6 @@
 using System.Runtime.InteropServices;
 using Diligent;
 using Engine.Core.Assets;
-using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Renderers;
@@ -13,7 +12,6 @@ using Engine.Module.Rendering.Fonts;
 using Engine.Module.Rendering.Renderers;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
-using Engine.Core.Logging;
 using Engine.Core.Memory;
 using Engine.Core.Modules;
 using Engine.Core.Profiling;
@@ -36,7 +34,7 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
     private ISwapChain _swapChain = null!;
     private IEngineFactoryD3D12 _engineFactory = null!;
     private static IEngineFactory.MessageCallbackDelegate _messageCallback = null!;
-    private static GCHandle _sCallbackRoot;
+    [UsedImplicitly] private static GCHandle _sCallbackRoot;
     
     public RenderingResources Initialize()
     {
@@ -115,6 +113,7 @@ public class RenderingModuleBootstrap : IRenderingModuleBootstrap
 
     public void Shutdown()
     {
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract - TODO: Diligent kills the swap chain itself?
         if (_swapChain == null)
         {
             Console.Error.WriteLine("SwapChain is already null. Something is wrong :(");

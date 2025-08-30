@@ -10,7 +10,7 @@ public class CubeMesh : StaticMesh
 {
     public static CubeMesh Instance { get; private set; } = new();
 
-    public StaticMesh Mesh;
+    public StaticMesh Mesh = null!;
 
     public void Load()
     {

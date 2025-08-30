@@ -3,7 +3,6 @@ using Engine.Module.Host.Services;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
-using Engine.Core.Logging;
 using Silk.NET.Input;
 
 namespace Engine.Module.Host.Actors;

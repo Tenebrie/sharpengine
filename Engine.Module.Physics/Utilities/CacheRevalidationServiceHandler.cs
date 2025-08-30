@@ -1,5 +1,4 @@
-﻿using Engine.Core.EntitySystem.Services;
-using Engine.Core.Modules.EntitySystem;
+﻿using Engine.Core.Modules.EntitySystem;
 
 namespace Engine.Module.Physics.Utilities;
 

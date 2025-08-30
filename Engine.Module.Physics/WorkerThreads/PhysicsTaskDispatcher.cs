@@ -1,6 +1,4 @@
-﻿using Engine.Module.Physics.Utilities;
-
-namespace Engine.Module.Physics.WorkerThreads;
+﻿namespace Engine.Module.Physics.WorkerThreads;
 
 public class PhysicsTaskDispatcher
 {

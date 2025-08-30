@@ -6,8 +6,6 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
-using Engine.Core.Profiling;
-using Engine.Core.Profiling.Attributes;
 using JetBrains.Annotations;
 
 namespace Engine.Core.EntitySystem.Components.Rendering;
@@ -41,7 +39,6 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
         set => _material = value;
     }
     public List<TInstance> Instances { get; } = [];
-    private readonly List<TInstance> _deadInstances = [];
     public int InstanceCount => Instances.Count;
 
     public TInstance CreateInstance()

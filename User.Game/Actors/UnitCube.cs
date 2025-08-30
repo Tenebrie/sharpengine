@@ -1,6 +1,5 @@
 ﻿using System.Drawing;
 using System.Numerics;
-using Engine.Core.Assets;
 using Engine.Core.Assets.Loaders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes.Builtins;

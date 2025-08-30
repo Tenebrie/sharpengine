@@ -1,5 +1,4 @@
 ﻿using System.Drawing;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
@@ -52,10 +51,8 @@ public partial class CloudLayer : Actor
     {
         _totalTime += deltaTime;
         var windOffset = new Vector2(_totalTime, _totalTime) * 310000 / (-LayerHeight * LayerHeight);
-        // var windOffset = Vector2.Zero;
         var camera = ParentScene.Actors.OfType<Camera>().First();
         Transform.Position = new Vector3(camera.WorldTransform.Position.X, LayerHeight, camera.WorldTransform.Position.Z);
-        // MeshComponent.MaterialInstance.UvOffset = ().Downgrade();
         var playerOffset = new Vector2(camera.WorldTransform.Position.X, camera.WorldTransform.Position.Z) /
                            -LayerHeight;
         MeshComponent.MaterialInstance
@@ -90,7 +87,5 @@ public partial class CloudLayer : Actor
         public readonly Vector2Float SunDirection = sunDirection.Downgrade();
         public readonly Vector4Float Color = color.ToVector4().Downgrade();
         public readonly float Brightness = (float)brightness;
-
-        public static uint SizeInBytes => (uint)Unsafe.SizeOf<CloudParams>();
     }
 }

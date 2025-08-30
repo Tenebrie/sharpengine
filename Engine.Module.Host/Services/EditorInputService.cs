@@ -4,10 +4,8 @@ using Engine.Core.Input;
 using Engine.Core.Input.Attributes;
 using Engine.Core.Input.Contexts;
 using Engine.Core.EntitySystem.Attributes;
-using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
-using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Silk.NET.Input;
 

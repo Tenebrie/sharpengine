@@ -9,7 +9,7 @@ public partial class Camera : Actor
 {
     public bool IsEditorCamera { get; protected set; } = false;
     
-    private Matrix _projMatrix;
+    private Matrix _projMatrix = Matrix.Identity;
     
     [OnReady]
     internal void OnReady()
@@ -131,11 +131,13 @@ public partial class Camera : Actor
     {
         return SphereInFrustum(sphere.WorldTransform, sphere.WorldRadius, instanceTransform);
     }
-    public bool SphereInFrustum(Transform worldTransform, double worldRadius, Transform? instanceTransform)
+
+    private bool SphereInFrustum(Transform worldTransform, double worldRadius, Transform? instanceTransform)
     {
         // No instance => use the sphere's transform directly
         if (instanceTransform == null)
         {
+            // ReSharper disable once LoopCanBeConvertedToQuery - introduces an allocation
             foreach (var p in _planes)
             {
                 if (p.Normal.DotProduct(worldTransform.Position) + p.D < -worldRadius)
@@ -150,6 +152,7 @@ public partial class Camera : Actor
         // Instance transform provided, multiply it with the sphere's transform
         instanceTransform.Multiply(worldTransform, ref _instanceWorldTransform);
         
+        // ReSharper disable once LoopCanBeConvertedToQuery - introduces an allocation
         foreach (var p in _planes)
         {
             if (p.Normal.DotProduct(_instanceWorldTransform.Position) + p.D < -_instanceWorldTransform.Scale.X)

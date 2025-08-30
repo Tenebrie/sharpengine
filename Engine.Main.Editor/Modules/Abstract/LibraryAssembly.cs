@@ -1,5 +1,4 @@
-﻿using Engine.Core.Logging;
-using Engine.Main.Editor.Modules.Compiler;
+﻿using Engine.Main.Editor.Modules.Compiler;
 
 namespace Engine.Main.Editor.Modules.Abstract;
 
@@ -29,6 +28,7 @@ public class LibraryAssembly(string assemblyName)
         return Loader.Update(deltaTime);
     }
     
+    public bool NeedsRebuild() => Loader.IsAssemblyDirty;
     public bool NeedsReload() => Loader.AssemblyAwaitingReload;
 
     public void QueueReload()

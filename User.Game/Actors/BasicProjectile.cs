@@ -1,5 +1,4 @@
-﻿using Engine.Core.Assets;
-using Engine.Core.Assets.Materials;
+﻿using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Communication.Signals;
 using Engine.Core.Makers;

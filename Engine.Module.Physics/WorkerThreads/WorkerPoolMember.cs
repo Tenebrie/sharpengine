@@ -1,6 +1,5 @@
 ﻿using Engine.Core.Common;
 using Engine.Core.EntitySystem.Entities;
-using Engine.Core.Logging;
 
 namespace Engine.Module.Physics.WorkerThreads;
 

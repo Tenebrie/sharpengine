@@ -109,6 +109,10 @@ public static class AssemblyRepository
 
     private static int _runsWithoutGarbageCollection = 0;
 
+    public static LibraryAssembly? GetAssembly(string name)
+    {
+        return GetSortedAssemblies().FirstOrDefault(candidate => candidate.Name == name);
+    }
     public static List<LibraryAssembly> GetSortedAssemblies()
     {
         var allAssemblies = LibraryAssemblies.Values.ToList();
@@ -122,15 +126,65 @@ public static class AssemblyRepository
             .ToList();
     }
 
-    public static List<LibraryAssembly> GetDependencies(string assemblyName)
+    public static List<LibraryAssembly> GetDependents(string assemblyName)
     {
         return GetSortedAssemblies().Where(assembly => assembly.Dependencies.Contains(assemblyName)).ToList();
     }
-    public static List<LibraryAssembly> GetAssembliesDependingOn(string assemblyName)
+
+    public static List<LibraryAssembly> GetDependencies(string assemblyName)
     {
-        if (!References.TryGetValue(assemblyName, out var node))
+        var sorted = GetSortedAssemblies();
+        var self = sorted.FirstOrDefault(assembly => assembly.Name == assemblyName);
+        if (self == null)
             return [];
-        return GetSortedAssemblies().Where(assembly => node.IsDependencyOf.Contains(assembly.Name)).ToList();
+        return sorted.Where(assembly => self.Dependencies.Contains(assembly.Name)).ToList();
+    }
+
+    private static bool _isRebuildingCascading = false;
+    public static void RebuildCascading(List<LibraryAssembly> targets)
+    {
+        if (_isRebuildingCascading)
+            return;
+        _isRebuildingCascading = true;
+        
+        Task.Run(async () =>
+        {
+            var rebuildQueue = targets.SelectMany(t => GetDependentsRecursive(t.Name))
+                .Concat(targets)
+                .ToHashSet()
+                .ToList()
+                .OrderByDescending(a => a.ReloadPriority)
+                .ToList();
+            Logger.ShowPersistent(LogLevel.Warn, "AssembliesBuildNotice", $"Building {rebuildQueue.Count} projects...");
+            Logger.Debug("Rebuilding projects:\n  - " + string.Join("\n  - ", rebuildQueue.Select(a => a.Name + " (priority " + a.ReloadPriority + ")")));
+            foreach (var currentTarget in rebuildQueue)
+            {
+                try
+                {
+                    await currentTarget.Loader.BuildGuestAsync();
+                }
+                catch (Exception e)
+                {
+                    Logger.Error(e);
+                }
+            }
+            Logger.ClearPersistent("AssembliesBuildNotice");
+            Logger.Info("Done building assemblies.");
+
+            _isRebuildingCascading = false;
+        });
+    }
+    
+    private static List<LibraryAssembly> GetDependentsRecursive(string assemblyName)
+    {
+        List<LibraryAssembly> list = [];
+        foreach (var dependent in GetDependents(assemblyName))
+        {
+            list.Add(dependent);
+            list.AddRange(GetDependentsRecursive(dependent.Name));
+        }
+
+        return list;
     }
     
     public static List<ModularAssembly> ReloadAllAwaiting()

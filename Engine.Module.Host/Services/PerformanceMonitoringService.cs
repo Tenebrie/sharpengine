@@ -1,5 +1,4 @@
-﻿using Engine.Core.Logging;
-using Engine.Core.Profiling;
+﻿using Engine.Core.Profiling;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 

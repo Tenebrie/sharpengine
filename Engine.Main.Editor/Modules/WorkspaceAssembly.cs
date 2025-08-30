@@ -1,5 +1,4 @@
-﻿using Engine.Core.Contracts;
-using Engine.Core.Logging;
+﻿using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Main.Editor.Modules.Abstract;
 
@@ -34,7 +33,7 @@ public class WorkspaceAssembly() : ModularAssembly("Engine.Module.Host", EngineM
 
         try
         {
-            HostBackstage.TriggerLogicFrameUpdate(deltaTime);
+            HostBackstage.TriggerLogicFrameUpdate(deltaTime * TimeScale);
         }
         catch (Exception ex)
         {

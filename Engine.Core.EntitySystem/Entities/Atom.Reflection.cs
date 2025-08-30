@@ -5,7 +5,6 @@ using Engine.Core.Communication.Groups;
 using Engine.Core.Communication.Signals;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.Input.Attributes;
-using Engine.Core.Profiling.Attributes;
 
 namespace Engine.Core.EntitySystem.Entities;
 

@@ -77,9 +77,11 @@ public class GuestAssemblyCompiler
                 if (!HasErrors)
                     onSuccess.Invoke();
             }
-            catch
+            catch (Exception ex)
             {
                 HasErrors = true;
+                Logger.Error("Compile failed: " + ex.Message);
+                Console.Error.WriteLine(ex);
                 throw;
             }
             finally

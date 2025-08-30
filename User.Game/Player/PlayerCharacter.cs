@@ -1,11 +1,8 @@
-﻿using System.Numerics;
-using Engine.Core.Makers;
+﻿using Engine.Core.Makers;
 using Engine.Core.EntitySystem.Attributes;
-using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
 using Engine.Core.Extensions;
-using Engine.Core.Logging;
 using Silk.NET.Input;
 using User.Game.Player.Abilities;
 using User.Game.Player.Components;

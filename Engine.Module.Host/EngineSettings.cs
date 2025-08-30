@@ -1,4 +1,4 @@
-﻿using Engine.Core.Contracts;
+﻿using Engine.Core.Modules;
 using Engine.Core.Modules.Attributes;
 
 namespace Engine.Module.Host;

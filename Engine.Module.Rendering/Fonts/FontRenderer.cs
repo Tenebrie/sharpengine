@@ -6,6 +6,7 @@ using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
+using Engine.Core.Logging;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
 using SixLabors.ImageSharp;
@@ -43,6 +44,9 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
             TextureWidth = 4096,
             TextureHeight = 4096
         });
+        Logger.Info("Loading font from " + $"Assets/Fonts/{key.Name}.ttf");
+        Logger.Info("Current Path: " + Directory.GetCurrentDirectory());
+        
         _fontSystem.AddFont(File.ReadAllBytes($"Assets/Fonts/{key.Name}.ttf"));
         _font = _fontSystem.GetFont(key.Size * key.SampleCount);
         _sampleCount = key.SampleCount;

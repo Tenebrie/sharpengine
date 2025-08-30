@@ -13,14 +13,14 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
     public bool IsCompiling = false;
     public bool HasErrors => _compiler.HasErrors;
     private bool _assemblyLoaded = false;
-    private bool _isAssemblyDirty = false;
+    public bool IsAssemblyDirty = false;
     private bool _isAssemblyStructureDirty = false;
     public bool AssemblyAwaitingReload = false;
 
     public Assembly? Assembly;
     private GameAssemblyLoadContext? _assemblyLoadContext;
 
-    private double _debounceTimer = 0.0;
+    public double DebounceTimer = 0.0;
     
     /// <summary>
     /// Run a per-frame update, triggering a build if the assembly is dirty.
@@ -28,19 +28,31 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
     /// <returns>Whether the assembly needs a reload</returns>
     internal bool Update(double deltaTime)
     {
+        if (DebounceTimer > 0.0)
+        {
+            DebounceTimer -= deltaTime;
+            if (DebounceTimer > 0.0)
+                return false;
+        }
+        
         if (IsCompiling)
             return false;
 
-        if (!_isAssemblyDirty)
+        if (!IsAssemblyDirty)
             return AssemblyAwaitingReload;
 
-        if (_debounceTimer > 0.0)
-        {
-            _debounceTimer -= deltaTime;
-            if (_debounceTimer > 0.0)
-                return false;
-        }
-        BuildGuestAsync();
+        // // Dependencies will trigger build on this assembly
+        // if (AssemblyRepository.GetDependencies(assemblyName).Any(dependency => dependency.Loader.IsCompiling || dependency.Loader.IsAssemblyDirty || dependency.Loader.AssemblyAwaitingReload))
+        // {
+        //     Logger.Info("Noping out for " + assemblyName);
+        //     foreach (var libraryAssembly in AssemblyRepository.GetDependencies(assemblyName))
+        //     {
+        //         Logger.Info(" - " + libraryAssembly.Name);
+        //     }
+        //     IsAssemblyDirty = false;
+        //     return false;
+        // }
+        // BuildGuestAsync();
         return false;
     }
     
@@ -61,15 +73,15 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
     
     private void OnSourceChangedIncrementally(object sender, FileSystemEventArgs e)
     {
-        _debounceTimer = 0.05;
-        _isAssemblyDirty = true;
+        DebounceTimer = Math.Max(DebounceTimer, 0.05);
+        IsAssemblyDirty = true;
         Logger.Debug("Source file updated: " + e.FullPath);
     }
 
     private void OnSourceChanged(object sender, FileSystemEventArgs e)
     {
-        _debounceTimer = 0.05;
-        _isAssemblyDirty = true;
+        DebounceTimer = Math.Max(DebounceTimer, 0.2);
+        IsAssemblyDirty = true;
         _isAssemblyStructureDirty = true;
         Logger.Debug("Source file changed: " + e.FullPath);
     }
@@ -77,22 +89,15 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
     public Task BuildGuestAsync()
     {
         Logger.Debug("Building assembly: " + assemblyName);
-        _isAssemblyDirty = false;
+        IsAssemblyDirty = false;
         AssemblyAwaitingReload = false;
         IsCompiling = true;
         UpdateLoggerState();
         return _compiler.CompileAsync(_isAssemblyStructureDirty,
         () =>
         {
+            Logger.Info("Success!");
             AssemblyAwaitingReload = true;
-            Task.Run(async () =>
-            {
-                foreach (var dependentAssembly in AssemblyRepository.GetAssembliesDependingOn(assemblyName))
-                {
-                    dependentAssembly.Loader._isAssemblyStructureDirty = true;
-                    await dependentAssembly.Loader.BuildGuestAsync();
-                }
-            });
         }, () =>
         {
             IsCompiling = false;
@@ -103,11 +108,6 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
 
     private static void UpdateLoggerState()
     {
-        if (AssemblyRepository.GetSortedAssemblies().Any(assembly => assembly.Loader.IsCompiling))
-            Logger.ShowPersistent(LogLevel.Warn, "AssembliesBuildNotice", "Building projects...");
-        else
-            Logger.ClearPersistent("AssembliesBuildNotice");
-        
         if (AssemblyRepository.GetSortedAssemblies().Any(assembly => assembly.Loader.HasErrors))
             Logger.ShowPersistent("FailedToCompile",
                 "Build failed. Keeping the previous assembly loaded.");

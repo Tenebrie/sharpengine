@@ -1,7 +1,4 @@
 ﻿using Diligent;
-using Engine.Core.Enum;
-using Engine.Core.Modules.EntitySystem;
-using Silk.NET.Windowing;
 
 namespace Engine.Core.Modules;
 

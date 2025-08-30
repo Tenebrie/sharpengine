@@ -2,7 +2,6 @@
 using Engine.Core.Common;
 using Engine.Core.Logging;
 using Engine.Core.Profiling;
-using Engine.Core.Profiling.Attributes;
 using Engine.Module.Rendering.Abstract;
 
 namespace Engine.Module.Rendering.Renderers;
@@ -161,10 +160,11 @@ public class LogRenderer(RenderingHost parent): Renderer(parent)
             Anchor.TopLeft => new Vector2(offset.X + Padding, offset.Y),
             Anchor.TopRight => new Vector2(Host.RootWindow.FramebufferSize.X - size - offset.X - Padding, offset.Y),
             Anchor.BottomLeft => new Vector2(offset.X + Padding, Host.RootWindow.FramebufferSize.Y - _glyphHeight - offset.Y - Padding),
-            _ => new Vector2(
+            Anchor.BottomRight => new Vector2(
                 Host.RootWindow.FramebufferSize.X - size - offset.X - Padding,
                 Host.RootWindow.FramebufferSize.Y - _glyphHeight - offset.Y - Padding
-            )
+            ),
+            _ => throw new ArgumentOutOfRangeException(nameof(anchor), anchor, null)
         };
         Host.TextRenderer.RenderText("RobotoMono-Bold", FontSize, text, position, color, 2);
     }

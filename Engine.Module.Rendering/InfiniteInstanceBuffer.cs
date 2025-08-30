@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using Diligent;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;

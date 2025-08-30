@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using Engine.Core.Logging;
 using Microsoft.Extensions.ObjectPool;
 
 namespace Engine.Core.Profiling;

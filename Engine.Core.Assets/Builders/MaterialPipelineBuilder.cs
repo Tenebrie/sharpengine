@@ -1,7 +1,6 @@
 ﻿using Diligent;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Rendering;
-using Engine.Core.Logging;
 
 namespace Engine.Core.Assets.Builders;
 
@@ -45,6 +44,7 @@ public static class PipelineBuilder
         public Mesh WithLayoutElement(LayoutElement layout)
         {
             _layoutElements.Add(layout);
+            // ReSharper disable once UsageOfDefaultStructEquality - it's fiiine here
             _hashCode ^= layout.GetHashCode();
             return this;
         }

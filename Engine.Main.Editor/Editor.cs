@@ -11,7 +11,6 @@ using Microsoft.Build.Locator;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
-using KillSwitch = Engine.Core.Errors.KillSwitch;
 
 namespace Engine.Main.Editor;
 
@@ -39,7 +38,6 @@ internal static class Editor
         };
         if (OperatingSystem.IsMacOS())
             opts.Size /= 2;
-        KillSwitch.InstallAvKiller();
         
         GuestAssemblyLoader.CleanTempFolder();
 
@@ -91,13 +89,6 @@ internal static class Editor
             Logger.Info("Engine startup complete.");
         };
 
-        /*
-         * TODO: Hot reload works well as long as it doesn't require a rebuild downstream.
-         * Definitely needs to be supported. If, say, EntitySystem is rebuilt, then
-         * all downstream dependencies (Gameplay, Physics, etc) need to be rebuilt too.
-         *
-         * Works otherwise though.
-         */
         MainWindow.Update += deltaTime =>
         {
             MainThreadTask.ExecuteAllQueued();
@@ -108,7 +99,7 @@ internal static class Editor
             }
             foreach (var guestAssembly in GuestAssemblies)
             {
-                guestAssembly.Update(deltaTime * guestAssembly.TimeScale);
+                guestAssembly.Update(deltaTime);
             }
 
             var allAssemblies = AssemblyRepository.LibraryAssemblies.Values.ToList();
@@ -116,6 +107,16 @@ internal static class Editor
             allAssemblies.Add(GameplayAssembly);
             allAssemblies.Add(PhysicsAssembly);
             allAssemblies.Add(WorkspaceAssembly);
+
+            var wantingBuild = allAssemblies.Where(a => a.NeedsRebuild()).ToList();
+            if (wantingBuild.Count > 0 && !allAssemblies.Any(a => a.Loader.DebounceTimer > 0.0))
+            {
+                AssemblyRepository.RebuildCascading(wantingBuild);
+                return;
+            }
+            
+            if (allAssemblies.Any(assembly => assembly.Loader.IsCompiling || assembly.Loader.HasErrors))
+                return;
 
             int awaitingCount;
             do
@@ -129,9 +130,6 @@ internal static class Editor
                     AssemblyRepository.InvalidateDependencies(libraryAssembly.Name);
                 }
             } while (awaitingCount < AssemblyRepository.AssembliesAwaitingReload.Count);
-            
-            if (allAssemblies.Any(assembly => assembly.Loader.IsCompiling || assembly.Loader.HasErrors))
-                return;
             
             var reloadedModules = AssemblyRepository.ReloadAllAwaiting();
             foreach (var reloadedModule in reloadedModules)

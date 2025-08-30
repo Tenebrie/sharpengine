@@ -40,7 +40,7 @@ public sealed class StaticInitGenerator : IIncrementalGenerator
 
                     return symbol;
                 })
-            .Where(static s => s is not null)!;
+            .Where(static s => s is not null);
 
         // Collect static parameterless void methods with [OnPrepareResources]/[OnPrepareResourcesAttribute]
         var prepMethods = ctx.SyntaxProvider
@@ -55,7 +55,7 @@ public sealed class StaticInitGenerator : IIncrementalGenerator
                         return null;
 
                     if (context.SemanticModel.GetDeclaredSymbol(methodDecl)
-                        is not IMethodSymbol { IsStatic: true } method)
+                        is not { IsStatic: true } method)
                         return null;
 
                     // Attribute filter
@@ -69,7 +69,7 @@ public sealed class StaticInitGenerator : IIncrementalGenerator
 
                     return method;
                 })
-            .Where(static m => m is not null)!;
+            .Where(static m => m is not null);
 
         // Combine both sets so we can generate a single static ctor per type
         var combined = fields.Collect().Combine(prepMethods.Collect());
@@ -81,7 +81,7 @@ public sealed class StaticInitGenerator : IIncrementalGenerator
             // Group by containing type
             var byType = fieldList.Cast<IFieldSymbol>()
                 .Select(f => (type: f.ContainingType, field: f))
-                .Concat(methodList.Cast<IMethodSymbol>().Select(m => (type: m.ContainingType, field: (IFieldSymbol?)null)))
+                .Concat(methodList.Cast<IMethodSymbol>().Select(m => (type: m.ContainingType, field: (IFieldSymbol?)null))!)
                 .GroupBy(x => x.type, SymbolEqualityComparer.Default);
 
             foreach (var group in byType)

@@ -1,5 +1,4 @@
 ﻿using System.Reflection;
-using Engine.Core.Logging;
 using Engine.Core.Modules.EntitySystem;
 
 namespace Engine.Core.EntitySystem.Entities;

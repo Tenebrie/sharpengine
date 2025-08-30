@@ -1,6 +1,4 @@
-﻿using System.Drawing;
-using System.Runtime.CompilerServices;
-using Diligent;
+﻿using Diligent;
 using Engine.Core.Common;
 
 namespace Engine.Core.Assets.Rendering;

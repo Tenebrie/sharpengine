@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Engine.Core.Common;
 using Engine.Core.Logging;
-using Engine.Core.Profiling.Attributes;
 using Color = System.Drawing.Color;
 
 namespace Engine.Module.Rendering.Fonts;

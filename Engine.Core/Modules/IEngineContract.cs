@@ -1,6 +1,6 @@
 ﻿using Engine.Core.Modules.EntitySystem;
 
-namespace Engine.Core.Contracts;
+namespace Engine.Core.Modules;
 
 public interface IBaseEngineContract
 {

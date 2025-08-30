@@ -5,7 +5,6 @@ using Engine.Core.Assets.Rendering;
 using Engine.Core.Communication.Tasks;
 using Engine.Core.Logging;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Advanced;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Processing.Processors.Transforms;
