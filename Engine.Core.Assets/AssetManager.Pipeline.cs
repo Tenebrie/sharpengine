@@ -21,6 +21,7 @@ public class PipelineAssetManager : IDisposable
     public void InvalidateAll()
     {
         AssetManager.Shared.Materials.InvalidateInstanceCaches();
+
         foreach (var pipeline in _cachedPipelines.Values)
             pipeline.Dispose();
 

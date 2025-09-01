@@ -491,10 +491,15 @@ public class RenderingHost : IRenderingHost
     { 
         RootWindow.Render -= RenderSingleFrameSync;
         RootWindow.FramebufferResize -= OnFramebufferResize;
-        _immediateContext.SetPipelineState(null);
-        _immediateContext.Flush();
-        _renderDevice.IdleGPU();
-        AssetManager.Shared.Pipelines.InvalidateAll();
+        try
+        {
+            _immediateContext.SetPipelineState(null);
+            _immediateContext.Flush();
+            _renderDevice.IdleGPU();
+            AssetManager.Shared.Pipelines.InvalidateAll();
+        }
+        catch { /* ignored */ }
+
         TextRenderer.Dispose();
         _backstages = [];
         _atomsToRender = [];
