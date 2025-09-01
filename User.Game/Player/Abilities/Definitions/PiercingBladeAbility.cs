@@ -15,20 +15,26 @@ public partial class PiercingBladeAbility : ActorComponent, IAbility
     private const double CooldownTime = 0.08;
     private double _cooldownRemaining = 0.0;
     
+    public bool Ready => _cooldownRemaining <= 0.0;
     public void OnCast()
     {
         if (_cooldownRemaining > 0)
             return;
         
+        var mousePos = GetService<InputService>().GetMousePosition();
+        // Get the intersection point with the ground plane (Y=0)
+        if (!Raycast.IntersectPlane(Backstage.ActiveCamera, PlaneShape.FromNormal(Vector3.Up), mousePos, out var targetPoint))
+            return;
+
+        OnAutoCast(targetPoint);
+    }
+    
+    public void OnAutoCast(Vector3 targetPoint)
+    {
         var projectile = CreateActor<BasicProjectile>();
         projectile.Transform.Position = WorldTransform.Position;
         
         var forwardVector = Vector3.Forward;
-        var mousePos = GetService<InputService>().GetMousePosition();
-        var window = Backstage.Window.Size;
-        // Get the intersection point with the ground plane (Y=0)
-        if (!Raycast.IntersectPlane(Backstage.ActiveCamera, PlaneShape.FromNormal(Vector3.Up), mousePos, out var targetPoint))
-            return;
         var value = targetPoint - WorldTransform.Position;
         var dotProduct = value.DotProduct(forwardVector);
         var crossProduct = value.CrossProduct(forwardVector);

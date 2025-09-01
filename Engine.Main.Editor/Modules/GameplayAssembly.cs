@@ -39,7 +39,7 @@ public class GameplayAssembly() : ModularAssembly("User.Game", EngineModule.Game
         {
             Logger.Error($"Error during Backstage update: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
-            return false;
+            return base.Update(deltaTime);
         }
         return base.Update(deltaTime);
     }

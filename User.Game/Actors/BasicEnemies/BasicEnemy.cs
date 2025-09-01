@@ -10,7 +10,8 @@ namespace User.Game.Actors.BasicEnemies;
 
 public partial class BasicEnemy : ActorInstance
 {
-    [DefaultGroup] public static readonly Group<BasicEnemy> All = new(); 
+    [DefaultGroup] public static readonly Group<BasicEnemy> All = new();
+    public static readonly Group<BasicEnemy> Alive = new();
     [Component] public PhysicsComponent Physics;
     [Component] public ColliderSphereComponent ColliderSphere;
     [Component] public SpaceshipEngineComponent LeftEngine;
@@ -36,6 +37,7 @@ public partial class BasicEnemy : ActorInstance
         if (Health > 0)
             return;
 
+        Alive.Leave(this);
         IsDying = true;
         Physics.GravityEnabled = true;
         Physics.AngularVelocity += DeathDropRandom * 0.5 * 360.0;
@@ -50,6 +52,7 @@ public partial class BasicEnemy : ActorInstance
         // SpaceshipFlames.Mesh = PlaneMesh.Shared;
         // SpaceshipFlames.Material = Material.CreateFromDisk("Assets/Shaders/cube");
 
+        Alive.Join(this);
         for (var i = 0; i < 2; i++)
         {
             var flames = CreateComponent<SpaceshipEngineComponent>();

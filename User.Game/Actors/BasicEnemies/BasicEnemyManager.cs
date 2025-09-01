@@ -35,7 +35,7 @@ public partial class BasicEnemyManager : Actor
     }
     
     private int _enemiesQueued = 0;
-    [OnTimer(Seconds = 1.0f)]
+    [OnTimer(Seconds = 0.1f)]
     protected void SpawnEnemy()
     {
         const int maxEnemies = 500;
