@@ -5,6 +5,7 @@ using System.Text;
 using Diligent;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Rendering;
+using Engine.Core.Logging;
 
 namespace Engine.Core.Assets.Builders;
 
@@ -76,6 +77,12 @@ public class MaterialBuilder
             ]
         };
     }
+
+    public MaterialBuilder SetUniqueName(string name)
+    {
+        _incrementalHash.Write("UniqueName", name);
+        return this;
+    }
     
     public MaterialBuilder SetTexture(string texturePath) => SetTexture(Texture.CreateFromDisk(texturePath));
 
@@ -107,7 +114,7 @@ public class MaterialBuilder
         _incrementalHash.Write(addressMode);
         return this;
     }
-
+    
     public MaterialBuilder WithUniformPixelBuffer<T>(string name, in T defaultValue) where T : unmanaged
     {
         _pipeline.Desc.ResourceLayout.Variables = _pipeline.Desc.ResourceLayout.Variables.Append(
@@ -153,10 +160,13 @@ public class MaterialBuilder
                 UseCombinedTextureSamplers = true
             },
             SourceLanguage = ShaderSourceLanguage.Hlsl
-        }, out _);
+        }, out var compilerOutput);
         if (vertexShader == null)
+        {
+            Logger.Error(compilerOutput.AsUtf8String());
             throw new InvalidOperationException($"Failed to create vertex shader from Assets/{_shaderPath}.vsh");
-        
+        }
+
         var pixelShader = RenderContext.Current.RenderDevice.CreateShader(new ShaderCreateInfo
         {
             FilePath = $"Assets/{_shaderPath}.psh",
@@ -230,5 +240,28 @@ internal class IncrementalHashWriter
     internal string Current()
     {
         return Convert.ToBase64String(_incrementalHash.GetCurrentHash());
+    }
+}
+
+public static class DataBlobExtensions
+{
+    public static string AsUtf8String(this IDataBlob blob)
+    {
+        if (blob == null) return null;
+
+        var size = checked((int)blob.GetSize());
+        var ptr  = blob.GetConstDataPtr();
+        if (ptr == IntPtr.Zero) return null;
+
+        if (size > 0)
+        {
+            var bytes = new byte[size];
+            Marshal.Copy(ptr, bytes, 0, size);
+            if (bytes.Length > 0 && bytes[^1] == 0) Array.Resize(ref bytes, bytes.Length - 1);
+            return Encoding.UTF8.GetString(bytes);
+        }
+
+        // Fallback if provider didn’t set size
+        return Marshal.PtrToStringAnsi(ptr);
     }
 }

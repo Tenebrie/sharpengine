@@ -34,7 +34,7 @@ public partial class Atom
             OnInputReleasedMethods = methods.Select(ReflectionInputMethod<IOnInputReleasedAttribute>.Create).OfType<ReflectionInputMethod<IOnInputReleasedAttribute>>().ToList(),
             OnTimerMethods = methods.Select(ReflectionMethod<OnTimerAttribute>.Create).OfType<ReflectionMethod<OnTimerAttribute>>().ToList(),
             
-            SignalFields = allFields.Select(ReflectionField<Signal, SignalAttribute>.Create).OfType<ReflectionField<Signal, SignalAttribute>>().ToList(),
+            SignalFields = allFields.Select(ReflectionField<ISignal, SignalAttribute>.Create).OfType<ReflectionField<ISignal, SignalAttribute>>().ToList(),
             ComponentFields = instanceFields.Select(ReflectionField<Atom, ComponentAttribute>.Create).OfType<ReflectionField<Atom, ComponentAttribute>>().ToList(),
             DefaultGroupFields = allFields.Select(ReflectionField<IGroup, DefaultGroupAttribute>.Create).OfType<ReflectionField<IGroup, DefaultGroupAttribute>>().ToList()
         };
@@ -55,7 +55,7 @@ public partial class Atom
         public required List<ReflectionInputMethod<IOnInputReleasedAttribute>> OnInputReleasedMethods { get; init; }
         public required List<ReflectionMethod<OnTimerAttribute>> OnTimerMethods { get; init; }
         
-        public required List<ReflectionField<Signal, SignalAttribute>> SignalFields { get; init; }
+        public required List<ReflectionField<ISignal, SignalAttribute>> SignalFields { get; init; }
         public required List<ReflectionField<Atom, ComponentAttribute>> ComponentFields { get; init; }
         public required List<ReflectionField<IGroup, DefaultGroupAttribute>> DefaultGroupFields { get; init; }
     }

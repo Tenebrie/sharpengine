@@ -12,7 +12,7 @@ using Engine.Core.Logging;
 
 namespace User.Game.Actors.CloudCover;
 
-public partial class CloudLayer : Actor
+public partial class DistantFogLayer : Actor
 { 
     [Component] public StaticMeshComponent MeshComponent; 
 
@@ -24,7 +24,7 @@ public partial class CloudLayer : Actor
         _material = MaterialBuilder
             .CreateFromDisk("Shaders/Meshes/Clouds")
             .WithUniformPixelBuffer("CloudParams", new CloudParams(
-                time: 0.0,
+                time: 2.0,
                 densityMin: 0.5,
                 densityMax: 1.0,
                 sunDirection: Vector3.One
@@ -43,7 +43,7 @@ public partial class CloudLayer : Actor
         MeshComponent.StaticMesh = PlaneMesh.Shared;
         MeshComponent.MaterialInstance = _material.Instantiate()
             .SetUvScale(25.0)
-            .SetTintColor(Color.White);
+            .SetTintColor(Color.Red);
     }
 
     private double _totalTime = Random.Shared.NextDouble() * 750.0;
@@ -56,14 +56,7 @@ public partial class CloudLayer : Actor
         Transform.Position = new Vector3(camera.WorldTransform.Position.X - 100, LayerHeight + RenderOffset, camera.WorldTransform.Position.Z - 2000);
         var playerOffset = new Vector2(camera.WorldTransform.Position.X, camera.WorldTransform.Position.Z) /
                            -LayerHeight;
-        if (IsShadow)
-        {
-            MeshComponent.MaterialInstance.SetUvOffset((windOffset * 3) + playerOffset * 16);
-        }
-        else
-        {
-            MeshComponent.MaterialInstance.SetUvOffset(windOffset + playerOffset * 10);
-        }
+        MeshComponent.MaterialInstance.SetUvOffset(windOffset + playerOffset * 10);
     }
 
     public partial class CloudLayerService : Service
@@ -76,9 +69,9 @@ public partial class CloudLayer : Actor
             _totalTime += deltaTime;
             _material.UpdateConstantBuffer("CloudParams", new CloudParams(
                 time: _totalTime,
-                densityMin: 0.4,
-                densityMax: 0.6,
-                sunDirection: new Vector3(0, 0.0, 1.0).Normalized()
+                densityMin: 0.0,
+                densityMax: 0.0,
+                sunDirection: new Vector3(1.0, 1.0, 1.0).Normalized()
             ));
         }
     }

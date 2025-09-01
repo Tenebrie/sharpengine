@@ -6,6 +6,7 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Logging;
 
 namespace User.Game.Actors;
 

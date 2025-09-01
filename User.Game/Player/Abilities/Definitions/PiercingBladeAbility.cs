@@ -1,6 +1,8 @@
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
+using Engine.Core.Geometry.Intersections;
+using Engine.Core.Geometry.Shapes;
 using Engine.Core.Makers;
 using JetBrains.Annotations;
 using User.Game.Actors;
@@ -24,7 +26,10 @@ public partial class PiercingBladeAbility : ActorComponent, IAbility
         var forwardVector = Vector3.Forward;
         var mousePos = GetService<InputService>().GetMousePosition();
         var window = Backstage.Window.Size;
-        var value = new Vector3(mousePos.X - window.X / 2.0, 0, mousePos.Y - window.Y / 2.0).Normalized();
+        // Get the intersection point with the ground plane (Y=0)
+        if (!Raycast.IntersectPlane(Backstage.ActiveCamera, PlaneShape.FromNormal(Vector3.Up), mousePos, out var targetPoint))
+            return;
+        var value = targetPoint - WorldTransform.Position;
         var dotProduct = value.DotProduct(forwardVector);
         var crossProduct = value.CrossProduct(forwardVector);
         var difference = Math.Atan2(crossProduct.Y, dotProduct);

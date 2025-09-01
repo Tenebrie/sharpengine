@@ -65,11 +65,13 @@ public struct Vector3(double x, double y, double z)
     public readonly double DistanceSquaredTo(Vector3 other) => Promote().DistanceSquaredTo(other);
 
     public readonly double DotProduct(Vector3 other) => Promote().DotProduct(other);
+    public static double Dot(Vector3 a, Vector3 b) => a.DotProduct(b);
     public Vector3 CrossProduct(Vector3 b) => new(
         Y * b.Z - Z * b.Y,
         Z * b.X - X * b.Z,
         X * b.Y - Y * b.X
     );
+    public static Vector3 Cross(Vector3 a, Vector3 b) => a.CrossProduct(b);
     
     public Vector3 Normalized() => Promote().Normalized();
     

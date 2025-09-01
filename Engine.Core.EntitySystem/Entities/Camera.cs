@@ -1,13 +1,18 @@
 ﻿using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components;
+using Engine.Core.Modules.EntitySystem;
 using Silk.NET.Maths;
 
 namespace Engine.Core.EntitySystem.Entities;
 
-public partial class Camera : Actor
+public partial class Camera : Actor, ICamera
 {
     public bool IsEditorCamera { get; protected set; } = false;
+    public double FieldOfView { get; set; } = 60.0;
+    public double AspectRatio { get; set; } = 16.0 / 9.0;
+    public double Width { get; set; } = 1920;
+    public double Height { get; set; } = 1080;
     
     private Matrix _projMatrix = Matrix.Identity;
     
@@ -16,15 +21,17 @@ public partial class Camera : Actor
     {
         if (Backstage.Window == null)
             throw new Exception("Camera cannot be initialized without a Backstage Window.");
+
+        Width = Backstage.Window.FramebufferSize.X;
+        Height = Backstage.Window.FramebufferSize.Y;
+        AspectRatio = Width / Height;
         
-        const float fov = 60.0f * MathF.PI / 180.0f;
-        var aspect = Backstage.Window.FramebufferSize.X / (float)Backstage.Window.FramebufferSize.Y;
-        const float near = 0.1f;
-        const float far = 20000.0f;
-        var f = 1.0f / MathF.Tan(fov / 2.0f);
+        const double near = 0.1;
+        const double far = 20000.0;
+        var f = 1.0 / Math.Tan(double.DegreesToRadians(FieldOfView) / 2.0);
         
         _projMatrix = new Matrix(
-            f / aspect, 0, 0, 0,
+            f / AspectRatio, 0, 0, 0,
             0, f, 0, 0,
             0, 0, (far + near) / (near - far), -1,
             0, 0, (2 * far * near) / (near - far), 0
@@ -47,11 +54,13 @@ public partial class Camera : Actor
 
     private void OnResize(Vector2D<int> size)
     {
-        var aspect = size.X / (float)size.Y;
-        const float fov = 60.0f * MathF.PI / 180.0f;
-        var f = 1.0f / MathF.Tan(fov / 2.0f);
+        Width = size.X;
+        Height = size.Y;
+        AspectRatio = Width / Height;
+        
+        var f = 1.0 / Math.Tan(FieldOfView / 2.0);
 
-        _projMatrix.M11 = f / aspect;
+        _projMatrix.M11 = f / AspectRatio;
         _projMatrix.M22 = f;
     }
 

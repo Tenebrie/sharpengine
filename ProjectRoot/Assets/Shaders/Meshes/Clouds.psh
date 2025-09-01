@@ -1,10 +1,10 @@
 cbuffer CloudParams
 {
-    float2 WindDir;
     float Time;
-    float Density;
+    float DensityMaskMin;
+    float DensityMaskMax;
     float3 SunDir;
-    float Brightness;
+    float2 _padding;
 };
 
 // ==== Noise functions ====
@@ -49,23 +49,20 @@ struct PSIn
 
 float4 main(PSIn IN) : SV_Target
 {
-    // Scroll UVs with wind
-    float2 uv = IN.UV + WindDir * Time * 0.02;
-
     // Base cloud mask
-    float base = fbm(uv);
-    float mask = smoothstep(0.5, 0.7, base);
+    float base = fbm(IN.UV);
+    float mask = smoothstep(DensityMaskMin, DensityMaskMax, base);
 
     // Fake lighting from sun dir
-    float gradX = fbm(uv + float2(0.01, 0)) - fbm(uv - float2(0.01, 0));
-    float gradY = fbm(uv + float2(0, 0.01)) - fbm(uv - float2(0, 0.01));
+    float gradX = fbm(IN.UV + float2(0.01, 0)) - fbm(IN.UV - float2(0.01, 0));
+    float gradY = fbm(IN.UV + float2(0, 0.01)) - fbm(IN.UV - float2(0, 0.01));
     float3 n = normalize(float3(-gradX, -gradY, 1.0));
     float light = saturate(dot(n, normalize(SunDir)));
 
     // Final color
-    float alpha = mask * Density;
+    float alpha = mask * IN.Color.a;
     float3 cloudColor = lerp(float3(0.8, 0.8, 0.8), float3(1.0, 1.0, 1.0), light);
-    cloudColor *= Brightness;
+    cloudColor *= IN.Color;
 
-    return float4(cloudColor, alpha);
+    return float4(min(1.0, cloudColor.r), min(1.0, cloudColor.g), min(1.0, cloudColor.b), min(1.0, alpha));
 }

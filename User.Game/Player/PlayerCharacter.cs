@@ -1,5 +1,6 @@
 ﻿using Engine.Core.Makers;
 using Engine.Core.EntitySystem.Attributes;
+using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
 using Engine.Core.Extensions;
@@ -26,7 +27,7 @@ public partial class PlayerCharacter : Actor
 
     [Component] public AbilityController Abilities;
     [Component] public DragonMesh DragonMeshComponent;
-    // [Component] public PhysicsComponent PhysicsComponent;
+    [Component] public PhysicsComponent PhysicsComponent;
     [Component] public ExperienceComponent Experience;
 
     [OnInputHeld(InputAction.MoveForward,  +1.0, +0.0)]
@@ -39,8 +40,6 @@ public partial class PlayerCharacter : Actor
             return;
         
         var value = new Vector3(direction.Y, 0, -direction.X).Normalized();
-        // Transform.TranslateGlobal(value * MovementSpeed * deltaTime);
-        // PhysicsComponent.LinearVelocity = value * MovementSpeed * 2;
         _acceleration = value * 15 * deltaTime;
         
         var forwardVector = Vector3.Forward;
@@ -81,8 +80,8 @@ public partial class PlayerCharacter : Actor
         
         if (_velocity.Length > maxSpeed)
             _velocity = _velocity.SetLengthIfNotZero(maxSpeed);
-        Transform.TranslateGlobal(_velocity * MovementSpeed * deltaTime);
-        // PhysicsComponent.LinearVelocity = _velocity * MovementSpeed;
+        // Transform.TranslateGlobal(_velocity * MovementSpeed * deltaTime);
+        PhysicsComponent.LinearVelocity = _velocity * MovementSpeed;
         if (!_inputHeldThisFrame)
             _velocity -= _velocity * 2.0 * deltaTime;
         
@@ -101,13 +100,5 @@ public partial class PlayerCharacter : Actor
         Transform.RotateAroundLocal(Vector3.Forward, _currentRoll);
 
         _inputHeldThisFrame = true;
-    }
-    
-    [OnInput(InputAction.Jump)]
-    protected void OnJump()
-    {
-        // if (Transform.Position.Y > 0)
-            // return;
-        // PhysicsComponent.LinearVelocity.Y = 20.0;
     }
 }

@@ -178,7 +178,12 @@ public sealed class BaseSignal<TDelegate> where TDelegate : Delegate
     }
 }
 
-public class Signal
+public interface ISignal
+{
+    
+}
+
+public class Signal : ISignal
 {
     public readonly BaseSignal<Action> Base = new();
     public void Emit() => Base.Snapshot()?.Invoke();
@@ -186,7 +191,7 @@ public class Signal
     public void Disconnect(Action action) => Base.Disconnect(action);
 }
 
-public class Signal<T1>
+public class Signal<T1> : ISignal
 {
     private readonly BaseSignal<Action<T1>> _baseSignal = new();
     public void Emit(T1 v1) => _baseSignal.Snapshot()?.Invoke(v1);
@@ -194,7 +199,7 @@ public class Signal<T1>
     public void Disconnect(Action<T1> action) => _baseSignal.Disconnect(action);
 }
 
-public class Signal<T1, T2>
+public class Signal<T1, T2> : ISignal
 {
     private readonly BaseSignal<Action<T1, T2>> _baseSignal = new();
     public void Emit(T1 v1, T2 v2) => _baseSignal.Snapshot()?.Invoke(v1, v2);
@@ -202,7 +207,7 @@ public class Signal<T1, T2>
     public void Disconnect(Action<T1, T2> action) => _baseSignal.Disconnect(action);
 }
 
-public class Signal<T1, T2, T3>
+public class Signal<T1, T2, T3> : ISignal
 {
     private readonly BaseSignal<Action<T1, T2, T3>> _baseSignal = new();
     public void Emit(T1 v1, T2 v2, T3 v3) => _baseSignal.Snapshot()?.Invoke(v1, v2, v3);
@@ -210,7 +215,7 @@ public class Signal<T1, T2, T3>
     public void Disconnect(Action<T1, T2, T3> action) => _baseSignal.Disconnect(action);
 }
 
-public class Signal<T1, T2, T3, T4>
+public class Signal<T1, T2, T3, T4> : ISignal
 {
     private readonly BaseSignal<Action<T1, T2, T3, T4>> _baseSignal = new();
     public void Emit(T1 v1, T2 v2, T3 v3, T4 v4) => _baseSignal.Snapshot()?.Invoke(v1, v2, v3, v4);
@@ -218,7 +223,7 @@ public class Signal<T1, T2, T3, T4>
     public void Disconnect(Action<T1, T2, T3, T4> action) => _baseSignal.Disconnect(action);
 }
 
-public class Signal<T1, T2, T3, T4, T5>
+public class Signal<T1, T2, T3, T4, T5> : ISignal
 {
     private readonly BaseSignal<Action<T1, T2, T3, T4, T5>> _baseSignal = new();
     public void Emit(T1 v1, T2 v2, T3 v3, T4 v4, T5 v5) => _baseSignal.Snapshot()?.Invoke(v1, v2, v3, v4, v5);
@@ -226,7 +231,7 @@ public class Signal<T1, T2, T3, T4, T5>
     public void Disconnect(Action<T1, T2, T3, T4, T5> action) => _baseSignal.Disconnect(action);
 }
 
-public class Signal<T1, T2, T3, T4, T5, T6>
+public class Signal<T1, T2, T3, T4, T5, T6> : ISignal
 {
     private readonly BaseSignal<Action<T1, T2, T3, T4, T5, T6>> _baseSignal = new();
     public void Emit(T1 v1, T2 v2, T3 v3, T4 v4, T5 v5, T6 v6) => _baseSignal.Snapshot()?.Invoke(v1, v2, v3, v4, v5, v6);

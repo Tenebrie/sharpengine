@@ -37,7 +37,7 @@ public class PhysicsHost : IPhysicsHost
     }
     public void Unregister(long rid) => _registeredAtoms.Remove(rid);
 
-    private const double PhysicsStepDuration = 0.0166666666666667;
+    private const double PhysicsStepDuration = 1.0 / 120.0;
     private double _leftoverTime = 0.0;
     public void ProcessPhysicsFrame(double deltaTime)
     {
@@ -52,6 +52,12 @@ public class PhysicsHost : IPhysicsHost
         {
             _leftoverTime -= PhysicsStepDuration;
             steps += 1;
+        }
+        
+        if (steps == 0)
+        {
+            stopwatch.StopAndReport(GetType(), ProfilingContext.PhysicsUpdate);
+            return;
         }
 
         _revalidationServices.DisableAll();

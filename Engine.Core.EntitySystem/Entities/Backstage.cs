@@ -40,6 +40,7 @@ public partial class Backstage : Scene
         ServiceRegistry.Get<InputService>().SendKeyboardHeldEvents(deltaTime);
     }
 
+    public Camera ActiveCamera => GetActiveCameraOrThrow();
     private Camera? GetActiveCamera => FindActiveCamera(this);
     public Camera GetActiveCameraOrThrow()
     {

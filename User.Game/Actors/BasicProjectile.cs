@@ -1,4 +1,5 @@
-﻿using Engine.Core.Assets.Materials;
+﻿using System.Drawing;
+using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Communication.Signals;
 using Engine.Core.Makers;
@@ -23,7 +24,7 @@ public partial class BasicProjectile : Actor
     {
         ProjectileCreated.Emit(this);
         MeshComponent.StaticMesh = StaticMesh.CreateFromDisk("Meshes/projectile-sword.obj");
-        MeshComponent.MaterialInstance = Material.CreateFromDisk("Shaders/cube").Instantiate();
+        MeshComponent.MaterialInstance = Material.CreateFromDisk("Shaders/cube").Instantiate().SetTintColor(Color.Red);
         MeshComponent.Transform.Rotation = QuatMakers.FromRotation(0, -90, 0);
     }
 

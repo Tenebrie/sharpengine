@@ -29,10 +29,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Module.Physics", "En
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Main.Launcher", "Engine.Main.Launcher\Engine.Main.Launcher.csproj", "{B3A499A8-C04E-4069-B677-48CDA0519EB6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core.Geometry", "Engine.Core.Geometry\Engine.Core.Geometry.csproj", "{A9A99E0A-BE84-421F-9D21-34BB30B2BEAA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core.Common", "Engine.Core.Common\Engine.Core.Common.csproj", "{C8F59C23-E0A1-4E4B-981A-2549E0BE1552}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
+		Release|Any CPU = Release|Any CPU
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{34F06698-A376-4AE2-84FE-CA25A47C4B85}.Debug|x64.ActiveCfg = Debug|x64
@@ -83,6 +91,14 @@ Global
 		{B3A499A8-C04E-4069-B677-48CDA0519EB6}.Debug|x64.Build.0 = Debug|x64
 		{B3A499A8-C04E-4069-B677-48CDA0519EB6}.Release|x64.ActiveCfg = Release|x64
 		{B3A499A8-C04E-4069-B677-48CDA0519EB6}.Release|x64.Build.0 = Release|x64
+		{A9A99E0A-BE84-421F-9D21-34BB30B2BEAA}.Debug|x64.ActiveCfg = Debug|x64
+		{A9A99E0A-BE84-421F-9D21-34BB30B2BEAA}.Debug|x64.Build.0 = Debug|x64
+		{A9A99E0A-BE84-421F-9D21-34BB30B2BEAA}.Release|x64.ActiveCfg = Release|x64
+		{A9A99E0A-BE84-421F-9D21-34BB30B2BEAA}.Release|x64.Build.0 = Release|x64
+		{C8F59C23-E0A1-4E4B-981A-2549E0BE1552}.Debug|x64.ActiveCfg = Debug|x64
+		{C8F59C23-E0A1-4E4B-981A-2549E0BE1552}.Debug|x64.Build.0 = Debug|x64
+		{C8F59C23-E0A1-4E4B-981A-2549E0BE1552}.Release|x64.ActiveCfg = Release|x64
+		{C8F59C23-E0A1-4E4B-981A-2549E0BE1552}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
