@@ -3,7 +3,7 @@ using Diligent;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 
-namespace Engine.Module.Rendering;
+namespace Engine.Module.Rendering.Utilities;
 
 public class InfiniteInstanceBuffer : IInstanceBuffer, IDisposable
 {

@@ -20,7 +20,6 @@ public class ProfileAspect
         [Argument(Source.Target)] Func<object[], object> target,
         [Argument(Source.Arguments)] object[] args)
     {
-        // start timing
         var sw = Profiler.Start();
 
         try

@@ -14,6 +14,5 @@ public partial class WorkspaceHost : Backstage, IWorkspaceHost
         CreateActor<EditorCamera>();
         RegisterService<EditorInputService>();
         RegisterService<EditorLoggingService>();
-        RegisterService<PerformanceMonitoringService>();
     }
 }

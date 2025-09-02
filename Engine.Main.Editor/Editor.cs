@@ -22,6 +22,7 @@ internal static class Editor
     internal static GameplayAssembly GameplayAssembly { get; private set; } = null!;
     internal static PhysicsAssembly PhysicsAssembly { get; private set; } = null!;
     internal static RenderingAssembly RenderingAssembly { get; private set; } = null!;
+    internal static UtilityAssembly UtilityAssembly { get; private set; } = null!;
     internal static WorkspaceAssembly WorkspaceAssembly { get; private set; } = null!;
 
     private static List<ModularAssembly> GuestAssemblies { get; set; } = [];
@@ -44,17 +45,19 @@ internal static class Editor
         WindowStateManager.TryLoadWindowState(ref opts);
         MainWindow = Window.Create(opts);
 
-        WorkspaceAssembly = new WorkspaceAssembly();
+        GameplayAssembly = new GameplayAssembly();
         PhysicsAssembly = new PhysicsAssembly();
         RenderingAssembly = new RenderingAssembly();
-        GameplayAssembly = new GameplayAssembly();
+        UtilityAssembly = new UtilityAssembly();
+        WorkspaceAssembly = new WorkspaceAssembly();
 
         GuestAssemblies =
         [
-            WorkspaceAssembly,
             GameplayAssembly,
             PhysicsAssembly,
             RenderingAssembly,
+            UtilityAssembly,
+            WorkspaceAssembly,
         ];
         
         GCSettings.LatencyMode = GCLatencyMode.LowLatency;
@@ -64,17 +67,20 @@ internal static class Editor
             // Create input context
             MainInputContext = MainWindow.CreateInput();
 
-            // Setup rendering first
+            // First: Utility assembly to run DI
+            UtilityAssembly.Load();
+            
+            // Second: Rendering to show the splash screen
             RenderingAssembly.Load();
             RenderingAssembly.RenderingHost?.RenderEngineLoadingScreen();
-
             MainWindow.IsVisible = true;
             
-            // Setup guest assemblies
+            // Then: The rest of the owl
             GameplayAssembly.Load();
             PhysicsAssembly.Load();
             WorkspaceAssembly.Load();
             
+            // Send the initial reload notification
             foreach (var reloadedAssembly in GuestAssemblies)
             {
                 GuestAssemblies.ForEachTry(
@@ -106,6 +112,7 @@ internal static class Editor
             allAssemblies.Add(RenderingAssembly);
             allAssemblies.Add(GameplayAssembly);
             allAssemblies.Add(PhysicsAssembly);
+            allAssemblies.Add(UtilityAssembly);
             allAssemblies.Add(WorkspaceAssembly);
 
             var wantingBuild = allAssemblies.Where(a => a.NeedsRebuild()).ToList();
@@ -145,10 +152,11 @@ internal static class Editor
         {
             WindowStateManager.SaveWindowState(MainWindow);
 
-            PhysicsAssembly.Destroy();
             GameplayAssembly.Destroy();
-            WorkspaceAssembly.Destroy();
+            PhysicsAssembly.Destroy();
             RenderingAssembly.Destroy();
+            UtilityAssembly.Destroy();
+            WorkspaceAssembly.Destroy();
 
             WindowStateManager.Cleanup();
         };
@@ -177,6 +185,7 @@ internal static class Editor
             EngineModule.Gameplay => GameplayAssembly,
             EngineModule.Rendering => RenderingAssembly,
             EngineModule.Physics => PhysicsAssembly,
+            EngineModule.Utility => UtilityAssembly,
             EngineModule.Workspace => WorkspaceAssembly,
             _ => throw new ArgumentOutOfRangeException(nameof(module), module, "Unmapped engine module.")
         };
@@ -191,6 +200,7 @@ internal static class Editor
         public IGameplayHost? GameplayModule => GameplayAssembly.HostBackstage;
         public IPhysicsHost? PhysicsModule => PhysicsAssembly.PhysicsModule;
         public IRenderingHost? RenderingModule => RenderingAssembly.RenderingHost;
+        public IUtilityHost? UtilityModule => UtilityAssembly.HostBackstage;
         public IWorkspaceHost? WorkspaceModule => WorkspaceAssembly.HostBackstage;
         
         public GameplayContext GameplayContext { get; private set; } = GameplayContext.Editor;

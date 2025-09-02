@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 
 namespace Engine.Core.Logging;
 
@@ -201,4 +202,24 @@ public enum LogLevel
     Error,
     Fatal,
     Log
+}
+
+public static class LogLevelExtensions
+{
+    /**
+     * Gets a color associated with the log level for UI representation.
+     */
+    public static Color GetColor(this LogLevel level)
+    {
+        return level switch
+        {
+            LogLevel.Debug => Color.LightGray,
+            LogLevel.Info => Color.LightGreen,
+            LogLevel.Warn => Color.Yellow,
+            LogLevel.Error => Color.Red,
+            LogLevel.Fatal => Color.Red,
+            LogLevel.Log => Color.LightCyan,
+            _ => Color.White
+        };
+    }
 }

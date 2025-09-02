@@ -1,8 +1,8 @@
-﻿using Engine.Core.Profiling;
-using Engine.Core.EntitySystem.Attributes;
+﻿using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Profiling;
 
-namespace Engine.Module.Host.Services;
+namespace Engine.Module.Utility.Services;
 
 public partial class PerformanceMonitoringService : Service
 {

@@ -71,6 +71,7 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
     {
         // TODO: Fix culling?
         IsOnScreen = true;
+        
         foreach (var actor in Instances)
         {
             actor.IsOnScreen = activeCamera.SphereInFrustum(BoundingSphere, actor.WorldTransform);

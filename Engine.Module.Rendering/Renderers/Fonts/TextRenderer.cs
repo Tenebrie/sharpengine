@@ -3,7 +3,7 @@ using Engine.Core.Common;
 using Engine.Core.Logging;
 using Color = System.Drawing.Color;
 
-namespace Engine.Module.Rendering.Fonts;
+namespace Engine.Module.Rendering.Renderers.Fonts;
 
 public struct FontKey : IEquatable<FontKey>
 {
@@ -21,9 +21,9 @@ public struct FontKey : IEquatable<FontKey>
 
 public class TextRenderer : IDisposable
 {
-    private readonly Dictionary<FontKey, FontRenderer> _fonts = new();
+    private readonly Dictionary<FontKey, SpecificFontRenderer> _fonts = new();
 
-    private FontRenderer? ProduceRenderer(string font, int size)
+    private SpecificFontRenderer? ProduceRenderer(string font, int size)
     {
         var key = new FontKey
         {
@@ -37,7 +37,7 @@ public class TextRenderer : IDisposable
         
         try
         {
-            _fonts[key] = fontRenderer = new FontRenderer(key);
+            _fonts[key] = fontRenderer = new SpecificFontRenderer(key);
             fontRenderer.Initialize();
         }
         catch (Exception e)

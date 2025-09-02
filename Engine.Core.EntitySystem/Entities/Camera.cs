@@ -58,7 +58,7 @@ public partial class Camera : Actor, ICamera
         Height = size.Y;
         AspectRatio = Width / Height;
         
-        var f = 1.0 / Math.Tan(FieldOfView / 2.0);
+        var f = 1.0 / Math.Tan(double.DegreesToRadians(FieldOfView / 2.0));
 
         _projMatrix.M11 = f / AspectRatio;
         _projMatrix.M22 = f;

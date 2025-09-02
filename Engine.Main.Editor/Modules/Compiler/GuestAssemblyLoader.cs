@@ -6,8 +6,12 @@ namespace Engine.Main.Editor.Modules.Compiler;
 
 internal sealed class GuestAssemblyLoader(string assemblyName)
 {
+
     private readonly string _srcPath = Path.GetFullPath($"../../../../../{assemblyName}");
-    private readonly string _dllPath = Path.GetFullPath($"../../../../../{assemblyName}/bin/x64/Debug/net9.0/{assemblyName}.dll");
+
+    private readonly string _dllPath =
+        Path.GetFullPath($"../../../../../{assemblyName}/bin/x64/{GetReleaseMode()}/net9.0/{assemblyName}.dll");
+
     private FileSystemWatcher? _watcher;
     private readonly GuestAssemblyCompiler _compiler = GuestAssemblyCompiler.Make(assemblyName);
     public bool IsCompiling = false;
@@ -21,7 +25,7 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
     private GameAssemblyLoadContext? _assemblyLoadContext;
 
     public double DebounceTimer = 0.0;
-    
+
     /// <summary>
     /// Run a per-frame update, triggering a build if the assembly is dirty.
     /// </summary>
@@ -34,7 +38,7 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
             if (DebounceTimer > 0.0)
                 return false;
         }
-        
+
         if (IsCompiling)
             return false;
 
@@ -55,7 +59,7 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
         // BuildGuestAsync();
         return false;
     }
-    
+
     private void StartWatching()
     {
         Logger.Debug("Watching for changes in: " + _srcPath);
@@ -70,7 +74,7 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
         _watcher.Deleted += OnSourceChanged;
         _watcher.EnableRaisingEvents = true;
     }
-    
+
     private void OnSourceChangedIncrementally(object sender, FileSystemEventArgs e)
     {
         DebounceTimer = Math.Max(DebounceTimer, 0.05);
@@ -94,15 +98,12 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
         IsCompiling = true;
         UpdateLoggerState();
         return _compiler.CompileAsync(_isAssemblyStructureDirty,
-        () =>
-        {
-            AssemblyAwaitingReload = true;
-        }, () =>
-        {
-            IsCompiling = false;
-            _isAssemblyStructureDirty = false;
-            UpdateLoggerState();
-        });
+            () => { AssemblyAwaitingReload = true; }, () =>
+            {
+                IsCompiling = false;
+                _isAssemblyStructureDirty = false;
+                UpdateLoggerState();
+            });
     }
 
     private static void UpdateLoggerState()
@@ -143,7 +144,7 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
             return;
         Directory.Delete(cacheDir, true);
     }
-    
+
     public TContract? ProduceContract<TContract>() where TContract : class
     {
         if (Assembly == null)
@@ -167,10 +168,10 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
             _watcher.Dispose();
             _watcher = null;
         }
-        
+
         _assemblyLoadContext!.Unload();
         _assemblyLoadContext = null;
-        
+
         _assemblyLoaded = false;
     }
 
@@ -180,10 +181,18 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
         {
             if (!i.IsGenericType && i == typeof(TContract))
                 return true;
-            
+
             return i.IsGenericType &&
-                i.GetGenericTypeDefinition() == typeof(TContract);
+                   i.GetGenericTypeDefinition() == typeof(TContract);
         });
+    }
+
+    private static string GetReleaseMode()
+    {
+#if DEBUG
+        return "Debug";
+#endif
+        return "Release";
     }
 }
 

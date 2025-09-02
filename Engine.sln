@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core.Geometry", "Eng
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core.Common", "Engine.Core.Common\Engine.Core.Common.csproj", "{C8F59C23-E0A1-4E4B-981A-2549E0BE1552}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Module.Utility", "Engine.Module.Utility\Engine.Module.Utility.csproj", "{A83ADF2D-E770-43D2-9673-EABF30DA6A2F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -99,6 +101,10 @@ Global
 		{C8F59C23-E0A1-4E4B-981A-2549E0BE1552}.Debug|x64.Build.0 = Debug|x64
 		{C8F59C23-E0A1-4E4B-981A-2549E0BE1552}.Release|x64.ActiveCfg = Release|x64
 		{C8F59C23-E0A1-4E4B-981A-2549E0BE1552}.Release|x64.Build.0 = Release|x64
+		{A83ADF2D-E770-43D2-9673-EABF30DA6A2F}.Debug|x64.ActiveCfg = Debug|x64
+		{A83ADF2D-E770-43D2-9673-EABF30DA6A2F}.Debug|x64.Build.0 = Debug|x64
+		{A83ADF2D-E770-43D2-9673-EABF30DA6A2F}.Release|x64.ActiveCfg = Release|x64
+		{A83ADF2D-E770-43D2-9673-EABF30DA6A2F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

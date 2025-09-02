@@ -66,13 +66,15 @@ public static class AssemblyRepository
             anyInvalidated = true;
             if (LibraryAssemblies.TryGetValue(depName, out var result))
                 result.QueueReload();
-            if (depName == Editor.RenderingAssembly.Name)
+            else if (depName == Editor.RenderingAssembly.Name)
                 Editor.RenderingAssembly.QueueReload();
-            if (depName == Editor.GameplayAssembly.Name)
+            else if (depName == Editor.GameplayAssembly.Name)
                 Editor.GameplayAssembly.QueueReload();
-            if (depName == Editor.PhysicsAssembly.Name)
+            else if (depName == Editor.PhysicsAssembly.Name)
                 Editor.PhysicsAssembly.QueueReload();
-            if (depName == Editor.WorkspaceAssembly.Name)
+            else if (depName == Editor.UtilityAssembly.Name)
+                Editor.UtilityAssembly.QueueReload();
+            else if (depName == Editor.WorkspaceAssembly.Name)
                 Editor.WorkspaceAssembly.QueueReload();
         }
         return anyInvalidated;
@@ -119,6 +121,7 @@ public static class AssemblyRepository
         allAssemblies.Add(Editor.RenderingAssembly);
         allAssemblies.Add(Editor.GameplayAssembly);
         allAssemblies.Add(Editor.PhysicsAssembly);
+        allAssemblies.Add(Editor.UtilityAssembly);
         allAssemblies.Add(Editor.WorkspaceAssembly);
         UpdateReloadPriority(allAssemblies);
         return allAssemblies

@@ -6,7 +6,7 @@ using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
-using Engine.Core.Logging;
+using Engine.Module.Rendering.Fonts;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
 using SixLabors.ImageSharp;
@@ -16,9 +16,9 @@ using Point = System.Drawing.Point;
 using Rectangle = System.Drawing.Rectangle;
 using ValueType = Diligent.ValueType;
 
-namespace Engine.Module.Rendering.Fonts;
+namespace Engine.Module.Rendering.Renderers.Fonts;
 
-public class FontRenderer : IFontStashRenderer2, IDisposable
+public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
 {
     private bool _isValid = false;
     private readonly FontSystem _fontSystem;
@@ -37,7 +37,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
     public ITexture2DManager TextureManager => _myTextureManager;
     private readonly MyTextureManager _myTextureManager;
     
-    public FontRenderer(FontKey key)
+    public SpecificFontRenderer(FontKey key)
     {
         _fontSystem = new FontSystem(new FontSystemSettings
         {
@@ -252,7 +252,7 @@ public class FontRenderer : IFontStashRenderer2, IDisposable
     }
 }
 
-public class MyTextureManager(FontRenderer renderer) : ITexture2DManager, IDisposable
+public class MyTextureManager(SpecificFontRenderer renderer) : ITexture2DManager, IDisposable
 {
     private readonly List<Texture> _textures = [];
     public object CreateTexture(int width, int height)
