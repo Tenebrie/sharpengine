@@ -10,6 +10,7 @@ using Engine.Core.Enum;
 using Engine.Module.Rendering.Fonts;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
+using Engine.Core.Logging;
 using Engine.Core.Memory;
 using Engine.Core.Modules;
 using Engine.Core.Profiling;
@@ -182,7 +183,8 @@ public class RenderingHost : IRenderingHost
     public async Task RenderSingleFrame(double deltaTime)
     {
         var stopwatch = Profiler.Start();
-        FrameCounter.Increment(); 
+        RenderStats.Reset();
+        FrameCounter.Increment();
         
         _immediateContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
         _immediateContext.ClearRenderTarget(_renderTargetView, new Vector4(0.35f, 0.35f, 0.35f, 1.0f), ResourceStateTransitionMode.Transition);
@@ -204,7 +206,7 @@ public class RenderingHost : IRenderingHost
             }
         );
         
-        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingPrepare);
+        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingFullFrame);
         _swapChain.Present(1);
     }
 
@@ -234,22 +236,28 @@ public class RenderingHost : IRenderingHost
         
         _infiniteInstanceBuffer.FrameStart();
         
-        _debugFramerateRenderer.RenderFrame(deltaTime);
-        _debugLogRenderer.RenderFrame(deltaTime);
-        _debugProfilerRenderer.RenderFrame(deltaTime);
         if (activeCamera != null)
         {
             foreach (var backstage in _backstages)
             {
                 // Collect all IRenderable entities reachable from the atom tree
+                var stopwatch = Profiler.Start();
                 CollectAtomsToRender(activeCamera, ref _atomsToRender, ref _atomsToRenderCount, backstage);
+                stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCollectAtoms);
+                
                 // Render surviving atoms
+                stopwatch = Profiler.Start();
                 RenderAtomTree(_atomsToRender, _atomsToRenderCount);
+                stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCollectAtoms);
 
                 _atomsToRenderCount = 0;
                 Array.Clear(_atomsToRender);
             }
         }
+        
+        _debugFramerateRenderer.RenderFrameWithTiming(deltaTime);
+        _debugLogRenderer.RenderFrameWithTiming(deltaTime);
+        _debugProfilerRenderer.RenderFrameWithTiming(deltaTime);
 
         TextRenderer.Flush();
         return Task.CompletedTask;
@@ -290,9 +298,15 @@ public class RenderingHost : IRenderingHost
 
             renderable.PerformCulling(activeCamera);
             if (renderable.IsOnScreen)
+            {
+                RenderStats.InstancesDrawn += 1;
                 entitiesToRender[entitiesToRenderCount++] = renderable;
+            }
             else
+            {
+                RenderStats.InstancesCulled += 1;
                 return;
+            }
         }
 
         foreach (var child in target.Children)
@@ -337,8 +351,9 @@ public class RenderingHost : IRenderingHost
 
     private void RenderAtomTree(IRenderable[] atomsToRender, int atomsToRenderCount)
     {
-        _renderRequestPool.Clear(); 
+        _renderRequestPool.Clear();
 
+        var stopwatch = Profiler.Start();
         for (var i = 0; i < atomsToRenderCount; i++)
         {
             var renderable = atomsToRender[i];
@@ -360,12 +375,16 @@ public class RenderingHost : IRenderingHost
             mergedRequest.InstanceCount += request.InstanceCount;
             _renderRequestPool[request.HashCode] = mergedRequest;
         }
+        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCombineRequests);
         
+        stopwatch = Profiler.Start();
+        RenderStats.DrawCalls += _renderRequestPool.Values.Count;
         foreach (var req in _renderRequestPool.Values)
         {
             req.RenderScript.Render(_immediateContext, req.InstanceCount, req.Mesh, (Transform[])req.InstanceTransforms.Array, req.Material,
                 (MaterialInstance[])req.MaterialInstances.Array);
         }
+        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingSubmitAtoms);
         MemoryManager.FreeDomain(MemoryDomain.Rendering);
     }
 

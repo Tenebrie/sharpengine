@@ -13,11 +13,11 @@ public class DebugFramerateRenderer(RenderingHost host): IRenderer
     private double _frameTimeAccumulator = 0.0;
     private int _framerate = 0;
     private int _onePercentLow = 0;
-    private List<IProfilerEntry> _profilerEntries = [];
+    private List<string> _statProfilerEntries = [];
+    private List<string> _renderingProfilerEntries = [];
     
     // After profiler update, remember the number of frames the snapshot represents to calculate timing per frame
     private int _lastSeenFrameIndex = -1;
-    private int _framesForLatestUpdate = 1;
 
     public void RenderFrame(double deltaTime)
     {
@@ -29,7 +29,7 @@ public class DebugFramerateRenderer(RenderingHost host): IRenderer
     {
         var stopwatch = Profiler.Start();
         RenderFrame(delta);
-        stopwatch.StopAndReport(typeof(DebugProfilerRenderer), ProfilingContext.RenderingDebugFramerate);
+        stopwatch.StopAndReport(typeof(DebugFramerateRenderer), ProfilingContext.RenderingDebugFramerate);
     }
 
     private int _lastSeenProfilerBufferIndex = -1;
@@ -40,27 +40,60 @@ public class DebugFramerateRenderer(RenderingHost host): IRenderer
 
         if (_lastSeenProfilerBufferIndex != Profiler.CurrentBufferIndex)
         {
-            _framesForLatestUpdate = Math.Max(1, FrameCounter.Current - _lastSeenFrameIndex);
-            _lastSeenFrameIndex = FrameCounter.Current;
-            _profilerEntries = Profiler
+            var framesForLatestUpdate = Math.Max(1, FrameCounter.Current - _lastSeenFrameIndex);
+            _statProfilerEntries = Profiler
                 .Query(ProfilingContext.BackstageUpdate |
                        ProfilingContext.PhysicsUpdate |
-                       ProfilingContext.RenderingPrepare |
-                       ProfilingContext.RenderingDebugFramerate |
-                       ProfilingContext.RenderingDebugLog |
-                       ProfilingContext.RenderingDebugProfiler)
-                .OrderBy(p => p.FullName)
+                       ProfilingContext.RenderingFullFrame)
+                .OrderByDescending(entry => entry.TotalMilliseconds / framesForLatestUpdate)
+                .Select(entry =>
+                {
+                    var timePerFrame = entry.TotalMilliseconds / framesForLatestUpdate;
+                    if (timePerFrame < 0.01)
+                        return "";
+                    return $"{entry.TypeName}: {timePerFrame:F2}ms";
+                })
+                .Where(str => str.Length > 0)
                 .ToList();
+            _renderingProfilerEntries = Profiler
+                .Query(ProfilingContext.RenderingDebugFramerate |
+                       ProfilingContext.RenderingDebugLog |
+                       ProfilingContext.RenderingDebugProfiler |
+                       ProfilingContext.RenderingCollectAtoms |
+                       ProfilingContext.RenderingCombineRequests |
+                       ProfilingContext.RenderingSubmitAtoms)
+                .OrderByDescending(entry => entry.TotalMilliseconds / framesForLatestUpdate)
+                .Select(entry =>
+                {
+                    var timePerFrame = entry.TotalMilliseconds / framesForLatestUpdate;
+                    if (timePerFrame < 0.01)
+                        return "";
+                    var displayName = entry.Context.ToString()!.Replace("Rendering", "");
+                    return $"{displayName}: {timePerFrame:F2}ms";
+                })
+                .Where(str => str.Length > 0)
+                .ToList();
+            
+            _lastSeenFrameIndex = FrameCounter.Current;
             _lastSeenProfilerBufferIndex = Profiler.CurrentBufferIndex;
         }
         var line = 2;
-        const int maxEntriesRendered = 32;
-        for (var i = 0; i < Math.Min(_profilerEntries.Count, maxEntriesRendered); i++)
+        const int maxEntriesRendered = 16;
+        for (var i = 0; i < Math.Min(_statProfilerEntries.Count, maxEntriesRendered); i++)
         {
-            var entry = _profilerEntries[i];
-            var timePerFrame = entry.TotalMilliseconds / _framesForLatestUpdate;
-            _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, $"{entry.TypeName}: {timePerFrame:F2}ms");
+            var entry = _statProfilerEntries[i];
+            _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, entry);
         }
+        _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, "---- Rendering ----");
+        for (var i = 0; i < Math.Min(_renderingProfilerEntries.Count, maxEntriesRendered); i++)
+        {
+            var entry = _renderingProfilerEntries[i];
+            _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, entry);
+        }
+        _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, "---- Stats ----");
+        _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, $"Draws: {RenderStats.DrawCalls, 4}");
+        _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, $"Instances: {RenderStats.InstancesDrawn, 4}");
+        _textGrid.Draw(0, line, DebugTextGrid.Anchor.TopRight, Color.White, $"Culled: {RenderStats.InstancesCulled, 4}");
     }
     
     private void UpdateFramerate(double deltaTime)

@@ -82,7 +82,8 @@ public class Profiler : IProfiler
             profilerEntry = new ProfilerEntry
             {
                 TypeName = ownerType.Name,
-                MethodName = "Context: " + context
+                MethodName = "Context: " + context,
+                Context = context
             };
             contextDictionary[context] = profilerEntry;
         }
@@ -158,6 +159,7 @@ public class ProfilerEntry : IProfilerEntry
         Array.Clear(_durations, 0, _durations.Length);
     }
 
+    public ProfilingContext? Context { get; internal set; } = null;
     public string TypeName { get; internal set; } = string.Empty;
     public string MethodName { get; internal set; } = string.Empty;
     public string FullName => $"{TypeName}.{MethodName}";

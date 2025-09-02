@@ -32,7 +32,7 @@ public class DebugLogRenderer(RenderingHost host): IRenderer
     {
         var stopwatch = Profiler.Start();
         RenderFrame(delta);
-        stopwatch.StopAndReport(typeof(DebugProfilerRenderer), ProfilingContext.RenderingDebugLog);
+        stopwatch.StopAndReport(typeof(DebugLogRenderer), ProfilingContext.RenderingDebugLog);
     }
 
     public void RenderFrame(double deltaTime)

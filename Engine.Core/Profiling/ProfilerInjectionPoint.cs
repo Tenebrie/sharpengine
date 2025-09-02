@@ -10,10 +10,13 @@ public enum ProfilingContext
     OnUpdateCallback = 1 << 3,
     OnDestroyCallback = 1 << 4,
     BackstageUpdate = 1 << 5,
-    RenderingPrepare = 1 << 6,
-    RenderingDebugLog = 1 << 7,
-    RenderingDebugFramerate = 1 << 8,
-    RenderingDebugProfiler = 1 << 9,
+    RenderingFullFrame = 1 << 6,
+    RenderingCollectAtoms = 1 << 7,
+    RenderingCombineRequests = 1 << 8,
+    RenderingSubmitAtoms = 1 << 9,
+    RenderingDebugLog = 1 << 10,
+    RenderingDebugFramerate = 1 << 11,
+    RenderingDebugProfiler = 1 << 12,
 }
 
 public static class Profiler
@@ -85,6 +88,7 @@ public class DummyProfilingStopwatch : IProfilingStopwatch
 
 public interface IProfilerEntry
 {
+    public ProfilingContext? Context { get; }
     public string TypeName { get; }
     public string FullName { get; }
     public double AverageMilliseconds { get; }

@@ -160,7 +160,8 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
     public void RenderText(string text, Vector2 position, Color color, int shadowBlur = 0)
     {
         var fsColor = new FSColor(color.R, color.G, color.B, color.A);
-        var renderPos = position * _sampleCount;
+        var renderPos = new Vector2(Math.Round(position.X * _sampleCount), Math.Round(position.Y * _sampleCount));
+        
         if (shadowBlur > 0)
         {
             var blackColor = new FSColor(0f, 0f, 0f, color.A);

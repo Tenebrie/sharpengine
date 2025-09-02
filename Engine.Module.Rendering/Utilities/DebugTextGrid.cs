@@ -50,18 +50,4 @@ public class DebugTextGrid(RenderingHost host)
         };
         host.TextRenderer.RenderText("RobotoMono-Bold", FontSize, text, position, color, 2);
     }
- 
-    private static Color GetLogColor(LogLevel level)
-    {
-        return level switch
-        {
-            LogLevel.Debug => Color.LightGray,
-            LogLevel.Info => Color.LightGreen,
-            LogLevel.Warn => Color.Yellow,
-            LogLevel.Error => Color.Red,
-            LogLevel.Fatal => Color.Red,
-            LogLevel.Log => Color.LightCyan,
-            _ => Color.White
-        };
-    }
 }
