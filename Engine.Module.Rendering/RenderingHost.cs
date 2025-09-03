@@ -6,6 +6,7 @@ using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Renderers;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
+using Engine.Core.Communication.Tasks;
 using Engine.Core.Enum;
 using Engine.Module.Rendering.Fonts;
 using Engine.Core.EntitySystem.Entities;
@@ -14,6 +15,8 @@ using Engine.Core.Logging;
 using Engine.Core.Memory;
 using Engine.Core.Modules;
 using Engine.Core.Profiling;
+using Engine.Core.Profiling.Attributes;
+using Engine.Module.Rendering.Computers;
 using Engine.Module.Rendering.Renderers.Debug;
 using Engine.Module.Rendering.Renderers.Fonts;
 using Engine.Module.Rendering.Utilities;
@@ -27,6 +30,11 @@ namespace Engine.Module.Rendering;
 public class RenderingHost : IRenderingHost
 {
     private List<Backstage> _backstages = [];
+    
+    // Computers
+    private CullingComputer _cullingComputer = null!;
+    
+    // Renderers
     private DebugFramerateRenderer _debugFramerateRenderer = null!;
     private DebugLogRenderer _debugLogRenderer = null!;
     private DebugProfilerRenderer _debugProfilerRenderer = null!;
@@ -55,9 +63,13 @@ public class RenderingHost : IRenderingHost
 
     private static int MsaaSamples => 8;
 
+    // Constant camera matrix buffer
     private IBuffer _viewMatrixBuffer = null!;
-    private IBuffer _objectIndexBuffer = null!;
-    private InfiniteInstanceBuffer _infiniteInstanceBuffer = null!;
+    
+    // Contains the index of the current instance
+    private IBuffer _instanceIndexBuffer = null!;
+    // Holds the per-instance data for all instances
+    private InfiniteInstanceWriteOnlyBuffer<InstanceData> _infiniteInstanceBuffer = null!;
     
     public void HotInitialize(RenderingResources resources)
     {
@@ -75,7 +87,7 @@ public class RenderingHost : IRenderingHost
             CPUAccessFlags = CpuAccessFlags.Write
         });
         
-        _objectIndexBuffer = resources.RenderDevice.CreateBuffer(new BufferDesc
+        _instanceIndexBuffer = resources.RenderDevice.CreateBuffer(new BufferDesc
         {
             Name = "ObjectIndexBuffer",
             Size = 16u,
@@ -85,20 +97,25 @@ public class RenderingHost : IRenderingHost
         });
                 
         using var engineFactory = Native.GetEngineFactoryD3D12();
-        _infiniteInstanceBuffer = new InfiniteInstanceBuffer();
+        _infiniteInstanceBuffer = new InfiniteInstanceWriteOnlyBuffer<InstanceData>();
         var renderContext = new RenderContext
         {
             DeviceContext = _immediateContext,
+            DeferredContexts = _deferredContexts,
             RenderDevice = _renderDevice,
             SwapChain = _swapChain,
             ViewMatrixBuffer = _viewMatrixBuffer,
-            ObjectIndexBuffer = _objectIndexBuffer,
+            ObjectIndexBuffer = _instanceIndexBuffer,
             InstanceBuffer = _infiniteInstanceBuffer,
             ShaderFactory = engineFactory.CreateDefaultShaderSourceStreamFactory("Assets/Shaders")
         };
         
         RenderContext.Current = renderContext;
         
+        // Computers
+        _cullingComputer = new CullingComputer(this);
+        
+        // Renderers
         _debugFramerateRenderer = new DebugFramerateRenderer(this);
         _debugLogRenderer = new DebugLogRenderer(this);
         _debugProfilerRenderer = new DebugProfilerRenderer(this);
@@ -185,11 +202,13 @@ public class RenderingHost : IRenderingHost
         var stopwatch = Profiler.Start();
         RenderStats.Reset();
         FrameCounter.Increment();
+        _immediateContext.ClearStats();
         
         _immediateContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
         _immediateContext.ClearRenderTarget(_renderTargetView, new Vector4(0.35f, 0.35f, 0.35f, 1.0f), ResourceStateTransitionMode.Transition);
         _immediateContext.ClearDepthStencil(_renderDepthView, ClearDepthStencilFlags.Depth, 1.0f, 0, ResourceStateTransitionMode.Transition);
 
+        await PrepareRenderers(deltaTime);
         await InvokeRenderers(deltaTime);
         
         var rtv = _swapChain.GetCurrentBackBufferRTV();
@@ -210,7 +229,7 @@ public class RenderingHost : IRenderingHost
         _swapChain.Present(1);
     }
 
-    private Task InvokeRenderers(double deltaTime)
+    private Task PrepareRenderers(double deltaTime)
     {
         Camera? activeCamera = null;
         foreach (var backstage in _backstages)
@@ -220,13 +239,14 @@ public class RenderingHost : IRenderingHost
             activeCamera = FindActiveCamera(backstage);
         }
         
+        Camera.Plane[] frustumPlanes = [];
         if (activeCamera == null)
         {
             // Logger.Error("No active camera found for rendering.");
         }
         else
         {
-            activeCamera.UpdateFrustumPlanes();
+            frustumPlanes = activeCamera.UpdateFrustumPlanes();
         
             var wvpMatrix = activeCamera.AsCameraView().ToMatrix();
             var mapUniformBuffer = _immediateContext.MapBuffer<MatrixFloat>(_viewMatrixBuffer, MapType.Write, MapFlags.Discard);
@@ -235,25 +255,26 @@ public class RenderingHost : IRenderingHost
         }
         
         _infiniteInstanceBuffer.FrameStart();
+        _cullingComputer.ReadResultsAndPrepare();
+        if (activeCamera == null)
+            return Task.CompletedTask;
         
-        if (activeCamera != null)
+        foreach (var backstage in _backstages)
         {
-            foreach (var backstage in _backstages)
-            {
-                // Collect all IRenderable entities reachable from the atom tree
-                var stopwatch = Profiler.Start();
-                CollectAtomsToRender(activeCamera, ref _atomsToRender, ref _atomsToRenderCount, backstage);
-                stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCollectAtoms);
-                
-                // Render surviving atoms
-                stopwatch = Profiler.Start();
-                RenderAtomTree(_atomsToRender, _atomsToRenderCount);
-                stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCollectAtoms);
-
-                _atomsToRenderCount = 0;
-                Array.Clear(_atomsToRender);
-            }
+            // Collect all IRenderable entities reachable from the atom tree
+            var stopwatch = Profiler.Start();
+            CollectAtomsToRender(ref _atomsToRender, ref _atomsToRenderCount, backstage);
+            stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCollectAtoms);
         }
+        _cullingComputer.SubmitCurrentQueue(frustumPlanes);
+        return Task.CompletedTask;
+    }
+    
+    private Task InvokeRenderers(double deltaTime)
+    {
+        RenderAtomTree(_atomsToRender, _atomsToRenderCount);
+        _atomsToRenderCount = 0;
+        Array.Clear(_atomsToRender);
         
         _debugFramerateRenderer.RenderFrameWithTiming(deltaTime);
         _debugLogRenderer.RenderFrameWithTiming(deltaTime);
@@ -281,8 +302,7 @@ public class RenderingHost : IRenderingHost
         return null;
     }
 
-    private static void CollectAtomsToRender(
-        Camera activeCamera,
+    private void CollectAtomsToRender(
         ref IRenderable[] entitiesToRender,
         ref int entitiesToRenderCount,
         Atom target)
@@ -296,22 +316,23 @@ public class RenderingHost : IRenderingHost
             if (entitiesToRenderCount >= entitiesToRender.Length)
                 Array.Resize(ref entitiesToRender, Math.Max(entitiesToRenderCount + 1, entitiesToRender.Length * 2));
 
-            renderable.PerformCulling(activeCamera);
-            if (renderable.IsOnScreen)
+            _cullingComputer.QueueForCulling(renderable);
+            var instanceCount = renderable.ProduceRenderRequest().InstanceCount;
+            if (_cullingComputer.IsVisible(renderable))
             {
-                RenderStats.InstancesDrawn += 1;
+                RenderStats.InstancesDrawn += instanceCount;
                 entitiesToRender[entitiesToRenderCount++] = renderable;
             }
             else
             {
-                RenderStats.InstancesCulled += 1;
+                RenderStats.InstancesCulled += instanceCount;
                 return;
             }
         }
 
         foreach (var child in target.Children)
         {
-            CollectAtomsToRender(activeCamera, ref entitiesToRender, ref entitiesToRenderCount, child);
+            CollectAtomsToRender(ref entitiesToRender, ref entitiesToRenderCount, child);
         }
     }
 
@@ -357,7 +378,7 @@ public class RenderingHost : IRenderingHost
         for (var i = 0; i < atomsToRenderCount; i++)
         {
             var renderable = atomsToRender[i];
-            var request = renderable.Render();
+            var request = renderable.ProduceRenderRequest();
             if (!_renderRequestPool.TryGetValue(request.HashCode, out var mergedRequest))
             {
                 _renderRequestPool[request.HashCode] = MergedRenderRequest.Create(request);
@@ -423,9 +444,9 @@ public class RenderingHost : IRenderingHost
         _backstages = [];
         _atomsToRender = [];
         _viewMatrixBuffer.Dispose();
-        _objectIndexBuffer.Dispose();
+        _instanceIndexBuffer.Dispose();
         _infiniteInstanceBuffer.Dispose();
-        DisposeRenderTargets();     
+        DisposeRenderTargets();
     }
 
     public void NotifyModuleReloaded(EngineModule module)

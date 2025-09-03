@@ -2,18 +2,14 @@
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Renderers;
 using Engine.Core.Common;
-using Engine.Core.EntitySystem.Entities;
 
 namespace Engine.Core.EntitySystem.Interfaces;
 
 public interface IRenderable
 {
-    public StaticMesh StaticMesh { get; }
-    public Material Material { get; }
-    public IRenderScript RenderScript { get; }
-    public bool IsOnScreen { get; set; }
-    public void PerformCulling(Camera activeCamera);
-    public RenderRequest Render();
+    public RenderRequest ProduceRenderRequest();
+    public Vector3 BoundingSphereWorldOrigin { get; }
+    public double BoundingSphereWorldRadius { get; }
 }
 
 public struct RenderRequest

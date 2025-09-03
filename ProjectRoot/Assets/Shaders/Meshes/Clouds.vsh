@@ -36,7 +36,7 @@ VSOut main(VSIn IN, uint instId : SV_InstanceID)
 {
     uint idx = ObjectIndex + instId;
     InstanceRecord inst = g_InstanceData[idx];
-    
+
     float4 wp = mul(float4(IN.Pos, 1.0), inst.World);
     VSOut OUT;
     OUT.PosH  = mul(wp, ViewProjection);

@@ -7,6 +7,7 @@
     <NoWarn>$(NoWarn);CS8618</NoWarn>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Platforms>x64</Platforms>
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
   <ItemGroup>

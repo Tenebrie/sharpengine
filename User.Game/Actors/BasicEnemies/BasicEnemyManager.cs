@@ -22,8 +22,8 @@ public partial class BasicEnemyManager : Actor
         //     mesh = TessellatedPlaneMesh.CreateWithoutCache();
         //     AssetManager.Meshes.Put("Assets/Virtual/BasicEnemy", mesh);
         // }
-        InstanceManager.StaticMesh = StaticMesh.CreateFromDisk("Meshes/invader01-crab.obj");
-        InstanceManager.Material = MaterialBuilder
+        InstanceManager.InstanceStaticMesh = StaticMesh.CreateFromDisk("Meshes/invader01-crab.obj");
+        InstanceManager.InstanceMaterial = MaterialBuilder
             .CreateFromDisk("Shaders/cube")
             .SetTexture(Texture.CreateFromDisk("Textures/metal-albedo.png"))
             .Compile();

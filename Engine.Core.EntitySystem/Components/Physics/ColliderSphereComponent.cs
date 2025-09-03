@@ -9,7 +9,7 @@ using JetBrains.Annotations;
 namespace Engine.Core.EntitySystem.Components.Physics;
 
 [UsedImplicitly]
-public partial class ColliderSphereComponent : ActorComponent, IRenderable
+public partial class ColliderSphereComponent : ActorComponent
 {
     public double Radius
     {
@@ -26,6 +26,9 @@ public partial class ColliderSphereComponent : ActorComponent, IRenderable
     // public void PerformCulling(Camera activeCamera) => IsOnScreen = activeCamera.SphereInFrustum(WorldTransform, WorldRadius, null);
     public void PerformCulling(Camera activeCamera) => IsOnScreen = false;
     public int GetInstanceCount() => 1;
+    
+    public Vector3 BoundingSphereWorldOrigin => WorldTransform.Position;
+    public double BoundingSphereWorldRadius => 1;
     
     private readonly Transform[] _singleComponentTransforms = new Transform[1];
     public RenderRequest Render()

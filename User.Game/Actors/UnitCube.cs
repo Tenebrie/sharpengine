@@ -18,9 +18,9 @@ public partial class UnitCube : Actor
     protected void OnReady()
     {
         // InstanceManager.Mesh = new StaticMesh();
-        InstanceManager.Material = Material.CreateFromDisk("Shaders/cube");
+        InstanceManager.InstanceMaterial = Material.CreateFromDisk("Shaders/cube");
         CubeMesh.Instance.Load();
-        InstanceManager.StaticMesh = CubeMesh.Instance.Mesh;
+        InstanceManager.InstanceStaticMesh = CubeMesh.Instance.Mesh;
         
         AssetVertex[] verts =
         [
@@ -33,7 +33,7 @@ public partial class UnitCube : Actor
             new(new Vector3( 1,  1,  1), Vector2.Zero, Vector3.One, Color.White),
             new(new Vector3(-1,  1,  1), Vector2.Zero, Vector3.One, Color.Gray)
         ];
-        InstanceManager.BoundingSphere.Generate(verts);
+        InstanceManager.InstanceBoundingSphere.Generate(verts);
         // ObjMeshLoader.LoadObj("bin/decimated_dragon32.obj", out AssetVertex[] vertices, out var indices);
         // InstanceManager.Mesh.Load(vertices, indices);
     } 

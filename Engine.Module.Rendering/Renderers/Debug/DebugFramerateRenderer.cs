@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Profiling;
 using Engine.Module.Rendering.Utilities;
@@ -84,16 +85,20 @@ public class DebugFramerateRenderer(RenderingHost host): IRenderer
             var entry = _statProfilerEntries[i];
             _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, entry);
         }
-        _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, "---- Rendering ----");
+        _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Rendering ----");
         for (var i = 0; i < Math.Min(_renderingProfilerEntries.Count, maxEntriesRendered); i++)
         {
             var entry = _renderingProfilerEntries[i];
             _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, entry);
         }
-        _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, "---- Stats ----");
-        _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, $"Draws: {RenderStats.DrawCalls, 4}");
+
+        var drawCallCount = RenderContext.Current.DeviceContext.GetStats().CommandCounters.DrawIndexed;
+        var val = RenderContext.Current.DeviceContext.GetStats().PrimitiveCounts;
+        _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Stats ----");
+        _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, $"Draws: {drawCallCount, 4}");
         _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, $"Instances: {RenderStats.InstancesDrawn, 4}");
-        _textGrid.Draw(0, line, DebugTextGrid.Anchor.TopRight, Color.White, $"Culled: {RenderStats.InstancesCulled, 4}");
+        _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, $"Culled: {RenderStats.InstancesCulled, 4}");
+        _textGrid.Draw(0, line,   DebugTextGrid.Anchor.TopRight, Color.White, $"Triangles: {val[1], 4}");
     }
     
     private void UpdateFramerate(double deltaTime)

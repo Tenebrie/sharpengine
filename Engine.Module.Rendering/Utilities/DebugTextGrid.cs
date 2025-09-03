@@ -22,7 +22,7 @@ public class DebugTextGrid(RenderingHost host)
     private bool _textMeasured = false;
     private int _glyphWidth = 0;
     private int _glyphHeight = 0;
-    
+
     public void Draw(int x, int y, Anchor anchor, Color color, string text)
     {
         if (text.Length > 512)

@@ -12,7 +12,7 @@ using JetBrains.Annotations;
 namespace Engine.Module.Physics;
 
 [UsedImplicitly]
-public class PhysicsHost : IPhysicsHost
+public class PhysicsHost : IPhysicsHost 
 {
     public required IRootHypervisor Hypervisor { get; set; }
     

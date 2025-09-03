@@ -16,39 +16,50 @@ public interface IInstancedActorComponent
 }
 
 [UsedImplicitly]
-public partial class InstancedActorComponent<TInstance> : ActorComponent, IInstancedActorComponent, IRenderable where TInstance : ActorInstance, new()
+public partial class InstancedActorComponent<TInstance> : ActorComponent, IInstancedActorComponent where TInstance : ActorInstance, new()
 {
-    [Component] private StaticMeshHolder _staticMeshHolder;
-    public StaticMesh StaticMesh
+    [Component] private StaticMeshHolder _instanceStaticMeshHolder;
+    public StaticMesh InstanceStaticMesh
     {
-        get => _staticMeshHolder.Mesh;
-        set => _staticMeshHolder.Mesh = value;
+        get => _instanceStaticMeshHolder.Mesh;
+        set => _instanceStaticMeshHolder.Mesh = value;
     }
-    public BoundingSphereComponent BoundingSphere
+    public BoundingSphereComponent InstanceBoundingSphere
     {
-        get => _staticMeshHolder.BoundingSphere;
-        set => _staticMeshHolder.BoundingSphere = value;
+        get => _instanceStaticMeshHolder.BoundingSphere;
+        set => _instanceStaticMeshHolder.BoundingSphere = value;
     }
-    public IRenderScript RenderScript { get; set; } = IRenderScript.Default;
+    public IRenderScript InstanceRenderScript { get; set; } = IRenderScript.Default;
 
     private Material? _material = null;
 
-    public Material Material
+    public Material InstanceMaterial
     {
         get => _material ?? MaterialAssetManager.FallbackMaterial;
         set => _material = value;
     }
     public List<TInstance> Instances { get; } = [];
+    private List<InstancedActorCluster<TInstance>> Clusters { get; } = [];
     public int InstanceCount => Instances.Count;
-
+    
     public TInstance CreateInstance()
     {
-        var instancedActor = Activator.CreateInstance<TInstance>();
-        instancedActor.MaterialInstance = Material.Instantiate();
-        instancedActor.ParentManager = this;
-        Instances.Add(instancedActor);
-        AdoptChild(instancedActor);
-        return instancedActor;
+        InstancedActorCluster<TInstance> cluster;
+        if (Clusters.Count == 0)
+        {
+            cluster = new InstancedActorCluster<TInstance>();
+            Clusters.Add(cluster);
+            cluster.InstanceManager = this;
+            AdoptChild(cluster);
+        }
+        else
+        {
+            cluster = Clusters[0];
+        }
+
+        var instance = cluster.CreateInstance();
+        Instances.Add(instance);
+        return instance;
     }
     
     public void DestroyInstance(ActorInstance instance)
@@ -58,29 +69,75 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
 
         instance.QueueFree();
         Instances.Remove(instancedActor);
+        
+        foreach (var cluster in Clusters)
+            cluster.RemoveInstance(instance);
     }
+}
 
-    public bool IsOnScreen { get; set; }
+[UsedImplicitly]
+public partial class InstancedActorCluster<TInstance> : ActorComponent, IRenderable where TInstance : ActorInstance, new()
+{
+    internal InstancedActorComponent<TInstance> InstanceManager = null!;
+    private List<TInstance> Instances { get; } = [];
+    
+    public Vector3 BoundingSphereWorldOrigin { get; private set; }
+    public double BoundingSphereWorldRadius { get; private set; }
 
     private int _maxInstancesSeen = 0;
     private Transform[] _transformPool = [];
     private Transform[] _sphereTransformPool = [];
     private MaterialInstance[] _materialPool = [];
     
-    public void PerformCulling(Camera activeCamera)
+    public TInstance CreateInstance()
     {
-        // TODO: Fix culling?
-        IsOnScreen = true;
-        
-        foreach (var actor in Instances)
-        {
-            actor.IsOnScreen = activeCamera.SphereInFrustum(BoundingSphere, actor.WorldTransform);
-            if (actor.IsOnScreen)
-                IsOnScreen = true;
-        }
+        var instancedActor = Activator.CreateInstance<TInstance>();
+        instancedActor.MaterialInstance = InstanceManager.InstanceMaterial.Instantiate();
+        instancedActor.ParentManager = InstanceManager;
+        Instances.Add(instancedActor);
+        AdoptChild(instancedActor);
+        RecomputeBoundingSphere();
+        return instancedActor;
+    }
+    
+    public void RemoveInstance(ActorInstance instance)
+    {
+        if (!Instances.Contains(instance) || instance is not TInstance instancedActor)
+            return;
+
+        Instances.Remove(instancedActor);
+        RecomputeBoundingSphere();
     }
 
-    public RenderRequest Render()
+    private void RecomputeBoundingSphere()
+    {
+        if (Instances.Count == 0)
+        {
+            BoundingSphereWorldOrigin = Vector3.Zero;
+            BoundingSphereWorldRadius = 0;
+            return;
+        }
+        
+        var center = Vector3.Zero;
+        foreach (var instance in Instances)
+        {
+            center += instance.WorldTransform.Position;
+        }
+        center /= Instances.Count;
+        
+        var radius = 0.0;
+        foreach (var instance in Instances)
+        {
+            var distance = (instance.WorldTransform.Position - center).Length + InstanceManager.InstanceBoundingSphere.WorldRadius;
+            if (distance > radius)
+                radius = distance;
+        }
+
+        BoundingSphereWorldOrigin = center;
+        BoundingSphereWorldRadius = radius;
+    }
+    
+    public RenderRequest ProduceRenderRequest()
     {
         if (Instances.Count > _maxInstancesSeen)
         {
@@ -106,22 +163,13 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
         
         return new RenderRequest
         {
-            Mesh = StaticMesh,
-            Material = Material,
-            RenderScript = RenderScript,
+            Mesh = InstanceManager.InstanceStaticMesh,
+            Material = InstanceManager.InstanceMaterial,
+            RenderScript = InstanceManager.InstanceRenderScript,
 
             InstanceCount = Instances.Count,
             InstanceTransforms = _transformPool,
             MaterialInstances = _materialPool
         };
-        // RenderScript.Render(Instances.Count, Mesh, _transformPool, Material, _materialPool);
-        // for (var i = 0; i < Instances.Count; i++)
-        // {
-        //     var actor = Instances[i];
-        //     if (!IsValid(actor))
-        //         continue;
-        //     BoundingSphere.Transform.MultiplyReverse(actor.WorldTransform, ref _sphereTransformPool[i]);
-        // }
-        // LineSphereMesh.Shared.Render((uint)Instances.Count, _sphereTransformPool, [WireframeMaterial.Shared], LineSphereMesh.ColorMode.AxisColor);
     }
 }

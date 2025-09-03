@@ -12,14 +12,24 @@ public class DebugProfilerRenderer(RenderingHost host): IRenderer
     private List<IProfilerEntry> _profilerEntries = [];
 
     private int _lastSeenFrameIndex = -1;
+    private int _lastSeenProfilerBufferIndex = -1;
+    private int _framesForLatestUpdate = 1;
 
     public void RenderFrame(double deltaTime)
     {
-        var entries = Profiler.QueryWorstOffenders().Take(10).ToList();
-        var line = 2;
-        foreach (var entry in entries)
+        if (_lastSeenProfilerBufferIndex != Profiler.CurrentBufferIndex)
         {
-            _textGrid.Draw(50, line++, DebugTextGrid.Anchor.TopLeft, Color.White, $"{entry.FullName}: {entry.AverageMilliseconds:F2}ms");
+            _framesForLatestUpdate = Math.Max(1, FrameCounter.Current - _lastSeenFrameIndex);
+            _profilerEntries = Profiler.QueryWorstOffenders().Take(10).ToList();
+            _lastSeenFrameIndex = FrameCounter.Current;
+            _lastSeenProfilerBufferIndex = Profiler.CurrentBufferIndex;
+        }
+
+        var line = 2;
+        foreach (var entry in _profilerEntries)
+        {
+            var timePerFrame = entry.TotalMilliseconds / _framesForLatestUpdate;
+            _textGrid.Draw(50, line++, DebugTextGrid.Anchor.TopLeft, Color.White, $"{entry.FullName}: {timePerFrame:F2}ms");
         }
     }
 

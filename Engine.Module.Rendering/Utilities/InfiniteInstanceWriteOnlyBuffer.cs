@@ -1,19 +1,21 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Diligent;
 using Engine.Core.Assets.Rendering;
-using Engine.Core.Common;
+using Engine.Core.Logging;
 
 namespace Engine.Module.Rendering.Utilities;
 
-public class InfiniteInstanceBuffer : IInstanceBuffer, IDisposable
+public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposable where T : unmanaged
 {
-    private static readonly int SizePerInstance;
-    private static readonly int PageSize;
+    private readonly int _sizePerInstance;
+    private const int EntitiesPerPage = 8192;
+    private readonly int _pageSize;
 
-    static InfiniteInstanceBuffer()
+    public InfiniteInstanceWriteOnlyBuffer()
     {
-        SizePerInstance = MatrixFloat.SizeInBytes + Vector4Float.SizeInBytes + Vector2Float.SizeInBytes + Vector2Float.SizeInBytes;
-        PageSize = 8192 * SizePerInstance;
+        _sizePerInstance = Unsafe.SizeOf<T>();
+        _pageSize = EntitiesPerPage * _sizePerInstance;
     }
     
     private readonly List<IBuffer> _buffers = [];
@@ -29,12 +31,12 @@ public class InfiniteInstanceBuffer : IInstanceBuffer, IDisposable
         var buffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
             Name = "SharedInstanceTransformBuffer",
-            Size = (ulong)PageSize,
+            Size = (ulong)_pageSize,
             Usage = Usage.Dynamic,
             BindFlags = BindFlags.ShaderResource,
             CPUAccessFlags = CpuAccessFlags.Write,
             Mode = BufferMode.Structured,
-            ElementByteStride = (uint)SizePerInstance
+            ElementByteStride = (uint)_sizePerInstance
         });
         if (buffer == null)
             throw new InvalidOperationException("Failed to create instance buffer.");
@@ -58,17 +60,35 @@ public class InfiniteInstanceBuffer : IInstanceBuffer, IDisposable
         _activePage = 0;
     }
 
-    public InstanceBufferTicket Write(int instanceCount, InstanceData[] instances)
+    public List<InstanceBufferTicket> Write(int instanceCount, T[] instances)
     {
-        var bytesWrittenAfterSubmit = (_cursorPosition + instanceCount) * (long)SizePerInstance;
-        var spaceRemaining = PageSize - bytesWrittenAfterSubmit;
-        var mapFlags = MapFlags.NoOverwrite;
-        if (spaceRemaining < 0)
+        var pagesNeeded = (_cursorPosition + instanceCount) / EntitiesPerPage + 1;
+        var instancesWritten = 0;
+        var tickets = new List<InstanceBufferTicket>();
+        for (var i = 0; i < pagesNeeded; i++)
         {
+            var instancesInThisPage = Math.Min(instanceCount - instancesWritten, EntitiesPerPage - _cursorPosition);
+            tickets.Add(new InstanceBufferTicket
+            {
+                View = ActiveBufferView,
+                StartIndex = _cursorPosition,
+                Count = instancesInThisPage,
+            });
+            WriteSinglePage(instancesInThisPage, instances.Skip(instancesWritten).Take(instancesInThisPage).ToArray());
+            instancesWritten += instancesInThisPage;
+            if (_cursorPosition < EntitiesPerPage)
+                continue;
+            
             AllocateBuffer();
             _cursorPosition = 0;
             _activePage += 1;
         }
+        return tickets;
+    }
+
+    private void WriteSinglePage(int instanceCount, T[] instances)
+    {
+        var mapFlags = MapFlags.NoOverwrite;
         if (_cursorPosition == 0)
             mapFlags = MapFlags.Discard;
         
@@ -80,23 +100,11 @@ public class InfiniteInstanceBuffer : IInstanceBuffer, IDisposable
 
         for (var i = 0; i < instanceCount; i++)
         {
-            var offset = (_cursorPosition + i) * SizePerInstance;
-            var matrix = instances[i].WorldTransform.ToMatrix().Downgrade();
-            Unsafe.WriteUnaligned(ref map[offset],  matrix);                offset += MatrixFloat.SizeInBytes;
-            Unsafe.WriteUnaligned(ref map[offset], instances[i].Tint);      offset += Vector4Float.SizeInBytes;
-            Unsafe.WriteUnaligned(ref map[offset], instances[i].UvOffset);  offset += Vector2Float.SizeInBytes;
-            Unsafe.WriteUnaligned(ref map[offset], instances[i].UvScale);
+            var offset = (_cursorPosition + i) * _sizePerInstance;
+            Unsafe.WriteUnaligned(ref map[offset], instances[i]);
         }
         RenderContext.Current.DeviceContext.UnmapBuffer(ActiveBuffer, MapType.Write);
-        var ticket = new InstanceBufferTicket
-        {
-            View = ActiveBufferView,
-            StartIndex = _cursorPosition,
-            Count = instanceCount,
-        };
-            
         _cursorPosition += instanceCount;
-        return ticket;
     }
 
     public void Dispose()

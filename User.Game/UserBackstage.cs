@@ -52,6 +52,7 @@ public partial class UserScene : Scene
         // honseTerrain.Transform.RotateAroundGlobal(Vector3.Up, 45);
         honseTerrain.Transform.Scale = new Vector3(scale, scale, scale);
         
+        CreateActor<BasicEnemyManager>();
         var distantFog = CreateActor<DistantFogLayer>();
         distantFog.Transform.Position = new Vector3(0, -5000, 0);
         distantFog.LayerHeight = -5000;
@@ -82,12 +83,12 @@ public partial class UserScene : Scene
         cloudLayer.LayerHeight = -3000;
         cloudLayer.MeshComponent.MaterialInstance.SetOpacity(0.8);
         cloudLayer.Transform.Scale = new Vector3(cloudScale * 1.5, 1, cloudScale * 1.5);
-
-        CreateActor<BasicEnemyManager>();
+        //
         cloudLayer = CreateActor<CloudLayer>();
         cloudLayer.Transform.Position = new Vector3(0, -1000, 0);
         cloudLayer.LayerHeight = -2000;
         cloudLayer.MeshComponent.MaterialInstance.SetOpacity(0.8);
         cloudLayer.Transform.Scale = new Vector3(cloudScale, 1, cloudScale);
+        
     }
 }

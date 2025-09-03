@@ -34,14 +34,16 @@ public partial class StaticMeshComponent : ActorComponent, IRenderable
         set => _staticMeshHolder.BoundingSphere = value;
     }
     public IRenderScript RenderScript { get; set; } = IRenderScript.Default;
-    
+    public Vector3 BoundingSphereWorldOrigin => WorldTransform.Position;
+    public double BoundingSphereWorldRadius => BoundingSphere.WorldRadius;
+
     public bool IsOnScreen { get; set; }
     public void PerformCulling(Camera activeCamera) => IsOnScreen = activeCamera.SphereInFrustum(BoundingSphere, null);
     
     private readonly Transform[] _singleComponentTransforms = new Transform[1];
     private RenderRequest? _renderRequest;
     
-    public RenderRequest Render()
+    public RenderRequest ProduceRenderRequest()
     {
         _singleComponentTransforms[0] = WorldTransform;
         if (_renderRequest != null)

@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <NoWarn>$(NoWarn);CS8618</NoWarn>
     <Platforms>x64</Platforms>
+    <DebugType>embedded</DebugType>
   </PropertyGroup>
 
   <ItemGroup>
