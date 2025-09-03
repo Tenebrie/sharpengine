@@ -35,12 +35,12 @@ public abstract partial class Spatial : Atom, ISpatial
             if (_cachedWorldTransformValid)
                 return _cachedWorldTransform;
 
-            if (Parent is not Spatial parent)     
+            if (Parent is not Spatial parent)
                 return Transform;
             
             parent.WorldTransform.Multiply(Transform, ref _cachedWorldTransform);
-            _cachedWorldTransformValid = true; 
-            return _cachedWorldTransform;   
+            _cachedWorldTransformValid = true;
+            return _cachedWorldTransform;
         }
     } 
     public Transform WorldTransformInverse  

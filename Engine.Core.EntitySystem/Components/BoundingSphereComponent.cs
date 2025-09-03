@@ -10,7 +10,7 @@ namespace Engine.Core.EntitySystem.Components;
 public partial class BoundingSphereComponent : ActorComponent
 {
     public double Radius => Transform.Scale.X;
-    public double WorldRadius => WorldTransform.Scale.X;
+    public double WorldRadius => WorldTransform?.Scale.X ?? 0;
 
     public void Generate(AssetVertex[] verts)
     {
