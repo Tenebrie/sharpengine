@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Platforms>x64</Platforms>
+        <Configurations>Release</Configurations>
+
+        <SelfContained>true</SelfContained>
+        <PublishTrimmed>false</PublishTrimmed>
+        <PublishReadyToRun>true</PublishReadyToRun>
+        <InvariantGlobalization>true</InvariantGlobalization>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Content Include="..\ProjectRoot\**\*">
+            <Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Remove="..\ProjectRoot\README.txt" />
+    </ItemGroup>
+    
+    <ItemGroup>
+        <PackageReference Include="FontStashSharp" Version="1.3.10" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+        <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
+        <PackageReference Include="Silk.NET.Input" Version="2.22.0" />
+        <PackageReference Include="Silk.NET.Windowing" Version="2.22.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
+        <ProjectReference Include="..\Engine.Tooling.Roslyn\Engine.Tooling.Roslyn.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+        <ProjectReference Include="..\Engine.Module.Physics\Engine.Module.Physics.csproj" />
+        <ProjectReference Include="..\Engine.Module.Rendering\Engine.Module.Rendering.csproj" />
+        <ProjectReference Include="..\Engine.Module.Utility\Engine.Module.Utility.csproj" />
+        <ProjectReference Include="..\User.Game\User.Game.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -6,6 +6,11 @@ public static class Launcher
 {
     private static void Main()
     {
+        if (Directory.Exists("bin") && File.Exists("bin/Engine.Main.Game.exe"))
+        {
+            RunApp("bin/Engine.Main.Game.exe");
+            return;
+        }
         if (Directory.Exists("Engine.Main.Editor"))
         {
             RunApp("Engine.Main.Editor/bin/x64/Release/net9.0/Engine.Main.Editor.exe");
@@ -28,6 +33,5 @@ public static class Launcher
             UseShellExecute  = true
         };
         Process.Start( process );
-        Thread.Sleep(5000);
     }
 }

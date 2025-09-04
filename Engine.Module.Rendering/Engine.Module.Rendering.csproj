@@ -8,6 +8,7 @@
     <Platforms>x64</Platforms>
     <GenerateDependencyFile>true</GenerateDependencyFile>
     <DebugType>embedded</DebugType>
+    <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

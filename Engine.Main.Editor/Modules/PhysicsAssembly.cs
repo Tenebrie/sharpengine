@@ -26,7 +26,15 @@ internal class PhysicsAssembly() : ModularAssembly("Engine.Module.Physics", Engi
     
     public override bool Update(double deltaTime)
     {
-        PhysicsModule?.ProcessPhysicsFrame(deltaTime * TimeScale);
+        try
+        {
+            PhysicsModule?.ProcessPhysicsFrame(deltaTime * TimeScale);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"Error during Physics update: {ex.Message}");
+            Console.Error.WriteLine(ex.StackTrace);
+        }
         return base.Update(deltaTime);
     }
 

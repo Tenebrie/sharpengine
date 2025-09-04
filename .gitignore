@@ -1,4 +1,6 @@
 bin/
 obj/
+Build/
 .build
 Engine.sln.DotSettings.user
+.idea
