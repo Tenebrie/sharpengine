@@ -28,9 +28,9 @@ public static class Launcher
         
         var process = new ProcessStartInfo(exeFullPath)
         {
-            FileName        = exeName,
+            FileName = exeName,
             WorkingDirectory = exeDir,
-            UseShellExecute  = true
+            UseShellExecute = true
         };
         Process.Start( process );
     }
