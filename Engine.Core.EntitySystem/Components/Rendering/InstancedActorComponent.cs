@@ -6,6 +6,8 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
+using Engine.Core.Logging;
+using Engine.Core.Profiling.Attributes;
 using JetBrains.Annotations;
 
 namespace Engine.Core.EntitySystem.Components.Rendering;
@@ -18,6 +20,9 @@ public interface IInstancedActorComponent
 [UsedImplicitly]
 public partial class InstancedActorComponent<TInstance> : ActorComponent, IInstancedActorComponent where TInstance : ActorInstance, new()
 {
+    internal const double ClusterSize = 100.0;
+    internal const double ClusterSizeSquared = ClusterSize * ClusterSize;
+    
     [Component] private StaticMeshHolder _instanceStaticMeshHolder;
     public StaticMesh InstanceStaticMesh
     {
@@ -41,25 +46,59 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
     public List<TInstance> Instances { get; } = [];
     private List<InstancedActorCluster<TInstance>> Clusters { get; } = [];
     public int InstanceCount => Instances.Count;
+
+    private int _currentUpdatedCluster = 0;
+    
+    [OnTimer(Seconds = 0.005)]
+    protected void OnUpdate()
+    {
+        if (Clusters.Count == 0)
+            return;
+        if (_currentUpdatedCluster >= Clusters.Count)
+            _currentUpdatedCluster = 0;
+        
+        Clusters[_currentUpdatedCluster].CheckClusterValidity(out var evictedInstances);
+        foreach (var instance in evictedInstances)
+        {
+            var cluster = FindClusterForInstance(instance);
+            cluster.AssignInstance(instance);
+        }
+        if (Clusters[_currentUpdatedCluster].Redundant)
+        {
+            Clusters[_currentUpdatedCluster].QueueFree();
+            Clusters.RemoveAt(_currentUpdatedCluster);
+            _currentUpdatedCluster--;
+        }
+        _currentUpdatedCluster = (_currentUpdatedCluster + 1) % Clusters.Count;
+    }
     
     public TInstance CreateInstance()
     {
-        InstancedActorCluster<TInstance> cluster;
-        if (Clusters.Count == 0)
+        var instance = Activator.CreateInstance<TInstance>();
+        var cluster = FindClusterForInstance(instance);
+
+        instance.MaterialInstance = InstanceMaterial.Instantiate();
+        instance.ParentManager = this;
+        Instances.Add(instance);
+        AdoptChild(instance);
+        cluster.AssignInstance(instance);
+        return instance;
+    }
+    
+    private InstancedActorCluster<TInstance> FindClusterForInstance(TInstance instance)
+    {
+        foreach (var cluster in Clusters.Where(x => x.InstanceCount < 100).OrderBy(x => x.InstanceCount))
         {
-            cluster = new InstancedActorCluster<TInstance>();
-            Clusters.Add(cluster);
-            cluster.InstanceManager = this;
-            AdoptChild(cluster);
-        }
-        else
-        {
-            cluster = Clusters[0];
+            var distanceSquared = instance.WorldTransform.Position.DistanceSquaredTo(cluster.BoundingSphereWorldOrigin);
+            if (distanceSquared <= ClusterSizeSquared)
+                return cluster;
         }
 
-        var instance = cluster.CreateInstance();
-        Instances.Add(instance);
-        return instance;
+        var newCluster = new InstancedActorCluster<TInstance>();
+        Clusters.Add(newCluster);
+        newCluster.InstanceManager = this;
+        AdoptChild(newCluster);
+        return newCluster;
     }
     
     public void DestroyInstance(ActorInstance instance)
@@ -76,28 +115,26 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
 }
 
 [UsedImplicitly]
-public partial class InstancedActorCluster<TInstance> : ActorComponent, IRenderable where TInstance : ActorInstance, new()
+internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRenderable where TInstance : ActorInstance, new()
 {
     internal InstancedActorComponent<TInstance> InstanceManager = null!;
     private List<TInstance> Instances { get; } = [];
     
     public Vector3 BoundingSphereWorldOrigin { get; private set; }
     public double BoundingSphereWorldRadius { get; private set; }
+    
+    public bool Redundant => Instances.Count == 0;
+    public int InstanceCount => Instances.Count;
 
     private int _maxInstancesSeen = 0;
     private Transform[] _transformPool = [];
     private Transform[] _sphereTransformPool = [];
     private MaterialInstance[] _materialPool = [];
     
-    public TInstance CreateInstance()
+    public void AssignInstance(TInstance instance)
     {
-        var instancedActor = Activator.CreateInstance<TInstance>();
-        instancedActor.MaterialInstance = InstanceManager.InstanceMaterial.Instantiate();
-        instancedActor.ParentManager = InstanceManager;
-        Instances.Add(instancedActor);
-        AdoptChild(instancedActor);
+        Instances.Add(instance);
         RecomputeBoundingSphere();
-        return instancedActor;
     }
     
     public void RemoveInstance(ActorInstance instance)
@@ -134,7 +171,25 @@ public partial class InstancedActorCluster<TInstance> : ActorComponent, IRendera
         }
 
         BoundingSphereWorldOrigin = center;
-        BoundingSphereWorldRadius = radius;
+        BoundingSphereWorldRadius = radius + 10.0; // Padding
+    }
+    
+    public void CheckClusterValidity(out List<TInstance> evicted)
+    {
+        const double clusterSize = InstancedActorComponent<TInstance>.ClusterSize;
+        const double maxErrorSquared = clusterSize * clusterSize * 2;
+        var badInstances = Instances
+            .Where(instance =>
+                instance.WorldTransform.Position.DistanceSquaredTo(BoundingSphereWorldOrigin) > maxErrorSquared)
+            .ToList();
+        foreach (var badInstance in badInstances)
+        {
+            RemoveInstance(badInstance);
+        }
+        evicted = badInstances.ToList();
+        
+        // Recompute the sphere to account for instances removed or just moving around
+        RecomputeBoundingSphere();
     }
     
     public RenderRequest ProduceRenderRequest()

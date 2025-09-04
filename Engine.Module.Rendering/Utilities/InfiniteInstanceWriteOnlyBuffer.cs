@@ -74,7 +74,7 @@ public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposabl
                 StartIndex = _cursorPosition,
                 Count = instancesInThisPage,
             });
-            WriteSinglePage(instancesInThisPage, instances.Skip(instancesWritten).Take(instancesInThisPage).ToArray());
+            WriteSinglePage(instancesInThisPage, instances.AsSpan(instancesWritten, instancesInThisPage));
             instancesWritten += instancesInThisPage;
             if (_cursorPosition < EntitiesPerPage)
                 continue;
@@ -86,7 +86,7 @@ public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposabl
         return tickets;
     }
 
-    private void WriteSinglePage(int instanceCount, T[] instances)
+    private void WriteSinglePage(int instanceCount, Span<T> instances)
     {
         var mapFlags = MapFlags.NoOverwrite;
         if (_cursorPosition == 0)
