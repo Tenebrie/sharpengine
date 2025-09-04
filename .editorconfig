@@ -1,7 +1,0 @@
-# Ignore ALL generated files that end in .g.cs
-[*.g.cs]
-generated_code = true
-
-# Or be surgical — only your hash files
-[*ResourceHash.g.cs]
-generated_code = true
