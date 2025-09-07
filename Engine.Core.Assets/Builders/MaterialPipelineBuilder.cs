@@ -14,6 +14,7 @@ public static class ShaderVariable
 
 public static class PipelineBuilder
 {
+    public static int MsaaSamples => 8;
     public static Mesh PrepareMesh()
     {
         return new Mesh();
@@ -36,7 +37,7 @@ public static class PipelineBuilder
             _handle.RasterizerDesc = new RasterizerStateDesc { CullMode = CullMode.Back };
             _handle.DepthStencilDesc = new DepthStencilStateDesc { DepthEnable = true };
             _handle.NumRenderTargets = 1;
-            _handle.SmplDesc.Count = 8;
+            _handle.SmplDesc.Count = (byte)MsaaSamples;
             _handle.RTVFormats = [RenderContext.Current.SwapChain.GetDesc().ColorBufferFormat];
             _handle.DSVFormat = RenderContext.Current.SwapChain.GetDesc().DepthBufferFormat;
             _handle.InputLayout = new InputLayoutDesc();

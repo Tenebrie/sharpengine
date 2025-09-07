@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using Diligent;
 using Engine.Core.Assets;
+using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Renderers;
@@ -67,12 +68,6 @@ public class RenderingHost : IRenderingHost
         (int)Math.Round(RootWindow.FramebufferSize.Y * ResolutionScale)
     );
 
-    private static int MsaaSamples => 8;
-    
-    // Sync to avoid starting a new frame before the previous one is done
-    private IFence _frameFence = null!;
-    private ulong _frameFenceValue;
-
     // Constant camera matrix buffer
     private IBuffer _viewMatrixBuffer = null!;
     
@@ -87,12 +82,6 @@ public class RenderingHost : IRenderingHost
         _immediateContext = resources.ImmediateContext;
         _deferredContexts = resources.DeferredContexts;
         _swapChain = resources.SwapChain;
-        
-        _frameFence = _renderDevice.CreateFence(new FenceDesc
-        {
-            Name = "FrameFence"
-        });
-        _frameFenceValue = _frameFence.GetCompletedValue();
         
         _viewMatrixBuffer = resources.RenderDevice.CreateBuffer(new BufferDesc
         {
@@ -154,7 +143,7 @@ public class RenderingHost : IRenderingHost
             Height = (uint)FramebufferSize.Y,
             MipLevels = 1,
             Format = swapChain.ColorBufferFormat,
-            SampleCount = (uint)MsaaSamples,
+            SampleCount = (uint)PipelineBuilder.MsaaSamples,
             BindFlags = BindFlags.RenderTarget
         });
         _renderTargetView = _renderTarget.GetDefaultView(TextureViewType.RenderTarget);
@@ -167,7 +156,7 @@ public class RenderingHost : IRenderingHost
             Height      = (uint)FramebufferSize.Y,
             MipLevels   = 1,
             Format      = swapChain.DepthBufferFormat,
-            SampleCount = (uint)MsaaSamples,
+            SampleCount = (uint)PipelineBuilder.MsaaSamples,
             BindFlags   = BindFlags.DepthStencil
         });
         _renderDepthView = _renderDepth.GetDefaultView(TextureViewType.DepthStencil);
@@ -245,7 +234,7 @@ public class RenderingHost : IRenderingHost
         );
         
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingFullFrame);
-        _swapChain.Present(1);
+        _swapChain.Present(0);
     }
 
     private Task PrepareRenderers(double deltaTime)
