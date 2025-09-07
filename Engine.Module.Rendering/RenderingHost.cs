@@ -67,7 +67,7 @@ public class RenderingHost : IRenderingHost
         (int)Math.Round(RootWindow.FramebufferSize.Y * ResolutionScale)
     );
 
-    private static int MsaaSamples => 2;
+    private static int MsaaSamples => 8;
     
     // Sync to avoid starting a new frame before the previous one is done
     private IFence _frameFence = null!;
@@ -215,7 +215,6 @@ public class RenderingHost : IRenderingHost
     
     public async Task RenderSingleFrame(double deltaTime)
     {
-        _frameFence.Wait(_frameFenceValue);
         var stopwatch = Profiler.Start();
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingGpuWait);
         
@@ -246,8 +245,7 @@ public class RenderingHost : IRenderingHost
         );
         
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingFullFrame);
-        _immediateContext.EnqueueSignal(_frameFence, ++_frameFenceValue);
-        _swapChain.Present(0);
+        _swapChain.Present(1);
     }
 
     private Task PrepareRenderers(double deltaTime)
