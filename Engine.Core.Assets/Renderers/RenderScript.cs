@@ -4,8 +4,7 @@ using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
-using Engine.Core.Profiling;
-using Engine.Core.Profiling.Attributes;
+using Engine.Core.Logging;
 
 namespace Engine.Core.Assets.Renderers;
 

@@ -28,6 +28,7 @@ public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposabl
 
     private void AllocateBuffer()
     {
+        Logger.Info("Allocating buffer " + (_buffers.Count + 1));
         var buffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
             Name = "SharedInstanceTransformBuffer",
@@ -83,26 +84,24 @@ public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposabl
             _cursorPosition = 0;
             _activePage += 1;
         }
+        
         return tickets;
     }
 
     private void WriteSinglePage(int instanceCount, Span<T> instances)
     {
-        var mapFlags = MapFlags.NoOverwrite;
-        if (_cursorPosition == 0)
-            mapFlags = MapFlags.Discard;
-        
-        var map = RenderContext.Current.DeviceContext.MapBuffer<byte>(
+        if (instanceCount == 0)
+            throw new InvalidOperationException("Instance count is 0");
+        var mapFlags = _cursorPosition == 0 ? MapFlags.Discard : MapFlags.NoOverwrite;
+
+        var map = RenderContext.Current.DeviceContext.MapBuffer<T>(
             ActiveBuffer,
             MapType.Write,
-            mapFlags
-        );
+            mapFlags);
 
-        for (var i = 0; i < instanceCount; i++)
-        {
-            var offset = (_cursorPosition + i) * _sizePerInstance;
-            Unsafe.WriteUnaligned(ref map[offset], instances[i]);
-        }
+        var dest = map.Slice(_cursorPosition, instanceCount);
+        instances.CopyTo(dest);
+
         RenderContext.Current.DeviceContext.UnmapBuffer(ActiveBuffer, MapType.Write);
         _cursorPosition += instanceCount;
     }
@@ -110,8 +109,8 @@ public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposabl
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        foreach (var buffer in _buffers) buffer.Dispose();
         foreach (var view in _bufferViews) view.Dispose();
+        foreach (var buffer in _buffers) buffer.Dispose();
         _buffers.Clear();
         _bufferViews.Clear();
     }

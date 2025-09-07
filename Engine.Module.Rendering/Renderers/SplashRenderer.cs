@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Collections;
+using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Diligent;
@@ -9,7 +10,7 @@ using Engine.Core.Common;
 using Engine.Core.Extensions;
 using ValueType = Diligent.ValueType;
 
-namespace Engine.Module.Rendering.Fonts;
+namespace Engine.Module.Rendering.Renderers;
 
 public static class SplashRenderer
 {

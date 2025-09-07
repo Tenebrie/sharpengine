@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Module.Utility", "En
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Main.Game", "Engine.Main.Game\Engine.Main.Game.csproj", "{9F9CE5DC-E883-45BA-A6C1-CCDB003DC9FF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core.Lamina", "Engine.Core.Lamina\Engine.Core.Lamina.csproj", "{26989E45-A768-4615-A1D7-7A7AF9CE65C5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -130,6 +132,12 @@ Global
 		{A83ADF2D-E770-43D2-9673-EABF30DA6A2F}.Shipping|x64.Build.0 = Release|x64
 		{9F9CE5DC-E883-45BA-A6C1-CCDB003DC9FF}.Shipping|x64.ActiveCfg = Release|x64
 		{9F9CE5DC-E883-45BA-A6C1-CCDB003DC9FF}.Shipping|x64.Build.0 = Release|x64
+		{26989E45-A768-4615-A1D7-7A7AF9CE65C5}.Debug|x64.ActiveCfg = Debug|x64
+		{26989E45-A768-4615-A1D7-7A7AF9CE65C5}.Debug|x64.Build.0 = Debug|x64
+		{26989E45-A768-4615-A1D7-7A7AF9CE65C5}.Release|x64.ActiveCfg = Release|x64
+		{26989E45-A768-4615-A1D7-7A7AF9CE65C5}.Release|x64.Build.0 = Release|x64
+		{26989E45-A768-4615-A1D7-7A7AF9CE65C5}.Shipping|x64.ActiveCfg = Release|x64
+		{26989E45-A768-4615-A1D7-7A7AF9CE65C5}.Shipping|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

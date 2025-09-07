@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using Diligent;
 using Engine.Core.Assets;
 using Engine.Core.Assets.Materials;
@@ -8,7 +9,6 @@ using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Communication.Tasks;
 using Engine.Core.Enum;
-using Engine.Module.Rendering.Fonts;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Logging;
@@ -17,12 +17,18 @@ using Engine.Core.Modules;
 using Engine.Core.Profiling;
 using Engine.Core.Profiling.Attributes;
 using Engine.Module.Rendering.Computers;
+using Engine.Module.Rendering.Renderers;
 using Engine.Module.Rendering.Renderers.Debug;
 using Engine.Module.Rendering.Renderers.Fonts;
 using Engine.Module.Rendering.Utilities;
 using JetBrains.Annotations;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
+using Vortice.Direct3D12;
+using Vortice.DXGI;
+using MapFlags = Diligent.MapFlags;
+using ResourceDimension = Diligent.ResourceDimension;
+using Usage = Diligent.Usage;
 
 namespace Engine.Module.Rendering;
 
@@ -61,7 +67,11 @@ public class RenderingHost : IRenderingHost
         (int)Math.Round(RootWindow.FramebufferSize.Y * ResolutionScale)
     );
 
-    private static int MsaaSamples => 8;
+    private static int MsaaSamples => 2;
+    
+    // Sync to avoid starting a new frame before the previous one is done
+    private IFence _frameFence = null!;
+    private ulong _frameFenceValue;
 
     // Constant camera matrix buffer
     private IBuffer _viewMatrixBuffer = null!;
@@ -77,6 +87,12 @@ public class RenderingHost : IRenderingHost
         _immediateContext = resources.ImmediateContext;
         _deferredContexts = resources.DeferredContexts;
         _swapChain = resources.SwapChain;
+        
+        _frameFence = _renderDevice.CreateFence(new FenceDesc
+        {
+            Name = "FrameFence"
+        });
+        _frameFenceValue = _frameFence.GetCompletedValue();
         
         _viewMatrixBuffer = resources.RenderDevice.CreateBuffer(new BufferDesc
         {
@@ -134,8 +150,8 @@ public class RenderingHost : IRenderingHost
         {
             Name = "MSAA Color",
             Type = ResourceDimension.Tex2d,
-            Width = swapChain.Width,
-            Height = swapChain.Height,
+            Width = (uint)FramebufferSize.X,
+            Height = (uint)FramebufferSize.Y,
             MipLevels = 1,
             Format = swapChain.ColorBufferFormat,
             SampleCount = (uint)MsaaSamples,
@@ -147,8 +163,8 @@ public class RenderingHost : IRenderingHost
         {
             Name        = "MSAA Depth",
             Type        = ResourceDimension.Tex2d,
-            Width       = swapChain.Width,
-            Height      = swapChain.Height,
+            Width       = (uint)FramebufferSize.X,
+            Height      = (uint)FramebufferSize.Y,
             MipLevels   = 1,
             Format      = swapChain.DepthBufferFormat,
             SampleCount = (uint)MsaaSamples,
@@ -196,10 +212,14 @@ public class RenderingHost : IRenderingHost
         
         _swapChain.Present(0);
     }
-
+    
     public async Task RenderSingleFrame(double deltaTime)
     {
+        _frameFence.Wait(_frameFenceValue);
         var stopwatch = Profiler.Start();
+        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingGpuWait);
+        
+        stopwatch = Profiler.Start();
         RenderStats.Reset();
         FrameCounter.Increment();
         _immediateContext.ClearStats();
@@ -226,7 +246,8 @@ public class RenderingHost : IRenderingHost
         );
         
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingFullFrame);
-        _swapChain.Present(1);
+        _immediateContext.EnqueueSignal(_frameFence, ++_frameFenceValue);
+        _swapChain.Present(0);
     }
 
     private Task PrepareRenderers(double deltaTime)
@@ -338,6 +359,10 @@ public class RenderingHost : IRenderingHost
 
     private readonly Dictionary<int, MergedRenderRequest> _renderRequestPool = new();
     
+    /**
+     * TODO: Instead of dynamically collecting the requests every frame, consider keeping them around, and rely on registration/deregistration
+     * when entities are added/removed or their materials/meshes change.
+     */
     private struct MergedRenderRequest
     {
         public required StaticMesh Mesh;

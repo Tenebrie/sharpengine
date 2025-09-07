@@ -1,9 +1,14 @@
 ﻿using System.Runtime.InteropServices;
 using Diligent;
 using Engine.Core.Assets;
+using Engine.Core.Logging;
 using Engine.Core.Modules;
 using JetBrains.Annotations;
 using Silk.NET.Windowing;
+using Vortice.Direct3D;
+using Vortice.Direct3D12;
+using Vortice.Direct3D12.Debug;
+using Vortice.DXGI;
 
 namespace Engine.Module.Rendering;
 
@@ -51,6 +56,7 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
     {
         _messageCallback = (severity, message, function, file, line) =>
         {
+            CrashOnTDR(message);
             switch (severity)
             {
                 case DebugMessageSeverity.Warning:
@@ -69,6 +75,16 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
         engineFactory.SetMessageCallback(_messageCallback);
     }
 
+    private static void CrashOnTDR(string message)
+    {
+        if (message.Contains(
+                "Timeout elapsed while waiting for the frame waitable object. This is a strong indication of a synchronization error."))
+        {
+            Logger.Error(message);
+            throw new Exception("TDR detected");
+        }
+    }
+
     private static void CreateRenderDeviceAndSwapChain(
         IEngineFactoryD3D12 engineFactory,
         out IRenderDevice renderDevice,
@@ -80,7 +96,9 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
         engineFactory.CreateDeviceAndContextsD3D12(new EngineD3D12CreateInfo
         {
             EnableValidation = true,
-            NumDeferredContexts = 8
+            // D3D12ValidationFlags = D3D12ValidationFlags.EnableGpuBasedValidation | D3D12ValidationFlags.BreakOnCorruption,
+            // ValidationFlags = ValidationFlags.CheckShaderBufferSize,
+            NumDeferredContexts = 8,
         }, out renderDevice, out IDeviceContext[] contextsOut);
         
         immediateContext = contextsOut[0];

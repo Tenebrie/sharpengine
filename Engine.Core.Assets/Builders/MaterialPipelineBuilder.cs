@@ -1,6 +1,7 @@
 ﻿using Diligent;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Rendering;
+using Engine.Core.Logging;
 
 namespace Engine.Core.Assets.Builders;
 

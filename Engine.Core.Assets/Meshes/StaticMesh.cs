@@ -9,6 +9,7 @@ using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Communication.Signals;
 using Engine.Core.Extensions;
+using Engine.Core.Logging;
 using ValueType = Diligent.ValueType;
 
 namespace Engine.Core.Assets.Meshes;

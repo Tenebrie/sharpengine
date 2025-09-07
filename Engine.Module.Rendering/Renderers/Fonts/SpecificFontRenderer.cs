@@ -6,7 +6,7 @@ using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
-using Engine.Module.Rendering.Fonts;
+using Engine.Core.Logging;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
 using SixLabors.ImageSharp;
@@ -26,7 +26,7 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
     private IBuffer _vertexBuffer = null!;
     private IBuffer _indexBuffer = null!;
 
-    private const int BufferSizeGlyphs = 16384;
+    private const int BufferSizeGlyphs = 4096;
     private MeshPipeline _meshPipeline;
 
     private Material _material = null!;
@@ -181,9 +181,11 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
         var verticesWritten = 0;
         var context = RenderContext.Current;
         
+        if (_glyphStream.Count != 1)
+            Logger.Info("Count is " + _glyphStream.Count);
         foreach (var (texture, vertexList) in _glyphStream)
         {
-            EnsureBufferSize(vertexList.Count);
+            EnsureBufferSize(verticesWritten + vertexList.Count);
             
             if (!_materialInstances.TryGetValue(texture, out var materialInstance))
             {
@@ -194,10 +196,13 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
             var pso = AssetManager.Shared.Pipelines.Produce(_meshPipeline, _material.Pipeline);
             context.DeviceContext.SetPipelineState(pso);
 
-            // Vertex buffer
+            // Buffers
             var vertexBuffer = context.DeviceContext.MapBuffer<RenderingVertex>(_vertexBuffer, MapType.Write, MapFlags.Discard);
-            foreach (var vertex in vertexList)
-                vertexBuffer[verticesWritten++] = vertex;
+            CollectionsMarshal.AsSpan(vertexList).CopyTo(vertexBuffer);
+            // foreach (var vertex in vertexList)
+            //     vertexBuffer[verticesWritten++] = vertex;
+            verticesWritten += vertexList.Count;
+
             context.DeviceContext.UnmapBuffer(_vertexBuffer, MapType.Write);
             context.DeviceContext.SetVertexBuffers(0, [_vertexBuffer], [0ul], ResourceStateTransitionMode.Transition);
             

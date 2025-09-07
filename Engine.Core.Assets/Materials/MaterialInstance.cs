@@ -3,6 +3,7 @@ using Diligent;
 using Engine.Core.Assets.Builders;
 using Engine.Core.Common;
 using Engine.Core.Extensions;
+using Engine.Core.Logging;
 
 namespace Engine.Core.Assets.Materials;
 
