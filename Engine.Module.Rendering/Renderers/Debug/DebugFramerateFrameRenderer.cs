@@ -6,7 +6,7 @@ using Engine.Module.Rendering.Utilities;
 
 namespace Engine.Module.Rendering.Renderers.Debug;
 
-public class DebugFramerateRenderer(RenderingHost host): IRenderer
+public class DebugFramerateFrameRenderer(RenderingHost host): IFrameRenderer
 {
     private readonly DebugTextGrid _textGrid = new(host);
     
@@ -30,7 +30,7 @@ public class DebugFramerateRenderer(RenderingHost host): IRenderer
     {
         var stopwatch = Profiler.Start();
         RenderFrame(delta);
-        stopwatch.StopAndReport(typeof(DebugFramerateRenderer), ProfilingContext.RenderingDebugFramerate);
+        stopwatch.StopAndReport(typeof(DebugFramerateFrameRenderer), ProfilingContext.RenderingDebugFramerate);
     }
 
     private int _lastSeenProfilerBufferIndex = -1;
@@ -92,8 +92,8 @@ public class DebugFramerateRenderer(RenderingHost host): IRenderer
             _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, entry);
         }
 
-        var drawCallCount = RenderContext.Current.DeviceContext.GetStats().CommandCounters.DrawIndexed;
-        var val = RenderContext.Current.DeviceContext.GetStats().PrimitiveCounts;
+        var drawCallCount = RenderContext.Current.ImmediateContext.GetStats().CommandCounters.DrawIndexed;
+        var val = RenderContext.Current.ImmediateContext.GetStats().PrimitiveCounts;
         _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Stats ----");
         _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, $"Draws: {drawCallCount, 4}");
         _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, $"Instances: {RenderStats.InstancesDrawn, 4}");

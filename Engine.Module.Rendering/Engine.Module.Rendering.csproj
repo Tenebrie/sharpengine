@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Engine.Core.EntitySystem\Engine.Core.EntitySystem.csproj" />
+    <ProjectReference Include="..\Engine.Core.Lamina\Engine.Core.Lamina.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,7 +22,6 @@
     <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
     <PackageReference Include="Silk.NET.Windowing" Version="2.22.0" />
     <PackageReference Include="Vortice.Direct3D12" Version="3.6.2" />
-    <PackageReference Include="Diligent-GraphicsEngine.NET" Version="2.5.3" />
   </ItemGroup>
 
 </Project>

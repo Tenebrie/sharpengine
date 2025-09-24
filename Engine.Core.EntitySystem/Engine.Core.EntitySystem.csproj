@@ -17,6 +17,7 @@
   </ItemGroup>
   
   <ItemGroup>
+    <ProjectReference Include="..\Engine.Core.Lamina\Engine.Core.Lamina.csproj" />
     <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
     <ProjectReference Include="..\Engine.Core.Assets\Engine.Core.Assets.csproj" />
     <ProjectReference Include="..\Engine.Core.Input\Engine.Core.Input.csproj" />

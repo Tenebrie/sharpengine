@@ -7,7 +7,7 @@ namespace Engine.Core.Assets.Rendering;
 public struct RenderContext
 {
     public required IRenderDevice RenderDevice;
-    public required IDeviceContext DeviceContext;
+    public required IDeviceContext ImmediateContext;
     public required IDeviceContext[] DeferredContexts;
     public required ISwapChain SwapChain;
     public required IBuffer ViewMatrixBuffer;

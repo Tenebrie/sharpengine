@@ -12,6 +12,7 @@
     </ItemGroup>
     
     <ItemGroup>
+      <ProjectReference Include="..\Engine.Core.Assets\Engine.Core.Assets.csproj" />
       <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
     </ItemGroup>
     

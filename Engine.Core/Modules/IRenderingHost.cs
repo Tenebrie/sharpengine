@@ -1,4 +1,7 @@
-﻿using Diligent;
+﻿using System.Drawing;
+using Diligent;
+using Engine.Core.Common;
+using Engine.Core.Modules.Assets;
 
 namespace Engine.Core.Modules;
 
@@ -17,6 +20,9 @@ public struct RenderingResources
     public required IDeviceContext[] DeferredContexts;
     public required ISwapChain SwapChain;
 }
+
+public interface ILaminaLayout;
+public interface ILaminaWidgetRenderer;
 
 public interface IRenderingHost : IModularHost
 {

@@ -29,13 +29,13 @@ public class DebugTextGrid(RenderingHost host)
             text = string.Concat(text.AsSpan(0, 512), "...");
         if (!_textMeasured)
         {
-            var singleGlyphSize = host.TextRenderer.MeasureText("RobotoMono-Bold", FontSize, "0");
+            var singleGlyphSize = host.ImmediateTextRenderer.MeasureText("RobotoMono-Bold", FontSize, "0");
             _glyphWidth = (int)singleGlyphSize.X;
             _glyphHeight = (int)singleGlyphSize.Y;
             _textMeasured = true;
         }
 
-        var size = host.TextRenderer.MeasureText("RobotoMono-Bold", FontSize, text).X;
+        var size = host.ImmediateTextRenderer.MeasureText("RobotoMono-Bold", FontSize, text).X;
         var offset = new Vector2(x * _glyphWidth, y * _glyphHeight * LineHeight);
         var position = anchor switch
         {
@@ -48,6 +48,6 @@ public class DebugTextGrid(RenderingHost host)
             ),
             _ => throw new ArgumentOutOfRangeException(nameof(anchor), anchor, null)
         };
-        host.TextRenderer.RenderText("RobotoMono-Bold", FontSize, text, position, color, 2);
+        host.ImmediateTextRenderer.RenderText("RobotoMono-Bold", FontSize, text, position, color, 2);
     }
 }

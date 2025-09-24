@@ -17,7 +17,8 @@ public partial class UserBackstage : GameplayHostBackstage
     [OnReady]
     protected void OnReady()
     {
-        CreateScene<UserScene>();
+        // CreateScene<UserScene>();
+        CreateScene<BasicEnemyScene>();
     }
     
     [OnUpdate]
@@ -31,8 +32,7 @@ public partial class BasicEnemyScene : Scene
     [OnReady]
     protected void OnReady()
     {
-        // var manager = CreateActor<BasicEnemyManager>();
-        // manager.InstanceManager.CreateInstance();
+        RegisterService<UserInterfaceService>();
     }
 }
 

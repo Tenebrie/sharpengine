@@ -10,7 +10,7 @@ using JetBrains.Annotations;
 namespace Engine.Core.EntitySystem.Components.Rendering;
 
 [UsedImplicitly]
-public partial class StaticMeshComponent : ActorComponent, IRenderable
+public partial class StaticMeshComponent : ActorComponent, IRenderable, ICullable
 {
     [Component] private StaticMeshHolder _staticMeshHolder;
     public StaticMesh StaticMesh

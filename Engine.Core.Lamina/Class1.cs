@@ -1,100 +1,34 @@
-﻿using Engine.Core.Common;
+﻿using System.Reflection.Emit;
+using Engine.Core.Common;
+using Engine.Core.Modules;
 using JetBrains.Annotations;
 
 namespace Engine.Core.Lamina;
 
-// public abstract record LaminaElement;
+public record FragmentLayout() : LaminaLayout(typeof(LaminaLayout));
+public record DivLayout(Vector2 Offset) : LaminaLayout(typeof(DivLayout));
+public record HeaderLayout(string Text) : LaminaLayout(typeof(HeaderLayout));
+public record LabelLayout(string Text) : LaminaLayout(typeof(LabelLayout));
+public record ButtonLayout(string Text, Action? OnClick = null) : LaminaLayout(typeof(ButtonLayout));
+public record VStack(List<LaminaLayout> Children) : LaminaLayout(typeof(VStack));
+public record HStack(List<LaminaLayout> Children, int Gap = 4) : LaminaLayout(typeof(HStack));
 
-public sealed record Header(string Text) : LaminaElement;
-public sealed record Button(string Label, Action? OnClick = null) : LaminaElement;
-public sealed record CustomElement() : LaminaElement;
-public sealed record VStack(List<LaminaElement> Children) : LaminaElement;
-public sealed record HStack(List<LaminaElement> Children, int Gap = 4) : LaminaElement;
-
-public record LaminaElement
+public record LaminaLayout(Type type) : ILaminaLayout
 {
-    public readonly List<LaminaElement> Children = [];
-    public void Add(LaminaElement w) => Children.Add(w);
-    public void Header(string text) => Add(new Header(text));
-    public void Button(string label, Action? onClick = null) => Add(new Button(label, onClick));
-    public VStack VStack(Action<LaminaElement> view)
+    public readonly Type LayoutType = type;
+    public readonly List<LaminaLayout> Children = [];
+    public void Add(LaminaLayout w)
     {
-        var inner = new LaminaElement();
-        view(inner);
-        var vstack = new VStack([..inner.Children]);
-        Add(vstack);
-        return vstack;
+        Children.Add(w);
     }
-    public VStack Floater(Vector3 position, Action<LaminaElement> body)
+    public void Add(LaminaLayout w, Action<LaminaLayout> render)
     {
-        var inner = new LaminaElement();
-        body(inner);
-        var vstack = new VStack([..inner.Children]);
-        Add(vstack);
-        return vstack;
+        Children.Add(w);
+        render.Invoke(w);
     }
-}
 
-public class Widget
-{
-    public LaminaElement Root = null!;
-
-    public void Render(Action<LaminaElement> body)
-    {
-        var scope = new LaminaElement();
-        body(scope);
-        Root = scope;
-    }
-    
-    public VStack VStack(Action<LaminaElement> body)
-    {
-        var inner = new LaminaElement();
-        body(inner);
-        var vstack = new VStack([..inner.Children]);
-        return vstack;
-    }
-}
-
-[MeansImplicitUse]
-[AttributeUsage(AttributeTargets.Method)]
-// ReSharper disable once InconsistentNaming
-public class OnUpdateUI : Attribute
-{
-}
-
-public class CustomButton : Widget
-{
-    
-    public record Element : LaminaElement
-    {
-        
-    }
-    
-    [OnUpdateUI]
-    public LaminaElement Render()
-    {
-        return VStack(v =>
-        {
-            v.Header("Hello World");
-            v.Button("Click Me", () => Console.WriteLine("Button Clicked!"));
-            v.Add(new CustomButton.Element());
-            v.VStack(Renderers.RenderFloatingButtons);
-        });
-    }
-}
-
-public static class Renderers
-{
-    private static readonly List<Vector3> Positions = [ new(0,0,0), new(1,1,1), new(2,2,2) ];
-    
-    public static void RenderFloatingButtons(LaminaElement v)
-    {
-        foreach (var position in Positions)
-        {
-            v.Floater(position, v =>
-            {
-                v.Button("Floating button", () => Console.WriteLine($"Clicked button at {position}"));
-            });
-        }
-    }
+    public void Div(Vector2 position, Action<LaminaLayout> action) => Add(new DivLayout(position), action);
+    public void Header(string text) => Add(new HeaderLayout(text));
+    public void Label(string text) => Add(new LabelLayout(text));
+    public void Button(string label, Action? onClick = null) => Add(new ButtonLayout(label, onClick));
 }

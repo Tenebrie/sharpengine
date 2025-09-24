@@ -4,6 +4,7 @@ using Diligent;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Communication.Tasks;
 using Engine.Core.Logging;
+using Engine.Core.Modules.Assets;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -12,7 +13,7 @@ using TextureFormat = Diligent.TextureFormat;
 
 namespace Engine.Core.Assets.Materials;
 
-public sealed class Texture : IDisposable
+public sealed class Texture : ITextureAsset, IDisposable
 {
     
     public bool IsValid { get; private set; } = false;
@@ -43,7 +44,7 @@ public sealed class Texture : IDisposable
 
         fixed (byte* pixelDataPtr = data)
         {
-            RenderContext.Current.DeviceContext.UpdateTexture(
+            RenderContext.Current.ImmediateContext.UpdateTexture(
                 _textureHandle,
                 mipLevel: 0,
                 slice: 0,
@@ -73,7 +74,7 @@ public sealed class Texture : IDisposable
     {
         fixed (byte* pixelDataPtr = data)
         {
-            RenderContext.Current.DeviceContext.UpdateTexture(
+            RenderContext.Current.ImmediateContext.UpdateTexture(
                 _textureHandle,
                 mipLevel: 0,
                 slice: 0,
@@ -138,7 +139,7 @@ public sealed class Texture : IDisposable
         {
             fixed (byte* pixelDataPtr = data)
             {
-                RenderContext.Current.DeviceContext.UpdateTexture(
+                RenderContext.Current.ImmediateContext.UpdateTexture(
                     _textureHandle,
                     mipLevel: (uint)level,
                     slice: 0,

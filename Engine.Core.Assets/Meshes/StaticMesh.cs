@@ -9,7 +9,6 @@ using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Communication.Signals;
 using Engine.Core.Extensions;
-using Engine.Core.Logging;
 using ValueType = Diligent.ValueType;
 
 namespace Engine.Core.Assets.Meshes;
@@ -110,8 +109,8 @@ public class StaticMesh : IDisposable
     private readonly ulong[] _vertexOffsets = [0ul];
     public void BindForRendering()
     {
-        RenderContext.Current.DeviceContext.SetVertexBuffers(0, _vertexBufferArray, _vertexOffsets, ResourceStateTransitionMode.Transition);
-        RenderContext.Current.DeviceContext.SetIndexBuffer(_indexBuffer, 0, ResourceStateTransitionMode.Transition);
+        RenderContext.Current.ImmediateContext.SetVertexBuffers(0, _vertexBufferArray, _vertexOffsets, ResourceStateTransitionMode.Transition);
+        RenderContext.Current.ImmediateContext.SetIndexBuffer(_indexBuffer, 0, ResourceStateTransitionMode.Transition);
     }
     
     public virtual void Dispose()

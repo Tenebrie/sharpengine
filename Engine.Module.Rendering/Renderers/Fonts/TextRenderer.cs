@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Diligent;
 using Engine.Core.Common;
 using Engine.Core.Logging;
 using Color = System.Drawing.Color;
@@ -19,7 +20,7 @@ public struct FontKey : IEquatable<FontKey>
     public static bool operator !=(FontKey left, FontKey right) => !(left == right);
 }
 
-public class TextRenderer : IDisposable
+public class TextRenderer(IDeviceContext deviceContext) : IDisposable
 {
     private readonly Dictionary<FontKey, SpecificFontRenderer> _fonts = new();
 
@@ -37,7 +38,7 @@ public class TextRenderer : IDisposable
         
         try
         {
-            _fonts[key] = fontRenderer = new SpecificFontRenderer(key);
+            _fonts[key] = fontRenderer = new SpecificFontRenderer(key, deviceContext);
             fontRenderer.Initialize();
         }
         catch (Exception e)

@@ -17,7 +17,8 @@ public enum ProfilingContext
     RenderingDebugLog = 1 << 10,
     RenderingDebugFramerate = 1 << 11,
     RenderingDebugProfiler = 1 << 12,
-    RenderingGpuWait = 1 << 13,
+    RenderingLamina = 1 << 13,
+    RenderingGpuWait = 1 << 14,
 }
 
 public static class Profiler

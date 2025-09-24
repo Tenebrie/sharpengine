@@ -1,32 +1,24 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
 using Diligent;
 using Engine.Core.Assets;
 using Engine.Core.Assets.Builders;
-using Engine.Core.Assets.Materials;
-using Engine.Core.Assets.Meshes;
-using Engine.Core.Assets.Renderers;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
-using Engine.Core.Communication.Tasks;
 using Engine.Core.Enum;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Logging;
-using Engine.Core.Memory;
 using Engine.Core.Modules;
 using Engine.Core.Profiling;
-using Engine.Core.Profiling.Attributes;
 using Engine.Module.Rendering.Computers;
 using Engine.Module.Rendering.Renderers;
 using Engine.Module.Rendering.Renderers.Debug;
 using Engine.Module.Rendering.Renderers.Fonts;
+using Engine.Module.Rendering.Renderers.Lamina;
 using Engine.Module.Rendering.Utilities;
 using JetBrains.Annotations;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
-using Vortice.Direct3D12;
-using Vortice.DXGI;
 using MapFlags = Diligent.MapFlags;
 using ResourceDimension = Diligent.ResourceDimension;
 using Usage = Diligent.Usage;
@@ -42,10 +34,12 @@ public class RenderingHost : IRenderingHost
     private CullingComputer _cullingComputer = null!;
     
     // Renderers
-    private DebugFramerateRenderer _debugFramerateRenderer = null!;
-    private DebugLogRenderer _debugLogRenderer = null!;
-    private DebugProfilerRenderer _debugProfilerRenderer = null!;
-    internal TextRenderer TextRenderer = null!;
+    private DebugFramerateFrameRenderer _debugFramerateFrameRenderer = null!;
+    private DebugLogFrameRenderer _debugLogFrameRenderer = null!;
+    private DebugProfilerFrameRenderer _debugProfilerFrameRenderer = null!;
+    private LaminaRenderer _laminaRenderer = null!;
+    private SceneRenderer _sceneRenderer = null!;
+    internal TextRenderer ImmediateTextRenderer = null!;
     
     private IRenderDevice _renderDevice = null!;
     private IDeviceContext _immediateContext = null!;
@@ -105,7 +99,7 @@ public class RenderingHost : IRenderingHost
         _infiniteInstanceBuffer = new InfiniteInstanceWriteOnlyBuffer<InstanceData>();
         var renderContext = new RenderContext
         {
-            DeviceContext = _immediateContext,
+            ImmediateContext = _immediateContext,
             DeferredContexts = _deferredContexts,
             RenderDevice = _renderDevice,
             SwapChain = _swapChain,
@@ -121,10 +115,12 @@ public class RenderingHost : IRenderingHost
         _cullingComputer = new CullingComputer(this);
         
         // Renderers
-        _debugFramerateRenderer = new DebugFramerateRenderer(this);
-        _debugLogRenderer = new DebugLogRenderer(this);
-        _debugProfilerRenderer = new DebugProfilerRenderer(this);
-        TextRenderer = new TextRenderer();
+        _debugFramerateFrameRenderer = new DebugFramerateFrameRenderer(this);
+        _debugLogFrameRenderer = new DebugLogFrameRenderer(this);
+        _debugProfilerFrameRenderer = new DebugProfilerFrameRenderer(this);
+        _laminaRenderer = new LaminaRenderer(this, _deferredContexts[0]);
+        _sceneRenderer = new SceneRenderer(this);
+        ImmediateTextRenderer = new TextRenderer(_immediateContext);
 
         CreateRenderTargets();
 
@@ -171,6 +167,8 @@ public class RenderingHost : IRenderingHost
 
     private int _atomsToRenderCount;
     private IRenderable[] _atomsToRender = [];
+    private int _widgetsToRenderCount;
+    private ILaminaRenderable[] _widgetsToRender = [];
 
     private void RenderSingleFrameSync(double deltaTime)
     {
@@ -179,9 +177,9 @@ public class RenderingHost : IRenderingHost
 
     public void RenderEngineLoadingScreen()
     {
-        _immediateContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
         _immediateContext.ClearRenderTarget(_renderTargetView, new Vector4(0.0, 0.0, 0.0, 1.0), ResourceStateTransitionMode.Transition);
         _immediateContext.ClearDepthStencil(_renderDepthView, ClearDepthStencilFlags.Depth, 1.0f, 0, ResourceStateTransitionMode.Transition);
+        _immediateContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
         
         SplashRenderer.RenderOnce();
 
@@ -212,12 +210,19 @@ public class RenderingHost : IRenderingHost
         FrameCounter.Increment();
         _immediateContext.ClearStats();
         
-        _immediateContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
+        await PrepareRenderers();
+        
         _immediateContext.ClearRenderTarget(_renderTargetView, new Vector4(0.35f, 0.35f, 0.35f, 1.0f), ResourceStateTransitionMode.Transition);
         _immediateContext.ClearDepthStencil(_renderDepthView, ClearDepthStencilFlags.Depth, 1.0f, 0, ResourceStateTransitionMode.Transition);
-
-        await PrepareRenderers(deltaTime);
-        await InvokeRenderers(deltaTime);
+        _immediateContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
+        
+        await InvokeSceneRenderers(deltaTime);
+        
+        var commandList = await InvokeLaminaRenderers(deltaTime);
+        if (commandList is not null)
+            _immediateContext.ExecuteCommandLists([commandList]);
+        
+        _immediateContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
         
         var rtv = _swapChain.GetCurrentBackBufferRTV();
         var rtvTexture = rtv.GetTexture();
@@ -234,10 +239,10 @@ public class RenderingHost : IRenderingHost
         );
         
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingFullFrame);
-        _swapChain.Present(0);
+        _swapChain.Present(1);
     }
 
-    private Task PrepareRenderers(double deltaTime)
+    private Task PrepareRenderers()
     {
         Camera? activeCamera = null;
         foreach (var backstage in _backstages)
@@ -271,24 +276,32 @@ public class RenderingHost : IRenderingHost
         {
             // Collect all IRenderable entities reachable from the atom tree
             var stopwatch = Profiler.Start();
-            CollectAtomsToRender(ref _atomsToRender, ref _atomsToRenderCount, backstage);
+            CollectAtomsToRender(backstage);
             stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCollectAtoms);
         }
         _cullingComputer.SubmitCurrentQueue(frustumPlanes);
         return Task.CompletedTask;
     }
     
-    private Task InvokeRenderers(double deltaTime)
+    private Task<ICommandList?> InvokeLaminaRenderers(double deltaTime)
     {
-        RenderAtomTree(_atomsToRender, _atomsToRenderCount);
+        var commandList = _laminaRenderer.RenderRetainedTexturesWithTiming(_widgetsToRender, _widgetsToRenderCount);
+        _widgetsToRenderCount = 0;
+        Array.Clear(_widgetsToRender);
+        return Task.FromResult(commandList);
+    }
+    
+    private Task InvokeSceneRenderers(double deltaTime)
+    {
+        _sceneRenderer.RenderAtomTree(_atomsToRender, _atomsToRenderCount);
         _atomsToRenderCount = 0;
         Array.Clear(_atomsToRender);
         
-        _debugFramerateRenderer.RenderFrameWithTiming(deltaTime);
-        _debugLogRenderer.RenderFrameWithTiming(deltaTime);
-        _debugProfilerRenderer.RenderFrameWithTiming(deltaTime);
+        _debugFramerateFrameRenderer.RenderFrameWithTiming(deltaTime);
+        _debugLogFrameRenderer.RenderFrameWithTiming(deltaTime);
+        _debugProfilerFrameRenderer.RenderFrameWithTiming(deltaTime);
 
-        TextRenderer.Flush();
+        ImmediateTextRenderer.Flush();
         return Task.CompletedTask;
     }
 
@@ -310,117 +323,51 @@ public class RenderingHost : IRenderingHost
         return null;
     }
 
-    private void CollectAtomsToRender(
-        ref IRenderable[] entitiesToRender,
-        ref int entitiesToRenderCount,
-        Atom target)
+    private void CollectAtomsToRender(Atom target)
     {
         if (!Atom.IsValid(target))
             return;
 
-        if (target is IRenderable renderable)
+        var instanceCount = GetInstanceCount(target);
+        
+        if (target is ICullable cullable)
         {
-            // Resize the array if necessary
-            if (entitiesToRenderCount >= entitiesToRender.Length)
-                Array.Resize(ref entitiesToRender, Math.Max(entitiesToRenderCount + 1, entitiesToRender.Length * 2));
-
-            _cullingComputer.QueueForCulling(renderable);
-            var instanceCount = renderable.ProduceRenderRequest().InstanceCount;
-            if (_cullingComputer.IsVisible(renderable))
-            {
-                RenderStats.InstancesDrawn += instanceCount;
-                entitiesToRender[entitiesToRenderCount++] = renderable;
-            }
-            else
+            _cullingComputer.QueueForCulling(cullable);
+            if (!_cullingComputer.IsVisible(cullable))
             {
                 RenderStats.InstancesCulled += instanceCount;
                 return;
             }
         }
 
+        if (target is IRenderable renderable)
+        {
+            // Resize the array if necessary
+            if (_atomsToRenderCount >= _atomsToRender.Length)
+                Array.Resize(ref _atomsToRender, Math.Max(_atomsToRenderCount + 1, _atomsToRender.Length * 2));
+            
+            RenderStats.InstancesDrawn += instanceCount;
+            _atomsToRender[_atomsToRenderCount++] = renderable;
+        }
+        if (target is ILaminaRenderable { Dirty: true } laminaRenderable)
+        {
+            if (_widgetsToRenderCount >= _widgetsToRender.Length)
+                Array.Resize(ref _widgetsToRender, Math.Max(_widgetsToRenderCount + 1, _widgetsToRender.Length * 2));
+            
+            _widgetsToRender[_widgetsToRenderCount++] = laminaRenderable;
+        }
+
         foreach (var child in target.Children)
         {
-            CollectAtomsToRender(ref entitiesToRender, ref entitiesToRenderCount, child);
+            CollectAtomsToRender(child);
         }
     }
 
-    private readonly Dictionary<int, MergedRenderRequest> _renderRequestPool = new();
-    
-    /**
-     * TODO: Instead of dynamically collecting the requests every frame, consider keeping them around, and rely on registration/deregistration
-     * when entities are added/removed or their materials/meshes change.
-     */
-    private struct MergedRenderRequest
+    private int GetInstanceCount(Atom target)
     {
-        public required StaticMesh Mesh;
-        public required Material Material;
-        public required IRenderScript RenderScript;
-    
-        public required int InstanceCount;
-        public required MemoryManager.ArrayHandle InstanceTransforms;
-        public required MemoryManager.ArrayHandle MaterialInstances;
-    
-        public static MergedRenderRequest Create(RenderRequest request)
-        { 
-            var req = new MergedRenderRequest  
-            {
-                Mesh = request.Mesh, 
-                Material = request.Material, 
-                RenderScript = request.RenderScript,
-                InstanceCount = request.InstanceCount,
-                InstanceTransforms = 
-                    MemoryManager.ProduceArray<Transform>(MemoryDomain.Rendering, request.InstanceCount),
-                MaterialInstances =
-                    MemoryManager.ProduceArray<MaterialInstance>(MemoryDomain.Rendering, request.InstanceCount),
-            };
-
-            req.MaterialInstances = MemoryManager.MergeArrays(MemoryDomain.Rendering, req.MaterialInstances,
-                request.InstanceCount, request.MaterialInstances);
-            req.InstanceTransforms = MemoryManager.MergeArrays(MemoryDomain.Rendering, req.InstanceTransforms,
-                request.InstanceCount, request.InstanceTransforms);
-            return req;
-        }
+        return target is IRenderable renderable ? renderable.ProduceRenderRequest().InstanceCount : 1;
     }
-
-    private void RenderAtomTree(IRenderable[] atomsToRender, int atomsToRenderCount)
-    {
-        _renderRequestPool.Clear();
-
-        var stopwatch = Profiler.Start();
-        for (var i = 0; i < atomsToRenderCount; i++)
-        {
-            var renderable = atomsToRender[i];
-            var request = renderable.ProduceRenderRequest();
-            if (!_renderRequestPool.TryGetValue(request.HashCode, out var mergedRequest))
-            {
-                _renderRequestPool[request.HashCode] = MergedRenderRequest.Create(request);
-                continue;
-            }
-            
-            mergedRequest.MaterialInstances = MemoryManager.MergeArrays(MemoryDomain.Rendering,
-                mergedRequest.MaterialInstances,
-                request.InstanceCount, request.MaterialInstances
-            );
-            mergedRequest.InstanceTransforms = MemoryManager.MergeArrays(MemoryDomain.Rendering,
-                mergedRequest.InstanceTransforms,
-                request.InstanceCount, request.InstanceTransforms
-            );
-            mergedRequest.InstanceCount += request.InstanceCount;
-            _renderRequestPool[request.HashCode] = mergedRequest;
-        }
-        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCombineRequests);
-        
-        stopwatch = Profiler.Start();
-        RenderStats.DrawCalls += _renderRequestPool.Values.Count;
-        foreach (var req in _renderRequestPool.Values)
-        {
-            req.RenderScript.Render(_immediateContext, req.InstanceCount, req.Mesh, (Transform[])req.InstanceTransforms.Array, req.Material,
-                (MaterialInstance[])req.MaterialInstances.Array);
-        }
-        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingSubmitAtoms);
-        MemoryManager.FreeDomain(MemoryDomain.Rendering);
-    }
-
+    
     private void OnFramebufferResize(Vector2D<int> size)
     {
         var width = size.X;
@@ -435,7 +382,7 @@ public class RenderingHost : IRenderingHost
         AssetManager.Shared.Pipelines.InvalidateAll();
     }
 
-    public void ToggleLogRendering() => _debugLogRenderer.OnToggleMode();
+    public void ToggleLogRendering() => _debugLogFrameRenderer.OnToggleMode();
 
     private GameplayContext GameplayContext => Hypervisor.GameplayContext;
 
@@ -452,12 +399,13 @@ public class RenderingHost : IRenderingHost
         }
         catch { /* ignored */ }
 
-        TextRenderer.Dispose();
+        ImmediateTextRenderer.Dispose();
         _backstages = [];
         _atomsToRender = [];
         _viewMatrixBuffer.Dispose();
         _instanceIndexBuffer.Dispose();
         _infiniteInstanceBuffer.Dispose();
+        _laminaRenderer.Dispose();
         DisposeRenderTargets();
     }
 
@@ -468,6 +416,16 @@ public class RenderingHost : IRenderingHost
             _backstages.Add(gameplayHost);
         if (Hypervisor.WorkspaceModule is Backstage workspaceHost)
             _backstages.Add(workspaceHost);
-    }  
+    }
     public void NotifyGameplayContextChanged(GameplayContext context) {}
+    
+    // public long Register(LaminaRenderer renderer)
+    // {
+    //     // if (maskedParent is not Spatial parent)
+    //     //     throw new ArgumentException("Unable to unmask a Spatial"); 
+    //     // if (maskedComponent is not PhysicsComponent component)
+    //     //     throw new ArgumentException("Unable to unmask a PhysicsComponent");
+    //     return _registeredAtoms.Add(parent, component);
+    // }
+    // public void Unregister(long rid) => _registeredAtoms.Remove(rid);
 }

@@ -15,7 +15,7 @@ public enum LoggingMode
     Count,
 }
 
-public class DebugLogRenderer(RenderingHost host): IRenderer
+public class DebugLogFrameRenderer(RenderingHost host): IFrameRenderer
 {
     private readonly DebugTextGrid _textGrid = new(host);
     
@@ -32,7 +32,7 @@ public class DebugLogRenderer(RenderingHost host): IRenderer
     {
         var stopwatch = Profiler.Start();
         RenderFrame(delta);
-        stopwatch.StopAndReport(typeof(DebugLogRenderer), ProfilingContext.RenderingDebugLog);
+        stopwatch.StopAndReport(typeof(DebugLogFrameRenderer), ProfilingContext.RenderingDebugLog);
     }
 
     public void RenderFrame(double deltaTime)

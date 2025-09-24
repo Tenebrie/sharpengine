@@ -5,7 +5,7 @@ using Engine.Module.Rendering.Utilities;
 
 namespace Engine.Module.Rendering.Renderers.Debug;
 
-public class DebugProfilerRenderer(RenderingHost host): IRenderer
+public class DebugProfilerFrameRenderer(RenderingHost host): IFrameRenderer
 {
     private readonly DebugTextGrid _textGrid = new(host);
     
@@ -37,6 +37,6 @@ public class DebugProfilerRenderer(RenderingHost host): IRenderer
     {
         var stopwatch = Profiler.Start();
         RenderFrame(delta);
-        stopwatch.StopAndReport(typeof(DebugProfilerRenderer), ProfilingContext.RenderingDebugProfiler);
+        stopwatch.StopAndReport(typeof(DebugProfilerFrameRenderer), ProfilingContext.RenderingDebugProfiler);
     }
 }

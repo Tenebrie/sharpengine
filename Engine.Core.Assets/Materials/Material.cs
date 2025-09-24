@@ -24,15 +24,14 @@ public class Material(MaterialPipeline pipeline, Texture? texture, Dictionary<st
         if (!ConstantBuffers.TryGetValue(name, out var buffer))
             throw new KeyNotFoundException($"Constant buffer '{name}' not found in material.");
         
-        var map = RenderContext.Current.DeviceContext.MapBuffer<T>(buffer, MapType.Write, MapFlags.Discard);
+        var map = RenderContext.Current.ImmediateContext.MapBuffer<T>(buffer, MapType.Write, MapFlags.Discard);
         map[0] = data;
-        RenderContext.Current.DeviceContext.UnmapBuffer(buffer, MapType.Write);
+        RenderContext.Current.ImmediateContext.UnmapBuffer(buffer, MapType.Write);
     }
 
     public MaterialInstance Instantiate()
     {
         var instance = InstantiateWithoutCache();
-        // AssetManager.Shared.Materials.RegisterInstance(instance);
         Instances.Add(instance);
         return instance;
     }

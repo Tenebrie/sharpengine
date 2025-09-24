@@ -2,6 +2,7 @@
 using System.Runtime.InteropServices;
 using Diligent;
 using Engine.Core.Assets.Rendering;
+using Engine.Core.Logging;
 
 namespace Engine.Module.Rendering.Utilities;
 
@@ -100,7 +101,7 @@ public class InfiniteInstanceReadOnlyBuffer<T> : IDisposable where T : unmanaged
             var dst = _stagingBuffers[i];
 
             var bytesThisPage = Math.Min(_pageSize, bytesRemaining);
-            RenderContext.Current.DeviceContext.CopyBuffer(src,
+            RenderContext.Current.ImmediateContext.CopyBuffer(src,
                 0,
                 ResourceStateTransitionMode.Transition,
                 dst,
@@ -124,10 +125,10 @@ public class InfiniteInstanceReadOnlyBuffer<T> : IDisposable where T : unmanaged
             if (elemsThisPage <= 0)
                 break;
 
-            var spanBytes = RenderContext.Current.DeviceContext.MapBuffer<byte>(_stagingBuffers[i], MapType.Read, MapFlags.DoNotWait);
+            var spanBytes = RenderContext.Current.ImmediateContext.MapBuffer<byte>(_stagingBuffers[i], MapType.Read, MapFlags.DoNotWait);
             var spanT = MemoryMarshal.Cast<byte, T>(spanBytes);
             data.AddRange(spanT[..elemsThisPage]);
-            RenderContext.Current.DeviceContext.UnmapBuffer(_stagingBuffers[i], MapType.Read);
+            RenderContext.Current.ImmediateContext.UnmapBuffer(_stagingBuffers[i], MapType.Read);
 
             remainingElems -= elemsThisPage;
         }

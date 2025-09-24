@@ -115,7 +115,7 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
 }
 
 [UsedImplicitly]
-internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRenderable where TInstance : ActorInstance, new()
+internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRenderable, ICullable where TInstance : ActorInstance, new()
 {
     internal InstancedActorComponent<TInstance> InstanceManager = null!;
     private List<TInstance> Instances { get; } = [];

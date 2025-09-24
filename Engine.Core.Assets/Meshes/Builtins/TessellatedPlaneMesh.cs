@@ -18,12 +18,12 @@ public static class TessellatedPlaneMesh
 
     private static StaticMesh CreateWithoutCache(float width = 1f, float height = 1f, int segmentsX = 1, int segmentsY = 1)
     {
-        var vertices = CreateVertices(width, height, segmentsX, segmentsY);
+        var vertices = CreateVerticesXz(width, height, segmentsX, segmentsY);
         var indices = CreateIndices(segmentsX * segmentsY);
         return StaticMesh.CreateFromMemoryWithoutCache(vertices, indices);
     }
 
-    public static AssetVertex[] CreateVertices(float width = 1f, float height = 1f, int segmentsX = 1, int segmentsY = 1)
+    public static AssetVertex[] CreateVerticesXz(float width = 1f, float height = 1f, int segmentsX = 1, int segmentsY = 1)
     {
         var vertices = new AssetVertex[(segmentsX + 1) * (segmentsY + 1)];
 
@@ -43,6 +43,28 @@ public static class TessellatedPlaneMesh
 
         return vertices;
     }
+    
+    public static AssetVertex[] CreateVerticesXy(float width = 1f, float height = 1f, int segmentsX = 1, int segmentsY = 1)
+    {
+        var vertices = new AssetVertex[(segmentsX + 1) * (segmentsY + 1)];
+
+        for (var y = 0; y <= segmentsY; y++)
+        {
+            for (var x = 0; x <= segmentsX; x++)
+            {
+                var u = (float)x / segmentsX;
+                var v = (float)y / segmentsY;
+                vertices[y * (segmentsX + 1) + x] = new AssetVertex
+                {
+                    Position = new Vector3(x * width / segmentsX - width / 2, y * height / segmentsY - height / 2, 0),
+                    TexCoord = new Vector2(u, v)
+                };
+            }
+        }
+
+        return vertices;
+    }
+    
     public static uint[] CreateIndices(int segmentsX = 1, int segmentsY = 1)
     {
         var indices = new uint[segmentsX * segmentsY * 6];

@@ -28,7 +28,6 @@ public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposabl
 
     private void AllocateBuffer()
     {
-        Logger.Info("Allocating buffer " + (_buffers.Count + 1));
         var buffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
             Name = "SharedInstanceTransformBuffer",
@@ -94,7 +93,7 @@ public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposabl
             throw new InvalidOperationException("Instance count is 0");
         var mapFlags = _cursorPosition == 0 ? MapFlags.Discard : MapFlags.NoOverwrite;
 
-        var map = RenderContext.Current.DeviceContext.MapBuffer<T>(
+        var map = RenderContext.Current.ImmediateContext.MapBuffer<T>(
             ActiveBuffer,
             MapType.Write,
             mapFlags);
@@ -102,7 +101,7 @@ public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposabl
         var dest = map.Slice(_cursorPosition, instanceCount);
         instances.CopyTo(dest);
 
-        RenderContext.Current.DeviceContext.UnmapBuffer(ActiveBuffer, MapType.Write);
+        RenderContext.Current.ImmediateContext.UnmapBuffer(ActiveBuffer, MapType.Write);
         _cursorPosition += instanceCount;
     }
 

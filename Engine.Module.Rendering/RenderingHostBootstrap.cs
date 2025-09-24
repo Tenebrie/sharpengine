@@ -96,7 +96,7 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
         engineFactory.CreateDeviceAndContextsD3D12(new EngineD3D12CreateInfo
         {
             EnableValidation = true,
-            // D3D12ValidationFlags = D3D12ValidationFlags.EnableGpuBasedValidation | D3D12ValidationFlags.BreakOnCorruption,
+            D3D12ValidationFlags = D3D12ValidationFlags.EnableGpuBasedValidation | D3D12ValidationFlags.BreakOnCorruption,
             // ValidationFlags = ValidationFlags.CheckShaderBufferSize,
             NumDeferredContexts = 8,
         }, out renderDevice, out IDeviceContext[] contextsOut);

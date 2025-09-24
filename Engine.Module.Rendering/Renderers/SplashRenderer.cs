@@ -76,23 +76,23 @@ public static class SplashRenderer
         var context = RenderContext.Current;
         
         var pso = AssetManager.Shared.Pipelines.Produce(meshPipeline, material.Pipeline);
-        context.DeviceContext.SetPipelineState(pso);
+        context.ImmediateContext.SetPipelineState(pso);
         var screenSize = new Vector2(context.SwapChain.GetDesc().Width, context.SwapChain.GetDesc().Height);
         var desiredSize = new Vector3(512, 512, 0);
         var sizeMod = new Vector3(desiredSize.X / screenSize.X, desiredSize.Y / screenSize.Y, 1.0f);
         
-        var vertexBufferSpan = context.DeviceContext.MapBuffer<RenderingVertex>(vertexBuffer, MapType.Write, MapFlags.Discard);
+        var vertexBufferSpan = context.ImmediateContext.MapBuffer<RenderingVertex>(vertexBuffer, MapType.Write, MapFlags.Discard);
         vertexBufferSpan[0] = new RenderingVertex(new Vector3(-1, 1, 0) * sizeMod, new Vector2(0f, 0f), Color.White);
         vertexBufferSpan[1] = new RenderingVertex(new Vector3(1, 1, 0) * sizeMod, new Vector2(1f, 0f), Color.White);
         vertexBufferSpan[2] = new RenderingVertex(new Vector3(-1, -1, 0) * sizeMod, new Vector2(0f, 1f), Color.White);
         vertexBufferSpan[3] = new RenderingVertex(new Vector3(1, -1, 0) * sizeMod, new Vector2(1f, 1f), Color.White);
-        context.DeviceContext.UnmapBuffer(vertexBuffer, MapType.Write);
-        context.DeviceContext.SetVertexBuffers(0, [vertexBuffer], [0ul], ResourceStateTransitionMode.Transition);
-        context.DeviceContext.SetIndexBuffer(indexBuffer, 0, ResourceStateTransitionMode.Transition);
+        context.ImmediateContext.UnmapBuffer(vertexBuffer, MapType.Write);
+        context.ImmediateContext.SetVertexBuffers(0, [vertexBuffer], [0ul], ResourceStateTransitionMode.Transition);
+        context.ImmediateContext.SetIndexBuffer(indexBuffer, 0, ResourceStateTransitionMode.Transition);
         var srb = material.Instantiate().BindMaterial(pso);
-        context.DeviceContext.CommitShaderResources(srb, ResourceStateTransitionMode.Transition);
+        context.ImmediateContext.CommitShaderResources(srb, ResourceStateTransitionMode.Transition);
 
-        context.DeviceContext.DrawIndexed(new DrawIndexedAttribs
+        context.ImmediateContext.DrawIndexed(new DrawIndexedAttribs
         {
             NumIndices = 6,
             IndexType = ValueType.UInt16,

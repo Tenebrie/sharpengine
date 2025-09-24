@@ -98,11 +98,11 @@ public class CullingComputer : IDisposable
     }
 
     private int _activeBufferIndex = 0;
-    private readonly List<List<IRenderable>> _submitQueues = [[], []];
-    private List<IRenderable> BackQueue => _submitQueues[1 - _activeBufferIndex];
-    private List<IRenderable> FrontQueue => _submitQueues[_activeBufferIndex];
+    private readonly List<List<ICullable>> _submitQueues = [[], []];
+    private List<ICullable> BackQueue => _submitQueues[1 - _activeBufferIndex];
+    private List<ICullable> FrontQueue => _submitQueues[_activeBufferIndex];
     
-    private readonly Dictionary<IRenderable, bool> _currentResults = new();
+    private readonly Dictionary<ICullable, bool> _currentResults = new();
 
     private List<float> _valuesBuffer = [];
     public void ReadResultsAndPrepare()
@@ -129,14 +129,14 @@ public class CullingComputer : IDisposable
         BackQueue.Clear();
     }
     
-    public void QueueForCulling(IRenderable renderable)
+    public void QueueForCulling(ICullable renderable)
     {
         if (_deviceBusy)
             return;
         FrontQueue.Add(renderable);
     }
     
-    public bool IsVisible(IRenderable renderable)
+    public bool IsVisible(ICullable renderable)
     {
         if (_currentResults.TryGetValue(renderable, out var visible))
             return visible;
@@ -174,20 +174,20 @@ public class CullingComputer : IDisposable
             var entitiesThisPage = inputBufferTickets[i].Count;
             var constantData = new ConstantParams(entitiesThisPage, frustumPlanes);
         
-            var span = RenderContext.Current.DeviceContext.MapBuffer<byte>(_constantBuffer, MapType.Write, MapFlags.Discard);
+            var span = RenderContext.Current.ImmediateContext.MapBuffer<byte>(_constantBuffer, MapType.Write, MapFlags.Discard);
             MemoryMarshal.Write(span, in constantData);
-            RenderContext.Current.DeviceContext.UnmapBuffer(_constantBuffer, MapType.Write);
+            RenderContext.Current.ImmediateContext.UnmapBuffer(_constantBuffer, MapType.Write);
             
-            RenderContext.Current.DeviceContext.SetPipelineState(_pipelineState);
+            RenderContext.Current.ImmediateContext.SetPipelineState(_pipelineState);
         
             _constantsVariable.Set(_constantBuffer, SetShaderResourceFlags.None);
             _inDataVariable.Set(inputBufferTickets[i].View, SetShaderResourceFlags.None);
             _outDataVariable.Set(outputBufferTickets[i].View, SetShaderResourceFlags.None);
             
-            RenderContext.Current.DeviceContext.CommitShaderResources(_srb, ResourceStateTransitionMode.Transition);
+            RenderContext.Current.ImmediateContext.CommitShaderResources(_srb, ResourceStateTransitionMode.Transition);
         
             var groupsX = (entitiesThisPage + threadsPerGroup - 1) / threadsPerGroup;
-            RenderContext.Current.DeviceContext.DispatchCompute(new DispatchComputeAttribs
+            RenderContext.Current.ImmediateContext.DispatchCompute(new DispatchComputeAttribs
             {
                 ThreadGroupCountX = (uint)groupsX,
                 ThreadGroupCountY = 1,
@@ -196,7 +196,7 @@ public class CullingComputer : IDisposable
         }
         
         _instanceOutputBuffer.DownloadLatestState(FrontQueue.Count);
-        RenderContext.Current.DeviceContext.EnqueueSignal(_fence, ++_fenceValue);
+        RenderContext.Current.ImmediateContext.EnqueueSignal(_fence, ++_fenceValue);
         
         _activeBufferIndex = 1 - _activeBufferIndex;
         FrontQueue.Clear();

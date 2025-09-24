@@ -9,6 +9,7 @@ namespace Engine.Core.Assets.Materials;
 public class MaterialInstance(Material material) : IDisposable
 {
     public Material Material = material;
+    public ITextureView? RemoteTextureView; // Optional override for the material's texture
     public Vector4Float Tint = Vector4.One.Downgrade();
     public Vector2Float UvOffset = Vector2.Zero.Downgrade();
     public Vector2Float UvScale = Vector2.One.Downgrade();
@@ -40,6 +41,12 @@ public class MaterialInstance(Material material) : IDisposable
         return this;
     }
 
+    public MaterialInstance SetRemoteTextureView(ITextureView textureView)
+    {
+        RemoteTextureView = textureView;
+        return this;
+    }
+
     private readonly Dictionary<IPipelineState, IShaderResourceBinding> _shaderBindingCache = new();
 
     public IShaderResourceBinding BindMaterial(IPipelineState pipelineState)
@@ -59,6 +66,13 @@ public class MaterialInstance(Material material) : IDisposable
         var sampler = srb.GetVariableByName(ShaderType.Pixel, ShaderVariable.AlbedoSampler);
         if (sampler is null)
             return;
+        
+        if (RemoteTextureView is not null)
+        {
+            sampler.Set(RemoteTextureView, SetShaderResourceFlags.None);
+            return;
+        }
+        
         var textureToBind = Material.Texture ?? TextureAssetManager.FallbackTexture;
         var textureSrv = textureToBind.GetDefaultView();
         sampler.Set(textureSrv, SetShaderResourceFlags.None);

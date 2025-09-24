@@ -148,10 +148,15 @@ public class MaterialBuilder
         
         if (RenderContext.Current.ShaderFactory == null)
             throw new InvalidOperationException("Shader factory is not initialized. Cannot compile material without shaders.");
+
+        var oldPixelPath = $"Assets/{_shaderPath}.psh";
+        var oldVertexPath = $"Assets/{_shaderPath}.vsh";
+        var pixelFilePath = File.Exists(oldPixelPath) ? oldPixelPath : $"Assets/{_shaderPath}.frag.hlsl";
+        var vertexFilePath = File.Exists(oldVertexPath) ? oldVertexPath : $"Assets/{_shaderPath}.vert.hlsl";
         
         var vertexShader = RenderContext.Current.RenderDevice.CreateShader(new ShaderCreateInfo
         {
-            FilePath = $"Assets/{_shaderPath}.vsh",
+            FilePath = vertexFilePath,
             ShaderSourceStreamFactory = RenderContext.Current.ShaderFactory,
             Desc = new ShaderDesc
             {
@@ -169,7 +174,7 @@ public class MaterialBuilder
 
         var pixelShader = RenderContext.Current.RenderDevice.CreateShader(new ShaderCreateInfo
         {
-            FilePath = $"Assets/{_shaderPath}.psh",
+            FilePath = pixelFilePath,
             ShaderSourceStreamFactory = RenderContext.Current.ShaderFactory,
             Desc = new ShaderDesc
             {
@@ -198,9 +203,9 @@ public class MaterialBuilder
             });
             if (buffer == null)
                 throw new InvalidOperationException($"Failed to create constant buffer for {bufferDesc.Name}");
-            var map = RenderContext.Current.DeviceContext.MapBuffer<byte>(buffer, MapType.Write, MapFlags.Discard);
+            var map = RenderContext.Current.ImmediateContext.MapBuffer<byte>(buffer, MapType.Write, MapFlags.Discard);
             bufferDesc.DefaultValue.Span.CopyTo(map);
-            RenderContext.Current.DeviceContext.UnmapBuffer(buffer, MapType.Write);
+            RenderContext.Current.ImmediateContext.UnmapBuffer(buffer, MapType.Write);
             return (bufferDesc.Name, buffer);
         }).ToDictionary();
         
