@@ -18,9 +18,8 @@ struct VSOut {
 
 cbuffer Constants
 {
-    // Adjust to your real layout if needed.
-    // If your buffer has separate View/Proj, replace ViewProjection with mul(View, Projection)
     row_major float4x4 ViewProjection;
+    float4 ScreenSize; // xy = size, zw = 1/size
 };
 
 cbuffer g_ObjectIndex

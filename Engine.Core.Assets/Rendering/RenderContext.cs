@@ -14,6 +14,7 @@ public struct RenderContext
     public required IBuffer ObjectIndexBuffer;
     public required IInstanceBuffer<InstanceData> InstanceBuffer;
     public required IShaderSourceInputStreamFactory ShaderFactory;
+    public required Vector2 RenderTargetSize;
 
     public static RenderContext Current { get; set; }
 }

@@ -24,7 +24,7 @@ public partial class BasicProjectile : Actor
     {
         ProjectileCreated.Emit(this);
         MeshComponent.StaticMesh = StaticMesh.CreateFromDisk("Meshes/projectile-sword.obj");
-        MeshComponent.MaterialInstance = Material.CreateFromDisk("Shaders/cube").Instantiate().SetTintColor(Color.Red);
+        MeshComponent.MaterialInstance = Material.CreateCachedFromDisk("Shaders/cube").Instantiate().SetTintColor(Color.Red);
         MeshComponent.Transform.Rotation = QuatMakers.FromRotation(0, -90, 0);
     }
 

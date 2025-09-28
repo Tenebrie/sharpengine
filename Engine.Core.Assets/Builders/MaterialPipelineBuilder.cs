@@ -65,9 +65,8 @@ public static class PipelineBuilder
         
         public Mesh WithDepthTest(bool enabled, bool writeEnabled)
         {
-            _handle.DepthStencilDesc.DepthEnable = false;
-            _handle.DepthStencilDesc.DepthWriteEnable = false;
-            _handle.DepthStencilDesc.DepthFunc = ComparisonFunction.Always;
+            _handle.DepthStencilDesc.DepthEnable = enabled;
+            _handle.DepthStencilDesc.DepthWriteEnable = writeEnabled;
             _hashCode ^= enabled.GetHashCode() ^ writeEnabled.GetHashCode();
             return this;
         }

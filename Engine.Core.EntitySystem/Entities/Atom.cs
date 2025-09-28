@@ -24,9 +24,6 @@ public partial class Atom : IAtom
         internal set => _backstage = value;
     }
 
-    public Atom? Parent { get; internal set; }
-    public List<Atom> Children { get; } = [];
-    
     // Whether the atom itself is ready (excluding children).
     [UsedImplicitly] private bool _isInitialized = false;
     // Whether the atom and all its children are ready.
@@ -83,25 +80,6 @@ public partial class Atom : IAtom
         }
 
         _isReady = true;
-    }
-
-    public T AdoptChild<T>(T atom) where T : Atom, new()
-    {
-        atom.Parent?.OrphanChild(atom);
-        Children.Add(atom);
-        atom.Parent = this;
-        atom.Backstage = Backstage;
-        if (_isInitialized && !atom._isInitialized)
-            atom.Initialize(); 
-        return atom;
-    }
-    
-    public void OrphanChild(Atom atom)
-    {
-        if (atom.Parent != this)
-            throw new InvalidOperationException("Atom is not a child of this parent.");
-        Children.Remove(atom);
-        atom.Parent = null;
     }
 
     public T GetService<T>() where T : Service, new()

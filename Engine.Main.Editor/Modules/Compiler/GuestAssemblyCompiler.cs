@@ -12,11 +12,14 @@ public class GuestAssemblyCompiler
 {
     private readonly string _assemblyName;
     public bool IsCompiling = false;
-    private readonly Project _project;
+    private Project _project = null!;
     private readonly ProjectCollection _projectCollection;
     private readonly Dictionary<string, string> _globals;
     private readonly BuildParameters _buildParams;
     public bool HasErrors = false;
+
+    private bool _projectLoaded = false;
+    private readonly string _projectPath;
     
     private GuestAssemblyCompiler(string assemblyName, string projectPath)
     {
@@ -34,12 +37,19 @@ public class GuestAssemblyCompiler
         };
         
         _projectCollection = new ProjectCollection(_globals);
-        _project = _projectCollection.LoadProject(projectPath);
         _buildParams = new BuildParameters(_projectCollection)
         {
             Loggers = [ new ConsoleLogger(LoggerVerbosity.Quiet) ]
         };
+        _projectPath = projectPath;
+    }
 
+    private void EnsureProjectLoaded()
+    {
+        if (_projectLoaded)
+            return;
+        _projectLoaded = true;
+        _project = _projectCollection.LoadProject(_projectPath);
         _project.SetProperty("BuildProjectReferences", "false");
     }
 
@@ -55,6 +65,7 @@ public class GuestAssemblyCompiler
         if (filesChanged)
             _project.MarkDirty();
 
+        EnsureProjectLoaded();
         var graph = new ProjectGraph(_project.FullPath, _globals, _projectCollection);
         var request = new GraphBuildRequestData(graph, ["Build"]);
         var result = BuildManager.DefaultBuildManager.Build(_buildParams, request);

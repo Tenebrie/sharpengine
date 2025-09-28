@@ -15,7 +15,7 @@ public partial class DragonMesh : Actor
     protected void OnReady()
     {
         MeshComponent.StaticMesh = StaticMesh.CreateFromDisk("Meshes/decimated_dragon32.obj");
-        MeshComponent.MaterialInstance = Material.CreateFromDisk("Shaders/cube").Instantiate();
+        MeshComponent.MaterialInstance = Material.CreateCachedFromDisk("Shaders/cube").Instantiate();
 
         MeshComponent.Transform.TranslateLocal(0, 3.20, 0);
         MeshComponent.Transform.Rotation = QuatMakers.FromRotation(90, 0, 0);

@@ -18,7 +18,7 @@ public partial class UnitCube : Actor
     protected void OnReady()
     {
         // InstanceManager.Mesh = new StaticMesh();
-        InstanceManager.InstanceMaterial = Material.CreateFromDisk("Shaders/cube");
+        InstanceManager.InstanceMaterial = Material.CreateCachedFromDisk("Shaders/cube");
         CubeMesh.Instance.Load();
         InstanceManager.InstanceStaticMesh = CubeMesh.Instance.Mesh;
         

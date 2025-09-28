@@ -60,14 +60,13 @@ internal static class Game
         {
             // Create input context
             MainInputContext = MainWindow.CreateInput();
-
-            // First: Utility assembly to run DI
-            ShippingUtilityAssembly.Load();
             
-            // Second: Rendering to show the splash screen
+            // First: Rendering to show the splash screen
             ShippingRenderingAssembly.Load();
-            ShippingRenderingAssembly.RenderingHost.RenderEngineLoadingScreen();
             MainWindow.IsVisible = true;
+            
+            // Second: Utility assembly to run DI
+            ShippingUtilityAssembly.Load();
             
             // Then: The rest of the owl
             GameplayAssembly.Load();

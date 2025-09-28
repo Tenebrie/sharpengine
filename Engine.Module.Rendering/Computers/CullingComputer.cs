@@ -5,6 +5,7 @@ using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
+using Engine.Core.Filesystem;
 using Engine.Core.Logging;
 using Engine.Core.Profiling.Attributes;
 using Engine.Module.Rendering.Utilities;
@@ -31,7 +32,7 @@ public class CullingComputer : IDisposable
     {
         var computeShader = RenderContext.Current.RenderDevice.CreateShader(new ShaderCreateInfo
         {
-            FilePath = "Assets/Shaders/Compute/Culling.comp.hlsl",
+            FilePath = FileResolver.Resolve("Assets/Shaders/Compute/Culling.comp.hlsl"),
             ShaderSourceStreamFactory = RenderContext.Current.ShaderFactory,
             Desc = new ShaderDesc
             {

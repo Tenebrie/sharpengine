@@ -1,9 +1,12 @@
 using System.Drawing;
 using Diligent;
+using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Lamina;
+using Engine.Core.Logging;
 using Engine.Core.Profiling;
+using Engine.Core.Profiling.Attributes;
 using Engine.Module.Rendering.Renderers.Debug;
 using Engine.Module.Rendering.Renderers.Fonts;
 
@@ -20,7 +23,7 @@ internal class LaminaRenderer : IDisposable
         _deviceContext = deviceContext;
         _textRenderer = new TextRenderer(deviceContext);
     }
-
+    
     private ICommandList? RenderRetainedTextures(ILaminaRenderable[] atomsToRender, int atomsToRenderCount)
     {
         if (atomsToRenderCount == 0)
@@ -34,16 +37,19 @@ internal class LaminaRenderer : IDisposable
             if (renderable is not { Dirty: true })
                 continue;
             renderable.Dirty = false;
-            renderable.EnsureRenderTarget(); 
+            renderable.EnsureRenderTarget();
             _deviceContext.ClearRenderTarget(
                 renderable.RenderTargetView,
                 new Vector4(0.25f, 0.25f, 0.25f, 1.0f),
                 ResourceStateTransitionMode.Transition);
             _deviceContext.SetRenderTargets([renderable.RenderTargetView], null, ResourceStateTransitionMode.Transition);
+            var ctx = RenderContext.Current;
+            ctx.RenderTargetSize = new Vector2(renderable.RenderTarget.GetDesc().Width / 2, renderable.RenderTarget.GetDesc().Height / 2);
+            RenderContext.Current = ctx;
             renderable.CollectCommandList(context);
             _textRenderer.Flush();
         }
-        
+
         return _deviceContext.FinishCommandList();
     }
 
@@ -66,7 +72,7 @@ internal class LaminaRenderContext(TextRenderer textRenderer, IDeviceContext dev
     public Vector2 Position { get; set; } = Vector2.Zero;
     public IDeviceContext DeviceContext => deviceContext;
 
-    public void RenderText(string font, int size, string text, Vector2 position, Color color, int shadowBlur = 0)
+    public void RenderText(string font, int size, string text, Vector2 position, Color color, int shadowBlur = 2)
     {
         textRenderer.RenderText(font, size, text, position + Position, color, shadowBlur);
     }

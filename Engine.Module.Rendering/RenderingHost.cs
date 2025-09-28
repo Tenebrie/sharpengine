@@ -7,9 +7,11 @@ using Engine.Core.Common;
 using Engine.Core.Enum;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
+using Engine.Core.Extensions;
 using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Core.Profiling;
+using Engine.Core.Profiling.Attributes;
 using Engine.Module.Rendering.Computers;
 using Engine.Module.Rendering.Renderers;
 using Engine.Module.Rendering.Renderers.Debug;
@@ -50,17 +52,11 @@ public class RenderingHost : IRenderingHost
     private ITexture _renderDepth = null!;
     private ITextureView _renderTargetView = null!;
     private ITextureView _renderDepthView = null!;
-
+    
     public IRootHypervisor Hypervisor { get; set; } = null!;
     internal IWindow RootWindow => Hypervisor.Window;
 
-    private float BaseResolutionScale => (float)RootWindow.Size.X / RootWindow.FramebufferSize.X;
-    private float ResolutionScale => BaseResolutionScale * 1.0f;
-
-    private Vector2D<int> FramebufferSize => new(
-        (int)Math.Round(RootWindow.FramebufferSize.X * ResolutionScale),
-        (int)Math.Round(RootWindow.FramebufferSize.Y * ResolutionScale)
-    );
+    private Vector2D<int> FramebufferSize => RootWindow.GetScaledFramebufferSize();
 
     // Constant camera matrix buffer
     private IBuffer _viewMatrixBuffer = null!;
@@ -69,8 +65,8 @@ public class RenderingHost : IRenderingHost
     private IBuffer _instanceIndexBuffer = null!;
     // Holds the per-instance data for all instances
     private InfiniteInstanceWriteOnlyBuffer<InstanceData> _infiniteInstanceBuffer = null!;
-    
-    public void HotInitialize(RenderingResources resources)
+
+    public void InitializeResources(RenderingResources resources)
     {
         _renderDevice = resources.RenderDevice;
         _immediateContext = resources.ImmediateContext;
@@ -94,7 +90,7 @@ public class RenderingHost : IRenderingHost
             BindFlags = BindFlags.UniformBuffer,
             CPUAccessFlags = CpuAccessFlags.Write,
         });
-                
+        
         using var engineFactory = Native.GetEngineFactoryD3D12();
         _infiniteInstanceBuffer = new InfiniteInstanceWriteOnlyBuffer<InstanceData>();
         var renderContext = new RenderContext
@@ -106,11 +102,15 @@ public class RenderingHost : IRenderingHost
             ViewMatrixBuffer = _viewMatrixBuffer,
             ObjectIndexBuffer = _instanceIndexBuffer,
             InstanceBuffer = _infiniteInstanceBuffer,
+            RenderTargetSize = new Vector2(_swapChain.GetDesc().Width, _swapChain.GetDesc().Height),
             ShaderFactory = engineFactory.CreateDefaultShaderSourceStreamFactory("Assets/Shaders")
         };
         
         RenderContext.Current = renderContext;
-        
+    }
+    
+    public void InitializeRenderers()
+    {
         // Computers
         _cullingComputer = new CullingComputer(this);
         
@@ -121,9 +121,9 @@ public class RenderingHost : IRenderingHost
         _laminaRenderer = new LaminaRenderer(this, _deferredContexts[0]);
         _sceneRenderer = new SceneRenderer(this);
         ImmediateTextRenderer = new TextRenderer(_immediateContext);
-
+        
         CreateRenderTargets();
-
+        
         RootWindow.Render += RenderSingleFrameSync;
         RootWindow.FramebufferResize += OnFramebufferResize;
     }
@@ -177,6 +177,8 @@ public class RenderingHost : IRenderingHost
 
     public void RenderEngineLoadingScreen()
     {
+        CreateRenderTargets();
+        
         _immediateContext.ClearRenderTarget(_renderTargetView, new Vector4(0.0, 0.0, 0.0, 1.0), ResourceStateTransitionMode.Transition);
         _immediateContext.ClearDepthStencil(_renderDepthView, ClearDepthStencilFlags.Depth, 1.0f, 0, ResourceStateTransitionMode.Transition);
         _immediateContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
@@ -223,6 +225,9 @@ public class RenderingHost : IRenderingHost
             _immediateContext.ExecuteCommandLists([commandList]);
         
         _immediateContext.SetRenderTargets([_renderTargetView], _renderDepthView, ResourceStateTransitionMode.Transition);
+        var ctx = RenderContext.Current;
+        ctx.RenderTargetSize = new Vector2(_swapChain.GetDesc().Width, _swapChain.GetDesc().Height);
+        RenderContext.Current = ctx;
         
         var rtv = _swapChain.GetCurrentBackBufferRTV();
         var rtvTexture = rtv.GetTexture();
@@ -239,7 +244,7 @@ public class RenderingHost : IRenderingHost
         );
         
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingFullFrame);
-        _swapChain.Present(1);
+        _swapChain.Present(0);
     }
 
     private Task PrepareRenderers()
@@ -253,19 +258,20 @@ public class RenderingHost : IRenderingHost
         }
         
         Camera.Plane[] frustumPlanes = [];
-        if (activeCamera == null)
-        {
-            // Logger.Error("No active camera found for rendering.");
-        }
-        else
+        var wvpMatrix = Matrix.Identity;
+        if (activeCamera != null)
         {
             frustumPlanes = activeCamera.UpdateFrustumPlanes();
-        
-            var wvpMatrix = activeCamera.AsCameraView().ToMatrix();
-            var mapUniformBuffer = _immediateContext.MapBuffer<MatrixFloat>(_viewMatrixBuffer, MapType.Write, MapFlags.Discard);
-            mapUniformBuffer[0] = wvpMatrix.Downgrade();
-            _immediateContext.UnmapBuffer(_viewMatrixBuffer, MapType.Write);
+            wvpMatrix = activeCamera.AsCameraView().ToMatrix();
         }
+        
+        var mapUniformBuffer = _immediateContext.MapBuffer<Vector4Float>(_viewMatrixBuffer, MapType.Write, MapFlags.Discard);
+        mapUniformBuffer[0] = wvpMatrix[0].Downgrade();
+        mapUniformBuffer[1] = wvpMatrix[1].Downgrade();
+        mapUniformBuffer[2] = wvpMatrix[2].Downgrade();
+        mapUniformBuffer[3] = wvpMatrix[3].Downgrade();
+        mapUniformBuffer[4] = new Vector4Float(FramebufferSize.X, FramebufferSize.Y, 1.0f / FramebufferSize.X, 1.0f / FramebufferSize.Y);
+        _immediateContext.UnmapBuffer(_viewMatrixBuffer, MapType.Write);
         
         _infiniteInstanceBuffer.FrameStart();
         _cullingComputer.ReadResultsAndPrepare();

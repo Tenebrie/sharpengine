@@ -9,6 +9,8 @@ using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Communication.Signals;
 using Engine.Core.Extensions;
+using Engine.Core.Filesystem;
+using Silk.NET.Core.Loader;
 using ValueType = Diligent.ValueType;
 
 namespace Engine.Core.Assets.Meshes;
@@ -127,7 +129,7 @@ public class StaticMesh : IDisposable
 
     public static StaticMesh CreateFromDisk(string path, WindingOrder windingOrder = WindingOrder.Cw)
     {
-        var filepath = Path.Combine("Assets", path);
+        var filepath = FileResolver.Resolve(Path.Combine("Assets", path));
         if (AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Meshes.TryGet(filepath, out var mesh))
             return mesh;
 

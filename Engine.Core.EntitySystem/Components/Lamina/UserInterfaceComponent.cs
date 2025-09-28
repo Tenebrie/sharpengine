@@ -1,5 +1,4 @@
 using Diligent;
-using Engine.Core.Assets;
 using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Meshes.Builtins;
@@ -9,10 +8,11 @@ using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
+using Engine.Core.Extensions;
 using Engine.Core.Lamina;
 using Engine.Core.Logging;
 using JetBrains.Annotations;
-using Color = System.Drawing.Color;
+using Silk.NET.Maths;
 
 namespace Engine.Core.EntitySystem.Components.Lamina;
 
@@ -20,14 +20,19 @@ namespace Engine.Core.EntitySystem.Components.Lamina;
 public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable, IDisposable
 {
     [Component] public StaticMeshComponent MeshComponent;
+    
+    private Vector2 _inferredSize = new(1920, 1080);
+    private Vector2 _textureSize = new(1920, 1080);
+    
+    private Vector2D<int> FramebufferSize => Backstage.Window.GetScaledFramebufferSize();
 
     [OnReady]
     protected void OnReady()
     {
         MeshComponent.StaticMesh = InterfacePlaneMesh.Shared;
-        MeshComponent.Material = MaterialBuilder.CreateFromDisk("Shaders/UserInterface/General").Compile();
+        MeshComponent.Material = MaterialBuilder.CreateFromDisk("Shaders/UserInterface/General").WithCache().Compile();
         MeshComponent.MaterialInstance = MeshComponent.Material.Instantiate();
-        Transform.Scale = new Vector3(1, -1, 1);
+        Transform.Scale = new Vector3(_textureSize.X / FramebufferSize.X, _textureSize.Y / FramebufferSize.Y, 1) * 2;
         Dirty = true;
     }
     
@@ -52,15 +57,15 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     
     public void EnsureRenderTarget()
     {
-        if (_renderTarget is not null)
+        if (_renderTarget is not null && _inferredSize.X <= _textureSize.X && _inferredSize.Y <= _textureSize.Y)
             return;
         
         _renderTarget = RenderContext.Current.RenderDevice.CreateTexture(new TextureDesc
         {
             Name = "LaminaRT",
             Type = ResourceDimension.Tex2d,
-            Width = 2048,
-            Height = 2048,
+            Width = (uint)_textureSize.X * 2,
+            Height = (uint)_textureSize.Y * 2,
             Format = TextureFormat.RGBA8_UNorm_sRGB,
             BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource
         });

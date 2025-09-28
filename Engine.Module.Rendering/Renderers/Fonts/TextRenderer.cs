@@ -12,10 +12,12 @@ public struct FontKey : IEquatable<FontKey>
     public required int Size;
     public required int SampleCount;
 
-    public override int GetHashCode() => Name.GetHashCode() ^ Size.GetHashCode();
-    public bool Equals(FontKey other) => GetHashCode() == other.GetHashCode() && Name == other.Name && Size == other.Size;
-    public override bool Equals([NotNullWhen(true)] object? obj) => base.Equals(obj);
-
+    public override int GetHashCode() => HashCode.Combine(Name, Size, SampleCount);
+    public bool Equals(FontKey other) =>
+        Size == other.Size &&
+        SampleCount == other.SampleCount &&
+        string.Equals(Name, other.Name, StringComparison.Ordinal);
+    public override bool Equals(object? obj) => obj is FontKey o && Equals(o);
     public static bool operator ==(FontKey left, FontKey right) => left.Equals(right);
     public static bool operator !=(FontKey left, FontKey right) => !(left == right);
 }

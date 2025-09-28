@@ -5,6 +5,7 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Profiling.Attributes;
 using User.Game.Player;
 
 namespace User.Game.Actors.BasicEnemies;
@@ -26,6 +27,7 @@ public partial class BasicEnemyManager : Actor
         InstanceManager.InstanceMaterial = MaterialBuilder
             .CreateFromDisk("Shaders/cube")
             .SetTexture(Texture.CreateFromDisk("Textures/metal-albedo.png"))
+            .WithCache()
             .Compile();
         // InstanceManager.Material =
         //     MaterialBuilder.Begin(typeof(BasicEnemyManager)).SetSamplingTexture(false).Compile();

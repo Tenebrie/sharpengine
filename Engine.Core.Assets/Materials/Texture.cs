@@ -3,6 +3,7 @@ using System.Reflection;
 using Diligent;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Communication.Tasks;
+using Engine.Core.Filesystem;
 using Engine.Core.Logging;
 using Engine.Core.Modules.Assets;
 using SixLabors.ImageSharp;
@@ -15,12 +16,11 @@ namespace Engine.Core.Assets.Materials;
 
 public sealed class Texture : ITextureAsset, IDisposable
 {
-    
     public bool IsValid { get; private set; } = false;
-    // public NativeTexture Handle { get; private set; }
     public int Width { get; private set; }
     public int Height { get; private set; }
 
+    private Guid _id = Guid.NewGuid();
     private readonly Image<Rgba32> _baseImage;
     private readonly IResampler _sampler = KnownResamplers.Lanczos3;
     private readonly ITexture _textureHandle;
@@ -70,11 +70,16 @@ public sealed class Texture : ITextureAsset, IDisposable
         return _baseImage.GetHashCode();
     }
 
-    public unsafe void Update(byte[] data, int minX, int minY, int maxX, int maxY)
+    public void Update(byte[] data, int minX, int minY, int maxX, int maxY)
+    {
+        Update(RenderContext.Current.ImmediateContext, data, minX, minY, maxX, maxY);
+    }
+    
+    public unsafe void Update(IDeviceContext context, byte[] data, int minX, int minY, int maxX, int maxY)
     {
         fixed (byte* pixelDataPtr = data)
         {
-            RenderContext.Current.ImmediateContext.UpdateTexture(
+            context.UpdateTexture(
                 _textureHandle,
                 mipLevel: 0,
                 slice: 0,
@@ -163,10 +168,11 @@ public sealed class Texture : ITextureAsset, IDisposable
     
     public static Texture CreateFromDisk(string path)
     {
-        var filepath = Path.Combine("Assets", path);
+        var filepath = FileResolver.Resolve(Path.Combine("Assets", path));
         if (AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Textures.TryGet(filepath, out var texture))
             return texture;
         
+        Logger.Info("Loading!");
         texture = CreateFromDiskWithoutCache(filepath);
         AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Textures.Put(filepath, texture);
         return texture;
@@ -175,7 +181,7 @@ public sealed class Texture : ITextureAsset, IDisposable
     private static Texture CreateFromDiskWithoutCache(string filepath)
     {
         using var image = Image.Load<Rgba32>(filepath);
-                
+
         var textureData = new byte[image.Width * image.Height * 4];
         image.CopyPixelDataTo(textureData);
                

@@ -192,7 +192,7 @@ public partial class Atom
         
         if (Parent == null) return;
 
-        Parent.Children.Remove(this);
+        Parent.RemoveChild(this);
         Backstage = null!;
     }
 
@@ -203,6 +203,7 @@ public partial class Atom
         if (IsBeingDestroyed)
             return;
         IsBeingDestroyed = true;
+        Parent?.RemoveChild(this);
         GetService<ReaperService>().Condemn(this);
     }
 }

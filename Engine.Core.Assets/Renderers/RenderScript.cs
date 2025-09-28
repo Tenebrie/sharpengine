@@ -24,7 +24,7 @@ public class RenderScript : IRenderScript
             return;
 
         if (_instanceDataPool.Length < instanceCount)
-            Array.Resize(ref _instanceDataPool, instanceCount);
+            Array.Resize(ref _instanceDataPool, instanceCount * 2);
         
         for (var i = 0; i < instanceCount; i++)
         {

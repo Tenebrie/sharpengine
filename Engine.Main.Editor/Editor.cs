@@ -2,6 +2,7 @@
 using Engine.Core.Communication.Tasks;
 using Engine.Core.Enum;
 using Engine.Core.Extensions;
+using Engine.Core.Filesystem;
 using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Main.Editor.Modules;
@@ -66,14 +67,13 @@ internal static class Editor
         {
             // Create input context
             MainInputContext = MainWindow.CreateInput();
-
-            // First: Utility assembly to run DI
-            UtilityAssembly.Load();
             
-            // Second: Rendering to show the splash screen
+            // First: Rendering to show the splash screen
             RenderingAssembly.Load();
-            RenderingAssembly.RenderingHost?.RenderEngineLoadingScreen();
             MainWindow.IsVisible = true;
+            
+            // Second: Utility assembly to run DI
+            UtilityAssembly.Load();
             
             // Then: The rest of the owl
             GameplayAssembly.Load();

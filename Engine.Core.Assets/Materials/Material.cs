@@ -46,11 +46,11 @@ public class Material(MaterialPipeline pipeline, Texture? texture, Dictionary<st
      * Creates a simple material from a shader path.
      * The path is relative to the Assets directory, e.g. "Shaders/ShaderName" matches "{projectRoot}/Assets/Shaders/ShaderName.{ext}".
      */
-    public static Material CreateFromDisk(string shaderPath)
+    public static Material CreateCachedFromDisk(string shaderPath)
     {
         if (AssetManager.Shared.Materials.TryGet(shaderPath, out var material))
             return material;
-        var newMaterial = MaterialBuilder.CreateFromDisk(shaderPath).Compile();
+        var newMaterial = MaterialBuilder.CreateFromDisk(shaderPath).WithCache().Compile();
         AssetManager.Shared.Materials.Put(shaderPath, newMaterial);
         return newMaterial;
     }

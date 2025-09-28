@@ -4,6 +4,7 @@ using Engine.Core.Communication.Groups;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Profiling.Attributes;
 using User.Game.Services;
 
 namespace User.Game.Actors.BasicEnemies;

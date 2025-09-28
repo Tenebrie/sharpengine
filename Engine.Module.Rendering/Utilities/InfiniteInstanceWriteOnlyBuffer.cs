@@ -90,7 +90,7 @@ public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposabl
     private void WriteSinglePage(int instanceCount, Span<T> instances)
     {
         if (instanceCount == 0)
-            throw new InvalidOperationException("Instance count is 0");
+            return;
         var mapFlags = _cursorPosition == 0 ? MapFlags.Discard : MapFlags.NoOverwrite;
 
         var map = RenderContext.Current.ImmediateContext.MapBuffer<T>(

@@ -1,16 +1,18 @@
-﻿namespace Engine.Module.Physics.WorkerThreads;
+﻿using Engine.Module.Physics.Utilities;
+
+namespace Engine.Module.Physics.WorkerThreads;
 
 public class PhysicsTaskDispatcher
 {
     public struct TaskDefinition
     {
         public WorkerPoolMember.PhysicsTaskType Type;
-        public AtomHandle[] AtomHandles;
+        public AtomList AtomHandles;
         public int StartIndex;
         public int Count;
     }
     
-    public static void Dispatch(WorkerPool workerPool, double deltaTime, WorkerPoolMember.PhysicsTaskType taskType, AtomHandle[] atoms)
+    public static void Dispatch(WorkerPool workerPool, double deltaTime, WorkerPoolMember.PhysicsTaskType taskType, AtomList atoms)
     {
         var startIndex = 0;
         var threadsPoked = 0;

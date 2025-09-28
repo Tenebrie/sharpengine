@@ -13,9 +13,8 @@ struct VSOut {
 
 cbuffer Constants
 {
-    // Adjust to your real layout if needed.
-    // If your buffer has separate View/Proj, replace ViewProjection with mul(View, Projection)
     row_major float4x4 ViewProjection;
+    float4 ScreenSize; // xy = size, zw = 1/size
 };
 
 cbuffer g_ObjectIndex
@@ -39,8 +38,11 @@ VSOut main(VSIn IN, uint instId : SV_InstanceID)
     uint idx = ObjectIndex + instId;
     InstanceRecord inst = g_InstanceData[idx];
     
-    float4 wp = float4(IN.Pos, 1.0);
+    // float4 wp = float4(IN.Pos, 1.0);
+    float4 wp = mul(float4(IN.Pos * 1.0, 1.0), inst.World * 1.0);
     float2 uv = float2(IN.UV.x, 1.0 - IN.UV.y);
+    // float4 wp = mul(float4(IN.Pos * 1.0, 1.0), inst.World);
+    // float2 uv = float2(IN.UV.x, 1.0 - IN.UV.y);
     VSOut OUT;
     OUT.PosH  = wp;
     OUT.UV    = uv * inst.UvScale + inst.UvOffset;

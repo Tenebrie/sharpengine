@@ -6,6 +6,7 @@ using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
+using Engine.Core.Filesystem;
 using Engine.Core.Logging;
 using FontStashSharp;
 using FontStashSharp.Interfaces;
@@ -37,14 +38,13 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
     public ITexture2DManager TextureManager => _myTextureManager;
     private readonly MyTextureManager _myTextureManager;
 
-    private readonly IDeviceContext _deviceContext;
+    public readonly IDeviceContext DeviceContext;
     
     public SpecificFontRenderer(FontKey key, IDeviceContext deviceContext)
     {
         FontSystemDefaults.KernelWidth = 2;
         FontSystemDefaults.KernelHeight = 2;
-        FontSystemDefaults.FontResolutionFactor = 2.0f;
-        _deviceContext = deviceContext;
+        DeviceContext = deviceContext;
         _fontSystem = new FontSystem(new FontSystemSettings
         {
             TextureWidth = 4096,
@@ -52,7 +52,7 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
         });
         
         // TODO: Resolve path manually because C# changes the project-wide working directory randomly T_T
-        _fontSystem.AddFont(File.ReadAllBytes($"Assets/Fonts/{key.Name}.ttf"));
+        _fontSystem.AddFont(FileResolver.ReadAllBytes($"Assets/Fonts/{key.Name}.ttf"));
         _font = _fontSystem.GetFont(key.Size * key.SampleCount);
         _sampleCount = key.SampleCount;
         _myTextureManager = new MyTextureManager(this);
@@ -60,7 +60,7 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
 
     public unsafe void Initialize()
     {
-        _material = Material.CreateFromDisk("Shaders/UserInterface/Text");
+        _material = MaterialBuilder.CreateFromDisk("Shaders/UserInterface/Text").Compile();
         
         _meshPipeline = PipelineBuilder.PrepareMesh()
             // Position
@@ -139,9 +139,10 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
         ref VertexPositionColorTexture bottomLeftVertex,
         ref VertexPositionColorTexture bottomRightVertex)
     {
-        var sc = RenderContext.Current.SwapChain.GetDesc();
-        var sx = 2f / sc.Width;
-        var sy = 2f / sc.Height;
+        
+        var sc = RenderContext.Current.RenderTargetSize;
+        var sx = 2f / sc.X;
+        var sy = 2f / sc.Y;
 
         var tex = (Texture)texture;
         if (!_glyphStream.TryGetValue(tex, out var list))
@@ -199,23 +200,23 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
             }
             
             var pso = AssetManager.Shared.Pipelines.Produce(_meshPipeline, _material.Pipeline);
-            _deviceContext.SetPipelineState(pso);
+            DeviceContext.SetPipelineState(pso);
 
             // Buffers
-            var vertexBuffer = _deviceContext.MapBuffer<RenderingVertex>(_vertexBuffer, MapType.Write, MapFlags.Discard);
+            var vertexBuffer = DeviceContext.MapBuffer<RenderingVertex>(_vertexBuffer, MapType.Write, MapFlags.Discard);
             CollectionsMarshal.AsSpan(vertexList).CopyTo(vertexBuffer);
             verticesWritten += vertexList.Count;
 
-            _deviceContext.UnmapBuffer(_vertexBuffer, MapType.Write);
-            _deviceContext.SetVertexBuffers(0, [_vertexBuffer], [0ul], ResourceStateTransitionMode.Transition);
+            DeviceContext.UnmapBuffer(_vertexBuffer, MapType.Write);
+            DeviceContext.SetVertexBuffers(0, [_vertexBuffer], [0ul], ResourceStateTransitionMode.Transition);
             
-            _deviceContext.SetIndexBuffer(_indexBuffer, 0, ResourceStateTransitionMode.Transition);
+            DeviceContext.SetIndexBuffer(_indexBuffer, 0, ResourceStateTransitionMode.Transition);
 
             // Material
             var srb = materialInstance.BindMaterial(pso);
-            _deviceContext.CommitShaderResources(srb, ResourceStateTransitionMode.Transition);
+            DeviceContext.CommitShaderResources(srb, ResourceStateTransitionMode.Transition);
 
-            _deviceContext.DrawIndexed(new DrawIndexedAttribs
+            DeviceContext.DrawIndexed(new DrawIndexedAttribs
             {
                 NumIndices = (uint)(vertexList.Count / 4) * 6,
                 IndexType = ValueType.UInt16,
@@ -280,9 +281,8 @@ public class MyTextureManager(SpecificFontRenderer renderer) : ITexture2DManager
 
     public void SetTextureData(object texture, Rectangle bounds, byte[] data)
     {
-        Logger.Info("Updating texture data");
         var tex = (Texture)texture;
-        tex.Update(data, bounds.Left, bounds.Top, bounds.Right, bounds.Bottom);
+        tex.Update(renderer.DeviceContext, data, bounds.Left, bounds.Top, bounds.Right, bounds.Bottom);
         renderer.Invalidate(tex);
     }
 

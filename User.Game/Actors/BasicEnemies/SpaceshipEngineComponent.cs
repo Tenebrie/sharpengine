@@ -5,6 +5,7 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Profiling.Attributes;
 
 namespace User.Game.Actors.BasicEnemies;
 
@@ -24,6 +25,7 @@ public partial class SpaceshipEngineComponent : ActorComponent
     {
         Mesh.StaticMesh = PlaneMesh.Shared;
         Mesh.MaterialInstance = MaterialBuilder.CreateFromDisk("Shaders/cube")
+            .WithCache()
             .SetTexture(Texture.CreateFromDisk("Textures/spaceship-flame.png"))
             .Instantiate()
             .SetUvOffset(new Vector2(0, 0))

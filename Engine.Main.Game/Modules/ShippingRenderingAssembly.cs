@@ -25,7 +25,9 @@ internal class ShippingRenderingAssembly() : BundledAssembly("Engine.Module.Rend
         };
         
         Resources = RenderingBootstrap.Initialize();
-        RenderingHost.HotInitialize(Resources);
+        RenderingHost.InitializeResources(Resources);
+        RenderingHost.RenderEngineLoadingScreen();
+        RenderingHost.InitializeRenderers();
     }
 
     internal override void Update(double deltaTime) {}

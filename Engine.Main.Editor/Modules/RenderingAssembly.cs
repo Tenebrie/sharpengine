@@ -28,12 +28,15 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
         RenderingBootstrap.Hypervisor = Editor.Hypervisor.Instance;
         if (_isInitialized)
         {
-            RenderingHost.HotInitialize(Resources);
+            RenderingHost.InitializeResources(Resources);
+            RenderingHost.InitializeRenderers();
         }
         else
         {
             Resources = RenderingBootstrap.Initialize();
-            RenderingHost.HotInitialize(Resources);
+            RenderingHost.InitializeResources(Resources);
+            RenderingHost.RenderEngineLoadingScreen();
+            RenderingHost.InitializeRenderers();
             _isInitialized = true;
         }
     }

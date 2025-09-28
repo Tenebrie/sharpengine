@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections.Concurrent;
+using System.Reflection;
 using System.Runtime.Loader;
 using Engine.Core.Logging;
 
@@ -6,7 +7,6 @@ namespace Engine.Main.Editor.Modules.Compiler;
 
 internal sealed class GuestAssemblyLoader(string assemblyName)
 {
-
     private readonly string _srcPath = Path.GetFullPath($"../../../../../{assemblyName}");
 
     private readonly string _dllPath =
@@ -45,18 +45,6 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
         if (!IsAssemblyDirty)
             return AssemblyAwaitingReload;
 
-        // // Dependencies will trigger build on this assembly
-        // if (AssemblyRepository.GetDependencies(assemblyName).Any(dependency => dependency.Loader.IsCompiling || dependency.Loader.IsAssemblyDirty || dependency.Loader.AssemblyAwaitingReload))
-        // {
-        //     Logger.Info("Noping out for " + assemblyName);
-        //     foreach (var libraryAssembly in AssemblyRepository.GetDependencies(assemblyName))
-        //     {
-        //         Logger.Info(" - " + libraryAssembly.Name);
-        //     }
-        //     IsAssemblyDirty = false;
-        //     return false;
-        // }
-        // BuildGuestAsync();
         return false;
     }
 
@@ -147,10 +135,13 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
 
     public TContract? ProduceContract<TContract>() where TContract : class
     {
-        if (Assembly == null)
-            return null;
-        var type = Assembly.GetTypes().Where(ImplementsContract<TContract>).ToList();
-        return type.Count == 0 ? null : (TContract)Activator.CreateInstance(type.First())!;
+        if (Assembly is null) return null;
+        foreach (var ti in Assembly.DefinedTypes)
+            if (ti is { IsAbstract: false, IsInterface: false, IsGenericTypeDefinition: false } &&
+                ImplementsContract<TContract>(ti.AsType()) &&
+                ti.GetConstructor(Type.EmptyTypes) != null)
+                return (TContract)Activator.CreateInstance(ti.AsType())!;
+        return null;
     }
 
     public void UnloadCurrent()
@@ -199,6 +190,7 @@ internal sealed class GuestAssemblyLoader(string assemblyName)
 internal sealed class GameAssemblyLoadContext(string sourceDllPath, string loadedDllPath)
     : AssemblyLoadContext(Path.GetFileNameWithoutExtension(loadedDllPath), isCollectible: true)
 {
+    private static readonly ConcurrentDictionary<string, string?> PathCache = new();
     private readonly AssemblyDependencyResolver _resolver = new(sourceDllPath);
 
     protected override Assembly? Load(AssemblyName assemblyName)
@@ -219,12 +211,13 @@ internal sealed class GameAssemblyLoadContext(string sourceDllPath, string loade
         return t.Loader.Assembly;
     }
 
+
     private Assembly? LoadExternal(AssemblyName assemblyName)
     {
         var name = assemblyName.Name!;
         if (AssemblyRepository.ExternalAssemblies.TryGetValue(name, out var externalAssembly))
             return externalAssembly;
-        var path = _resolver.ResolveAssemblyToPath(assemblyName);
+        var path = PathCache.GetOrAdd(assemblyName.FullName, _resolver.ResolveAssemblyToPath(assemblyName));
         if (path == null)
             return null;
 

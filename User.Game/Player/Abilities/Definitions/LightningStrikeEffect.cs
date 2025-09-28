@@ -20,6 +20,7 @@ public partial class LightningStrikeEffect : Actor
         _material = MaterialBuilder
             .CreateFromDisk("Shaders/cube")
             .SetTexture(Texture.CreateFromDisk("Textures/lightning.png"))
+            .WithCache()
             .Compile();
     }
 

@@ -17,7 +17,7 @@ public partial class ExperienceDropService : Service
     protected void OnReady()
     {
         InstanceManager.InstanceStaticMesh = StaticMesh.CreateFromDisk("Meshes/drop-experienceOrb.obj");
-        InstanceManager.InstanceMaterial = MaterialBuilder.CreateFromDisk("Shaders/cube").Compile();
+        InstanceManager.InstanceMaterial = MaterialBuilder.CreateFromDisk("Shaders/cube").WithCache().Compile();
     }
     
     public void SpawnExperienceDrop(Vector3 position, double experienceValue)

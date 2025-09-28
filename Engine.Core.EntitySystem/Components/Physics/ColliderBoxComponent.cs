@@ -15,7 +15,7 @@ public partial class ColliderBoxComponent : ActorComponent
     public Vector3 WorldSize => WorldTransform.Scale;
 
     public StaticMesh StaticMesh => LineSphereMesh.Shared;
-    public Material Material => Material.CreateFromDisk("Shaders/cube");
+    public Material Material => Material.CreateCachedFromDisk("Shaders/cube");
     public IRenderScript RenderScript => IRenderScript.Default;
 
     public bool IsOnScreen { get; set; }

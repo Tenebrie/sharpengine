@@ -1,5 +1,6 @@
 ﻿using Engine.Core.Common;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Module.Physics.Utilities;
 
 namespace Engine.Module.Physics.WorkerThreads;
 
@@ -80,7 +81,7 @@ public class WorkerPoolMember
         }
     }
     
-    private void ProcessTask(PhysicsTaskType type, ref AtomHandle atomHandle, AtomHandle[] allParticipants)
+    private void ProcessTask(PhysicsTaskType type, ref AtomHandle atomHandle, AtomList allParticipants)
     {
         switch (type)
         {
@@ -146,12 +147,12 @@ public class WorkerPoolMember
         // handle.LinearVelocity.Y = 0;
     }
     
-    private static void CollectCollisionCandidates(ref AtomHandle handle, AtomHandle[] participants)
+    private static void CollectCollisionCandidates(ref AtomHandle handle, AtomList participants)
     {
         handle.CollisionCandidates.Clear();
         if (!handle.HasColliders)
             return;
-        foreach (var participant in participants)
+        foreach (var participant in participants.AsSpan())
         {
             if (participant.Rid == handle.Rid || !participant.HasColliders)
                 continue;

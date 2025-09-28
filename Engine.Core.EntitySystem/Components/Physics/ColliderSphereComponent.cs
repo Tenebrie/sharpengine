@@ -19,7 +19,7 @@ public partial class ColliderSphereComponent : ActorComponent
     public double WorldRadius => WorldTransform.Scale.X;
     
     public StaticMesh StaticMesh => LineSphereMesh.Shared;
-    public Material Material => Material.CreateFromDisk("Shaders/cube");
+    public Material Material => Material.CreateCachedFromDisk("Shaders/cube");
     public IRenderScript RenderScript => IRenderScript.Default;
 
     public bool IsOnScreen { get; set; }

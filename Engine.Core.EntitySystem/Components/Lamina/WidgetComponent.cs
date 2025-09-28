@@ -1,5 +1,6 @@
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.Lamina;
+using Engine.Core.Logging;
 
 namespace Engine.Core.EntitySystem.Components.Lamina;
 
@@ -11,8 +12,8 @@ public partial class WidgetComponent : Actor, IWidget
     {
         // TODO: Diff and update instead of clearing and recreating everything
         _currentLayout = layout;
-        foreach (var child in Children)
-            child.QueueFree();
+        while (Children.Count > 0)
+            Children[0].QueueFree();
         foreach (var childLayout in layout.Children)
         {
             if (!LaminaRendererRepository.TryGet(childLayout, out var renderer)) 

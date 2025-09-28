@@ -16,7 +16,10 @@ public static class SplashRenderer
 {
     public static unsafe void RenderOnce()
     {
-        var material = MaterialBuilder.CreateFromDisk("Shaders/UserInterface/Text").SetTexture("Textures/splash.png").Compile();
+        var material = MaterialBuilder
+            .CreateFromDisk("Shaders/UserInterface/Text")
+            .SetTexture("Textures/splash.png")
+            .Compile();
         
         var meshPipeline = PipelineBuilder.PrepareMesh()
             // Position

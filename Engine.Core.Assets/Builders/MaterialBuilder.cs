@@ -5,6 +5,7 @@ using System.Text;
 using Diligent;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Rendering;
+using Engine.Core.Filesystem;
 using Engine.Core.Logging;
 
 namespace Engine.Core.Assets.Builders;
@@ -20,7 +21,7 @@ public class MaterialBuilder
 {
     private Texture? _texture = null;
     private string? _shaderPath = null;
-    private bool _useCache = true;
+    private bool _useCache = false;
     private MaterialPipeline _pipeline = new();
     private readonly List<ConstantBufferDesc> _constantBuffers = [];
     
@@ -42,7 +43,7 @@ public class MaterialBuilder
                 new ShaderResourceVariableDesc
                 {
                     ShaderStages = ShaderType.Pixel,
-                    Name = ShaderVariable.AlbedoSampler,
+                    Name = ShaderVariable.AlbedoSampler, 
                     Type = ShaderResourceVariableType.Mutable
                 },
                 new ShaderResourceVariableDesc
@@ -105,6 +106,11 @@ public class MaterialBuilder
         _useCache = cache;
         return this;
     }
+    public MaterialBuilder WithCache()
+    {
+        _useCache = true;
+        return this;
+    }
 
     public MaterialBuilder SetTextureMode(TextureAddressMode addressMode)
     {
@@ -149,10 +155,10 @@ public class MaterialBuilder
         if (RenderContext.Current.ShaderFactory == null)
             throw new InvalidOperationException("Shader factory is not initialized. Cannot compile material without shaders.");
 
-        var oldPixelPath = $"Assets/{_shaderPath}.psh";
-        var oldVertexPath = $"Assets/{_shaderPath}.vsh";
-        var pixelFilePath = File.Exists(oldPixelPath) ? oldPixelPath : $"Assets/{_shaderPath}.frag.hlsl";
-        var vertexFilePath = File.Exists(oldVertexPath) ? oldVertexPath : $"Assets/{_shaderPath}.vert.hlsl";
+        var oldPixelPath = FileResolver.Resolve($"Assets/{_shaderPath}.psh");
+        var oldVertexPath = FileResolver.Resolve($"Assets/{_shaderPath}.vsh"); 
+        var pixelFilePath = File.Exists(oldPixelPath) ? oldPixelPath : FileResolver.Resolve($"Assets/{_shaderPath}.frag.hlsl");
+        var vertexFilePath = File.Exists(oldVertexPath) ? oldVertexPath : FileResolver.Resolve($"Assets/{_shaderPath}.vert.hlsl");
         
         var vertexShader = RenderContext.Current.RenderDevice.CreateShader(new ShaderCreateInfo
         {
@@ -174,7 +180,7 @@ public class MaterialBuilder
 
         var pixelShader = RenderContext.Current.RenderDevice.CreateShader(new ShaderCreateInfo
         {
-            FilePath = pixelFilePath,
+            FilePath = pixelFilePath, 
             ShaderSourceStreamFactory = RenderContext.Current.ShaderFactory,
             Desc = new ShaderDesc
             {

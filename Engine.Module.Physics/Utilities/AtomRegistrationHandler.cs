@@ -10,7 +10,8 @@ public class AtomRegistrationHandler
     private long _idCounter = 0;
     private bool _cacheValid = false;
     private AtomHandle[] _cachedArray = [];
-    private readonly ConcurrentDictionary<long, AtomHandle> _registeredAtoms = new();
+    // private readonly ConcurrentDictionary<long, AtomHandle> _registeredAtoms = new();
+    private readonly Dictionary<long, AtomHandle> _registeredAtoms = new();
 
     public long Add(Spatial parent, PhysicsComponent component)
     {
@@ -31,14 +32,37 @@ public class AtomRegistrationHandler
     public void Remove(long rid)
     {
         _cacheValid = false;
-        _registeredAtoms.TryRemove(rid, out _);
+        _registeredAtoms.Remove(rid, out _);
     }
 
-    public AtomHandle[] AsArray()
+    private AtomList _cachedAtomList = new();
+    public AtomList AsArray()
     {
         if (!_cacheValid)
-            _cachedArray = _registeredAtoms.Values.ToArray();
+        {
+            _cachedAtomList.Load(_registeredAtoms.Values);
+        }
+
         _cacheValid = true;
-        return _cachedArray;
+        return _cachedAtomList;
     }
+}
+
+public class AtomList
+{
+    private int _count = 0;
+    private AtomHandle[] _array = [];
+    
+    public int Length => _count;
+    public ref AtomHandle this[int index] => ref _array[index];
+    
+    public void Load(Dictionary<long, AtomHandle>.ValueCollection values)
+    {
+        _count = values.Count;
+        if (_array.Length < values.Count)
+            _array = new AtomHandle[values.Count * 2];
+        values.CopyTo(_array, 0);
+    }
+    
+    public Span<AtomHandle> AsSpan() => _array.AsSpan(0, _count);
 }

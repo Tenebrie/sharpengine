@@ -26,7 +26,8 @@ public interface ILaminaWidgetRenderer;
 
 public interface IRenderingHost : IModularHost
 {
-    public void HotInitialize(RenderingResources resources);
+    public void InitializeResources(RenderingResources resources);
+    public void InitializeRenderers();
     public void RenderEngineLoadingScreen();
     public Task RenderSingleFrame(double deltaTime);
     public void ToggleLogRendering();
