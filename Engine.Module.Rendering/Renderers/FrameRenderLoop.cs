@@ -81,7 +81,6 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         );
         
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingFullFrame);
-        SwapLaminaRenderTargets();
         SwapChain.Present(0);
     }
     
@@ -135,21 +134,11 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
     private Task InvokeLaminaRenderers(double _)
     {
         _laminaRenderer.RenderRetainedTexturesWithTiming(_widgetsToRender, _widgetsToRenderCount);
+        _widgetsToRenderCount = 0;
+        Array.Clear(_widgetsToRender);
         return Task.CompletedTask;
     }
 
-    private void SwapLaminaRenderTargets()
-    {
-        for (var index = 0; index < _widgetsToRenderCount; index++)
-        {
-            var renderable = _widgetsToRender[index];
-            renderable.SwapRenderTargets();
-        }
-
-        _widgetsToRenderCount = 0;
-        Array.Clear(_widgetsToRender);
-    }
-    
     private Task InvokeSceneRenderers(double deltaTime)
     {
         _sceneRenderer.RenderAtomTree(_atomsToRender, _atomsToRenderCount);

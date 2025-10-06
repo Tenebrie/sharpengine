@@ -63,6 +63,8 @@ public class DebugFramerateFrameRenderer(RenderingHost host, TextRenderer textRe
                        ProfilingContext.RenderingDebugProfiler |
                        ProfilingContext.RenderingCollectAtoms |
                        ProfilingContext.RenderingCombineRequests |
+                       ProfilingContext.RenderingLamina |
+                       ProfilingContext.RenderingSortRequests |
                        ProfilingContext.RenderingSubmitAtoms)
                 .OrderByDescending(entry => entry.TotalMilliseconds / framesForLatestUpdate)
                 .Select(entry =>

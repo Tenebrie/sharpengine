@@ -48,7 +48,7 @@ public partial class Atom : IAtom
         {
             using var stopwatch = Profiler.Start();
             try
-            { 
+            {
                 OnCreateCallback.Invoke();
             } catch (Exception e)
             {

@@ -16,7 +16,6 @@ public interface ILaminaRenderable
 {
     public bool Dirty { get; set; }
     public void EnsureRenderTarget();
-    public void SwapRenderTargets();
     public void CollectCommandList(ILaminaRenderContext renderContext);
     public Vector2 TextureSize { get; }
     public ITextureView RenderTargetView { get; }

@@ -6,17 +6,16 @@ namespace Engine.Core.Assets;
 
 public class PipelineAssetManager : IDisposable
 {
-    private readonly Dictionary<string, IPipelineState> _cachedPipelines = new();
+    private readonly Dictionary<(string Mesh, string Material), IPipelineState> _cachedPipelines = new();
 
     public IPipelineState Produce(MeshPipeline mesh, MaterialPipeline material)
     {
-        var pipelineHash = mesh.HashCode + material.HashCode;
-        if (_cachedPipelines.TryGetValue(pipelineHash, out var pipeline))
+        if (_cachedPipelines.TryGetValue((mesh.HashCode, material.HashCode), out var pipeline))
             return pipeline;
 
         Logger.Info("Creating new PSO");
         pipeline = PipelineBuilder.ComposeWithoutCache(mesh, material);
-        _cachedPipelines[pipelineHash] = pipeline;
+        _cachedPipelines[(mesh.HashCode, material.HashCode)] = pipeline;
         return pipeline;
     }
 

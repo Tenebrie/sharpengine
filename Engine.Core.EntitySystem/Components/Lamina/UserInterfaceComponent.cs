@@ -59,7 +59,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     }
     private readonly List<RenderTargetData> _renderTargets = [];
     public ITextureView RenderTargetView => _renderTargets[_activeRenderTargetIndex].RenderTargetView;
-    public ITextureView ShaderResourceView => _renderTargets[1 - _activeRenderTargetIndex].ShaderResourceView;
+    public ITextureView ShaderResourceView => _renderTargets[_activeRenderTargetIndex].ShaderResourceView;
     
     public void EnsureRenderTarget()
     {
@@ -73,50 +73,27 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
             target.ShaderResourceView.Dispose();
         }
         
-        for (var i = 0; i < 2; i++)
+        var targetTexture = RenderContext.Current.RenderDevice.CreateTexture(new TextureDesc
         {
-            var targetTexture = RenderContext.Current.RenderDevice.CreateTexture(new TextureDesc
-            {
-                Name = "LaminaRT",
-                Type = ResourceDimension.Tex2d,
-                Width = (uint)TextureSize.X * 2,
-                Height = (uint)TextureSize.Y * 2,
-                Format = TextureFormat.RGBA8_UNorm_sRGB,
-                BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource
-            });
-            var renderTargetView = targetTexture.GetDefaultView(TextureViewType.RenderTarget);
-            var shaderResourceView = targetTexture.GetDefaultView(TextureViewType.ShaderResource);
-            if (renderTargetView == null || shaderResourceView == null)
-                throw new InvalidOperationException("Failed to create render target views for Lamina UI component");
-            _renderTargets.Add(new RenderTargetData
-            {
-                Target = targetTexture,
-                RenderTargetView = renderTargetView,
-                ShaderResourceView = shaderResourceView
-            });
-        }
+            Name = "LaminaRT",
+            Type = ResourceDimension.Tex2d,
+            Width = (uint)TextureSize.X * 2,
+            Height = (uint)TextureSize.Y * 2,
+            Format = TextureFormat.RGBA8_UNorm_sRGB,
+            BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource
+        });
+        var renderTargetView = targetTexture.GetDefaultView(TextureViewType.RenderTarget);
+        var shaderResourceView = targetTexture.GetDefaultView(TextureViewType.ShaderResource);
+        if (renderTargetView == null || shaderResourceView == null)
+            throw new InvalidOperationException("Failed to create render target views for Lamina UI component");
+        _renderTargets.Add(new RenderTargetData
+        {
+            Target = targetTexture,
+            RenderTargetView = renderTargetView,
+            ShaderResourceView = shaderResourceView
+        });
 
         _activeRenderTargetIndex = 0;
-        MeshComponent.MaterialInstance.SetRemoteTextureView(ShaderResourceView);
-    }
-
-    private readonly StateTransitionDesc[] _transitionDescList = new StateTransitionDesc[2];
-    public void SwapRenderTargets()
-    {
-        if (_activeRenderTargetIndex == -1)
-            return;
-        _activeRenderTargetIndex = 1 - _activeRenderTargetIndex;
-        _transitionDescList[0] = new StateTransitionDesc
-        {
-            Resource = _renderTargets[_activeRenderTargetIndex].Target,
-            NewState = ResourceState.RenderTarget
-        };
-        _transitionDescList[1] = new StateTransitionDesc
-        {
-            Resource = _renderTargets[1 - _activeRenderTargetIndex].Target,
-            NewState = ResourceState.ShaderResource
-        };
-        RenderContext.Current.ImmediateContext.TransitionResourceStates(_transitionDescList);
         MeshComponent.MaterialInstance.SetRemoteTextureView(ShaderResourceView);
     }
 

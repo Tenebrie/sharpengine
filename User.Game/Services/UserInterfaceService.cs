@@ -27,31 +27,40 @@ public partial class UserInterfaceService : Service
         _lastMouse = mouse;
         if (GetService<InputService>().IsMouseButtonHeld(MouseButton.Left))
         {
-            UserInterface.SetLayout(v =>
-            {
-                v.Div(new Vector2(10, 10), v => { v.Label("With some imagination, that's a UI framework"); });
-                v.Div(mouse, v =>
-                {
-                    // v.Label("I can change it to say Triangles");
-                    v.Button("Click me!", () => _counter++);
-                });
-            });
+            Render(mouse);
         }
     }
     
     [OnReady]
-    protected void OnReady()
+    protected void Start()
+    {
+        Render(new Vector2(500, 8));
+    }
+
+    private void Render(Vector2 mouse)
     {
         UserInterface.SetLayout(v =>
         {
-            v.Div(new Vector2(0, 200), v => 
+            v.Div(mouse, v =>
             {
-                v.Label("With some imagination, that's a UI framework");
-            });
-            v.Div(new Vector2(400, 0), v => 
-            {
-                v.Label("Hello world");
+                v.Button("Click me", () => _counter++);
             });
         });
     }
+    
+    // [OnReady]
+    // protected void OnReady()
+    // {
+    //     UserInterface.SetLayout(v =>
+    //     {
+    //         v.Div(new Vector2(0, 200), v => 
+    //         {
+    //             v.Label("With some imagination, that's a UI framework");
+    //         });
+    //         v.Div(new Vector2(400, 0), v => 
+    //         {
+    //             v.Label("Hello world");
+    //         });
+    //     });
+    // }
 }
