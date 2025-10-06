@@ -77,12 +77,12 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
 
     private static void CrashOnTDR(string message)
     {
-        if (message.Contains(
+        if (!message.Contains(
                 "Timeout elapsed while waiting for the frame waitable object. This is a strong indication of a synchronization error."))
-        {
-            Logger.Error(message);
-            throw new Exception("TDR detected");
-        }
+            return;
+        
+        Logger.Error(message);
+        throw new Exception("TDR detected");
     }
 
     private static void CreateRenderDeviceAndSwapChain(
@@ -96,6 +96,7 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
         engineFactory.CreateDeviceAndContextsD3D12(new EngineD3D12CreateInfo
         {
             EnableValidation = true,
+            ValidationFlags = ValidationFlags.CheckShaderBufferSize,
             D3D12ValidationFlags = D3D12ValidationFlags.EnableGpuBasedValidation | D3D12ValidationFlags.BreakOnCorruption,
             // ValidationFlags = ValidationFlags.CheckShaderBufferSize,
             NumDeferredContexts = 8,

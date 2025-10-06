@@ -195,7 +195,7 @@ public class MaterialBuilder
         
         _pipeline.VertexShader = vertexShader;
         _pipeline.PixelShader = pixelShader;
-        _pipeline.HashCode = hash.GetHashCode();
+        _pipeline.HashCode = hash;
         
         var constantBuffers =  _constantBuffers.Select(bufferDesc =>
         {

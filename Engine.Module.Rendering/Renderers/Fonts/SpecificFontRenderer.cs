@@ -27,7 +27,7 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
     private IBuffer _vertexBuffer = null!;
     private IBuffer _indexBuffer = null!;
 
-    private const int BufferSizeGlyphs = 4096;
+    private const int BufferSizeGlyphs = 8192;
     private MeshPipeline _meshPipeline;
 
     private Material _material = null!;
@@ -206,7 +206,7 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
             var vertexBuffer = DeviceContext.MapBuffer<RenderingVertex>(_vertexBuffer, MapType.Write, MapFlags.Discard);
             CollectionsMarshal.AsSpan(vertexList).CopyTo(vertexBuffer);
             verticesWritten += vertexList.Count;
-
+            
             DeviceContext.UnmapBuffer(_vertexBuffer, MapType.Write);
             DeviceContext.SetVertexBuffers(0, [_vertexBuffer], [0ul], ResourceStateTransitionMode.Transition);
             

@@ -13,12 +13,13 @@ public enum ProfilingContext
     RenderingFullFrame = 1 << 6,
     RenderingCollectAtoms = 1 << 7,
     RenderingCombineRequests = 1 << 8,
-    RenderingSubmitAtoms = 1 << 9,
-    RenderingDebugLog = 1 << 10,
-    RenderingDebugFramerate = 1 << 11,
-    RenderingDebugProfiler = 1 << 12,
-    RenderingLamina = 1 << 13,
-    RenderingGpuWait = 1 << 14,
+    RenderingSortRequests = 1 << 9,
+    RenderingSubmitAtoms = 1 << 10,
+    RenderingDebugLog = 1 << 11,
+    RenderingDebugFramerate = 1 << 12,
+    RenderingDebugProfiler = 1 << 13,
+    RenderingLamina = 1 << 14,
+    RenderingGpuWait = 1 << 15,
 }
 
 public static class Profiler

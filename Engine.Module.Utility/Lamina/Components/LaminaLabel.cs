@@ -19,6 +19,15 @@ public class LaminaRendererAttribute : Attribute;
 [UsedImplicitly]
 public partial class LaminaLabel : WidgetComponent
 {
+    // [OnUpdate]
+    // public void OnUpdate()
+    // {
+    //     if (_currentLayout is LabelLayout label)
+    //     {
+    //         Logger.Info(label.Text);
+    //     }
+    // }
+    
     [LaminaRenderer]
     protected override void Render(LaminaLayout layout, ILaminaRenderContext context)
     {
@@ -26,5 +35,4 @@ public partial class LaminaLabel : WidgetComponent
             throw new ArgumentException($"Expected layout of type {nameof(LabelLayout)}, got {layout.GetType().Name}");
         context.RenderText("RobotoMono-Bold", 27, labelLayout.Text, new Vector2(0, 0), Color.White, 2);
     }
-
 }

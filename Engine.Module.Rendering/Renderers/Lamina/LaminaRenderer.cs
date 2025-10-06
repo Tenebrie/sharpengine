@@ -7,6 +7,7 @@ using Engine.Core.Lamina;
 using Engine.Core.Logging;
 using Engine.Core.Profiling;
 using Engine.Core.Profiling.Attributes;
+using Engine.Module.Rendering.Renderers.Atoms;
 using Engine.Module.Rendering.Renderers.Debug;
 using Engine.Module.Rendering.Renderers.Fonts;
 
@@ -17,19 +18,21 @@ internal class LaminaRenderer : IDisposable
     private readonly RenderingHost _host;
     private readonly IDeviceContext _deviceContext;
     private readonly TextRenderer _textRenderer;
+    
     internal LaminaRenderer(RenderingHost host, IDeviceContext deviceContext)
     {
         _host = host;
         _deviceContext = deviceContext;
         _textRenderer = new TextRenderer(deviceContext);
     }
-    
-    private ICommandList? RenderRetainedTextures(ILaminaRenderable[] atomsToRender, int atomsToRenderCount)
+
+    private readonly ITextureView[] _renderTargetViews = new ITextureView[1];
+    private void RenderRetainedTextures(ILaminaRenderable[] atomsToRender, int atomsToRenderCount)
     {
         if (atomsToRenderCount == 0)
-            return null;
+            return;
         
-        _deviceContext.Begin(0);
+        // _deviceContext.Begin(0);
         var context = new LaminaRenderContext(_textRenderer, _deviceContext);
         for (var index = 0; index < atomsToRenderCount; index++)
         {
@@ -40,25 +43,29 @@ internal class LaminaRenderer : IDisposable
             renderable.EnsureRenderTarget();
             _deviceContext.ClearRenderTarget(
                 renderable.RenderTargetView,
-                new Vector4(0.25f, 0.25f, 0.25f, 1.0f),
+                new Vector4(0.0f, 0.0f, 0.0f, 0.0f),
                 ResourceStateTransitionMode.Transition);
-            _deviceContext.SetRenderTargets([renderable.RenderTargetView], null, ResourceStateTransitionMode.Transition);
+            _renderTargetViews[0] = renderable.RenderTargetView;
+            _deviceContext.SetRenderTargets(_renderTargetViews, null, ResourceStateTransitionMode.Transition);
             var ctx = RenderContext.Current;
-            ctx.RenderTargetSize = new Vector2(renderable.RenderTarget.GetDesc().Width / 2, renderable.RenderTarget.GetDesc().Height / 2);
+            ctx.RenderTargetSize = renderable.TextureSize;
             RenderContext.Current = ctx;
             renderable.CollectCommandList(context);
+            
+            foreach (var request in context.RenderRequests)
+            {
+                request.RenderScript.Render(_deviceContext, request.InstanceCount, request.Mesh, request.InstanceTransforms, request.Material,
+                    request.MaterialInstances);
+            }
             _textRenderer.Flush();
         }
-
-        return _deviceContext.FinishCommandList();
     }
 
-    internal ICommandList? RenderRetainedTexturesWithTiming(ILaminaRenderable[] atomsToRender, int atomsToRenderCount)
+    internal void RenderRetainedTexturesWithTiming(ILaminaRenderable[] atomsToRender, int atomsToRenderCount)
     {
         var stopwatch = Profiler.Start();
-        var cmdList = RenderRetainedTextures(atomsToRender, atomsToRenderCount);
+        RenderRetainedTextures(atomsToRender, atomsToRenderCount);
         stopwatch.StopAndReport(typeof(DebugProfilerFrameRenderer), ProfilingContext.RenderingLamina);
-        return cmdList;
     }
 
     public void Dispose()
@@ -72,6 +79,8 @@ internal class LaminaRenderContext(TextRenderer textRenderer, IDeviceContext dev
     public Vector2 Position { get; set; } = Vector2.Zero;
     public IDeviceContext DeviceContext => deviceContext;
 
+    public readonly List<LaminaRenderRequest> RenderRequests = [];
+
     public void RenderText(string font, int size, string text, Vector2 position, Color color, int shadowBlur = 2)
     {
         textRenderer.RenderText(font, size, text, position + Position, color, shadowBlur);
@@ -79,6 +88,12 @@ internal class LaminaRenderContext(TextRenderer textRenderer, IDeviceContext dev
 
     public void RenderRequest(LaminaRenderRequest request)
     {
-        // throw new NotImplementedException();
+        foreach (var transform in request.InstanceTransforms)
+        {
+            var pos = Position / RenderContext.Current.RenderTargetSize - Vector2.One / 2;
+            transform.Position = new Vector3(pos.X, -pos.Y, 0) * 2 + new Vector3(transform.Scale.X, -transform.Scale.Y, 0.0) / 2;
+        }
+
+        RenderRequests.Add(request);
     }
 }

@@ -82,6 +82,8 @@ public struct Vector2(double x, double y)
     public static Vector2 operator *(Vector2 a, Vector2 b) => a.Promote() * b.Promote();
     public static Vector2 operator /(Vector2 a, double b) => a.Promote() / b;
     public static Vector2 operator /(Vector2 a, Vector2 b) => a.Promote() / b.Promote();
+    public static bool operator ==(Vector2 a, Vector2 b) => a.Promote() == b.Promote();
+    public static bool operator !=(Vector2 a, Vector2 b) => !(a == b);
 
     // Vector4
     public static implicit operator Vector2(Vector4 v) => Unsafe.As<Vector4, Vector2>(ref v);

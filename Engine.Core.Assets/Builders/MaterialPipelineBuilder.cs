@@ -29,7 +29,8 @@ public static class PipelineBuilder
     {
         private GraphicsPipelineDesc _handle = new();
         private readonly List<LayoutElement> _layoutElements = [];
-        private int _hashCode = 0;
+        
+        private readonly IncrementalHashWriter _incrementalHash = new();
     
         public Mesh()
         {
@@ -47,7 +48,8 @@ public static class PipelineBuilder
         {
             _layoutElements.Add(layout);
             // ReSharper disable once UsageOfDefaultStructEquality - it's fiiine here
-            _hashCode ^= layout.GetHashCode();
+            // _hashCode ^= layout.GetHashCode();
+            _incrementalHash.Write("LayoutElement", layout.GetHashCode().ToString());
             return this;
         }
         
@@ -59,7 +61,8 @@ public static class PipelineBuilder
                 WindingOrder.Cw => CullMode.Front,
                 _ => CullMode.Back
             };
-            _hashCode ^= windingOrder.GetHashCode();
+            _incrementalHash.Write("WindingOrder", windingOrder.ToString());
+            // _hashCode ^= windingOrder.GetHashCode();
             return this;
         }
         
@@ -67,7 +70,9 @@ public static class PipelineBuilder
         {
             _handle.DepthStencilDesc.DepthEnable = enabled;
             _handle.DepthStencilDesc.DepthWriteEnable = writeEnabled;
-            _hashCode ^= enabled.GetHashCode() ^ writeEnabled.GetHashCode();
+            // _hashCode ^= _handle.DepthStencilDesc.GetHashCode();
+            _incrementalHash.Write("DepthTest", enabled.ToString());
+            _incrementalHash.Write("DepthWrite", writeEnabled.ToString());
             return this;
         }
         
@@ -89,7 +94,8 @@ public static class PipelineBuilder
             _handle.BlendDesc.IndependentBlendEnable = false;
             _handle.BlendDesc.RenderTargets = [rt0];
             _handle.BlendDesc.AlphaToCoverageEnable = alphaToCoverage;
-            _hashCode ^= premultiplied.GetHashCode() ^ alphaToCoverage.GetHashCode();
+            _incrementalHash.Write("AlphaBlending", premultiplied.ToString());
+            _incrementalHash.Write("AlphaToCoverage", alphaToCoverage.ToString());
 
             return this;
         }
@@ -97,18 +103,19 @@ public static class PipelineBuilder
         public MeshPipeline Build()
         {
             _handle.InputLayout.LayoutElements = _layoutElements.ToArray();
-            return new MeshPipeline { Desc = _handle, HashCode = _hashCode };
+            return new MeshPipeline { Desc = _handle, HashCode = _incrementalHash.Current() };
         }
     }
 
     public class Material
     {
         private MaterialPipeline _handle = new();
-        private readonly int _hashCode = 0;
+        
+        private readonly IncrementalHashWriter _incrementalHash = new();
 
         public Material(string key)
         {
-            _hashCode = key.GetHashCode();
+            _incrementalHash.Write("Key", key);
             _handle.Desc.Name = "Common Material";
             _handle.Desc.ResourceLayout = new PipelineResourceLayoutDesc
             {
@@ -167,7 +174,7 @@ public static class PipelineBuilder
 
         public MaterialPipeline Build()
         {
-            return _handle with { HashCode = _hashCode };
+            return _handle with { HashCode = _incrementalHash.Current() };
         }
     }
     
@@ -191,7 +198,7 @@ public static class PipelineBuilder
 public struct MeshPipeline
 {
     public GraphicsPipelineDesc Desc;
-    public int HashCode;
+    public string HashCode;
 }
 
 public struct MaterialPipeline
@@ -199,5 +206,5 @@ public struct MaterialPipeline
     public PipelineStateDesc Desc;
     public IShader VertexShader;
     public IShader PixelShader;
-    public int HashCode;
+    public string HashCode;
 }

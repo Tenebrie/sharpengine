@@ -36,7 +36,7 @@ public class StaticMesh : IDisposable
     public Signal<AssetVertex[]> OnMeshLoaded { get; } = new();
     public static ValueType IndexType => ValueType.UInt32;
 
-    protected void LoadInternal(AssetVertex[] vertices, uint[] indices, WindingOrder windingOrder)
+    protected void LoadInternal(AssetVertex[] vertices, uint[] indices, WindingOrder windingOrder, Action<PipelineBuilder.Mesh> pipeline)
     {
         Vertices = vertices;
         Indices = indices;
@@ -48,7 +48,7 @@ public class StaticMesh : IDisposable
             renderVertices[i] = new RenderingVertex(v.Position, v.TexCoord, v.VertexColor, new Vector3(0, 1, 0));
         }
 
-        Pipeline = PipelineBuilder.PrepareMesh()
+        var builder = PipelineBuilder.PrepareMesh()
             // Position
             .WithLayoutElement(new LayoutElement
             {
@@ -83,8 +83,10 @@ public class StaticMesh : IDisposable
             })
             .WithDepthTest(true, true)
             .WithAlphaBlending(true, true)
-            .WithWindingOrder(windingOrder)
-            .Build();
+            .WithWindingOrder(windingOrder);
+
+        pipeline(builder);
+        Pipeline = builder.Build();
 
         _vertexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
@@ -142,7 +144,7 @@ public class StaticMesh : IDisposable
     public static StaticMesh CreateFromMemoryWithoutCache(AssetVertex[] verts, uint[] indices, WindingOrder windingOrder = WindingOrder.Cw)
     {
         var newMesh = new StaticMesh();
-        newMesh.LoadInternal(verts, indices, windingOrder);
+        newMesh.LoadInternal(verts, indices, windingOrder, _ => { });
         return newMesh;
     }
 

@@ -1,6 +1,7 @@
 ﻿using System.Drawing;
 using Engine.Core.Logging;
 using Engine.Core.Profiling;
+using Engine.Module.Rendering.Renderers.Fonts;
 using Engine.Module.Rendering.Utilities;
 
 namespace Engine.Module.Rendering.Renderers.Debug;
@@ -15,9 +16,9 @@ public enum LoggingMode
     Count,
 }
 
-public class DebugLogFrameRenderer(RenderingHost host): IFrameRenderer
+public class DebugLogFrameRenderer(RenderingHost host, TextRenderer textRenderer)
 {
-    private readonly DebugTextGrid _textGrid = new(host);
+    private readonly DebugTextGrid _textGrid = new(host, textRenderer);
     
     private LoggingMode _mode = LoggingMode.Recent;
 

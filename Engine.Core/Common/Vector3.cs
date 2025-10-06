@@ -98,6 +98,8 @@ public struct Vector3(double x, double y, double z)
     public static Vector3 operator *(Vector3 a, Vector3 b) => a.Promote() * b.Promote();
     public static Vector3 operator /(Vector3 a, double b) => a.Promote() / b;
     public static Vector3 operator /(Vector3 a, Vector3 b) => a.Promote() / b.Promote();
+    public static bool operator ==(Vector3 a, Vector3 b) => a.Promote() == b.Promote();
+    public static bool operator !=(Vector3 a, Vector3 b) => !(a == b);
     
     // Vector4
     public static implicit operator Vector3(Vector4 v) => Unsafe.As<Vector4, Vector3>(ref v);

@@ -8,7 +8,7 @@ using Engine.Core.Memory;
 using Engine.Core.Profiling;
 using Engine.Module.Rendering.Utilities;
 
-namespace Engine.Module.Rendering.Renderers;
+namespace Engine.Module.Rendering.Renderers.Atoms;
 
 public class SceneRenderer(RenderingHost host)
 {
@@ -43,8 +43,14 @@ public class SceneRenderer(RenderingHost host)
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCombineRequests);
         
         stopwatch = Profiler.Start();
+        var mergedRequests = _renderRequestPool.Values.ToList();
+        mergedRequests.Sort((a, b) => a.SortOrder - b.SortOrder);
+
+        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingSortRequests);
+        
+        stopwatch = Profiler.Start();
         RenderStats.DrawCalls += _renderRequestPool.Values.Count;
-        foreach (var req in _renderRequestPool.Values)
+        foreach (var req in mergedRequests)
         {
             req.RenderScript.Render(
                 RenderContext.Current.ImmediateContext,
@@ -71,6 +77,8 @@ public class SceneRenderer(RenderingHost host)
         public required int InstanceCount;
         public required MemoryManager.ArrayHandle InstanceTransforms;
         public required MemoryManager.ArrayHandle MaterialInstances;
+
+        public required int SortOrder;
     
         public static MergedRenderRequest Create(RenderRequest request)
         { 
@@ -84,6 +92,7 @@ public class SceneRenderer(RenderingHost host)
                     MemoryManager.ProduceArray<Transform>(MemoryDomain.Rendering, request.InstanceCount),
                 MaterialInstances =
                     MemoryManager.ProduceArray<MaterialInstance>(MemoryDomain.Rendering, request.InstanceCount),
+                SortOrder = request.SortOrder
             };
 
             req.MaterialInstances = MemoryManager.MergeArrays(MemoryDomain.Rendering, req.MaterialInstances,

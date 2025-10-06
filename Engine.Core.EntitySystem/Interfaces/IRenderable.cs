@@ -16,8 +16,9 @@ public interface ILaminaRenderable
 {
     public bool Dirty { get; set; }
     public void EnsureRenderTarget();
+    public void SwapRenderTargets();
     public void CollectCommandList(ILaminaRenderContext renderContext);
-    public ITexture RenderTarget { get; }
+    public Vector2 TextureSize { get; }
     public ITextureView RenderTargetView { get; }
     public ITextureView ShaderResourceView { get; }
 }
@@ -31,6 +32,7 @@ public struct RenderRequest
     public required int InstanceCount;
     public required Transform[] InstanceTransforms;
     public required MaterialInstance[] MaterialInstances;
+    public int SortOrder { get; set; }
     
     public int HashCode => Mesh.GetHashCode() ^ Material.GetHashCode() ^ RenderScript.GetHashCode();
 }

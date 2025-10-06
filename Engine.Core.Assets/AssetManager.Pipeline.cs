@@ -1,18 +1,20 @@
 ﻿using Diligent;
 using Engine.Core.Assets.Builders;
+using Engine.Core.Logging;
 
 namespace Engine.Core.Assets;
 
 public class PipelineAssetManager : IDisposable
 {
-    private readonly Dictionary<int, IPipelineState> _cachedPipelines = new();
+    private readonly Dictionary<string, IPipelineState> _cachedPipelines = new();
 
     public IPipelineState Produce(MeshPipeline mesh, MaterialPipeline material)
     {
-        var pipelineHash = Math.Abs(mesh.HashCode ^ material.HashCode);
+        var pipelineHash = mesh.HashCode + material.HashCode;
         if (_cachedPipelines.TryGetValue(pipelineHash, out var pipeline))
-            return pipeline; 
+            return pipeline;
 
+        Logger.Info("Creating new PSO");
         pipeline = PipelineBuilder.ComposeWithoutCache(mesh, material);
         _cachedPipelines[pipelineHash] = pipeline;
         return pipeline;

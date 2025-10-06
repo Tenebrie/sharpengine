@@ -2,13 +2,14 @@
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Profiling;
+using Engine.Module.Rendering.Renderers.Fonts;
 using Engine.Module.Rendering.Utilities;
 
 namespace Engine.Module.Rendering.Renderers.Debug;
 
-public class DebugFramerateFrameRenderer(RenderingHost host): IFrameRenderer
+public class DebugFramerateFrameRenderer(RenderingHost host, TextRenderer textRenderer)
 {
-    private readonly DebugTextGrid _textGrid = new(host);
+    private readonly DebugTextGrid _textGrid = new(host, textRenderer);
     
     private readonly List<double> _frameTimes = [];
     private double _frameTimeAccumulator = 0.0;

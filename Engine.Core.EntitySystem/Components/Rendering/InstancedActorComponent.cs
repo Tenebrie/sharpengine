@@ -35,6 +35,7 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
         set => _instanceStaticMeshHolder.BoundingSphere = value;
     }
     public IRenderScript InstanceRenderScript { get; set; } = IRenderScript.Default;
+    public bool CullingEnabled { get; set; } = true;
 
     private Material? _material = null;
 
@@ -119,6 +120,7 @@ internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRende
 {
     internal InstancedActorComponent<TInstance> InstanceManager = null!;
     private List<TInstance> Instances { get; } = [];
+    public bool CullingEnabled { get; set; } = true;
     
     public Vector3 BoundingSphereWorldOrigin { get; private set; }
     public double BoundingSphereWorldRadius { get; private set; }
