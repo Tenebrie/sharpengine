@@ -18,7 +18,8 @@ public struct LaminaWidgetRenderer : ILaminaWidgetRenderer
 public interface ILaminaRenderContext
 {
     public Vector2 Position { get; set; }
-    IDeviceContext DeviceContext { get; }
+    IDeviceContext DeviceContext { get; } 
+    
     public void RenderText(string font, int size, string text, Vector2 position, Color color, int shadowBlur = 0);
     public void RenderRequest(LaminaRenderRequest request);
 }

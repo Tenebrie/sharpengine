@@ -108,7 +108,7 @@ public class DebugFramerateFrameRenderer(RenderingHost host, TextRenderer textRe
     {
         _frameTimeAccumulator += deltaTime;
         _frameTimes.Add(deltaTime);
-        if (_frameTimeAccumulator < 0.1)
+        if (_frameTimeAccumulator < 1)
             return;
         
         var averageFrameTime = _frameTimes.Count > 0 ? _frameTimes.Average() : 0.0;

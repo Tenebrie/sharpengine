@@ -93,7 +93,6 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
         
         _vertexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
-            Name = "FontQuadVertexBuffer",
             Usage = Usage.Dynamic,
             BindFlags = BindFlags.VertexBuffer,
             CPUAccessFlags = CpuAccessFlags.Write,
@@ -122,7 +121,6 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
         }
         _indexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
-            Name = "FontQuadIndexBuffer",
             Usage = Usage.Immutable,
             BindFlags = BindFlags.IndexBuffer,
             CPUAccessFlags = CpuAccessFlags.None,
@@ -191,7 +189,8 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
             Logger.Info("Count is " + _glyphStream.Count);
         foreach (var (texture, vertexList) in _glyphStream)
         {
-            EnsureBufferSize(verticesWritten + vertexList.Count);
+            if (verticesWritten + vertexList.Count >= BufferSizeGlyphs * 4)
+                return;
             
             if (!_materialInstances.TryGetValue(texture, out var materialInstance))
             {

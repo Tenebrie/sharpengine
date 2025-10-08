@@ -33,9 +33,9 @@ internal class LaminaRenderer : IDisposable
             return;
         
         // _deviceContext.Begin(0);
-        var context = new LaminaRenderContext(_textRenderer, _deviceContext);
         for (var index = 0; index < atomsToRenderCount; index++)
         {
+            var context = new LaminaRenderContext(_textRenderer, _deviceContext);
             var renderable = atomsToRender[index];
             if (renderable is not { Dirty: true })
                 continue;
@@ -88,12 +88,6 @@ internal class LaminaRenderContext(TextRenderer textRenderer, IDeviceContext dev
 
     public void RenderRequest(LaminaRenderRequest request)
     {
-        foreach (var transform in request.InstanceTransforms)
-        {
-            var pos = Position / RenderContext.Current.RenderTargetSize - Vector2.One / 2;
-            transform.Position = new Vector3(pos.X, -pos.Y, 0) * 2 + new Vector3(transform.Scale.X, -transform.Scale.Y, 0.0) / 2;
-        }
-
         RenderRequests.Add(request);
     }
 }

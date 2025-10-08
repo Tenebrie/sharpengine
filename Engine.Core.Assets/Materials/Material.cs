@@ -50,7 +50,7 @@ public class Material(MaterialPipeline pipeline, Texture? texture, Dictionary<st
     {
         if (AssetManager.Shared.Materials.TryGet(shaderPath, out var material))
             return material;
-        var newMaterial = MaterialBuilder.CreateFromDisk(shaderPath).WithCache().Compile();
+        var newMaterial = MaterialBuilder.CreateFromDisk(shaderPath).AsSharedMaterial().Compile();
         AssetManager.Shared.Materials.Put(shaderPath, newMaterial);
         return newMaterial;
     }

@@ -1,6 +1,7 @@
 ﻿using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.Lamina;
+using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Core.Modules.Attributes;
 using Engine.Core.Profiling;
@@ -17,6 +18,7 @@ public partial class UtilityHost : Backstage, IUtilityHost
     [OnReady] 
     protected void OnReady()
     {
+        RegisterService<LaminaInputService>();
         RegisterService<PerformanceMonitoringService>();
         Profiler.Implementation = new Instrumentation.Profiler();
     }
@@ -28,6 +30,7 @@ public partial class UtilityHost : Backstage, IUtilityHost
         LaminaRendererRepository.RegisterRenderer<DivLayout, LaminaDiv>();
         LaminaRendererRepository.RegisterRenderer<ButtonLayout, LaminaButton>();
         LaminaRendererRepository.RegisterRenderer<LabelLayout, LaminaLabel>();
+        LaminaRendererRepository.RegisterRenderer<LineLayout, LaminaLine>();
     }
     
     [OnDestroy]
@@ -37,5 +40,6 @@ public partial class UtilityHost : Backstage, IUtilityHost
         LaminaRendererRepository.Unregister<DivLayout>();
         LaminaRendererRepository.Unregister<ButtonLayout>();
         LaminaRendererRepository.Unregister<LabelLayout>();
+        LaminaRendererRepository.Unregister<LineLayout>();
     }
 }

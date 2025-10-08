@@ -37,7 +37,7 @@ public class WorkspaceAssembly() : ModularAssembly("Engine.Module.Host", EngineM
         }
         catch (Exception ex)
         {
-            Logger.Error($"Error during OnUpdate: {ex.Message}");
+            Logger.Error($"[WorkspaceAssembly] Error during OnUpdate: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
             return base.Update(deltaTime);
         }

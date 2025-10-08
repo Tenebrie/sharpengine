@@ -14,6 +14,8 @@ public class AssemblyReferenceNode
 
 public static class AssemblyRepository
 {
+    public static bool UpdatesSuspended { get; set; } = false;
+    
     public static Dictionary<string, LibraryAssembly> LibraryAssemblies { get; } = new();
     public static Dictionary<string, Assembly> ExternalAssemblies { get; } = new();
 
@@ -193,6 +195,8 @@ public static class AssemblyRepository
     {
         if (AssembliesAwaitingReload.Count == 0)
             return [];
+
+        UpdatesSuspended = true;
         
         var allAssemblies = LibraryAssemblies.Values.ToList();
         allAssemblies.Add(Editor.RenderingAssembly);
@@ -220,6 +224,8 @@ public static class AssemblyRepository
         }
 
         Logger.ClearPersistent("AssembliesReloadNotice");
+        
+        UpdatesSuspended = false;
         return assembliesToReload.Where(assembly => assembly is ModularAssembly).Cast<ModularAssembly>().ToList();
     }
 }

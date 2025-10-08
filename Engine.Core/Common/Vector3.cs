@@ -10,11 +10,11 @@ namespace Engine.Core.Common;
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 [SuppressMessage("ReSharper", "UnusedMember.Local")]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
-public struct Vector3(double x, double y, double z)
+public record struct Vector3(double X, double Y, double Z)
 {
-    [FieldOffset(00)] public double X = x;
-    [FieldOffset(08)] public double Y = y;
-    [FieldOffset(16)] public double Z = z;
+    [FieldOffset(00)] public double X = X;
+    [FieldOffset(08)] public double Y = Y;
+    [FieldOffset(16)] public double Z = Z;
     
     public double this[int i] => i switch
     {
@@ -98,18 +98,34 @@ public struct Vector3(double x, double y, double z)
     public static Vector3 operator *(Vector3 a, Vector3 b) => a.Promote() * b.Promote();
     public static Vector3 operator /(Vector3 a, double b) => a.Promote() / b;
     public static Vector3 operator /(Vector3 a, Vector3 b) => a.Promote() / b.Promote();
-    public static bool operator ==(Vector3 a, Vector3 b) => a.Promote() == b.Promote();
-    public static bool operator !=(Vector3 a, Vector3 b) => !(a == b);
+    
+    /**
+     * Implicit conversions
+     */
     
     // Vector4
+    
     public static implicit operator Vector3(Vector4 v) => Unsafe.As<Vector4, Vector3>(ref v);
     public static implicit operator Vector4(Vector3 v) => Unsafe.As<Vector3, Vector4>(ref v);
-    // System.Numerics.Vector2
+    
+    // System.Numerics.Vector3
+    
     public static implicit operator Vector3(System.Numerics.Vector3 v) => new(v.X, v.Y, v.Z);
     public static implicit operator System.Numerics.Vector3(Vector3 v) => new((float)v.X, (float)v.Y, (float)v.Z);
-    // Silk.NET.Maths.Vector2D<double>
+    
+    // Silk.NET.Maths.Vector3D<double>
+    
     public static implicit operator Vector3(Silk.NET.Maths.Vector3D<double> v) => new(v.X, v.Y, v.Z);
     public static implicit operator Silk.NET.Maths.Vector3D<double>(Vector3 v) => new(v.X, v.Y, v.Z);
+    
+    // Tuple (x, y)
+    
+    public static implicit operator Vector3((double x, double y, double z) t) => new(t.x, t.y, t.z);
+    public static implicit operator (double x, double y, double z)(Vector3 v) => (v.X, v.Y, v.Z);
+    
+    /**
+     * Others
+     */
     
     public override string ToString() => $"Vector3({X}, {Y}, {Z})";
 }

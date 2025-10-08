@@ -10,6 +10,7 @@ using Engine.Core.Common;
 using Engine.Core.Communication.Signals;
 using Engine.Core.Extensions;
 using Engine.Core.Filesystem;
+using Engine.Core.Logging;
 using Silk.NET.Core.Loader;
 using ValueType = Diligent.ValueType;
 
@@ -25,9 +26,9 @@ public class StaticMesh : IDisposable
 {
     public bool IsValid { get; private set; }
 
-    private IBuffer _vertexBuffer = null!;
+    private IBuffer? _vertexBuffer = null;
     private IBuffer[] _vertexBufferArray = [];
-    private IBuffer _indexBuffer = null!;
+    private IBuffer? _indexBuffer = null;
     public MeshPipeline Pipeline { get; private set; }
 
     public AssetVertex[] Vertices { get; private set; } = [];
@@ -35,19 +36,18 @@ public class StaticMesh : IDisposable
 
     public Signal<AssetVertex[]> OnMeshLoaded { get; } = new();
     public static ValueType IndexType => ValueType.UInt32;
-
-    protected void LoadInternal(AssetVertex[] vertices, uint[] indices, WindingOrder windingOrder, Action<PipelineBuilder.Mesh> pipeline)
+    
+    protected void LoadDefault(AssetVertex[] vertices, uint[] indices, WindingOrder windingOrder)
     {
-        Vertices = vertices;
-        Indices = indices;
+        LoadCustomized(vertices, indices, windingOrder, Usage.Immutable, _ => { });
+    }
 
-        var renderVertices = new RenderingVertex[vertices.Length];
-        for (var i = 0; i < vertices.Length; i++)
-        {
-            var v = vertices[i];
-            renderVertices[i] = new RenderingVertex(v.Position, v.TexCoord, v.VertexColor, new Vector3(0, 1, 0));
-        }
-
+    protected void LoadCustomized(AssetVertex[] vertices,
+        uint[] indices,
+        WindingOrder windingOrder,
+        Usage usage,
+        Action<PipelineBuilder.Mesh> pipeline)
+    {
         var builder = PipelineBuilder.PrepareMesh()
             // Position
             .WithLayoutElement(new LayoutElement
@@ -88,26 +88,75 @@ public class StaticMesh : IDisposable
         pipeline(builder);
         Pipeline = builder.Build();
 
-        _vertexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
-        {
-            Name = "StaticMesh vertex buffer",
-            Usage = Usage.Immutable,
-            BindFlags = BindFlags.VertexBuffer,
-            Size = RenderingVertex.SizeInBytes * (uint)vertices.Length
-        }, renderVertices);
-        _vertexBufferArray = [_vertexBuffer];
+        LoadMesh(vertices, indices, Pipeline, usage);
+    }
 
-        _indexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
-        {
-            Name = "StaticMesh index buffer",
-            Usage = Usage.Immutable,
-            BindFlags = BindFlags.IndexBuffer,
-            Size = (ulong)(Unsafe.SizeOf<uint>() * indices.Length)
-        }, indices);
+    protected void LoadMesh(AssetVertex[] vertices, uint[] indices, MeshPipeline pipeline, Usage usage = Usage.Immutable)
+    {
+        CreateOrUpdateBuffers(vertices, indices, usage);
+        
+        Vertices = vertices;
+        Indices = indices;
+        Pipeline = pipeline;
 
         IsValid = true;
 
         OnMeshLoaded.Emit(vertices);
+    }
+
+    private RenderingVertex[] _renderVertices = [];
+    private unsafe void CreateOrUpdateBuffers(AssetVertex[] vertices, uint[] indices, Usage usage = Usage.Immutable)
+    {
+        if (_renderVertices.Length != vertices.Length)
+            _renderVertices = new RenderingVertex[vertices.Length];
+        for (var i = 0; i < vertices.Length; i++)
+        {
+            var v = vertices[i];
+            _renderVertices[i] = new RenderingVertex(v.Position, v.TexCoord, v.VertexColor, new Vector3(0, 1, 0));
+        }
+        
+        if (usage == Usage.Immutable ||
+            _vertexBuffer == null || _indexBuffer == null ||
+            vertices.Length > Vertices.Length || indices.Length > Indices.Length)
+        {
+            // Logger.Info("Create" + (_vertexBuffer == null || _indexBuffer == null));
+            _vertexBuffer?.Dispose();
+            _indexBuffer?.Dispose();
+            
+            _vertexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
+            {
+                Usage = usage,
+                BindFlags = BindFlags.VertexBuffer,
+                Size = RenderingVertex.SizeInBytes * (uint)vertices.Length
+            }, _renderVertices);
+            _vertexBufferArray = [_vertexBuffer];
+
+            _indexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
+            {
+                Usage = usage,
+                BindFlags = BindFlags.IndexBuffer,
+                Size = (ulong)(Unsafe.SizeOf<uint>() * indices.Length)
+            }, indices);
+        }
+        else
+        {
+            fixed (RenderingVertex* ptr = _renderVertices)
+            {
+                RenderContext.Current.ImmediateContext.UpdateBuffer(_vertexBuffer,
+                    0,
+                    RenderingVertex.SizeInBytes * (uint)vertices.Length,
+                    (nint)ptr,
+                    ResourceStateTransitionMode.Transition);
+            }
+            fixed (uint* ptr = indices)
+            {
+                RenderContext.Current.ImmediateContext.UpdateBuffer(_indexBuffer,
+                    0,
+                    (ulong)(Unsafe.SizeOf<uint>() * indices.Length),
+                    (nint)ptr,
+                    ResourceStateTransitionMode.Transition);
+            }
+        }
     }
 
     private readonly ulong[] _vertexOffsets = [0ul];
@@ -124,8 +173,8 @@ public class StaticMesh : IDisposable
         GC.SuppressFinalize(this);
         if (!IsValid)
             return;
-        _vertexBuffer.Dispose();
-        _indexBuffer.Dispose();
+        _vertexBuffer?.Dispose();
+        _indexBuffer?.Dispose();
         IsValid = false;
     }
 
@@ -144,7 +193,7 @@ public class StaticMesh : IDisposable
     public static StaticMesh CreateFromMemoryWithoutCache(AssetVertex[] verts, uint[] indices, WindingOrder windingOrder = WindingOrder.Cw)
     {
         var newMesh = new StaticMesh();
-        newMesh.LoadInternal(verts, indices, windingOrder, _ => { });
+        newMesh.LoadDefault(verts, indices, windingOrder);
         return newMesh;
     }
 

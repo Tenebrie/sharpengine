@@ -4,9 +4,11 @@ using Engine.Core.Assets;
 using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
+using Engine.Core.Communication.Multithreading;
 using Engine.Core.Enum;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.Extensions;
+using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Module.Rendering.Renderers;
 using Engine.Module.Rendering.Renderers.Fonts;
@@ -60,7 +62,6 @@ public class RenderingHost : IRenderingHost
         
         ViewMatrixBuffer = resources.RenderDevice.CreateBuffer(new BufferDesc
         {
-            Name = "CameraViewMatrixBuffer",
             Size = MatrixFloat.SizeInBytes,
             Usage = Usage.Dynamic,
             BindFlags = BindFlags.UniformBuffer,
@@ -69,7 +70,6 @@ public class RenderingHost : IRenderingHost
         
         _instanceIndexBuffer = resources.RenderDevice.CreateBuffer(new BufferDesc
         {
-            Name = "ObjectIndexBuffer",
             Size = 16u,
             Usage = Usage.Dynamic,
             BindFlags = BindFlags.UniformBuffer,
@@ -109,7 +109,6 @@ public class RenderingHost : IRenderingHost
         var swapChain = _swapChain.GetDesc();
         RenderTarget = _renderDevice.CreateTexture(new TextureDesc
         {
-            Name = "MSAA Color",
             Type = ResourceDimension.Tex2d,
             Width = (uint)FramebufferSize.X,
             Height = (uint)FramebufferSize.Y,
@@ -122,7 +121,6 @@ public class RenderingHost : IRenderingHost
         
         _renderDepth = _renderDevice.CreateTexture(new TextureDesc
         {
-            Name        = "MSAA Depth",
             Type        = ResourceDimension.Tex2d,
             Width       = (uint)FramebufferSize.X,
             Height      = (uint)FramebufferSize.Y,

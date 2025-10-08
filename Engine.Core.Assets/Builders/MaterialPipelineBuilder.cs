@@ -43,6 +43,13 @@ public static class PipelineBuilder
             _handle.DSVFormat = RenderContext.Current.SwapChain.GetDesc().DepthBufferFormat;
             _handle.InputLayout = new InputLayoutDesc();
         }
+        
+        public Mesh WithPrimitiveTopology(PrimitiveTopology topology)
+        {
+            _handle.PrimitiveTopology = topology;
+            _incrementalHash.Write("PrimitiveTopology", topology.ToString());
+            return this;
+        }
     
         public Mesh WithLayoutElement(LayoutElement layout)
         {
@@ -76,7 +83,7 @@ public static class PipelineBuilder
             return this;
         }
         
-        public Mesh WithAlphaBlending(bool premultiplied = false, bool alphaToCoverage = false)
+        public Mesh WithAlphaBlending(bool premultiplied, bool alphaToCoverage)
         {
             // Blend: straight vs premultiplied alpha
             var rt0 = new RenderTargetBlendDesc
@@ -116,7 +123,6 @@ public static class PipelineBuilder
         public Material(string key)
         {
             _incrementalHash.Write("Key", key);
-            _handle.Desc.Name = "Common Material";
             _handle.Desc.ResourceLayout = new PipelineResourceLayoutDesc
             {
                 DefaultVariableType = ShaderResourceVariableType.Static,

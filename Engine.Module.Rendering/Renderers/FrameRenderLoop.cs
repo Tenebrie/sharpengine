@@ -1,6 +1,7 @@
 using Diligent;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
+using Engine.Core.Communication.Multithreading;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Enum;

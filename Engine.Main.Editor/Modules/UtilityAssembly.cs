@@ -1,6 +1,7 @@
 ﻿using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Main.Editor.Modules.Abstract;
+using SharpGen.Runtime;
 
 namespace Engine.Main.Editor.Modules;
 
@@ -10,6 +11,7 @@ public class UtilityAssembly() : ModularAssembly("Engine.Module.Utility", Engine
     private IBaseEngineContract? Contract { get; set; }
     
     internal override IModularHost? GetHost() => HostBackstage;
+    internal override int ImplicitReloadPriority => 1;
 
     public override void Load()
     {
@@ -37,7 +39,7 @@ public class UtilityAssembly() : ModularAssembly("Engine.Module.Utility", Engine
         }
         catch (Exception ex)
         {
-            Logger.Error($"Error during OnUpdate: {ex.Message}");
+            Logger.Error($"[UtilityAssembly] Error during OnUpdate: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
             return base.Update(deltaTime);
         }

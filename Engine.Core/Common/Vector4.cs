@@ -9,12 +9,12 @@ namespace Engine.Core.Common;
 
 [StructLayout(LayoutKind.Explicit, Size = 32)]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
-public struct Vector4(double x, double y, double z, double w) : IEquatable<Vector4>
+public record struct Vector4(double X, double Y, double Z, double W)
 {
-    [FieldOffset(00)] public double X = x;
-    [FieldOffset(08)] public double Y = y;
-    [FieldOffset(16)] public double Z = z;
-    [FieldOffset(24)] public double W = w;
+    [FieldOffset(00)] public double X = X;
+    [FieldOffset(08)] public double Y = Y;
+    [FieldOffset(16)] public double Z = Z;
+    [FieldOffset(24)] public double W = W;
     
     /** Indexers */
     
@@ -225,28 +225,15 @@ public struct Vector4(double x, double y, double z, double w) : IEquatable<Vecto
     }
     
     /**
-     * Equality check
-     */
-    
-    public bool Equals(Vector4 other)
-    {
-        if (!IsHardwareAccelerated)
-            return X.Equals(other.X) && Y.Equals(other.Y) && Z.Equals(other.Z) && W.Equals(other.W);
-        var compareResult = Avx.CompareEqual(ToAccelerated(), other.ToAccelerated());
-        return Avx.MoveMask(compareResult) == 0b1111;
-    }
-
-    public override bool Equals(object? obj) => obj is Vector4 other && Equals(other);
-    public override int GetHashCode() => HashCode.Combine(X, Y, Z, W);
-    public static bool operator ==(Vector4 left, Vector4 right) => left.Equals(right);
-    public static bool operator !=(Vector4 left, Vector4 right) => !(left == right);
-    
-    /**
      * Implicit conversions
      */
     
     public static implicit operator Silk.NET.Maths.Vector4D<double>(Vector4 v) => new(v.X, v.Y, v.Z, v.W);
     public static implicit operator System.Numerics.Vector4(Vector4 v) => new((float)v.X, (float)v.Y, (float)v.Z, (float)v.W);
+    
+    // Tuple (x, y)
+    public static implicit operator Vector4((double x, double y, double z, double w) t) => new(t.x, t.y, t.z, t.w);
+    public static implicit operator (double x, double y, double z, double w)(Vector4 v) => (v.X, v.Y, v.Z, v.W);
     
     /**
      * Others

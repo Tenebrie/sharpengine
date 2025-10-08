@@ -17,7 +17,7 @@ public partial class UserInterfaceService : Service
     protected int _counter = 0;
     protected Vector2 _lastMouse = Vector2.Zero;
 
-    [OnUpdate]
+    [OnTimer(Frames = 2)]
     protected void OnTimer()
     {
         var mouse = GetService<InputService>().GetMousePosition();
@@ -43,7 +43,7 @@ public partial class UserInterfaceService : Service
         {
             v.Div(mouse, v =>
             {
-                v.Button("Click me", () => _counter++);
+                v.Button("Click me", onClick: () => _counter++);
             });
         });
     }

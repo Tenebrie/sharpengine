@@ -36,7 +36,6 @@ public class CullingComputer : IDisposable
             ShaderSourceStreamFactory = RenderContext.Current.ShaderFactory,
             Desc = new ShaderDesc
             {
-                Name = "CullingComputeShader",
                 ShaderType = ShaderType.Compute
             },
             SourceLanguage = ShaderSourceLanguage.Hlsl
@@ -46,7 +45,6 @@ public class CullingComputer : IDisposable
         {
             PSODesc = new PipelineStateDesc
             {
-                Name = "CullingComputer Pipeline",
                 PipelineType = PipelineType.Compute,
                 ResourceLayout = new PipelineResourceLayoutDesc
                 {
@@ -83,7 +81,6 @@ public class CullingComputer : IDisposable
         
         _constantBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
-            Name = "CullingComputer Constant Buffer",
             Size = ConstantParams.SizeInBytes,
             Usage = Usage.Dynamic,
             BindFlags = BindFlags.UniformBuffer,

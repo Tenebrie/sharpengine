@@ -3,6 +3,7 @@ using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Meshes.Builtins;
 using Engine.Core.Assets.Rendering;
+using Engine.Core.Attributes;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
@@ -11,6 +12,7 @@ using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Extensions;
 using Engine.Core.Lamina;
 using Engine.Core.Logging;
+using Engine.Core.Modules;
 using JetBrains.Annotations;
 using Silk.NET.Maths;
 
@@ -20,6 +22,7 @@ namespace Engine.Core.EntitySystem.Components.Lamina;
 public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable, IDisposable
 {
     [Component] public StaticMeshComponent MeshComponent;
+    [Component] protected WidgetComponent RootWidget;
     
     private Vector2 _inferredSize = new(1920, 1080);
     public Vector2 TextureSize { get; private set; } = new(1920, 1080);
@@ -31,7 +34,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     {
         _inferredSize = TextureSize = new Vector2(FramebufferSize.X, FramebufferSize.Y);
         MeshComponent.StaticMesh = InterfacePlaneMesh.Shared;
-        MeshComponent.Material = MaterialBuilder.CreateFromDisk("Shaders/UserInterface/General").WithCache().Compile();
+        MeshComponent.Material = MaterialBuilder.CreateFromDisk("Shaders/UserInterface/General").Compile();
         MeshComponent.MaterialInstance = MeshComponent.Material.Instantiate();
         MeshComponent.SortOrder = 1;
         MeshComponent.CullingEnabled = false;
@@ -39,7 +42,6 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         Dirty = true;
     }
     
-    [Component] protected WidgetComponent RootWidget;
     public void SetLayout(Action<LaminaLayout> renderFunction)
     {
         var layout = new LaminaLayout(typeof(LaminaLayout));
@@ -75,7 +77,6 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         
         var targetTexture = RenderContext.Current.RenderDevice.CreateTexture(new TextureDesc
         {
-            Name = "LaminaRT",
             Type = ResourceDimension.Tex2d,
             Width = (uint)TextureSize.X * 2,
             Height = (uint)TextureSize.Y * 2,
@@ -131,7 +132,7 @@ public class InterfacePlaneMesh : StaticMesh
 
         var verts = TessellatedPlaneMesh.CreateVerticesXy();
         var indices = TessellatedPlaneMesh.CreateIndices();
-        LoadInternal(verts, indices, WindingOrder.Ccw, builder =>
+        LoadCustomized(verts, indices, WindingOrder.Ccw, Usage.Immutable, builder =>
         {
             builder.WithDepthTest(false, false);
             builder.WithAlphaBlending(false, false);

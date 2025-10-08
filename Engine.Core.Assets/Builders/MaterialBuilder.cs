@@ -34,7 +34,6 @@ public class MaterialBuilder
 
     private MaterialBuilder()
     {
-        _pipeline.Desc.Name = "Unnamed Material";
         _pipeline.Desc.ResourceLayout = new PipelineResourceLayoutDesc
         {
             DefaultVariableType = ShaderResourceVariableType.Static,
@@ -106,7 +105,7 @@ public class MaterialBuilder
         _useCache = cache;
         return this;
     }
-    public MaterialBuilder WithCache()
+    public MaterialBuilder AsSharedMaterial()
     {
         _useCache = true;
         return this;
@@ -166,7 +165,6 @@ public class MaterialBuilder
             ShaderSourceStreamFactory = RenderContext.Current.ShaderFactory,
             Desc = new ShaderDesc
             {
-                Name = $"VertexShader {_shaderPath}",
                 ShaderType = ShaderType.Vertex,
                 UseCombinedTextureSamplers = true
             },
@@ -184,7 +182,6 @@ public class MaterialBuilder
             ShaderSourceStreamFactory = RenderContext.Current.ShaderFactory,
             Desc = new ShaderDesc
             {
-                Name = $"PixelShader {_shaderPath}",
                 ShaderType = ShaderType.Pixel,
                 UseCombinedTextureSamplers = true
             },
@@ -201,7 +198,6 @@ public class MaterialBuilder
         {
             var buffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
             {
-                Name = $"ConstantBuffer {bufferDesc.Name}",
                 BindFlags = BindFlags.UniformBuffer,
                 Size = (ulong)bufferDesc.SizeInBytes,
                 Usage = Usage.Dynamic,

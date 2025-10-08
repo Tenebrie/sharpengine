@@ -96,7 +96,7 @@ public partial class InputHandler
                 
             foreach (var boundAction in inputActionList)
             {
-                try 
+                try
                 {
                     boundAction.Action.Invoke(deltaX * boundAction.X, deltaX * boundAction.Y, deltaX * boundAction.Z, 0.0f);
                 }

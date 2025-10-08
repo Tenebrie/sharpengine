@@ -51,8 +51,12 @@ public class RenderScript : IRenderScript
             srb.GetVariableByName(ShaderType.Vertex, ShaderVariable.InstanceData)?.Set(ticket.View, SetShaderResourceFlags.None);
             srb.GetVariableByName(ShaderType.Vertex, ShaderVariable.ObjectIndex)?.Set(context.ObjectIndexBuffer, SetShaderResourceFlags.None);
         
-            var map = device.MapBuffer<uint>(context.ObjectIndexBuffer, MapType.Write, MapFlags.Discard);
-            map[0] = (uint)ticket.StartIndex;
+            var map = device.MapBuffer(context.ObjectIndexBuffer, MapType.Write, MapFlags.Discard);
+            unsafe
+            {
+                var p = (uint*)map.ToPointer();
+                p[0] = (uint)ticket.StartIndex;
+            }
             device.UnmapBuffer(context.ObjectIndexBuffer, MapType.Write);
             device.CommitShaderResources(srb, ResourceStateTransitionMode.Transition);
 

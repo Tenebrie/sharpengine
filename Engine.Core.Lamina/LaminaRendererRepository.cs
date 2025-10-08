@@ -7,7 +7,7 @@ public static class LaminaRendererRepository
 {
     private static readonly Dictionary<Type, LaminaWidgetRenderer> RegisteredRenderers = new();
 
-    static LaminaRendererRepository()
+    static LaminaRendererRepository() 
     {
         // RegisteredRenderers.Add(typeof(LaminaLayout), new LaminaWidgetRenderer
         // {
@@ -31,9 +31,13 @@ public static class LaminaRendererRepository
     {
         RegisteredRenderers.Remove(typeof(TLayout));
     }
+    public static void UnregisterAll()
+    {
+        RegisteredRenderers.Clear();
+    }
     
     public static bool TryGet(LaminaLayout layout, [MaybeNullWhen(false)] out LaminaWidgetRenderer renderer)
     {
-        return RegisteredRenderers.TryGetValue(layout.LayoutType, out renderer);
+        return RegisteredRenderers.TryGetValue(layout.Type, out renderer);
     }
 }

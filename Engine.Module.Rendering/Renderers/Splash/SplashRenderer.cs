@@ -51,7 +51,6 @@ public static class SplashRenderer
         
         var vertexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
-            Name = "SplashVertexBuffer",
             Usage = Usage.Dynamic,
             BindFlags = BindFlags.VertexBuffer,
             CPUAccessFlags = CpuAccessFlags.Write,
@@ -68,7 +67,6 @@ public static class SplashRenderer
         }
         var indexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
-            Name = "SplashIndexBuffer",
             Usage = Usage.Immutable,
             BindFlags = BindFlags.IndexBuffer,
             CPUAccessFlags = CpuAccessFlags.None,

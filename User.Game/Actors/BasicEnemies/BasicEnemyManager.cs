@@ -27,7 +27,7 @@ public partial class BasicEnemyManager : Actor
         InstanceManager.InstanceMaterial = MaterialBuilder
             .CreateFromDisk("Shaders/cube")
             .SetTexture(Texture.CreateFromDisk("Textures/metal-albedo.png"))
-            .WithCache()
+            .AsSharedMaterial()
             .Compile();
         // InstanceManager.Material =
         //     MaterialBuilder.Begin(typeof(BasicEnemyManager)).SetSamplingTexture(false).Compile();

@@ -61,7 +61,7 @@ internal static class Editor
             WorkspaceAssembly,
         ];
         
-        GCSettings.LatencyMode = GCLatencyMode.SustainedLowLatency;
+        GCSettings.LatencyMode = GCLatencyMode.LowLatency;
 
         MainWindow.Load += () =>
         {
@@ -97,6 +97,9 @@ internal static class Editor
 
         MainWindow.Update += deltaTime =>
         {
+            if (AssemblyRepository.UpdatesSuspended)
+                return;
+            
             MainThreadTask.ExecuteAllQueued();
             
             foreach (var libraryAssembly in AssemblyRepository.LibraryAssemblies.Values)

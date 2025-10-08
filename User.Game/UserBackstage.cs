@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Runtime;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
@@ -18,7 +19,7 @@ public partial class UserBackstage : GameplayHostBackstage
     [OnReady]
     protected void OnReady()
     {
-        // CreateScene<UserScene>();
+        CreateScene<UserScene>();
         CreateScene<BasicEnemyScene>();
     }
     

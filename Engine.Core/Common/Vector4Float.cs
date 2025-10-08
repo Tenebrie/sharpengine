@@ -3,12 +3,12 @@
 namespace Engine.Core.Common;
 
 [StructLayout(LayoutKind.Explicit, Size = 16)]
-public struct Vector4Float(float x, float y, float z, float w)
+public record struct Vector4Float(float X, float Y, float Z, float W)
 {
-    [FieldOffset(0)]  public float X = x;
-    [FieldOffset(4)]  public float Y = y;
-    [FieldOffset(8)]  public float Z = z;
-    [FieldOffset(12)] public float W = w;
+    [FieldOffset(0)]  public float X = X;
+    [FieldOffset(4)]  public float Y = Y;
+    [FieldOffset(8)]  public float Z = Z;
+    [FieldOffset(12)] public float W = W;
     
     public byte[] ToByteArray()
     {

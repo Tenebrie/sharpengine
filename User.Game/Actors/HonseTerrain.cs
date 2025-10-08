@@ -22,7 +22,7 @@ public partial class HonseTerrain : Actor
         Mesh.MaterialInstance = MaterialBuilder.CreateFromDisk("Shaders/cube")
             .SetTextureMode(TextureAddressMode.Wrap)
             .SetTexture(Texture.CreateFromDisk("Textures/honse-terrain-looped.png"))
-            .WithCache()
+            .AsSharedMaterial()
             .Instantiate()
             .SetUvScale(4.5);
     }

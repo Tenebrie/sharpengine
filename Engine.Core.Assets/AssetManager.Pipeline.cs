@@ -13,7 +13,6 @@ public class PipelineAssetManager : IDisposable
         if (_cachedPipelines.TryGetValue((mesh.HashCode, material.HashCode), out var pipeline))
             return pipeline;
 
-        Logger.Info("Creating new PSO");
         pipeline = PipelineBuilder.ComposeWithoutCache(mesh, material);
         _cachedPipelines[(mesh.HashCode, material.HashCode)] = pipeline;
         return pipeline;

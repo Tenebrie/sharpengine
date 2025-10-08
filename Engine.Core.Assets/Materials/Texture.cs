@@ -2,6 +2,7 @@
 using System.Reflection;
 using Diligent;
 using Engine.Core.Assets.Rendering;
+using Engine.Core.Communication.Multithreading;
 using Engine.Core.Communication.Tasks;
 using Engine.Core.Filesystem;
 using Engine.Core.Logging;
@@ -172,7 +173,6 @@ public sealed class Texture : ITextureAsset, IDisposable
         if (AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Textures.TryGet(filepath, out var texture))
             return texture;
         
-        Logger.Info("Loading!");
         texture = CreateFromDiskWithoutCache(filepath);
         AssetManager.AssemblyShared(Assembly.GetCallingAssembly()).Textures.Put(filepath, texture);
         return texture;

@@ -1,4 +1,3 @@
-using System.Drawing;
 using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Renderers;
@@ -8,6 +7,7 @@ using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.Lamina;
 using Engine.Core.Logging;
+using Engine.Module.Utility.Services;
 using JetBrains.Annotations;
 
 namespace Engine.Module.Utility.Lamina.Components;
@@ -19,34 +19,47 @@ public partial class LaminaButton : WidgetComponent
     {
         if (layout is not ButtonLayout buttonLayout)
             throw new ArgumentException($"Expected layout of type {nameof(ButtonLayout)}, got {layout.GetType().Name}");
-        layout.Add(new LabelLayout(buttonLayout.Text));
+        
+        layout.Add(new LabelLayout(buttonLayout.Props.Label));
     }
-    
+
+    private Material? _material = null;
     private MaterialInstance? _materialInstance = null;
 
-    [LaminaRenderer]
     protected override void Render(LaminaLayout layout, ILaminaRenderContext context)
     {
         if (layout is not ButtonLayout buttonLayout)
             throw new ArgumentException($"Expected layout of type {nameof(ButtonLayout)}, got {layout.GetType().Name}");
 
-        var material = MaterialBuilder.CreateFromDisk("Shaders/UserInterface/General").WithCache().Compile();
-        var transform = Transform.Identity;
-        if (_materialInstance == null)
+        if (_material == null || _materialInstance == null)
         {
-            var textureSize = new Vector2(120, 64);
-            var scale = textureSize / RenderContext.Current.RenderTargetSize;
-            transform.Scale = new Vector3(scale.X, scale.Y, 1.0) * 2;
-            _materialInstance = material.Instantiate().SetTintColor(Color.Red);
+            _material = MaterialBuilder.CreateFromDisk("Shaders/UserInterface/General").Compile();
+            _materialInstance = _material.Instantiate().SetTintColor(buttonLayout.Props.BackgroundColor);
         }
+        
+        Position = context.Position;
+        Size = new Vector2(120, 64);
+            
+        Transform = Transform.Identity;
+        var screenPosition = context.Position / RenderContext.Current.RenderTargetSize - Vector2.One / 2;
+        var scale = Size / RenderContext.Current.RenderTargetSize;
+        Transform.Scale = new Vector3(scale.X, scale.Y, 1.0) * 2;
+        Transform.Position = new Vector3(screenPosition.X, -screenPosition.Y, 0) * 2 + new Vector3(scale.X, -scale.Y, 0.0);
+        
         context.RenderRequest(new LaminaRenderRequest
         {
             InstanceCount = 1,
-            InstanceTransforms = [transform],
-            Material = material,
+            InstanceTransforms = [Transform],
+            Material = _material,
             Mesh = InterfacePlaneMesh.Shared,
             RenderScript = IRenderScript.Default,
             MaterialInstances = [_materialInstance]
         });
+    }
+    
+    [OnInput(InputAction.MouseMove, 1.0, 1.0)]
+    protected void OnMouseMove(Vector2 direction)
+    {
+        Logger.Info(direction);
     }
 }

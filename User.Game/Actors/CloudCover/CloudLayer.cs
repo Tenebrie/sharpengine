@@ -29,7 +29,7 @@ public partial class CloudLayer : Actor
                 densityMax: 1.0,
                 sunDirection: Vector3.One
             ))
-            .WithCache()
+            .AsSharedMaterial()
             .Compile();
     }
 

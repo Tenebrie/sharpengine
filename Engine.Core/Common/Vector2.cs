@@ -10,11 +10,11 @@ namespace Engine.Core.Common;
 [SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 [SuppressMessage("ReSharper", "UnusedMember.Local")]
 [SuppressMessage("ReSharper", "UnusedMember.Global")]
-public struct Vector2(double x, double y)
+public record struct Vector2(double X, double Y)
 {
-    [FieldOffset(00)] public double X = x;
-    [FieldOffset(08)] public double Y = y;
-    
+    [FieldOffset(00)] public double X = X;
+    [FieldOffset(08)] public double Y = Y;
+
     public double this[int i] => i switch
     {
         0 => X,
@@ -82,18 +82,34 @@ public struct Vector2(double x, double y)
     public static Vector2 operator *(Vector2 a, Vector2 b) => a.Promote() * b.Promote();
     public static Vector2 operator /(Vector2 a, double b) => a.Promote() / b;
     public static Vector2 operator /(Vector2 a, Vector2 b) => a.Promote() / b.Promote();
-    public static bool operator ==(Vector2 a, Vector2 b) => a.Promote() == b.Promote();
-    public static bool operator !=(Vector2 a, Vector2 b) => !(a == b);
+    
+    /**
+     * Implicit conversions
+     */
 
     // Vector4
+    
     public static implicit operator Vector2(Vector4 v) => Unsafe.As<Vector4, Vector2>(ref v);
     public static implicit operator Vector4(Vector2 v) => Unsafe.As<Vector2, Vector4>(ref v);
+    
     // System.Numerics.Vector2
+    
     public static implicit operator Vector2(System.Numerics.Vector2 v) => new(v.X, v.Y);
     public static implicit operator System.Numerics.Vector2(Vector2 v) => new((float)v.X, (float)v.Y);
+    
     // Silk.NET.Maths.Vector2D<double>
+    
     public static implicit operator Vector2(Silk.NET.Maths.Vector2D<double> v) => new(v.X, v.Y);
     public static implicit operator Silk.NET.Maths.Vector2D<double>(Vector2 v) => new(v.X, v.Y);
+    
+    // Tuple (x, y)
+    
+    public static implicit operator Vector2((double x, double y) t) => new(t.x, t.y);
+    public static implicit operator (double x, double y)(Vector2 v) => (v.X, v.Y);
+    
+    /**
+     * Others
+     */
     
     public override string ToString() => $"Vector2({X}, {Y})";
 }

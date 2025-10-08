@@ -30,7 +30,6 @@ public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposabl
     {
         var buffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
-            Name = "SharedInstanceTransformBuffer",
             Size = (ulong)_pageSize,
             Usage = Usage.Dynamic,
             BindFlags = BindFlags.ShaderResource,
@@ -42,7 +41,6 @@ public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposabl
             throw new InvalidOperationException("Failed to create instance buffer.");
         var bufferView = buffer.CreateView(new BufferViewDesc
         {
-           Name = "SharedInstanceTransformBufferView",
            ViewType = BufferViewType.ShaderResource,
         });
         if (bufferView == null)
@@ -60,15 +58,16 @@ public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposabl
         _activePage = 0;
     }
 
+    private readonly List<InstanceBufferTicket> _tickets = [];
     public List<InstanceBufferTicket> Write(int instanceCount, T[] instances)
     {
         var pagesNeeded = (_cursorPosition + instanceCount) / EntitiesPerPage + 1;
         var instancesWritten = 0;
-        var tickets = new List<InstanceBufferTicket>();
+        _tickets.Clear();
         for (var i = 0; i < pagesNeeded; i++)
         {
             var instancesInThisPage = Math.Min(instanceCount - instancesWritten, EntitiesPerPage - _cursorPosition);
-            tickets.Add(new InstanceBufferTicket
+            _tickets.Add(new InstanceBufferTicket
             {
                 View = ActiveBufferView,
                 StartIndex = _cursorPosition,
@@ -84,7 +83,7 @@ public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposabl
             _activePage += 1;
         }
         
-        return tickets;
+        return _tickets;
     }
 
     private void WriteSinglePage(int instanceCount, Span<T> instances)
@@ -93,13 +92,21 @@ public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposabl
             return;
         var mapFlags = _cursorPosition == 0 ? MapFlags.Discard : MapFlags.NoOverwrite;
 
-        var map = RenderContext.Current.ImmediateContext.MapBuffer<T>(
-            ActiveBuffer,
-            MapType.Write,
-            mapFlags);
+        // var map = RenderContext.Current.ImmediateContext.MapBuffer<T>(
+        //     ActiveBuffer,
+        //     MapType.Write,
+        //     mapFlags);
+        //
+        // var dest = map.Slice(_cursorPosition, instanceCount);
+        var map = RenderContext.Current.ImmediateContext.MapBuffer(ActiveBuffer, MapType.Write, mapFlags);
 
-        var dest = map.Slice(_cursorPosition, instanceCount);
-        instances.CopyTo(dest);
+        unsafe
+        {
+            var dest = new Span<T>(
+                (byte*)map.ToPointer() + _cursorPosition * Unsafe.SizeOf<T>(),
+                instanceCount);
+            instances.CopyTo(dest);
+        }
 
         RenderContext.Current.ImmediateContext.UnmapBuffer(ActiveBuffer, MapType.Write);
         _cursorPosition += instanceCount;

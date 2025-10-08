@@ -27,7 +27,6 @@ public class InfiniteInstanceReadOnlyBuffer<T> : IDisposable where T : unmanaged
     {
         var writeBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
-            Name = "InfiniteInstanceReadOnlyBuffer",
             Size = (ulong)_pageSize,
             Usage = Usage.Default,
             BindFlags = BindFlags.UnorderedAccess,
@@ -40,7 +39,6 @@ public class InfiniteInstanceReadOnlyBuffer<T> : IDisposable where T : unmanaged
         
         var writeBufferView = writeBuffer.CreateView(new BufferViewDesc
         {
-           Name = "InfiniteInstanceReadOnlyBuffer View",
            ViewType = BufferViewType.UnorderedAccess,
         });
         if (writeBufferView == null)
@@ -48,7 +46,6 @@ public class InfiniteInstanceReadOnlyBuffer<T> : IDisposable where T : unmanaged
         
         var stagingBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
-            Name = "InfiniteInstanceReadOnlyBuffer Staging",
             Size = (ulong)_pageSize,
             Usage = Usage.Staging,
             BindFlags = BindFlags.None,
