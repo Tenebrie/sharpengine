@@ -41,6 +41,22 @@ internal static class Editor
         if (OperatingSystem.IsMacOS())
             opts.Size /= 2;
         
+        // AppDomain.CurrentDomain.FirstChanceException += (sender, e) =>
+        // {
+        //     Logger.Log($"First chance exception: {e.Exception}" +
+        //                $"\nSender: {sender}" +
+        //                $"\nStack trace: {e.Exception.StackTrace}");
+        // };
+        // TaskScheduler.UnobservedTaskException += (s, e) =>
+        // {
+        //     Logger.Error($"Unobserved task exception: {e.Exception}");
+        //     e.SetObserved(); // optional
+        // };
+        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+        {
+            Logger.Fatal($"UNHANDLED (IsTerminating={e.IsTerminating}): {e.ExceptionObject}");
+        };
+        
         GuestAssemblyLoader.CleanTempFolder();
 
         WindowStateManager.TryLoadWindowState(ref opts);
@@ -149,6 +165,7 @@ internal static class Editor
                     (assembly, exception) => Logger.Error($"Failed to notify about module reload: {assembly}", exception)
                 );
             }
+            RenderingAssembly.AwaitRenderThread();
         };
 
         MainWindow.Closing += () =>

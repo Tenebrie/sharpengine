@@ -27,6 +27,7 @@ public class InfiniteInstanceReadOnlyBuffer<T> : IDisposable where T : unmanaged
     {
         var writeBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
+            Name = $"InstanceBuffer<{typeof(T).Name}>_{_gpuBuffers.Count}",
             Size = (ulong)_pageSize,
             Usage = Usage.Default,
             BindFlags = BindFlags.UnorderedAccess,
@@ -46,6 +47,7 @@ public class InfiniteInstanceReadOnlyBuffer<T> : IDisposable where T : unmanaged
         
         var stagingBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
+            Name = $"InstanceStagingBuffer<{typeof(T).Name}>_{_stagingBuffers.Count}",
             Size = (ulong)_pageSize,
             Usage = Usage.Staging,
             BindFlags = BindFlags.None,

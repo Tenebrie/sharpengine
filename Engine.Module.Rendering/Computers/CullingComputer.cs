@@ -81,6 +81,7 @@ public class CullingComputer : IDisposable
         
         _constantBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
+            Name = "CullingComputer Constant Buffer",
             Size = ConstantParams.SizeInBytes,
             Usage = Usage.Dynamic,
             BindFlags = BindFlags.UniformBuffer,
@@ -153,6 +154,8 @@ public class CullingComputer : IDisposable
         for (var index = 0; index < FrontQueue.Count; index++)
         {
             var renderable = FrontQueue[index];
+            if (renderable is Atom atom && !Atom.IsValid(atom))
+                continue;
             _tempEntries[index] = new InstanceEntry(
                 renderable.BoundingSphereWorldOrigin, renderable.BoundingSphereWorldRadius);
         }

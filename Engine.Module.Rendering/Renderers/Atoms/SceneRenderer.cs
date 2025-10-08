@@ -3,7 +3,9 @@ using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Renderers;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
+using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
+using Engine.Core.Logging;
 using Engine.Core.Memory;
 using Engine.Core.Profiling;
 using Engine.Module.Rendering.Utilities;
@@ -22,6 +24,8 @@ public class SceneRenderer(RenderingHost host)
         for (var i = 0; i < atomsToRenderCount; i++)
         {
             var renderable = atomsToRender[i];
+            if (renderable is Atom atom && !Atom.IsValid(atom))
+                continue;
             var request = renderable.ProduceRenderRequest();
             if (!_renderRequestPool.TryGetValue(request.HashCode, out var mergedRequest))
             {
@@ -56,9 +60,9 @@ public class SceneRenderer(RenderingHost host)
                 RenderContext.Current.ImmediateContext,
                 req.InstanceCount,
                 req.Mesh,
-                (Transform[])req.InstanceTransforms.Array,
+                (TransformSnapshot[])req.InstanceTransforms.Array,
                 req.Material,
-                (MaterialInstance[])req.MaterialInstances.Array);
+                (MaterialInstanceSnapshot[])req.MaterialInstances.Array);
         }
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingSubmitAtoms);
         MemoryManager.FreeDomain(MemoryDomain.Rendering);
@@ -89,9 +93,9 @@ public class SceneRenderer(RenderingHost host)
                 RenderScript = request.RenderScript,
                 InstanceCount = request.InstanceCount,
                 InstanceTransforms = 
-                    MemoryManager.ProduceArray<Transform>(MemoryDomain.Rendering, request.InstanceCount),
+                    MemoryManager.ProduceArray<TransformSnapshot>(MemoryDomain.Rendering, request.InstanceCount),
                 MaterialInstances =
-                    MemoryManager.ProduceArray<MaterialInstance>(MemoryDomain.Rendering, request.InstanceCount),
+                    MemoryManager.ProduceArray<MaterialInstanceSnapshot>(MemoryDomain.Rendering, request.InstanceCount),
                 SortOrder = request.SortOrder
             };
 

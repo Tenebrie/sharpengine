@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Diligent;
 using Engine.Core.Assets;
 using Engine.Core.Logging;
@@ -62,7 +63,12 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
                 case DebugMessageSeverity.Warning:
                 case DebugMessageSeverity.Error:
                 case DebugMessageSeverity.FatalError:
-                    Console.WriteLine($"Diligent Engine: {severity} in {function}() ({file}, {line}): {message}");
+                    // Console.WriteLine($"Diligent Engine: {severity} in {function}() ({file}, {line}): {message}");
+                    // Hard exit the process now
+                    if (Debugger.IsAttached)
+                        Debugger.Break();
+                    // Logger.Info("Crashing due to Diligent Engine fatal error.");
+                    // Environment.FailFast($"Diligent Engine: {severity} in {function}() ({file}, {line}): {message}");
                     break;
                 case DebugMessageSeverity.Info:
                     Console.WriteLine($"Diligent Engine: {severity} {message}");
@@ -96,10 +102,10 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
         engineFactory.CreateDeviceAndContextsD3D12(new EngineD3D12CreateInfo
         {
             EnableValidation = true,
-            ValidationFlags = ValidationFlags.CheckShaderBufferSize,
-            D3D12ValidationFlags = D3D12ValidationFlags.EnableGpuBasedValidation | D3D12ValidationFlags.BreakOnCorruption,
+            ValidationFlags = ValidationFlags.None,
+            D3D12ValidationFlags = D3D12ValidationFlags.BreakOnCorruption,
             // ValidationFlags = ValidationFlags.CheckShaderBufferSize,
-            NumDeferredContexts = 8,
+            NumDeferredContexts = 8
         }, out renderDevice, out IDeviceContext[] contextsOut);
         
         immediateContext = contextsOut[0];
@@ -108,7 +114,10 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
         swapChain = engineFactory.CreateSwapChainD3D12(
             renderDevice,
             immediateContext,
-            new SwapChainDesc(),
+            new SwapChainDesc()
+            {
+                BufferCount = 2,
+            },
             new FullScreenModeDesc(),
             new Win32NativeWindow
             {

@@ -62,6 +62,7 @@ public class RenderingHost : IRenderingHost
         
         ViewMatrixBuffer = resources.RenderDevice.CreateBuffer(new BufferDesc
         {
+            Name = "ViewMatrixBuffer",
             Size = MatrixFloat.SizeInBytes,
             Usage = Usage.Dynamic,
             BindFlags = BindFlags.UniformBuffer,
@@ -70,6 +71,7 @@ public class RenderingHost : IRenderingHost
         
         _instanceIndexBuffer = resources.RenderDevice.CreateBuffer(new BufferDesc
         {
+            Name = "InstanceIndexBuffer",
             Size = 16u,
             Usage = Usage.Dynamic,
             BindFlags = BindFlags.UniformBuffer,
@@ -100,7 +102,7 @@ public class RenderingHost : IRenderingHost
         
         CreateRenderTargets();
         
-        RootWindow.Render += RenderSingleFrameSync;
+        // RootWindow.Render += RenderSingleFrameSync;
         RootWindow.FramebufferResize += OnFramebufferResize;
     }
 
@@ -139,19 +141,14 @@ public class RenderingHost : IRenderingHost
         _renderDepth?.Dispose();
     }
 
-    private void RenderSingleFrameSync(double deltaTime)
-    {
-        _frameRenderLoop.RenderSingleFrame(deltaTime).GetAwaiter().GetResult();
-    }
-    
     public void RenderEngineLoadingScreen()
     {
         new LoadingSplashRenderLoop(this).RenderEngineLoadingScreen();
     }
 
-    public Task RenderSingleFrame(double deltaTime)
+    public void RenderSingleFrame(double deltaTime)
     {
-        return _frameRenderLoop.RenderSingleFrame(deltaTime);
+        _frameRenderLoop.RenderSingleFrame(deltaTime);
     }
     
     private void OnFramebufferResize(Vector2D<int> size)
@@ -172,7 +169,7 @@ public class RenderingHost : IRenderingHost
     
     public void HotShutdown()
     { 
-        RootWindow.Render -= RenderSingleFrameSync;
+        // RootWindow.Render -= RenderSingleFrameSync;
         RootWindow.FramebufferResize -= OnFramebufferResize;
         try
         {

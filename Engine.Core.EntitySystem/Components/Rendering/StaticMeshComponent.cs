@@ -5,6 +5,7 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
+using Engine.Core.Logging;
 using JetBrains.Annotations;
 
 namespace Engine.Core.EntitySystem.Components.Rendering;
@@ -39,12 +40,16 @@ public partial class StaticMeshComponent : ActorComponent, IRenderable, ICullabl
     public Vector3 BoundingSphereWorldOrigin => WorldTransform.Position;
     public double BoundingSphereWorldRadius => BoundingSphere.WorldRadius;
 
-    private readonly Transform[] _singleComponentTransforms = new Transform[1];
+    private readonly TransformSnapshot[] _singleComponentTransforms = new TransformSnapshot[1];
     private RenderRequest? _renderRequest;
     
     public RenderRequest ProduceRenderRequest()
     {
-        _singleComponentTransforms[0] = WorldTransform;
+        if (_singleComponentTransforms == null)
+            throw new NullReferenceException($"{nameof(_singleComponentTransforms)} was null");
+        if (WorldTransform == null)
+            throw new NullReferenceException($"{nameof(WorldTransform)} was null");
+        _singleComponentTransforms[0] = WorldTransform.Snapshot();
         if (_renderRequest != null)
             return (RenderRequest)_renderRequest;
         
@@ -56,7 +61,7 @@ public partial class StaticMeshComponent : ActorComponent, IRenderable, ICullabl
 
             InstanceCount = 1,
             InstanceTransforms = _singleComponentTransforms,
-            MaterialInstances = [MaterialInstance],
+            MaterialInstances = [MaterialInstance.Snapshot()],
             
             SortOrder = SortOrder
         };

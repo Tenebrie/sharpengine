@@ -14,7 +14,10 @@ public abstract class ModularAssembly(string assemblyName, EngineModule module) 
     public override void Unload()
     {
         if (Loader.Assembly is not null)
+        {
             MainThreadTask.Purge(Loader.Assembly);
+            RenderThreadTask.Purge(Loader.Assembly);
+        }
         base.Unload();
     }
     

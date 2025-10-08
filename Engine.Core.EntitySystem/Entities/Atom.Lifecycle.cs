@@ -4,6 +4,7 @@ using Engine.Core.EntitySystem.Services;
 using Engine.Core.Enum;
 using Engine.Core.Modules;
 using Engine.Core.Profiling;
+using Engine.Core.Profiling.Attributes;
 
 namespace Engine.Core.EntitySystem.Entities;
 
@@ -74,7 +75,7 @@ public partial class Atom
     }
 
     private static readonly ArrayPool<Atom> AtomPool = ArrayPool<Atom>.Create();
-    protected internal void ProcessLogicFrame(double deltaTime)
+    protected void ProcessLogicFrame(double deltaTime)
     {
         var localDelta = deltaTime * TimeScale;
         if (IsTicking)
@@ -84,7 +85,6 @@ public partial class Atom
 
             selfPf.StopAndReport(GetType(), ProfilingContext.OnUpdateCallback);
         }
-
 
         var count = Children.Count;
         var buffer = AtomPool.Rent(count);

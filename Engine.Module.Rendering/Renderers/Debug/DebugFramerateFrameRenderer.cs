@@ -1,6 +1,7 @@
 ﻿using System.Drawing;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
+using Engine.Core.Logging;
 using Engine.Core.Profiling;
 using Engine.Module.Rendering.Renderers.Fonts;
 using Engine.Module.Rendering.Utilities;
@@ -108,12 +109,13 @@ public class DebugFramerateFrameRenderer(RenderingHost host, TextRenderer textRe
     {
         _frameTimeAccumulator += deltaTime;
         _frameTimes.Add(deltaTime);
-        if (_frameTimeAccumulator < 1)
+        if (_frameTimeAccumulator < 1.0)
             return;
         
         var averageFrameTime = _frameTimes.Count > 0 ? _frameTimes.Average() : 0.0;
         var framerate = 1.0 / averageFrameTime;
-        
+
+        _frameTimes.Sort();
         var onePercentCount = Math.Max(1, (int)Math.Ceiling(_frameTimes.Count * 0.01));
         var slowestFrames = _frameTimes.OrderByDescending(x => x).Take(onePercentCount).ToList();
         var onePercentLowFrameTime = slowestFrames.Count != 0 ? slowestFrames.Average() : 0.0;

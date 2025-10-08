@@ -13,7 +13,7 @@ public interface IRenderScript
         IDeviceContext device,
         int instanceCount,
         StaticMesh mesh,
-        Transform[] worldTransforms,
+        TransformSnapshot[] worldTransforms,
         Material material,
-        MaterialInstance[] materialInstances);
+        MaterialInstanceSnapshot[] materialInstances);
 }

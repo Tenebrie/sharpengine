@@ -125,6 +125,7 @@ public class StaticMesh : IDisposable
             
             _vertexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
             {
+                Name = "VertexBuffer",
                 Usage = usage,
                 BindFlags = BindFlags.VertexBuffer,
                 Size = RenderingVertex.SizeInBytes * (uint)vertices.Length
@@ -133,6 +134,7 @@ public class StaticMesh : IDisposable
 
             _indexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
             {
+                Name = "IndexBuffer",
                 Usage = usage,
                 BindFlags = BindFlags.IndexBuffer,
                 Size = (ulong)(Unsafe.SizeOf<uint>() * indices.Length)

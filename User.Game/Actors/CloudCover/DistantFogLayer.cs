@@ -4,6 +4,7 @@ using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Common;
+using Engine.Core.Communication.Tasks;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
@@ -48,14 +49,21 @@ public partial class DistantFogLayer : Actor
     }
 
     private double _totalTime = Random.Shared.NextDouble() * 750.0;
+    
+    private Camera _camera;
+    [OnReady]
+    protected void OnReadyCamera()
+    {
+        _camera = ParentScene.Actors.OfType<Camera>().First();
+    }
+    
     [OnUpdate]
     protected void OnUpdate(double deltaTime)
     {
         _totalTime += deltaTime;
         var windOffset = new Vector2(_totalTime, _totalTime) * 310000 / (-LayerHeight * LayerHeight);
-        var camera = ParentScene.Actors.OfType<Camera>().First();
-        Transform.Position = new Vector3(camera.WorldTransform.Position.X - 100, LayerHeight + RenderOffset, camera.WorldTransform.Position.Z - 2000);
-        var playerOffset = new Vector2(camera.WorldTransform.Position.X, camera.WorldTransform.Position.Z) /
+        Transform.Position = new Vector3(_camera.WorldTransform.Position.X - 100, LayerHeight + RenderOffset, _camera.WorldTransform.Position.Z - 2000);
+        var playerOffset = new Vector2(_camera.WorldTransform.Position.X, _camera.WorldTransform.Position.Z) /
                            -LayerHeight;
         MeshComponent.MaterialInstance.SetUvOffset(windOffset + playerOffset * 10);
     }
@@ -65,15 +73,17 @@ public partial class DistantFogLayer : Actor
         private double _totalTime = 0.0;
 
         [OnUpdate]
-        protected void OnUpdate(double deltaTime)
+        protected void OnUpdate()
         {
-            _totalTime += deltaTime;
-            _material.UpdateConstantBuffer("CloudParams", new CloudParams(
-                time: _totalTime,
-                densityMin: 0.0,
-                densityMax: 0.0,
-                sunDirection: new Vector3(1.0, 1.0, 1.0).Normalized()
-            ));
+            RenderThreadTask.Run("CloudLayerService -> Update", () =>
+            {
+                _material.UpdateConstantBuffer("CloudParams", new CloudParams(
+                    time: 10,
+                    densityMin: 0.0,
+                    densityMax: 0.0,
+                    sunDirection: new Vector3(1.0, 1.0, 1.0).Normalized()
+                ));
+            });
         }
     }
     

@@ -95,7 +95,7 @@ public partial class Atom : IAtom
     [SuppressMessage("ReSharper", "RedundantAlwaysMatchSubpattern")]
     public static bool IsValid(Atom? atom)
     {
-        return atom is { IsBeingDestroyed: false, Backstage: not null };
+        return atom is { IsBeingDestroyed: false, _backstage: not null };
     }
     
     public static bool IsStale(Atom? atom)

@@ -1,4 +1,6 @@
-﻿using Engine.Core.Logging;
+﻿using System.Diagnostics;
+using Engine.Core.Communication.Tasks;
+using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Main.Editor.Modules.Abstract;
 
@@ -39,10 +41,87 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
             RenderingHost.InitializeRenderers();
             _isInitialized = true;
         }
+
+        StartRenderThread();
+    }
+    
+    private Thread? _renderThread;
+    private enum RenderThreadState { Stopped, Running, Paused }
+    private volatile RenderThreadState _renderThreadState = RenderThreadState.Stopped;
+    private void StartRenderThread()
+    {
+        if (_renderThreadState == RenderThreadState.Paused)
+        {
+            _renderThreadState = RenderThreadState.Running;
+            return;
+        }
+        
+        if (_renderThread is { IsAlive: true } && _renderThreadState == RenderThreadState.Running)
+            return;
+        
+        _renderThreadState = RenderThreadState.Running;
+        _renderThread = new Thread(RenderThreadLoop)
+        {
+            Name = "RenderThread",
+            IsBackground = true
+        };
+        _renderThread.Start();
+    }
+    
+    private SemaphoreSlim _renderSemaphore = new(1, 1);
+    private Barrier _renderBarrier = new(2);
+    private void RenderThreadLoop()
+    {
+        try
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            long lastFrameTime = 0;
+        
+            while (_renderThreadState != RenderThreadState.Stopped)
+            {
+                if (_renderThreadState == RenderThreadState.Paused)
+                {
+                    Thread.Sleep(25);
+                    continue;
+                }
+                _renderBarrier.SignalAndWait();
+                
+                var currentTime = stopwatch.ElapsedMilliseconds;
+                var deltaTime = (currentTime - lastFrameTime) / 1000.0;
+                lastFrameTime = currentTime;
+                
+
+                RenderingHost?.RenderSingleFrame(deltaTime);
+                RenderThreadTask.ExecuteAllQueued();
+                
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error($"RenderingAssembly: Render thread crashed: {ex}");
+            throw;
+        }
+    }
+
+    public void AwaitRenderThread()
+    {
+        _renderBarrier.SignalAndWait();
+    }
+    
+    private void PauseRenderThread()
+    {
+        _renderThreadState = RenderThreadState.Paused;
+    }
+    private void StopRenderThread()
+    {
+        _renderThreadState = RenderThreadState.Stopped;
+        _renderThread?.Join();
+        _renderThread = null;
     }
 
     public override void Unload()
     {
+        PauseRenderThread();
         RenderingHost?.HotShutdown();
         RenderingHost = null;
         base.Unload();
@@ -50,6 +129,7 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
 
     public override void Destroy()
     {
+        StopRenderThread();
         RenderingHost?.HotShutdown();
         if (_isInitialized)
             RenderingBootstrap?.Shutdown();

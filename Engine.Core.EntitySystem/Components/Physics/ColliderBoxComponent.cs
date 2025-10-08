@@ -27,11 +27,11 @@ public partial class ColliderBoxComponent : ActorComponent
     
     public int GetInstanceCount() => 1;
     
-    private readonly Transform[] _singleComponentTransforms = new Transform[1];
+    private readonly TransformSnapshot[] _singleComponentTransforms = new TransformSnapshot[1];
 
     public RenderRequest Render()
     {
-        _singleComponentTransforms[0] = WorldTransform;
+        _singleComponentTransforms[0] = WorldTransform.Snapshot();
         return new RenderRequest
         {
             Mesh = StaticMesh,
@@ -40,7 +40,7 @@ public partial class ColliderBoxComponent : ActorComponent
 
             InstanceCount = 1,
             InstanceTransforms = _singleComponentTransforms,
-            MaterialInstances = [Material.Instantiate()]
+            MaterialInstances = [Material.Instantiate().Snapshot()]
         };
         // LineSphereMesh.Shared.Render(1, _singleComponentTransforms, [WireframeMaterial.Shared], LineSphereMesh.ColorMode.Collider);
     }

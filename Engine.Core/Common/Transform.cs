@@ -326,4 +326,6 @@ public class Transform
     {
         result.Data = Data * child;
     }
+
+    public TransformSnapshot Snapshot() => new(this);
 }

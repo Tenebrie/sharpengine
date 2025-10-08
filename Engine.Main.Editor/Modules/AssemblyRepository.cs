@@ -211,7 +211,8 @@ public static class AssemblyRepository
             .ToList();
         Logger.ShowPersistent(LogLevel.Warn, "AssembliesReloadNotice", $"Reloading {assembliesToReload.Count} projects...");
         Logger.Debug("Reloading projects:\n  - " + string.Join("\n  - ", assembliesToReload.Select(a => a.Name + " (priority " + a.ReloadPriority + ")")));
-        Editor.RenderingAssembly.RenderingHost?.RenderSingleFrame(0);
+        // TODO: Bad idea?
+        // Editor.RenderingAssembly.RenderingHost?.RenderSingleFrame(0);
         foreach (var assembly in assembliesToReload)
             assembly.Reload();
         AssembliesAwaitingReload.Clear();

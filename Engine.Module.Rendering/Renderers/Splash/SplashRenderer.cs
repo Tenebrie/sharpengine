@@ -51,6 +51,7 @@ public static class SplashRenderer
         
         var vertexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
+            Name = "Splash Vertex Buffer",
             Usage = Usage.Dynamic,
             BindFlags = BindFlags.VertexBuffer,
             CPUAccessFlags = CpuAccessFlags.Write,
@@ -67,6 +68,7 @@ public static class SplashRenderer
         }
         var indexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
+            Name = "Splash Index Buffer",
             Usage = Usage.Immutable,
             BindFlags = BindFlags.IndexBuffer,
             CPUAccessFlags = CpuAccessFlags.None,
@@ -89,7 +91,7 @@ public static class SplashRenderer
         context.ImmediateContext.UnmapBuffer(vertexBuffer, MapType.Write);
         context.ImmediateContext.SetVertexBuffers(0, [vertexBuffer], [0ul], ResourceStateTransitionMode.Transition);
         context.ImmediateContext.SetIndexBuffer(indexBuffer, 0, ResourceStateTransitionMode.Transition);
-        var srb = material.Instantiate().BindMaterial(pso);
+        var srb = material.BindMaterial(pso);
         context.ImmediateContext.CommitShaderResources(srb, ResourceStateTransitionMode.Transition);
 
         context.ImmediateContext.DrawIndexed(new DrawIndexedAttribs

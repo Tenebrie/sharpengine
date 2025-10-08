@@ -36,8 +36,8 @@ public struct LaminaRenderRequest
     public required IRenderScript RenderScript;
     
     public required int InstanceCount;
-    public required Transform[] InstanceTransforms;
-    public required MaterialInstance[] MaterialInstances;
+    public required TransformSnapshot[] InstanceTransforms;
+    public required MaterialInstanceSnapshot[] MaterialInstances;
     
     public int HashCode => Mesh.GetHashCode() ^ Material.GetHashCode() ^ RenderScript.GetHashCode();
 }

@@ -49,11 +49,11 @@ public partial class LaminaButton : WidgetComponent
         context.RenderRequest(new LaminaRenderRequest
         {
             InstanceCount = 1,
-            InstanceTransforms = [Transform],
+            InstanceTransforms = [Transform.Snapshot()],
             Material = _material,
             Mesh = InterfacePlaneMesh.Shared,
             RenderScript = IRenderScript.Default,
-            MaterialInstances = [_materialInstance]
+            MaterialInstances = [_materialInstance.Snapshot()]
         });
     }
     

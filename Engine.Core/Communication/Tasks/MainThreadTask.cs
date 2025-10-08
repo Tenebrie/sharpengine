@@ -3,22 +3,27 @@ using Engine.Core.Logging;
 
 namespace Engine.Core.Communication.Tasks;
 
-public static class MainThreadTask
+public class MarshaledTask(string homeThreadName)
 {
-    private static List<QueuedTask> _queue = [];
-    public static void Run(Action action)
+    private List<QueuedTask> _queue = [];
+    public void Run(Action action, string label, Assembly sourceAssembly)
     {
+        if (Thread.CurrentThread.Name == homeThreadName)
+        {
+            action();
+            return;
+        }
         lock (_queue)
         {
             _queue.Add(new QueuedTask
             {
-                SourceAssembly = Assembly.GetCallingAssembly(),
+                SourceAssembly = sourceAssembly,
                 Action = action
             });
         }
     }
 
-    public static void ExecuteAllQueued()
+    public void ExecuteAllQueued()
     {
         lock (_queue)
         {
@@ -38,7 +43,7 @@ public static class MainThreadTask
         }
     }
     
-    public static void Purge(Assembly assembly)
+    public void Purge(Assembly assembly)
     {
         lock (_queue)
         {
@@ -47,6 +52,22 @@ public static class MainThreadTask
                 .ToList();
         }
     }
+}
+
+public static class MainThreadTask
+{
+    private static readonly MarshaledTask Handle = new("MainThread");
+    public static void Run(Action action) => Handle.Run(action, "", Assembly.GetCallingAssembly());
+    public static void ExecuteAllQueued() => Handle.ExecuteAllQueued();
+    public static void Purge(Assembly assembly) => Handle.Purge(assembly);
+}
+
+public static class RenderThreadTask
+{
+    private static readonly MarshaledTask Handle = new("RenderThread");
+    public static void Run(string label, Action action) => Handle.Run(action, label, Assembly.GetCallingAssembly());
+    public static void ExecuteAllQueued() => Handle.ExecuteAllQueued();
+    public static void Purge(Assembly assembly) => Handle.Purge(assembly);
 }
 
 internal struct QueuedTask

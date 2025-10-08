@@ -6,6 +6,7 @@ using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
+using Engine.Core.Communication.Tasks;
 using Engine.Core.Filesystem;
 using Engine.Core.Logging;
 using FontStashSharp;
@@ -93,6 +94,7 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
         
         _vertexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
+            Name = "Font Vertex Buffer",
             Usage = Usage.Dynamic,
             BindFlags = BindFlags.VertexBuffer,
             CPUAccessFlags = CpuAccessFlags.Write,
@@ -121,6 +123,7 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
         }
         _indexBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
+            Name = "Font Index Buffer",
             Usage = Usage.Immutable,
             BindFlags = BindFlags.IndexBuffer,
             CPUAccessFlags = CpuAccessFlags.None,
@@ -212,7 +215,7 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
             DeviceContext.SetIndexBuffer(_indexBuffer, 0, ResourceStateTransitionMode.Transition);
 
             // Material
-            var srb = materialInstance.BindMaterial(pso);
+            var srb = materialInstance.Material.BindMaterial(pso);
             DeviceContext.CommitShaderResources(srb, ResourceStateTransitionMode.Transition);
 
             DeviceContext.DrawIndexed(new DrawIndexedAttribs

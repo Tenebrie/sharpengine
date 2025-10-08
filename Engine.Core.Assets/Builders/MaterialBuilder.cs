@@ -198,6 +198,7 @@ public class MaterialBuilder
         {
             var buffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
             {
+                Name = bufferDesc.Name,
                 BindFlags = BindFlags.UniformBuffer,
                 Size = (ulong)bufferDesc.SizeInBytes,
                 Usage = Usage.Dynamic,

@@ -43,18 +43,21 @@ public sealed class Texture : ITextureAsset, IDisposable
             MiscFlags = MiscTextureFlags.GenerateMips
         });
 
-        fixed (byte* pixelDataPtr = data)
+        RenderThreadTask.Run("Texture -> Constructor", () =>
         {
-            RenderContext.Current.ImmediateContext.UpdateTexture(
-                _textureHandle,
-                mipLevel: 0,
-                slice: 0,
-                dstBox: new Box { MaxX = width, MaxY = height },
-                new TextureSubResData { Data = (IntPtr)pixelDataPtr, Stride = (ulong)(width * 4) },
-                ResourceStateTransitionMode.Transition,
-                ResourceStateTransitionMode.Transition
-            );
-        }
+            fixed (byte* pixelDataPtr = data)
+            {
+                RenderContext.Current.ImmediateContext.UpdateTexture(
+                    _textureHandle,
+                    mipLevel: 0,
+                    slice: 0,
+                    dstBox: new Box { MaxX = width, MaxY = height },
+                    new TextureSubResData { Data = (IntPtr)pixelDataPtr, Stride = (ulong)(width * 4) },
+                    ResourceStateTransitionMode.Transition,
+                    ResourceStateTransitionMode.Transition
+                );
+            }
+        });
 
         if (generateMips)
             Task.Run(() => GenerateMips(width, height));
@@ -78,22 +81,25 @@ public sealed class Texture : ITextureAsset, IDisposable
     
     public unsafe void Update(IDeviceContext context, byte[] data, int minX, int minY, int maxX, int maxY)
     {
-        fixed (byte* pixelDataPtr = data)
+        RenderThreadTask.Run("Texture -> Update", () =>
         {
-            context.UpdateTexture(
-                _textureHandle,
-                mipLevel: 0,
-                slice: 0,
-                dstBox: new Box
-                {
-                    MinX = (uint)minX, MaxX = (uint)maxX,
-                    MinY = (uint)minY, MaxY = (uint)maxY
-                },
-                new TextureSubResData { Data = (IntPtr)pixelDataPtr, Stride = (ulong)((maxX - minX) * 4) },
-                ResourceStateTransitionMode.Transition,
-                ResourceStateTransitionMode.Transition
-            );
-        }
+            fixed (byte* pixelDataPtr = data)
+            {
+                context.UpdateTexture(
+                    _textureHandle,
+                    mipLevel: 0,
+                    slice: 0,
+                    dstBox: new Box
+                    {
+                        MinX = (uint)minX, MaxX = (uint)maxX,
+                        MinY = (uint)minY, MaxY = (uint)maxY
+                    },
+                    new TextureSubResData { Data = (IntPtr)pixelDataPtr, Stride = (ulong)((maxX - minX) * 4) },
+                    ResourceStateTransitionMode.Transition,
+                    ResourceStateTransitionMode.Transition
+                );
+            }
+        });
     }
     
     private void GenerateMips(ushort width, ushort height)
@@ -141,7 +147,7 @@ public sealed class Texture : ITextureAsset, IDisposable
 
         mipmap.CopyPixelDataTo(data);
         
-        MainThreadTask.Run(() =>
+        RenderThreadTask.Run("Texture -> GenerateMipLevel", () =>
         {
             fixed (byte* pixelDataPtr = data)
             {

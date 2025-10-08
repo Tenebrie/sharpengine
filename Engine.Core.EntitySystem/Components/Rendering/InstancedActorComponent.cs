@@ -120,6 +120,7 @@ internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRende
 {
     internal InstancedActorComponent<TInstance> InstanceManager = null!;
     private List<TInstance> Instances { get; } = [];
+    private ReaderWriterLockSlim InstanceLock { get; } = new();
     public bool CullingEnabled { get; set; } = true;
     
     public Vector3 BoundingSphereWorldOrigin { get; private set; }
@@ -129,13 +130,15 @@ internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRende
     public int InstanceCount => Instances.Count;
 
     private int _maxInstancesSeen = 0;
-    private Transform[] _transformPool = [];
-    private Transform[] _sphereTransformPool = [];
-    private MaterialInstance[] _materialPool = [];
+    private TransformSnapshot[] _transformPool = [];
+    private TransformSnapshot[] _sphereTransformPool = [];
+    private MaterialInstanceSnapshot[] _materialPool = [];
     
     public void AssignInstance(TInstance instance)
     {
+        InstanceLock.EnterWriteLock();
         Instances.Add(instance);
+        InstanceLock.ExitWriteLock();
         RecomputeBoundingSphere();
     }
     
@@ -144,7 +147,9 @@ internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRende
         if (!Instances.Contains(instance) || instance is not TInstance instancedActor)
             return;
 
+        InstanceLock.EnterWriteLock();
         Instances.Remove(instancedActor);
+        InstanceLock.ExitWriteLock();
         RecomputeBoundingSphere();
     }
 
@@ -157,6 +162,7 @@ internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRende
             return;
         }
         
+        InstanceLock.EnterReadLock();
         var center = Vector3.Zero;
         foreach (var instance in Instances)
         {
@@ -174,6 +180,7 @@ internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRende
 
         BoundingSphereWorldOrigin = center;
         BoundingSphereWorldRadius = radius + 10.0; // Padding
+        InstanceLock.ExitReadLock();
     }
     
     public void CheckClusterValidity(out List<TInstance> evicted)
@@ -196,27 +203,30 @@ internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRende
     
     public RenderRequest ProduceRenderRequest()
     {
-        if (Instances.Count > _maxInstancesSeen)
+        InstanceLock.EnterReadLock();
+        var instanceCount = Instances.Count;
+        if (instanceCount > _maxInstancesSeen)
         {
-            Array.Resize(ref _transformPool, Instances.Count);
-            Array.Resize(ref _sphereTransformPool, Instances.Count);
-            Array.Resize(ref _materialPool, Instances.Count);
-            for (var i = _maxInstancesSeen; i < Instances.Count; i++)
+            Array.Resize(ref _transformPool, instanceCount);
+            Array.Resize(ref _sphereTransformPool, instanceCount);
+            Array.Resize(ref _materialPool, instanceCount);
+            for (var i = _maxInstancesSeen; i < instanceCount; i++)
             {
-                _transformPool[i] = Transform.Identity;
-                _sphereTransformPool[i] = Transform.Identity;
-                _materialPool[i] = MaterialAssetManager.FallbackMaterialInstance;
+                _transformPool[i] = TransformSnapshot.Identity;
+                _sphereTransformPool[i] = TransformSnapshot.Identity;
+                _materialPool[i] = MaterialAssetManager.FallbackMaterialInstance.Snapshot();
             }
-            _maxInstancesSeen = Instances.Count;
+            _maxInstancesSeen = instanceCount;
         }
-        for (var i = 0; i < Instances.Count; i++)
+        for (var i = 0; i < instanceCount; i++)
         {
             var actor = Instances[i];
             if (!IsValid(actor))
                 continue;
-            _transformPool[i] = actor.WorldTransform;
-            _materialPool[i] = actor.MaterialInstance;
+            _transformPool[i] = actor.WorldTransform.Snapshot();
+            _materialPool[i] = actor.MaterialInstance.Snapshot();
         }
+        InstanceLock.ExitReadLock();
         
         return new RenderRequest
         {
@@ -224,7 +234,7 @@ internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRende
             Material = InstanceManager.InstanceMaterial,
             RenderScript = InstanceManager.InstanceRenderScript,
 
-            InstanceCount = Instances.Count,
+            InstanceCount = instanceCount,
             InstanceTransforms = _transformPool,
             MaterialInstances = _materialPool
         };

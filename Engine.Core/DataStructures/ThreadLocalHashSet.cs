@@ -6,17 +6,23 @@ public class ThreadLocalHashSet<TValue> : IDisposable
 
     public void Add(TValue item)
     {
-        _localValues.Value!.Add(item);
+        lock (_localValues)
+        {
+            _localValues.Value!.Add(item);
+        }
     }
 
     public void Collect(ref HashSet<TValue> collection)
     {
-        foreach (var list in _localValues.Values)
+        lock (_localValues)
         {
-            foreach (var v in list)
-                collection.Add(v);
+            foreach (var list in _localValues.Values)
+            {
+                foreach (var v in list)
+                    collection.Add(v);
 
-            list.Clear();
+                list.Clear();
+            }
         }
     }
 

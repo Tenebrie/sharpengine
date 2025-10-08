@@ -95,7 +95,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         });
 
         _activeRenderTargetIndex = 0;
-        MeshComponent.MaterialInstance.SetRemoteTextureView(ShaderResourceView);
+        MeshComponent.Material.SetRemoteTextureView(ShaderResourceView);
     }
 
     public void CollectCommandList(ILaminaRenderContext renderContext)

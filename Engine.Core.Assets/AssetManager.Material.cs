@@ -45,7 +45,7 @@ public class MaterialAssetManager : IDisposable
     public void InvalidateInstanceCaches()
     {
         foreach (var material in _cachedMaterials.Values)
-            material.InvalidateInstancesCache();
+            material.InvalidateCache();
     }
     
     public void Dispose()

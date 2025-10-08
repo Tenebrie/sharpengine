@@ -4,6 +4,7 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Logging;
 using Engine.Core.Profiling;
 
 namespace Engine.Module.Host.Actors;
@@ -33,12 +34,13 @@ public partial class EditorPerformanceWidget : Actor
         {
             v.Div(position: (1300, 24), v =>
             {
+                var scaleFactor = 800.0 / FramerateCounter.MaximumValue;
                 var graphData = FramerateCounter.FramerateHistory
-                    .Select((val, index) => new Vector2(index * 25, -val * 2.5))
+                    .Select((val, index) => new Vector2(index * 25, -val * scaleFactor))
                     .ToImmutableList();
                 v.Line(points: graphData);
                 var lowGraphData = FramerateCounter.LowFramerateHistory
-                    .Select((val, index) => new Vector2(index * 25, -val * 2.5))
+                    .Select((val, index) => new Vector2(index * 25, -val * scaleFactor))
                     .ToImmutableList();
                 v.Line(points: lowGraphData, color: Color.Red);
             });
@@ -50,6 +52,7 @@ public partial class FramerateCounterComponent : ActorComponent
 {
     internal readonly List<double> FramerateHistory = Enumerable.Repeat(0.0, 256).ToList();
     internal readonly List<double> LowFramerateHistory = Enumerable.Repeat(0.0, 256).ToList();
+    internal int MaximumValue = 240;
 
     private readonly List<double> _frameTimes = [];
     private double _frameTimeAccumulator = 0.0;
@@ -60,12 +63,14 @@ public partial class FramerateCounterComponent : ActorComponent
     
     // After profiler update, remember the number of frames the snapshot represents to calculate timing per frame
     private int _lastSeenFrameIndex = -1;
+    private int _updateFramesCollected = 0;
 
     [OnUpdate]
     protected void CollectFrameTimes(double deltaTime)
     {
         _frameTimeAccumulator += deltaTime;
         _frameTimes.Add(deltaTime);
+        _updateFramesCollected++;
     }
     
     [OnTimer(Seconds = 0.1)]
@@ -91,8 +96,10 @@ public partial class FramerateCounterComponent : ActorComponent
         LowFramerateHistory.Add(_onePercentLow);
         FramerateHistory.RemoveAt(0);
         LowFramerateHistory.RemoveAt(0);
+        MaximumValue = (int)Math.Max(FramerateHistory.Max(), LowFramerateHistory.Max());
 
-        var framesForLatestUpdate = Math.Max(1, FrameCounter.Current - _lastSeenFrameIndex);
+        // var framesForLatestUpdate = Math.Max(1, FrameCounter.Current - _lastSeenFrameIndex);
+        var framesForLatestUpdate = Math.Max(1, _updateFramesCollected);
         _statProfilerEntries = Profiler
             .Query(ProfilingContext.BackstageUpdate |
                    ProfilingContext.PhysicsUpdate |
@@ -115,6 +122,7 @@ public partial class FramerateCounterComponent : ActorComponent
                    ProfilingContext.RenderingCombineRequests |
                    ProfilingContext.RenderingLamina |
                    ProfilingContext.RenderingSortRequests |
+                   ProfilingContext.RenderingPresent |
                    ProfilingContext.RenderingSubmitAtoms)
             .OrderByDescending(entry => entry.TotalMilliseconds / framesForLatestUpdate)
             .Select(entry =>
@@ -129,6 +137,7 @@ public partial class FramerateCounterComponent : ActorComponent
             .ToList();
         
         _lastSeenFrameIndex = FrameCounter.Current;
+        _updateFramesCollected = 0;
         
         // _lastSeenProfilerBufferIndex = Profiler.CurrentBufferIndex;
         // var line = 2;

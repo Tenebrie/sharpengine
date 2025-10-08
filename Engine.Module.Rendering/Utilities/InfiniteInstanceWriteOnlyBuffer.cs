@@ -30,6 +30,7 @@ public class InfiniteInstanceWriteOnlyBuffer<T> : IInstanceBuffer<T>, IDisposabl
     {
         var buffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
+            Name = $"InstanceBuffer Page {_buffers.Count}",
             Size = (ulong)_pageSize,
             Usage = Usage.Dynamic,
             BindFlags = BindFlags.ShaderResource,

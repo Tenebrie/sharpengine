@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Diligent;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
@@ -6,6 +7,7 @@ using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Enum;
 using Engine.Core.Extensions;
+using Engine.Core.Logging;
 using Engine.Core.Profiling;
 using Engine.Module.Rendering.Computers;
 using Engine.Module.Rendering.Renderers.Atoms;
@@ -42,30 +44,31 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
 
     private Vector2D<int> FramebufferSize => host.Hypervisor.Window.GetScaledFramebufferSize();
 
-    public async Task RenderSingleFrame(double deltaTime)
+    public void RenderSingleFrame(double deltaTime)
     {
         var stopwatch = Profiler.Start();
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingGpuWait);
         
         stopwatch = Profiler.Start();
+
         RenderStats.Reset();
         FrameCounter.Increment();
         ImmediateContext.ClearStats();
         
-        await PrepareRenderers();
+        PrepareRenderers();
         
         ImmediateContext.ClearRenderTarget(RenderTargetView, new Vector4(0.35f, 0.35f, 0.35f, 1.0f), ResourceStateTransitionMode.Transition);
         ImmediateContext.ClearDepthStencil(RenderDepthView, ClearDepthStencilFlags.Depth, 1.0f, 0, ResourceStateTransitionMode.Transition);
         ImmediateContext.SetRenderTargets([RenderTargetView], RenderDepthView, ResourceStateTransitionMode.Transition);
         
-        await InvokeLaminaRenderers(deltaTime);
+        InvokeLaminaRenderers(deltaTime);
         
         ImmediateContext.SetRenderTargets([RenderTargetView], RenderDepthView, ResourceStateTransitionMode.None);
         var ctx = RenderContext.Current;
         ctx.RenderTargetSize = new Vector2(SwapChain.GetDesc().Width, SwapChain.GetDesc().Height);
         RenderContext.Current = ctx;
         
-        await InvokeSceneRenderers(deltaTime);
+        InvokeSceneRenderers(deltaTime);
         
         var rtv = SwapChain.GetCurrentBackBufferRTV();
         var rtvTexture = rtv.GetTexture();
@@ -82,7 +85,9 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         );
         
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingFullFrame);
+        stopwatch = Profiler.Start();
         SwapChain.Present(0);
+        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingPresent);
     }
     
     private int _atomsToRenderCount;
@@ -93,7 +98,8 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
     private Task PrepareRenderers()
     {
         Camera? activeCamera = null;
-        foreach (var backstage in Backstages)
+        // TODO: Fix allocation
+        foreach (var backstage in Backstages.ToList())
         {
             if (activeCamera != null)
                 continue;
@@ -121,7 +127,7 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         if (activeCamera == null)
             return Task.CompletedTask;
         
-        foreach (var backstage in Backstages)
+        foreach (var backstage in Backstages.ToList())
         {
             // Collect all IRenderable entities reachable from the atom tree
             var stopwatch = Profiler.Start();
@@ -132,15 +138,14 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         return Task.CompletedTask;
     }
     
-    private Task InvokeLaminaRenderers(double _)
+    private void InvokeLaminaRenderers(double _)
     {
         _laminaRenderer.RenderRetainedTexturesWithTiming(_widgetsToRender, _widgetsToRenderCount);
         _widgetsToRenderCount = 0;
         Array.Clear(_widgetsToRender);
-        return Task.CompletedTask;
     }
 
-    private Task InvokeSceneRenderers(double deltaTime)
+    private void InvokeSceneRenderers(double deltaTime)
     {
         _sceneRenderer.RenderAtomTree(_atomsToRender, _atomsToRenderCount);
         _atomsToRenderCount = 0;
@@ -151,7 +156,6 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         _debugProfilerFrameRenderer.RenderFrameWithTiming(deltaTime);
 
         immediateTextRenderer.Flush();
-        return Task.CompletedTask;
     }
 
     private Camera? FindActiveCamera(Atom target)
@@ -162,9 +166,11 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
             return camera;
         }
 
-        foreach (var child in target.Children)
+        using var children = target.Children.Snapshot();
+        for (var index = 0; index < children.Length; index++)
         {
-            var foundCamera = FindActiveCamera(child); 
+            var child = children.Array[index];
+            var foundCamera = FindActiveCamera(child);
             if (foundCamera != null)
                 return foundCamera;
         }
@@ -206,8 +212,11 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
             _widgetsToRender[_widgetsToRenderCount++] = laminaRenderable;
         }
 
-        foreach (var child in target.Children)
+        // TODO: Fix allocation
+        using var children = target.Children.Snapshot();
+        for (var index = 0; index < children.Length; index++)
         {
+            var child = children.Array[index];
             CollectAtomsToRender(child);
         }
     }

@@ -16,9 +16,9 @@ public class RenderScript : IRenderScript
         IDeviceContext device,
         int instanceCount,
         StaticMesh mesh,
-        Transform[] worldTransforms,
+        TransformSnapshot[] worldTransforms,
         Material material,
-        MaterialInstance[] materialInstances)
+        MaterialInstanceSnapshot[] materialInstances)
     {
         if (instanceCount <= 0)
             return;
@@ -30,7 +30,7 @@ public class RenderScript : IRenderScript
         {
             _instanceDataPool[i] = new InstanceData
             {
-                WorldTransform = worldTransforms[i].ToMatrix().Downgrade(),
+                WorldTransform = worldTransforms[i].Data.Downgrade(),
                 Tint = materialInstances[i].Tint,
                 UvOffset = materialInstances[i].UvOffset,
                 UvScale = materialInstances[i].UvScale
@@ -44,7 +44,7 @@ public class RenderScript : IRenderScript
         device.SetPipelineState(pso);
         mesh.BindForRendering();
         
-        var srb = materialInstances[0].BindMaterial(pso);
+        var srb = material.BindMaterial(pso);
         
         foreach (var ticket in tickets)
         {

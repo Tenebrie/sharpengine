@@ -1,6 +1,7 @@
 ﻿using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Primitives;
+using Engine.Core.Logging;
 using Engine.Core.Modules.EntitySystem;
 using Microsoft.Extensions.ObjectPool;
 
@@ -10,7 +11,7 @@ public abstract partial class Spatial : Atom, ISpatial
 {
     private static readonly ObjectPool<Transform> SharedTransformPool = new DefaultObjectPool<Transform>(new DefaultPooledObjectPolicy<Transform>(), 1000);
     
-    private Transform _transform = null!;
+    private Transform _transform = Transform.Identity;
     public Transform Transform
     {
         get => _transform;
