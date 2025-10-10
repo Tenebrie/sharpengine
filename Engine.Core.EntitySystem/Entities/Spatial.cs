@@ -1,7 +1,7 @@
 ﻿using Engine.Core.Common;
+using Engine.Core.DataStructures;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Primitives;
-using Engine.Core.Logging;
 using Engine.Core.Modules.EntitySystem;
 using Microsoft.Extensions.ObjectPool;
 
@@ -10,7 +10,7 @@ namespace Engine.Core.EntitySystem.Entities;
 public abstract partial class Spatial : Atom, ISpatial
 {
     private static readonly ObjectPool<Transform> SharedTransformPool = new DefaultObjectPool<Transform>(new DefaultPooledObjectPolicy<Transform>(), 1000);
-    
+
     private Transform _transform = Transform.Identity;
     public Transform Transform
     {
@@ -43,7 +43,7 @@ public abstract partial class Spatial : Atom, ISpatial
             _cachedWorldTransformValid = true;
             return _cachedWorldTransform;
         }
-    } 
+    }
     public Transform WorldTransformInverse  
     {
         get
@@ -53,7 +53,7 @@ public abstract partial class Spatial : Atom, ISpatial
 
             WorldTransform.GetInverse(ref _cachedWorldTransformInverse);
             _cachedWorldTransformInverseValid = true;
-            return _cachedWorldTransformInverse; 
+            return _cachedWorldTransformInverse;
         }
     }
      

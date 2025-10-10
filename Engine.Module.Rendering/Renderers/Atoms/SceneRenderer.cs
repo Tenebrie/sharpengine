@@ -16,7 +16,7 @@ public class SceneRenderer(RenderingHost host)
 {
     private readonly Dictionary<int, MergedRenderRequest> _renderRequestPool = new();
     
-    internal void RenderAtomTree(IRenderable[] atomsToRender, int atomsToRenderCount)
+    internal void RenderAtomTree(RenderableHandle[] atomsToRender, int atomsToRenderCount)
     {
         _renderRequestPool.Clear();
 
@@ -24,9 +24,12 @@ public class SceneRenderer(RenderingHost host)
         for (var i = 0; i < atomsToRenderCount; i++)
         {
             var renderable = atomsToRender[i];
-            if (renderable is Atom atom && !Atom.IsValid(atom))
+            // if (renderable is Atom atom && !Atom.IsValid(atom))
+                // continue;
+            var requestOptional = renderable.RenderRequest;
+            if (!requestOptional.HasValue)
                 continue;
-            var request = renderable.ProduceRenderRequest();
+            var request = requestOptional.Value;
             if (!_renderRequestPool.TryGetValue(request.HashCode, out var mergedRequest))
             {
                 _renderRequestPool[request.HashCode] = MergedRenderRequest.Create(request);

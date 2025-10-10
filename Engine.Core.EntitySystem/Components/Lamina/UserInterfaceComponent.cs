@@ -106,6 +106,34 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         }
     }
     
+    public long Rid = -1;
+    
+    [OnCreate]
+    [OnModuleReload(EngineModule.Rendering)]
+    protected void OnRegisterOnRenderingServer()
+    { 
+        var renderingModule = Backstage.RenderingModule;
+        if (renderingModule == null)
+            return; 
+        Rid = renderingModule.Register(this);
+    }
+    
+    [OnUpdate]
+    protected void OnReregisterOnRenderingServer()
+    { 
+        var renderingModule = Backstage.RenderingModule;
+        renderingModule?.UpdateRegistered(Rid, this);
+    }
+    
+    [OnDestroy]
+    protected void OnUnregisterOnRenderingServer()
+    {
+        if (Rid == -1)
+            return;
+        var renderingModule = Backstage.RenderingModule;
+        renderingModule?.UnregisterLamina(Rid);
+    }
+    
     public void Dispose()
     {
         GC.SuppressFinalize(this);

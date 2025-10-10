@@ -63,8 +63,7 @@ public partial class CloudLayer : Actor
         _totalTime += deltaTime;
         var windOffset = new Vector2(_totalTime, _totalTime) * 310000 / (-LayerHeight * LayerHeight);
         Transform.Position = new Vector3(_camera.WorldTransform.Position.X - 100, LayerHeight + RenderOffset, _camera.WorldTransform.Position.Z - 2000);
-        var playerOffset = new Vector2(_camera.WorldTransform.Position.X, _camera.WorldTransform.Position.Z) /
-                           -LayerHeight;
+        var playerOffset = new Vector2(_camera.WorldTransform.Position.X, _camera.WorldTransform.Position.Z) / -LayerHeight;
         if (IsShadow)
         {
             MeshComponent.MaterialInstance.SetUvOffset((windOffset * 3) + playerOffset * 16);
@@ -82,10 +81,11 @@ public partial class CloudLayer : Actor
         [OnUpdate]
         protected void OnUpdate(double deltaTime)
         {
+            _totalTime += deltaTime * 10;
             RenderThreadTask.Run("CloudParams -> Update", () =>
             {
                 _material.UpdateConstantBuffer("CloudParams", new CloudParams(
-                    time: 10,
+                    time: _totalTime,
                     densityMin: 0.4,
                     densityMax: 0.6,
                     sunDirection: new Vector3(0, 0.0, 1.0).Normalized()

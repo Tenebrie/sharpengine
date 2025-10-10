@@ -103,7 +103,7 @@ public partial class FramerateCounterComponent : ActorComponent
         _statProfilerEntries = Profiler
             .Query(ProfilingContext.BackstageUpdate |
                    ProfilingContext.PhysicsUpdate |
-                   ProfilingContext.RenderingFullFrame)
+                   ProfilingContext.RenderingTotal)
             .OrderByDescending(entry => entry.TotalMilliseconds / framesForLatestUpdate)
             .Select(entry =>
             {
@@ -123,6 +123,7 @@ public partial class FramerateCounterComponent : ActorComponent
                    ProfilingContext.RenderingLamina |
                    ProfilingContext.RenderingSortRequests |
                    ProfilingContext.RenderingPresent |
+                   ProfilingContext.RenderingFlushRegistrations |
                    ProfilingContext.RenderingSubmitAtoms)
             .OrderByDescending(entry => entry.TotalMilliseconds / framesForLatestUpdate)
             .Select(entry =>

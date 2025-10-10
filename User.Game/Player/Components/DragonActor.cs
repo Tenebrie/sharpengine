@@ -4,6 +4,7 @@ using Engine.Core.Makers;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Logging;
 
 namespace User.Game.Player.Components;
 

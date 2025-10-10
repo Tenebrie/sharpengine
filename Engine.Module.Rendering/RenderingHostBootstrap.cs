@@ -116,7 +116,7 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
             immediateContext,
             new SwapChainDesc()
             {
-                BufferCount = 2,
+                BufferCount = 3,
             },
             new FullScreenModeDesc(),
             new Win32NativeWindow

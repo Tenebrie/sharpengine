@@ -17,6 +17,7 @@ public class DebugFramerateFrameRenderer(RenderingHost host, TextRenderer textRe
     private int _framerate = 0;
     private int _onePercentLow = 0;
     private List<string> _statProfilerEntries = [];
+    private double _unaccountedCpuRenderingTime = 0;
     private List<string> _renderingProfilerEntries = [];
     
     // After profiler update, remember the number of frames the snapshot represents to calculate timing per frame
@@ -46,32 +47,43 @@ public class DebugFramerateFrameRenderer(RenderingHost host, TextRenderer textRe
             var framesForLatestUpdate = Math.Max(1, FrameCounter.Current - _lastSeenFrameIndex);
             _statProfilerEntries = Profiler
                 .Query(ProfilingContext.BackstageUpdate |
-                       ProfilingContext.PhysicsUpdate |
-                       ProfilingContext.RenderingFullFrame)
+                       ProfilingContext.PhysicsUpdate)
                 .OrderByDescending(entry => entry.TotalMilliseconds / framesForLatestUpdate)
                 .Select(entry =>
                 {
                     var timePerFrame = entry.TotalMilliseconds / framesForLatestUpdate;
-                    if (timePerFrame < 0.01)
+                    if (timePerFrame < 0.03)
                         return "";
                     return $"{entry.TypeName}: {timePerFrame:F2}ms";
                 })
                 .Where(str => str.Length > 0)
                 .ToList();
-            _renderingProfilerEntries = Profiler
+            var cpuRenderingQueries = Profiler
                 .Query(ProfilingContext.RenderingDebugFramerate |
+                       ProfilingContext.RenderingTotal |
                        ProfilingContext.RenderingDebugLog |
                        ProfilingContext.RenderingDebugProfiler |
                        ProfilingContext.RenderingCollectAtoms |
                        ProfilingContext.RenderingCombineRequests |
                        ProfilingContext.RenderingLamina |
                        ProfilingContext.RenderingSortRequests |
-                       ProfilingContext.RenderingSubmitAtoms)
+                       ProfilingContext.RenderingResolveRenderTarget |
+                       ProfilingContext.RenderingImmediateTextFlush |
+                       ProfilingContext.RenderingPresent |
+                       ProfilingContext.RenderingCullingComputerRead |
+                       ProfilingContext.RenderingCullingComputerWrite |
+                       ProfilingContext.RenderingFlushRegistrations |
+                       ProfilingContext.RenderingSubmitAtoms);
+            
+            var actualCpuRenderingTime = Profiler.Query(ProfilingContext.RenderingTotal).Sum(entry => entry.TotalMilliseconds) / framesForLatestUpdate;
+            var totalCpuRenderingTime = cpuRenderingQueries.Sum(entry => entry.TotalMilliseconds) / framesForLatestUpdate - actualCpuRenderingTime;
+            _unaccountedCpuRenderingTime = actualCpuRenderingTime - totalCpuRenderingTime;
+            _renderingProfilerEntries = cpuRenderingQueries
                 .OrderByDescending(entry => entry.TotalMilliseconds / framesForLatestUpdate)
                 .Select(entry =>
                 {
                     var timePerFrame = entry.TotalMilliseconds / framesForLatestUpdate;
-                    if (timePerFrame < 0.01)
+                    if (timePerFrame < 0.03)
                         return "";
                     var displayName = entry.Context.ToString()!.Replace("Rendering", "");
                     return $"{displayName}: {timePerFrame:F2}ms";
@@ -84,17 +96,20 @@ public class DebugFramerateFrameRenderer(RenderingHost host, TextRenderer textRe
         }
         var line = 2;
         const int maxEntriesRendered = 16;
+        _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Main Thread (CPU) ----");
         for (var i = 0; i < Math.Min(_statProfilerEntries.Count, maxEntriesRendered); i++)
         {
             var entry = _statProfilerEntries[i];
             _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, entry);
         }
-        _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Rendering ----");
+        _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Render Thread (CPU) ----");
+        
         for (var i = 0; i < Math.Min(_renderingProfilerEntries.Count, maxEntriesRendered); i++)
         {
             var entry = _renderingProfilerEntries[i];
             _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, entry);
         }
+        _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, "Other: " + _unaccountedCpuRenderingTime.ToString("F2") + "ms");
 
         var drawCallCount = RenderContext.Current.ImmediateContext.GetStats().CommandCounters.DrawIndexed;
         var val = RenderContext.Current.ImmediateContext.GetStats().PrimitiveCounts;

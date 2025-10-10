@@ -4,15 +4,16 @@ using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Renderers;
 using Engine.Core.Common;
 using Engine.Core.Lamina;
+using Engine.Core.Modules;
 
 namespace Engine.Core.EntitySystem.Interfaces;
 
-public interface IRenderable
+public interface IRenderable : IMaskedRenderable
 {
-    public RenderRequest ProduceRenderRequest();
+    public RenderRequest? ProduceRenderRequest();
 }
 
-public interface ILaminaRenderable
+public interface ILaminaRenderable : IMaskedLaminaRenderable
 {
     public bool Dirty { get; set; }
     public void EnsureRenderTarget();

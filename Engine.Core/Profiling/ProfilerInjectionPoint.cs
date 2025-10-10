@@ -10,7 +10,7 @@ public enum ProfilingContext
     OnUpdateCallback = 1 << 3,
     OnDestroyCallback = 1 << 4,
     BackstageUpdate = 1 << 5,
-    RenderingFullFrame = 1 << 6,
+    RenderingTotal = 1 << 6,
     RenderingCollectAtoms = 1 << 7,
     RenderingCombineRequests = 1 << 8,
     RenderingSortRequests = 1 << 9,
@@ -21,6 +21,11 @@ public enum ProfilingContext
     RenderingLamina = 1 << 14,
     RenderingGpuWait = 1 << 15,
     RenderingPresent = 1 << 16,
+    RenderingFlushRegistrations = 1 << 17,
+    RenderingResolveRenderTarget = 1 << 18,
+    RenderingImmediateTextFlush = 1 << 19,
+    RenderingCullingComputerRead = 1 << 20,
+    RenderingCullingComputerWrite = 1 << 21,
 }
 
 public static class Profiler

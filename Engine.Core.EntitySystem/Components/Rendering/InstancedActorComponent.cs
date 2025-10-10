@@ -2,11 +2,13 @@
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Renderers;
+using Engine.Core.Attributes;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Logging;
+using Engine.Core.Modules;
 using Engine.Core.Profiling.Attributes;
 using JetBrains.Annotations;
 
@@ -201,7 +203,7 @@ internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRende
         RecomputeBoundingSphere();
     }
     
-    public RenderRequest ProduceRenderRequest()
+    public RenderRequest? ProduceRenderRequest()
     {
         InstanceLock.EnterReadLock();
         var instanceCount = Instances.Count;
@@ -212,8 +214,8 @@ internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRende
             Array.Resize(ref _materialPool, instanceCount);
             for (var i = _maxInstancesSeen; i < instanceCount; i++)
             {
-                _transformPool[i] = TransformSnapshot.Identity;
-                _sphereTransformPool[i] = TransformSnapshot.Identity;
+                _transformPool[i] = Common.TransformSnapshot.Identity;
+                _sphereTransformPool[i] = Common.TransformSnapshot.Identity;
                 _materialPool[i] = MaterialAssetManager.FallbackMaterialInstance.Snapshot();
             }
             _maxInstancesSeen = instanceCount;
@@ -238,5 +240,33 @@ internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRende
             InstanceTransforms = _transformPool,
             MaterialInstances = _materialPool
         };
+    }
+    
+    public long Rid = -1;
+    
+    [OnCreate]
+    [OnModuleReload(EngineModule.Rendering)]
+    protected void OnRegisterOnPhysicsServer()
+    { 
+        var renderingModule = Backstage.RenderingModule;
+        if (renderingModule == null)
+            return; 
+        Rid = renderingModule.Register(this);
+    }
+    
+    [OnUpdate]
+    protected void OnReregisterOnRenderingServer()
+    { 
+        var renderingModule = Backstage.RenderingModule;
+        renderingModule?.UpdateRegistered(Rid, this);
+    }
+    
+    [OnDestroy]
+    protected void OnUnregisterOnPhysicsServer()
+    {
+        if (Rid == -1)
+            return;
+        var renderingModule = Backstage.RenderingModule;
+        renderingModule?.UnregisterRenderable(Rid);
     }
 }

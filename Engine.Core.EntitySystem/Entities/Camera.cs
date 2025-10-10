@@ -1,6 +1,8 @@
-﻿using Engine.Core.Common;
+﻿using Engine.Core.Attributes;
+using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components;
+using Engine.Core.Modules;
 using Engine.Core.Modules.EntitySystem;
 using Silk.NET.Maths;
 
@@ -73,16 +75,14 @@ public partial class Camera : Actor, ICamera
         _transformInverse.MultiplyReverse(_projMatrix, ref vp);
         return vp;
     }
-    
-    public struct Plane { public Vector3 Normal; public double D; }
 
-    private Plane[] _planes = new Plane[6];
-    public Plane[] UpdateFrustumPlanes()
+    private ICamera.Plane[] _planes = new ICamera.Plane[6];
+    public ICamera.Plane[] UpdateFrustumPlanes()
     {
         // var vp = Matrix4x4.Multiply(view, proj);
         var vp = Matrix.Identity;
         _transformInverse.MultiplyReverse(_projMatrix, ref vp);
-        var planes = new Plane[6];
+        var planes = new ICamera.Plane[6];
 
         // left  = row4 + row1
         planes[0].Normal.X = vp.M14 + vp.M11;
@@ -171,5 +171,33 @@ public partial class Camera : Actor, ICamera
         }
 
         return true;
+    }
+    
+    public long Rid = -1;
+    
+    [OnCreate]
+    [OnModuleReload(EngineModule.Rendering)]
+    protected void OnRegisterOnRenderingServer()
+    { 
+        var renderingModule = Backstage.RenderingModule;
+        if (renderingModule == null)
+            return;
+        Rid = renderingModule.Register(this);
+    }
+    
+    [OnUpdate]
+    protected void OnReregisterOnRenderingServer()
+    { 
+        var renderingModule = Backstage.RenderingModule;
+        renderingModule?.UpdateRegistered(Rid, this);
+    }
+    
+    [OnDestroy]
+    protected void OnUnregisterOnRenderingServer()
+    {
+        if (Rid == -1)
+            return;
+        var renderingModule = Backstage.RenderingModule;
+        renderingModule?.UnregisterCamera(Rid);
     }
 }

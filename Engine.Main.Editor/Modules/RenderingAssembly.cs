@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Engine.Core.Common;
 using Engine.Core.Communication.Tasks;
 using Engine.Core.Logging;
 using Engine.Core.Modules;
@@ -85,15 +86,14 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
                     continue;
                 }
                 _renderBarrier.SignalAndWait();
+                FrameCounter.Increment();
                 
                 var currentTime = stopwatch.ElapsedMilliseconds;
                 var deltaTime = (currentTime - lastFrameTime) / 1000.0;
                 lastFrameTime = currentTime;
                 
-
                 RenderingHost?.RenderSingleFrame(deltaTime);
                 RenderThreadTask.ExecuteAllQueued();
-                
             }
         }
         catch (Exception ex)

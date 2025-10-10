@@ -1,13 +1,10 @@
-using System.Diagnostics;
 using Diligent;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
-using Engine.Core.Communication.Multithreading;
-using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Enum;
 using Engine.Core.Extensions;
-using Engine.Core.Logging;
+using Engine.Core.Modules.EntitySystem;
 using Engine.Core.Profiling;
 using Engine.Module.Rendering.Computers;
 using Engine.Module.Rendering.Renderers.Atoms;
@@ -21,7 +18,6 @@ namespace Engine.Module.Rendering.Renderers;
 
 public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRenderer) : IDisposable
 {
-    private List<Backstage> Backstages => host.Backstages;
     private GameplayContext GameplayContext => host.Hypervisor.GameplayContext;
     
     // Computers
@@ -35,7 +31,6 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
     private readonly SceneRenderer _sceneRenderer = new(host);
     
     private static IDeviceContext ImmediateContext => RenderContext.Current.ImmediateContext;
-    private static IDeviceContext[] DeferredContexts => RenderContext.Current.DeferredContexts;
     private static ISwapChain SwapChain => RenderContext.Current.SwapChain;
 
     private ITexture RenderTarget => host.RenderTarget;
@@ -49,10 +44,9 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         var stopwatch = Profiler.Start();
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingGpuWait);
         
-        stopwatch = Profiler.Start();
+        var fullFrameStopwatch = Profiler.Start();
 
         RenderStats.Reset();
-        FrameCounter.Increment();
         ImmediateContext.ClearStats();
         
         PrepareRenderers();
@@ -70,6 +64,7 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         
         InvokeSceneRenderers(deltaTime);
         
+        stopwatch = Profiler.Start();
         var rtv = SwapChain.GetCurrentBackBufferRTV();
         var rtvTexture = rtv.GetTexture();
         
@@ -83,35 +78,29 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
                 DstTextureTransitionMode = ResourceStateTransitionMode.Transition,
             }
         );
+        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingResolveRenderTarget);
         
-        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingFullFrame);
         stopwatch = Profiler.Start();
         SwapChain.Present(0);
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingPresent);
+        fullFrameStopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingTotal);
     }
     
     private int _atomsToRenderCount;
-    private IRenderable[] _atomsToRender = [];
+    private RenderableHandle[] _atomsToRender = [];
     private int _widgetsToRenderCount;
     private ILaminaRenderable[] _widgetsToRender = [];
 
-    private Task PrepareRenderers()
+    private void PrepareRenderers()
     {
-        Camera? activeCamera = null;
-        // TODO: Fix allocation
-        foreach (var backstage in Backstages.ToList())
-        {
-            if (activeCamera != null)
-                continue;
-            activeCamera = FindActiveCamera(backstage);
-        }
+        var activeCamera = host.RegisteredCameras.FindActive(GameplayContext == GameplayContext.Editor);
         
-        Camera.Plane[] frustumPlanes = [];
+        ICamera.Plane[] frustumPlanes = [];
         var wvpMatrix = Matrix.Identity;
-        if (activeCamera != null)
+        if (activeCamera.HasValue)
         {
-            frustumPlanes = activeCamera.UpdateFrustumPlanes();
-            wvpMatrix = activeCamera.AsCameraView().ToMatrix();
+            frustumPlanes = activeCamera.Value.FrustumPlanes;
+            wvpMatrix = activeCamera.Value.InverseWorldTransform.Data;
         }
         
         var mapUniformBuffer = ImmediateContext.MapBuffer<Vector4Float>(host.ViewMatrixBuffer, MapType.Write, MapFlags.Discard);
@@ -123,19 +112,17 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         ImmediateContext.UnmapBuffer(host.ViewMatrixBuffer, MapType.Write);
         
         host.InfiniteInstanceBuffer.FrameStart();
+        var stopwatch = Profiler.Start();
         _cullingComputer.ReadResultsAndPrepare();
-        if (activeCamera == null)
-            return Task.CompletedTask;
-        
-        foreach (var backstage in Backstages.ToList())
-        {
-            // Collect all IRenderable entities reachable from the atom tree
-            var stopwatch = Profiler.Start();
-            CollectAtomsToRender(backstage);
-            stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCollectAtoms);
-        }
+        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCullingComputerRead);
+        if (activeCamera == null) return;
+
+        stopwatch = Profiler.Start();
+        CollectRegisteredAtomsToRender();
+        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCollectAtoms);
+        stopwatch = Profiler.Start();
         _cullingComputer.SubmitCurrentQueue(frustumPlanes);
-        return Task.CompletedTask;
+        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCullingComputerWrite);
     }
     
     private void InvokeLaminaRenderers(double _)
@@ -155,77 +142,52 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         _debugLogFrameRenderer.RenderFrameWithTiming(deltaTime);
         _debugProfilerFrameRenderer.RenderFrameWithTiming(deltaTime);
 
+        var stopwatch = Profiler.Start();
         immediateTextRenderer.Flush();
+        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingImmediateTextFlush);
     }
 
-    private Camera? FindActiveCamera(Atom target)
+    private void CollectRegisteredAtomsToRender()
     {
-        if (target is Camera camera
-            && ((camera.IsEditorCamera && GameplayContext == GameplayContext.Editor) || (!camera.IsEditorCamera && GameplayContext != GameplayContext.Editor)))
+        var renderables = host.RegisteredRenderables.AsArray();
+        foreach (var handle in renderables.AsSpan())
         {
-            return camera;
-        }
-
-        using var children = target.Children.Snapshot();
-        for (var index = 0; index < children.Length; index++)
-        {
-            var child = children.Array[index];
-            var foundCamera = FindActiveCamera(child);
-            if (foundCamera != null)
-                return foundCamera;
-        }
-
-        return null;
-    }
-
-    private void CollectAtomsToRender(Atom target)
-    {
-        if (!Atom.IsValid(target))
-            return;
-
-        var instanceCount = GetInstanceCount(target);
-        
-        if (target is ICullable { CullingEnabled: true } cullable)
-        {
-            _cullingComputer.QueueForCulling(cullable);
-            if (!_cullingComputer.IsVisible(cullable))
+            var instanceCount = GetInstanceCount(handle);
+            
+            if (handle.Renderable is ICullable { CullingEnabled: true } cullable)
             {
-                RenderStats.InstancesCulled += instanceCount;
-                return;
+                _cullingComputer.QueueForCulling(cullable);
+                if (!_cullingComputer.IsVisible(cullable))
+                {
+                    RenderStats.InstancesCulled += instanceCount;
+                    continue;
+                }
             }
-        }
-
-        if (target is IRenderable renderable)
-        {
-            // Resize the array if necessary
+            
             if (_atomsToRenderCount >= _atomsToRender.Length)
                 Array.Resize(ref _atomsToRender, Math.Max(_atomsToRenderCount + 1, _atomsToRender.Length * 2));
             
             RenderStats.InstancesDrawn += instanceCount;
-            _atomsToRender[_atomsToRenderCount++] = renderable;
+            _atomsToRender[_atomsToRenderCount++] = handle;
         }
-        if (target is ILaminaRenderable { Dirty: true } laminaRenderable)
+        
+        var laminaHandleList = host.RegisteredLaminaElements.AsArray();
+        foreach (var handle in laminaHandleList.AsSpan())
         {
             if (_widgetsToRenderCount >= _widgetsToRender.Length)
                 Array.Resize(ref _widgetsToRender, Math.Max(_widgetsToRenderCount + 1, _widgetsToRender.Length * 2));
-            
-            _widgetsToRender[_widgetsToRenderCount++] = laminaRenderable;
-        }
-
-        // TODO: Fix allocation
-        using var children = target.Children.Snapshot();
-        for (var index = 0; index < children.Length; index++)
-        {
-            var child = children.Array[index];
-            CollectAtomsToRender(child);
+            _widgetsToRender[_widgetsToRenderCount++] = handle.Renderable;
         }
     }
     
     public void ToggleLogRendering() => _debugLogFrameRenderer.OnToggleMode();
 
-    private static int GetInstanceCount(Atom target)
+    private static int GetInstanceCount(RenderableHandle handle)
     {
-        return target is IRenderable renderable ? renderable.ProduceRenderRequest().InstanceCount : 1;
+        var request = handle.RenderRequest;
+        if (!request.HasValue)
+            return 0;
+        return request.Value.InstanceCount;
     }
 
     public void Dispose()

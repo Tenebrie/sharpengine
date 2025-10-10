@@ -72,6 +72,11 @@ public class Transform
         Data = Matrix.Identity;
     }
 
+    public Transform(Matrix matrix)
+    {
+        Data = matrix;
+    }
+
     private Transform(Vector3 translation, Quat rotation, Vector3 scale)
     {
         var translationMatrix = MatrixMakers.FromTranslation(translation);

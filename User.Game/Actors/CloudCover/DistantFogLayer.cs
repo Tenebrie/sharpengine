@@ -73,12 +73,13 @@ public partial class DistantFogLayer : Actor
         private double _totalTime = 0.0;
 
         [OnUpdate]
-        protected void OnUpdate()
+        protected void OnUpdate(double deltaTime)
         {
+            _totalTime += deltaTime * 10;
             RenderThreadTask.Run("CloudLayerService -> Update", () =>
             {
                 _material.UpdateConstantBuffer("CloudParams", new CloudParams(
-                    time: 10,
+                    time: _totalTime,
                     densityMin: 0.0,
                     densityMax: 0.0,
                     sunDirection: new Vector3(1.0, 1.0, 1.0).Normalized()

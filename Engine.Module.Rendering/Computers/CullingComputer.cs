@@ -7,6 +7,7 @@ using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Filesystem;
 using Engine.Core.Logging;
+using Engine.Core.Modules.EntitySystem;
 using Engine.Core.Profiling.Attributes;
 using Engine.Module.Rendering.Utilities;
 
@@ -143,7 +144,7 @@ public class CullingComputer : IDisposable
     }
 
     private InstanceEntry[] _tempEntries = [];
-    public void SubmitCurrentQueue(Camera.Plane[] frustumPlanes)
+    public void SubmitCurrentQueue(ICamera.Plane[] frustumPlanes)
     {
         if (FrontQueue.Count == 0 || _deviceBusy)
             return;
@@ -215,7 +216,7 @@ public class CullingComputer : IDisposable
     }
     
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    private readonly struct ConstantParams(int count, Camera.Plane[] planes)
+    private readonly struct ConstantParams(int count, ICamera.Plane[] planes)
     {
         public readonly uint Count = (uint)count;
         public readonly Vector3Float _padding = new(0, 0, 0);
@@ -230,7 +231,7 @@ public class CullingComputer : IDisposable
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    private readonly struct PlaneData(Camera.Plane plane)
+    private readonly struct PlaneData(ICamera.Plane plane)
     {
         public readonly Vector3Float Normal = plane.Normal.Downgrade();
         public readonly float D = (float)plane.D;

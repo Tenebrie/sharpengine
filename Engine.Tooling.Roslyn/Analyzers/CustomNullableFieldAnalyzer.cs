@@ -87,7 +87,7 @@ public class CustomNullableFieldAnalyzer : DiagnosticAnalyzer
             .Any(attr =>
             {
                 var attrSymbol = semanticModel.GetSymbolInfo(attr).Symbol as IMethodSymbol;
-                return attrSymbol?.ContainingType?.Name is "OnInit" or "OnInitAttribute";
+                return attrSymbol?.ContainingType?.Name is "OnCreate" or "OnCreateAttribute" or "OnReady" or "OnReadyAttribute";
             });
     }
 

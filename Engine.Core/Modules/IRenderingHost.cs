@@ -2,6 +2,7 @@
 using Diligent;
 using Engine.Core.Common;
 using Engine.Core.Modules.Assets;
+using Engine.Core.Modules.EntitySystem;
 
 namespace Engine.Core.Modules;
 
@@ -26,6 +27,18 @@ public interface ILaminaWidgetRenderer;
 
 public interface IRenderingHost : IModularHost
 {
+    public long Register(ICamera camera);
+    public long Register(IMaskedRenderable maskedRenderable);
+    public long Register(IMaskedLaminaRenderable maskedRenderable);
+    
+    public void UpdateRegistered(long rid, ICamera camera);
+    public void UpdateRegistered(long rid, IMaskedRenderable maskedRenderable);
+    public void UpdateRegistered(long rid, IMaskedLaminaRenderable maskedRenderable);
+    
+    public void UnregisterCamera(long rid);
+    public void UnregisterRenderable(long rid);
+    public void UnregisterLamina(long rid);
+    
     public void InitializeResources(RenderingResources resources);
     public void InitializeRenderers();
     public void RenderEngineLoadingScreen();
@@ -33,3 +46,6 @@ public interface IRenderingHost : IModularHost
     public void ToggleLogRendering();
     public void HotShutdown();
 }
+
+public interface IMaskedRenderable;
+public interface IMaskedLaminaRenderable;

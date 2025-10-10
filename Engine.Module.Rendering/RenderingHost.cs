@@ -4,12 +4,12 @@ using Engine.Core.Assets;
 using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
-using Engine.Core.Communication.Multithreading;
 using Engine.Core.Enum;
-using Engine.Core.EntitySystem.Entities;
+using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Extensions;
-using Engine.Core.Logging;
 using Engine.Core.Modules;
+using Engine.Core.Modules.EntitySystem;
+using Engine.Core.Profiling;
 using Engine.Module.Rendering.Renderers;
 using Engine.Module.Rendering.Renderers.Fonts;
 using Engine.Module.Rendering.Renderers.Splash;
@@ -17,7 +17,6 @@ using Engine.Module.Rendering.Utilities;
 using JetBrains.Annotations;
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
-using MapFlags = Diligent.MapFlags;
 using ResourceDimension = Diligent.ResourceDimension;
 using Usage = Diligent.Usage;
 
@@ -26,8 +25,6 @@ namespace Engine.Module.Rendering;
 [UsedImplicitly]
 public class RenderingHost : IRenderingHost
 {
-    internal List<Backstage> Backstages = [];
-
     private IRenderDevice _renderDevice = null!;
     private IDeviceContext _immediateContext = null!;
     private IDeviceContext[] _deferredContexts = [];
@@ -42,6 +39,10 @@ public class RenderingHost : IRenderingHost
     
     public IRootHypervisor Hypervisor { get; set; } = null!;
     internal IWindow RootWindow => Hypervisor.Window;
+    
+    internal readonly CameraRegistrationHandler RegisteredCameras = new();
+    internal readonly LaminaRegistrationHandler RegisteredLaminaElements = new();
+    internal readonly RenderableRegistrationHandler RegisteredRenderables = new();
 
     private Vector2D<int> FramebufferSize => RootWindow.GetScaledFramebufferSize();
 
@@ -52,7 +53,39 @@ public class RenderingHost : IRenderingHost
     private IBuffer _instanceIndexBuffer = null!;
     // Holds the per-instance data for all instances
     internal InfiniteInstanceWriteOnlyBuffer<InstanceData> InfiniteInstanceBuffer = null!;
+
+    public long Register(ICamera camera) => RegisteredCameras.Add(camera);
+    public long Register(IMaskedRenderable maskedRenderable)
+    {
+        if (maskedRenderable is not IRenderable renderable)
+            throw new ArgumentException("Unable to unmask an IRenderable");
+        return RegisteredRenderables.Add(renderable);
+    }
+    public long Register(IMaskedLaminaRenderable maskedRenderable)
+    {
+        if (maskedRenderable is not ILaminaRenderable renderable)
+            throw new ArgumentException("Unable to unmask an ILaminaRenderable");
+        return RegisteredLaminaElements.Add(renderable);
+    }
     
+    public void UpdateRegistered(long rid, ICamera camera) => RegisteredCameras.Update(rid, camera);
+    public void UpdateRegistered(long rid, IMaskedRenderable maskedRenderable)
+    {
+        if (maskedRenderable is not IRenderable renderable)
+            throw new ArgumentException("Unable to unmask an IRenderable");
+        RegisteredRenderables.Update(rid, renderable);
+    }
+    public void UpdateRegistered(long rid, IMaskedLaminaRenderable maskedRenderable)
+    {
+        if (maskedRenderable is not ILaminaRenderable renderable)
+            throw new ArgumentException("Unable to unmask an ILaminaRenderable");
+        RegisteredLaminaElements.Update(rid, renderable);
+    }
+    
+    public void UnregisterCamera(long rid) => RegisteredCameras.Remove(rid);
+    public void UnregisterRenderable(long rid) => RegisteredRenderables.Remove(rid);
+    public void UnregisterLamina(long rid) => RegisteredLaminaElements.Remove(rid);
+
     public void InitializeResources(RenderingResources resources)
     {
         _renderDevice = resources.RenderDevice;
@@ -148,6 +181,12 @@ public class RenderingHost : IRenderingHost
 
     public void RenderSingleFrame(double deltaTime)
     {
+        var stopwatch = Profiler.Start();
+        RegisteredCameras.FlushPending();
+        RegisteredRenderables.FlushPending();
+        RegisteredLaminaElements.FlushPending();
+        stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingFlushRegistrations);
+        
         _frameRenderLoop.RenderSingleFrame(deltaTime);
     }
     
@@ -180,21 +219,13 @@ public class RenderingHost : IRenderingHost
         }
         catch { /* ignored */ }
 
-        Backstages = [];
         ViewMatrixBuffer.Dispose();
         _instanceIndexBuffer.Dispose();
         InfiniteInstanceBuffer.Dispose();
         DisposeRenderTargets();
     }
 
-    public void NotifyModuleReloaded(EngineModule module)
-    {
-        Backstages.Clear();
-        if (Hypervisor.GameplayModule is Backstage gameplayHost)             
-            Backstages.Add(gameplayHost);
-        if (Hypervisor.WorkspaceModule is Backstage workspaceHost)
-            Backstages.Add(workspaceHost);
-    }
+    public void NotifyModuleReloaded(EngineModule module) {}
     public void NotifyGameplayContextChanged(GameplayContext context) {}
     
     // public long Register(LaminaRenderer renderer)
