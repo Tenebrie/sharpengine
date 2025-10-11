@@ -2,6 +2,7 @@
 using Engine.Core.Common;
 using Engine.Core.Communication.Tasks;
 using Engine.Core.Logging;
+using Engine.Core.Memory;
 using Engine.Core.Modules;
 using Engine.Main.Editor.Modules.Abstract;
 
@@ -75,8 +76,8 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
     {
         try
         {
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-            long lastFrameTime = 0;
+            var stopwatch = Stopwatch.StartNew();
+            double lastFrameTime = 0;
         
             while (_renderThreadState != RenderThreadState.Stopped)
             {
@@ -88,12 +89,13 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
                 _renderBarrier.SignalAndWait();
                 FrameCounter.Increment();
                 
-                var currentTime = stopwatch.ElapsedMilliseconds;
-                var deltaTime = (currentTime - lastFrameTime) / 1000.0;
+                var currentTime = stopwatch.Elapsed.TotalMicroseconds;
+                var deltaTime = (currentTime - lastFrameTime) / 1000000.0;
                 lastFrameTime = currentTime;
                 
-                RenderingHost?.RenderSingleFrame(deltaTime); // ends with present call
-                RenderThreadTask.ExecuteAllQueued(); // async task here
+                RenderingHost?.RenderSingleFrame(deltaTime);
+                RenderThreadTask.ExecuteAllQueued();
+                MemoryManager.FreeDomain(MemoryDomain.Rendering);
             }
         }
         catch (Exception ex)

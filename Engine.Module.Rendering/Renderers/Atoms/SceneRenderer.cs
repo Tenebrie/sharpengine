@@ -26,10 +26,7 @@ public class SceneRenderer(RenderingHost host)
             var renderable = atomsToRender[i];
             // if (renderable is Atom atom && !Atom.IsValid(atom))
                 // continue;
-            var requestOptional = renderable.RenderRequest;
-            if (!requestOptional.HasValue)
-                continue;
-            var request = requestOptional.Value;
+            var request = renderable.RenderRequest;
             if (!_renderRequestPool.TryGetValue(request.HashCode, out var mergedRequest))
             {
                 _renderRequestPool[request.HashCode] = MergedRenderRequest.Create(request);
@@ -68,7 +65,6 @@ public class SceneRenderer(RenderingHost host)
                 (MaterialInstanceSnapshot[])req.MaterialInstances.Array);
         }
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingSubmitAtoms);
-        MemoryManager.FreeDomain(MemoryDomain.Rendering);
     }
     
     /**

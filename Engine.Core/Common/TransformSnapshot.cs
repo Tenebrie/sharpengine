@@ -1,7 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-using Engine.Core.Makers;
-
-namespace Engine.Core.Common;
+﻿namespace Engine.Core.Common;
 
 public struct TransformSnapshot(Transform transform)
 {

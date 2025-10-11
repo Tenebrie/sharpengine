@@ -6,6 +6,7 @@ namespace Engine.Core.Memory;
 public enum MemoryDomain
 {
     Rendering,
+    RenderRequest,
 }
 
 public static class MemoryManager
@@ -50,7 +51,7 @@ public static class MemoryManager
             _activePool[entry.NearestPower].Push(entry);
         }
         
-        private uint _freeMask;
+        private uint _freeMask = 0;
         public ArrayHandle Find<T>(int minimalSize)
         {
             if (minimalSize <= 1) minimalSize = 1;
@@ -134,6 +135,18 @@ public static class MemoryManager
         public required ArrayHandleBucket Bucket;
         
         public int Capacity => Array.Length;
+        
+        public void PlaceAt(int index, object value)
+        {
+            if (!IsBeingUsed)
+                throw new InvalidOperationException("ArrayHandle is not being used.");
+            if (index < 0 || index >= Capacity)
+                throw new ArgumentOutOfRangeException(nameof(index), "Index is out of bounds.");
+            Array.SetValue(value, index);
+            if (index >= SizeUsed)
+                SizeUsed = index + 1;
+            AccessedAt = Stopwatch.GetTimestamp();
+        }
         
         public void MarkAsFree()
         {

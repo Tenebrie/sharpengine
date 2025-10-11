@@ -7,9 +7,7 @@ using Engine.Core.DataStructures;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
-using Engine.Core.Logging;
 using Engine.Core.Modules;
-using Engine.Core.Profiling.Attributes;
 using JetBrains.Annotations;
 
 namespace Engine.Core.EntitySystem.Components.Rendering;
@@ -56,6 +54,8 @@ public partial class StaticMeshComponent : ActorComponent, IRenderable, ICullabl
     public Vector3 BoundingSphereWorldOrigin => WorldTransform.Position;
     public double BoundingSphereWorldRadius => BoundingSphere.WorldRadius;
 
+    private readonly FrameBufferedSingletonArray<TransformSnapshot> _worldTransformBuffer = new();
+    private readonly FrameBufferedSingletonArray<MaterialInstanceSnapshot> _materialInstanceBuffer = new();
     public RenderRequest? ProduceRenderRequest()
     {
         return new RenderRequest
@@ -65,28 +65,28 @@ public partial class StaticMeshComponent : ActorComponent, IRenderable, ICullabl
             RenderScript = RenderScript,
 
             InstanceCount = 1,
-            InstanceTransforms = [WorldTransform.Snapshot()],
-            MaterialInstances = [MaterialInstance.Snapshot()],
+            InstanceTransforms = _worldTransformBuffer.Produce(WorldTransform.Snapshot()),
+            MaterialInstances = _materialInstanceBuffer.Produce(MaterialInstance.Snapshot()),
 
             SortOrder = SortOrder
-        };
+        }; 
     }
     
     public long Rid = -1;
     
-    [OnCreate]
+    [OnReady]
     [OnModuleReload(EngineModule.Rendering)]
     protected void OnRegisterOnRenderingServer()
     { 
         var renderingModule = Backstage.RenderingModule;
         if (renderingModule == null)
-            return; 
+            return;
         Rid = renderingModule.Register(this);
     }
     
     [OnUpdate]
     protected void OnReregisterOnRenderingServer()
-    { 
+    {
         var renderingModule = Backstage.RenderingModule;
         renderingModule?.UpdateRegistered(Rid, this);
     }

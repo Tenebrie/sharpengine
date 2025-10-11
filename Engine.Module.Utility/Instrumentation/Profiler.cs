@@ -6,6 +6,7 @@ namespace Engine.Module.Utility.Instrumentation;
 
 public class Profiler : IProfiler
 {
+    private ReaderWriterLockSlim ReadWriteLock { get; } = new();
     private int _currentBufferIndex = 0;
     private readonly Dictionary<string, Dictionary<string, ProfilerEntry>>[] _methodEntriesBuffers = [new(), new()];
     private readonly Dictionary<string, Dictionary<ProfilingContext, ProfilerEntry>>[] _lifecycleEntriesBuffers = [new(), new()];
@@ -31,26 +32,33 @@ public class Profiler : IProfiler
     
     public IProfilerEntry[] Query(ProfilingContext context)
     {
-        return Instance.LastSecondLifecycleEntries
+        Instance.ReadWriteLock.EnterReadLock();
+        var result = Instance.LastSecondLifecycleEntries
             .SelectMany(kvp => kvp.Value)
             .Where(kvp => context.HasFlag(kvp.Key))
             .Select(kvp => kvp.Value)
             .Cast<IProfilerEntry>()
             .ToArray();
+        Instance.ReadWriteLock.ExitReadLock();
+        return result;
     }
     
     public IProfilerEntry[] QueryWorstOffenders()
     {
-        return Instance.LastSecondMethodEntries
+        Instance.ReadWriteLock.EnterReadLock();
+        var result = Instance.LastSecondMethodEntries
             .SelectMany(kvp => kvp.Value)
             .Select(kvp => kvp.Value)
             .OrderByDescending(e => e.AverageMilliseconds)
             .Cast<IProfilerEntry>()
             .ToArray();
+        Instance.ReadWriteLock.ExitReadLock();
+        return result;
     }
     
     public void SwapBuffers()
     {
+        Instance.ReadWriteLock.EnterWriteLock();
         Instance._currentBufferIndex = 1 - Instance._currentBufferIndex;
         foreach (var instanceMethodEntry in Instance.MethodEntries)
         {
@@ -68,10 +76,12 @@ public class Profiler : IProfiler
             foreach (var profilerEntry in instanceLifecycleEntry.Value.Values)
                 profilerEntry.Clear();
         }
+        Instance.ReadWriteLock.ExitWriteLock();
     }
     
     internal static void ReportByContext(ProfilingStopwatch stopwatch, Type ownerType, ProfilingContext context)
     {
+        Instance.ReadWriteLock.EnterWriteLock();
         if (!Instance.LifecycleEntries.TryGetValue(ownerType.Name, out var contextDictionary))
         {
             contextDictionary = new Dictionary<ProfilingContext, ProfilerEntry>();
@@ -89,10 +99,12 @@ public class Profiler : IProfiler
         }
         profilerEntry.RecordDuration(stopwatch.Stopwatch.Elapsed.TotalMicroseconds);
         Pool.Return(stopwatch);
+        Instance.ReadWriteLock.ExitWriteLock();
     }
     
     internal static void ReportByMethodName(ProfilingStopwatch stopwatch, Type ownerType, string methodName)
     {
+        Instance.ReadWriteLock.EnterWriteLock();
         if (!Instance.MethodEntries.TryGetValue(ownerType.Name, out var contextDictionary))
         {
             contextDictionary = new Dictionary<string, ProfilerEntry>();
@@ -109,6 +121,7 @@ public class Profiler : IProfiler
         }
         profilerEntry.RecordDuration(stopwatch.Stopwatch.Elapsed.TotalMicroseconds);
         Pool.Return(stopwatch);
+        Instance.ReadWriteLock.ExitWriteLock();
     }
 }
 

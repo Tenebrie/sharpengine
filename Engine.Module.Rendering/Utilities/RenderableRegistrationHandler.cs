@@ -1,7 +1,5 @@
 ﻿using Engine.Core.Common;
 using Engine.Core.EntitySystem.Interfaces;
-using Engine.Core.Logging;
-using Engine.Core.Profiling;
 
 namespace Engine.Module.Rendering.Utilities;
 
@@ -32,11 +30,25 @@ public class RenderableRegistrationHandler
     public long Add(IRenderable renderable)
     {
         var rid = Interlocked.Increment(ref _idCounter);
+        var maybeRequest = renderable.ProduceRenderRequest();
+        if (maybeRequest is not { } request)
+            return rid;
         var atomHandle = new RenderableHandle
         {
             Rid = rid,
             Renderable = renderable,
-            RenderRequest = renderable.ProduceRenderRequest(),
+            RenderRequest = new RenderRequest
+            {
+                Mesh = request.Mesh,
+                Material = request.Material,
+                RenderScript = request.RenderScript,
+                
+                InstanceCount = 0,
+                MaterialInstances = [],
+                InstanceTransforms = [],
+                
+                SortOrder = request.SortOrder,
+            },
         };
         _toAdd[ActiveBufferIndex][rid] = atomHandle;
 
@@ -45,8 +57,8 @@ public class RenderableRegistrationHandler
 
     public void Update(long rid, IRenderable renderable)
     {
-        var request = renderable.ProduceRenderRequest();
-        if (request == null)
+        var maybeRequest = renderable.ProduceRenderRequest();
+        if (maybeRequest is not { } request)
             return;
         _toUpdate[ActiveBufferIndex][rid] = new RenderableHandle
         {
@@ -65,17 +77,17 @@ public class RenderableRegistrationHandler
 
     public void FlushPending()
     {
-        if (_toAdd[BackBufferIndex].Count == 0 && _toUpdate[BackBufferIndex].Count == 0 && _toRemove[BackBufferIndex].Count == 0)
-            return;
-
         lock (_dictionaryLock)
         {
-            foreach (var rid in _toRemove[BackBufferIndex])
-                _registeredAtoms.Remove(rid);
-            foreach (var kv in _toUpdate[BackBufferIndex])
-                _registeredAtoms[kv.Key] = kv.Value;
+            if (_toAdd[BackBufferIndex].Count == 0 && _toUpdate[BackBufferIndex].Count == 0 && _toRemove[BackBufferIndex].Count == 0)
+                return;
+
             foreach (var kv in _toAdd[BackBufferIndex])
                 _registeredAtoms[kv.Key] = kv.Value;
+            foreach (var kv in _toUpdate[BackBufferIndex])
+                _registeredAtoms[kv.Key] = kv.Value;
+            foreach (var rid in _toRemove[BackBufferIndex])
+                _registeredAtoms.Remove(rid);
         }
 
         _toAdd[BackBufferIndex].Clear();
@@ -91,9 +103,7 @@ public class RenderableRegistrationHandler
         lock (_dictionaryLock)
         {
             if (!_cacheValid)
-            {
                 _cachedAtomList.Load(_registeredAtoms.Values);
-            }
 
             _cacheValid = true;
             return _cachedAtomList;
@@ -124,5 +134,5 @@ public struct RenderableHandle
 {
     public required long Rid;
     public required IRenderable Renderable;
-    public required RenderRequest? RenderRequest;
+    public required RenderRequest RenderRequest;
 }

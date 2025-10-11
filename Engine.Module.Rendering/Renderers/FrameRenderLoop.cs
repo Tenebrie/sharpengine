@@ -185,10 +185,7 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
 
     private static int GetInstanceCount(RenderableHandle handle)
     {
-        var request = handle.RenderRequest;
-        if (!request.HasValue)
-            return 0;
-        return request.Value.InstanceCount;
+        return handle.RenderRequest.InstanceCount;
     }
 
     public void Dispose()

@@ -34,5 +34,5 @@ public struct RenderRequest
     public required MaterialInstanceSnapshot[] MaterialInstances;
     public int SortOrder { get; set; }
     
-    public int HashCode => Mesh.GetHashCode() ^ Material.GetHashCode() ^ RenderScript.GetHashCode();
+    public int HashCode => Mesh.GetHashCode() ^ Material.GetHashCode() ^ RenderScript.GetHashCode() ^ SortOrder;
 }

@@ -214,8 +214,8 @@ internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRende
             Array.Resize(ref _materialPool, instanceCount);
             for (var i = _maxInstancesSeen; i < instanceCount; i++)
             {
-                _transformPool[i] = Common.TransformSnapshot.Identity;
-                _sphereTransformPool[i] = Common.TransformSnapshot.Identity;
+                _transformPool[i] = TransformSnapshot.Identity;
+                _sphereTransformPool[i] = TransformSnapshot.Identity;
                 _materialPool[i] = MaterialAssetManager.FallbackMaterialInstance.Snapshot();
             }
             _maxInstancesSeen = instanceCount;
