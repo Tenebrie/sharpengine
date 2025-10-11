@@ -19,7 +19,8 @@ namespace Engine.Core.Assets.Meshes;
 public enum WindingOrder
 {
     Ccw = 0,
-    Cw = 1
+    Cw = 1,
+    None = 2,
 }
 
 public class StaticMesh : IDisposable

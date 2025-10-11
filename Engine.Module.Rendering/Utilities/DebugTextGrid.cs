@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using Engine.Core.Common;
+using Engine.Core.Logging;
 using Engine.Module.Rendering.Renderers.Fonts;
 
 namespace Engine.Module.Rendering.Utilities;

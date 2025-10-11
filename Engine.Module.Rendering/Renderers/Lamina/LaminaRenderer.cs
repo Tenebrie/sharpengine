@@ -32,7 +32,6 @@ internal class LaminaRenderer : IDisposable
         if (atomsToRenderCount == 0)
             return;
         
-        // _deviceContext.Begin(0);
         for (var index = 0; index < atomsToRenderCount; index++)
         {
             var context = new LaminaRenderContext(_textRenderer, _deviceContext);
@@ -41,15 +40,11 @@ internal class LaminaRenderer : IDisposable
                 continue;
             renderable.Dirty = false;
             renderable.EnsureRenderTarget();
-            _deviceContext.ClearRenderTarget(
-                renderable.RenderTargetView,
-                new Vector4(0.0f, 0.0f, 0.0f, 0.0f),
-                ResourceStateTransitionMode.Transition);
             _renderTargetViews[0] = renderable.RenderTargetView;
-            _deviceContext.SetRenderTargets(_renderTargetViews, null, ResourceStateTransitionMode.Transition);
-            var ctx = RenderContext.Current;
-            ctx.RenderTargetSize = renderable.TextureSize;
-            RenderContext.Current = ctx;
+            _host.FrameRenderLoop.SetRenderTargets(_renderTargetViews,
+                null,
+                renderable.TextureSize,
+                clearColor: new Vector4(0.0f, 0.0f, 0.0f, 0.0f));
             renderable.CollectCommandList(context);
             
             foreach (var request in context.RenderRequests)

@@ -9,6 +9,7 @@ using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.Lamina;
+using Engine.Core.Logging;
 using JetBrains.Annotations;
 
 namespace Engine.Module.Utility.Lamina.Components;
@@ -20,6 +21,17 @@ public partial class LaminaLine : WidgetComponent
     private LaminaLineMesh? _mesh = null;
     private Material? _material = null;
     private MaterialInstance? _materialInstance = null;
+
+    protected override void PopulateIntrinsics(LaminaLayout layout)
+    {
+        if (layout is not LineLayout lineLayout)
+            throw new ArgumentException($"Expected layout of type {nameof(LineLayout)}, got {layout.GetType().Name}");
+
+        var points = lineLayout.Props.Points;
+        var minValues = new Vector2(points.Select(p => p.X).Min(), points.Select(p => p.Y).Min());
+        var maxValues = new Vector2(points.Select(p => p.X).Max(), points.Select(p => p.Y).Max());
+        Size = maxValues - minValues;
+    }
 
     protected override void Render(LaminaLayout layout, ILaminaRenderContext context)
     {
@@ -37,14 +49,9 @@ public partial class LaminaLine : WidgetComponent
         }
         
         Position = context.Position;
-        // TODO: Set size from bounding box of points
-        Size = new Vector2(120, 64);
             
         Transform = Transform.Identity;
-        var screenPosition = context.Position / RenderContext.Current.RenderTargetSize - Vector2.One / 2;
-        var scale = Size / RenderContext.Current.RenderTargetSize;
-        Transform.Scale = new Vector3(scale.X, scale.Y, 1.0) * 2;
-        Transform.Position = new Vector3(screenPosition.X, -screenPosition.Y, 0) * 2 + new Vector3(scale.X, -scale.Y, 0.0);
+        Transform.Position = context.Position.ToVector3();
         
         context.RenderRequest(new LaminaRenderRequest
         {
@@ -68,9 +75,11 @@ public partial class LaminaLine : WidgetComponent
         _points.Clear();
         foreach (var point in props.Points)
         {
-            var adjusted = point / RenderContext.Current.RenderTargetSize;
-            _points.Add(new Vector2(adjusted.X, -adjusted.Y));
+            _points.Add(new Vector2(point.X, point.Y));
         }
+        var minValues = new Vector2(_points.Select(p => p.X).Min(), _points.Select(p => p.Y).Min());
+        var maxValues = new Vector2(_points.Select(p => p.X).Max(), _points.Select(p => p.Y).Max());
+        Size = maxValues - minValues;
 
         _mesh ??= new LaminaLineMesh();
         _mesh.Generate(_points);
@@ -83,7 +92,7 @@ public partial class LaminaLine : WidgetComponent
         internal void Generate(List<Vector2> points)
         {
             if (_verts.Length != points.Count)
-                _verts = new AssetVertex[points.Count];
+                _verts = new AssetVertex[points.Count * 2];
             for (var i = 0; i < points.Count; i++)
             {
                 var point = points[i];
@@ -95,12 +104,29 @@ public partial class LaminaLine : WidgetComponent
             }
 
             if (_indices.Length != (points.Count - 1) * 2)
-                _indices = new uint[(points.Count - 1) * 2];
+                _indices = new uint[(points.Count - 1) * 4];
             for (var i = 0; i < points.Count - 1; i++)
             {
                 _indices[i * 2] = (uint)i;
                 _indices[i * 2 + 1] = (uint)(i + 1);
             }
+            
+            // Pass 2
+            // for (var i = 0; i < points.Count; i++)
+            // {
+            //     var point = points[i];
+            //     _verts[points.Count + i] = new AssetVertex
+            //     {
+            //         Position = point.ToVector3() + new Vector3(1,1,0),
+            //         VertexColor = Color.White
+            //     };
+            // }
+            //
+            // for (var i = 0; i < points.Count - 1; i++)
+            // {
+            //     _indices[(points.Count - 1) * 2 + i * 2] = (uint)points.Count + (uint)i;
+            //     _indices[(points.Count - 1) * 2 + i * 2 + 1] = (uint)points.Count + (uint)(i + 1);
+            // }
 
             LoadCustomized(_verts, _indices, WindingOrder.Ccw, Usage.Default, builder =>
             {

@@ -62,7 +62,6 @@ public class MarshaledTask(string homeThreadName)
     
     public void Purge(Assembly assembly)
     {
-        Logger.Info("Purge");
         lock (_queue)
         {
             _queue = _queue

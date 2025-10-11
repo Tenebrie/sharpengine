@@ -1,9 +1,7 @@
 using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Renderers;
-using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
-using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.Lamina;
 using Engine.Core.Logging;
@@ -20,7 +18,7 @@ public partial class LaminaButton : WidgetComponent
         if (layout is not ButtonLayout buttonLayout)
             throw new ArgumentException($"Expected layout of type {nameof(ButtonLayout)}, got {layout.GetType().Name}");
         
-        layout.Add(new LabelLayout(buttonLayout.Props.Label));
+        layout.Label(text: buttonLayout.Props.Label);
     }
 
     private Material? _material = null;
@@ -38,13 +36,14 @@ public partial class LaminaButton : WidgetComponent
         }
         
         Position = context.Position;
-        Size = new Vector2(120, 64);
+        Size = new Vector2(100, 50);
             
         Transform = Transform.Identity;
-        var screenPosition = context.Position / RenderContext.Current.RenderTargetSize - Vector2.One / 2;
-        var scale = Size / RenderContext.Current.RenderTargetSize;
-        Transform.Scale = new Vector3(scale.X, scale.Y, 1.0) * 2;
-        Transform.Position = new Vector3(screenPosition.X, -screenPosition.Y, 0) * 2 + new Vector3(scale.X, -scale.Y, 0.0);
+        // var screenPosition = context.Position / RenderContext.Current.RenderTargetSize - Vector2.One / 2;
+        // var scale = Size / RenderContext.Current.RenderTargetSize;
+        // Transform.Scale = new Vector3(scale.X, scale.Y, 1.0) * 2;
+        // Transform.Position = new Vector3(screenPosition.X, -screenPosition.Y, 0) * 2 + new Vector3(scale.X, -scale.Y, 0.0);
+        Transform.Position = context.Position.ToVector3();
         
         context.RenderRequest(new LaminaRenderRequest
         {

@@ -66,7 +66,7 @@ public static class PipelineBuilder
             {
                 WindingOrder.Ccw => CullMode.Back,
                 WindingOrder.Cw => CullMode.Front,
-                _ => CullMode.Back
+                _ => CullMode.None
             };
             _incrementalHash.Write("WindingOrder", windingOrder.ToString());
             // _hashCode ^= windingOrder.GetHashCode();

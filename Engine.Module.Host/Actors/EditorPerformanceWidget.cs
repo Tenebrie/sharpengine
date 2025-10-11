@@ -1,57 +1,73 @@
 using System.Collections.Immutable;
 using System.Drawing;
+using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.EntitySystem.Entities;
-using Engine.Core.Logging;
+using Engine.Core.Lamina;
 using Engine.Core.Profiling;
+using Engine.Module.Host.Utilities;
 
 namespace Engine.Module.Host.Actors;
 
 public partial class EditorPerformanceWidget : Actor
 {
     [Component] protected FramerateCounterComponent FramerateCounter;
+    [Component] protected UserInterfaceComponent PerformanceMetricsWidget;
     [Component] protected UserInterfaceComponent FramerateLabelWidget;
     [Component] protected UserInterfaceComponent FramerateGraphWidget;
-    
-    // [OnTimer(Frames = 60)]
-    // protected void OnTimer()
-    // {
-    //     FramerateLabelWidget.SetLayout(v => 
-    //     {
-    //         v.Div(new Vector2(100, 300), v =>
-    //         {
-    //             v.Button(label: "Test Button", backgroundColor: Color.Aqua);
-    //         });
-    //     });
-    // }
 
-    [OnTimer(Seconds = 0.5)]
+    [Component] protected LaminaDebugTextGrid TextGrid;
+
+    [OnTimer(Seconds = 0.1)]
     protected void OnGraphUpdate()
     {
+        const double height = 48.0;
+
+        // FramerateLabelWidget.Size = (1024, Backstage.Window.FramebufferSize.Y);
+        // FramerateLabelWidget.Transform.Position = (Backstage.Window.FramebufferSize.X - 1024, 0, 0);
+        FramerateLabelWidget.SetLayout(v =>
+        {
+            v.Div(position: (0, 0), v =>
+            {
+                FramerateCounter.WriteFramerateToGrid(TextGrid, v);
+            });
+        });
+
+        FramerateGraphWidget.Size = new Vector2(128 + 2, height + 2);
+        FramerateGraphWidget.Transform.Position = new Vector3(Backstage.Window.FramebufferSize.X - 290, 8, 0);
         FramerateGraphWidget.SetLayout(v =>
         {
-            v.Div(position: (1300, 24), v =>
+            v.Div(position: (0, 0), v =>
             {
-                var scaleFactor = 800.0 / FramerateCounter.MaximumValue;
+                var scaleFactor = height / FramerateCounter.MaximumValue;
                 var graphData = FramerateCounter.FramerateHistory
-                    .Select((val, index) => new Vector2(index * 25, -val * scaleFactor))
+                    .Select((val, index) => new Vector2(index, height - val * scaleFactor))
                     .ToImmutableList();
                 v.Line(points: graphData);
                 var lowGraphData = FramerateCounter.LowFramerateHistory
-                    .Select((val, index) => new Vector2(index * 25, -val * scaleFactor))
+                    .Select((val, index) => new Vector2(index, height - val * scaleFactor))
                     .ToImmutableList();
                 v.Line(points: lowGraphData, color: Color.Red);
             });
+        });
+    }
+    
+    [OnTimer(Seconds = 1.0)]
+    protected void OnMetricsUpdate()
+    {
+        PerformanceMetricsWidget.SetLayout(v =>
+        {
+            FramerateCounter.WriteMetricsToGrid(TextGrid, v);
         });
     }
 }
 
 public partial class FramerateCounterComponent : ActorComponent
 {
-    internal readonly List<double> FramerateHistory = Enumerable.Repeat(0.0, 256).ToList();
-    internal readonly List<double> LowFramerateHistory = Enumerable.Repeat(0.0, 256).ToList();
+    internal readonly List<double> FramerateHistory = Enumerable.Repeat(0.0, 128).ToList();
+    internal readonly List<double> LowFramerateHistory = Enumerable.Repeat(0.0, 128).ToList();
     internal int MaximumValue = 240;
 
     private readonly List<double> _frameTimes = [];
@@ -59,10 +75,9 @@ public partial class FramerateCounterComponent : ActorComponent
     private int _framerate = 0;
     private int _onePercentLow = 0;
     private List<string> _statProfilerEntries = [];
+    private double _unaccountedCpuRenderingTime = 0;
     private List<string> _renderingProfilerEntries = [];
     
-    // After profiler update, remember the number of frames the snapshot represents to calculate timing per frame
-    private int _lastSeenFrameIndex = -1;
     private int _updateFramesCollected = 0;
 
     [OnUpdate]
@@ -74,11 +89,8 @@ public partial class FramerateCounterComponent : ActorComponent
     }
     
     [OnTimer(Seconds = 0.1)]
-    protected void FlushFrameTimes()
+    protected void CollectFrameTimes()
     {
-        // _textGrid.Draw(0, 0, DebugTextGrid.Anchor.TopRight, Color.White, "FPS: " + _framerate);
-        // _textGrid.Draw(0, 1, DebugTextGrid.Anchor.TopRight, Color.White, "1% Low: " + _onePercentLow);
-        
         var averageFrameTime = _frameTimes.Count > 0 ? _frameTimes.Average() : 0.0;
         var framerate = 1.0 / averageFrameTime;
         
@@ -97,39 +109,52 @@ public partial class FramerateCounterComponent : ActorComponent
         FramerateHistory.RemoveAt(0);
         LowFramerateHistory.RemoveAt(0);
         MaximumValue = (int)Math.Max(FramerateHistory.Max(), LowFramerateHistory.Max());
-
+    }
+    
+    [OnTimer(Seconds = 1.0)]
+    protected void CollectPerformanceMetrics()
+    {
         // var framesForLatestUpdate = Math.Max(1, FrameCounter.Current - _lastSeenFrameIndex);
         var framesForLatestUpdate = Math.Max(1, _updateFramesCollected);
         _statProfilerEntries = Profiler
             .Query(ProfilingContext.BackstageUpdate |
-                   ProfilingContext.PhysicsUpdate |
-                   ProfilingContext.RenderingTotal)
+                   ProfilingContext.PhysicsUpdate)
             .OrderByDescending(entry => entry.TotalMilliseconds / framesForLatestUpdate)
             .Select(entry =>
             {
                 var timePerFrame = entry.TotalMilliseconds / framesForLatestUpdate;
-                if (timePerFrame < 0.01)
+                if (timePerFrame < 0.03)
                     return "";
                 return $"{entry.TypeName}: {timePerFrame:F2}ms";
             })
             .Where(str => str.Length > 0)
             .ToList();
-        _renderingProfilerEntries = Profiler
+        var cpuRenderingQueries = Profiler
             .Query(ProfilingContext.RenderingDebugFramerate |
+                   ProfilingContext.RenderingTotal |
                    ProfilingContext.RenderingDebugLog |
                    ProfilingContext.RenderingDebugProfiler |
                    ProfilingContext.RenderingCollectAtoms |
                    ProfilingContext.RenderingCombineRequests |
                    ProfilingContext.RenderingLamina |
                    ProfilingContext.RenderingSortRequests |
+                   ProfilingContext.RenderingResolveRenderTarget |
+                   ProfilingContext.RenderingImmediateTextFlush |
                    ProfilingContext.RenderingPresent |
+                   ProfilingContext.RenderingCullingComputerRead |
+                   ProfilingContext.RenderingCullingComputerWrite |
                    ProfilingContext.RenderingFlushRegistrations |
-                   ProfilingContext.RenderingSubmitAtoms)
+                   ProfilingContext.RenderingSubmitAtoms);
+        
+        var actualCpuRenderingTime = Profiler.Query(ProfilingContext.RenderingTotal).Sum(entry => entry.TotalMilliseconds) / framesForLatestUpdate;
+        var totalCpuRenderingTime = cpuRenderingQueries.Sum(entry => entry.TotalMilliseconds) / framesForLatestUpdate - actualCpuRenderingTime;
+        _unaccountedCpuRenderingTime = actualCpuRenderingTime - totalCpuRenderingTime;
+        _renderingProfilerEntries = cpuRenderingQueries
             .OrderByDescending(entry => entry.TotalMilliseconds / framesForLatestUpdate)
             .Select(entry =>
             {
                 var timePerFrame = entry.TotalMilliseconds / framesForLatestUpdate;
-                if (timePerFrame < 0.01)
+                if (timePerFrame < 0.03)
                     return "";
                 var displayName = entry.Context.ToString()!.Replace("Rendering", "");
                 return $"{displayName}: {timePerFrame:F2}ms";
@@ -137,30 +162,41 @@ public partial class FramerateCounterComponent : ActorComponent
             .Where(str => str.Length > 0)
             .ToList();
         
-        _lastSeenFrameIndex = FrameCounter.Current;
         _updateFramesCollected = 0;
+    }
+    
+    public void WriteFramerateToGrid(LaminaDebugTextGrid textGrid, LaminaLayout v)
+    {
+        textGrid.Draw(v, 0, 0, LaminaDebugTextGrid.Anchor.TopRight, Color.White, "FPS: " + _framerate);
+        textGrid.Draw(v, 0, 1, LaminaDebugTextGrid.Anchor.TopRight, Color.White, "1% Low: " + _onePercentLow);
+    }
+
+    public void WriteMetricsToGrid(LaminaDebugTextGrid textGrid, LaminaLayout v)
+    {
+        var line = 2;
+        const int maxEntriesRendered = 16;
+        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Main Thread (CPU) ----");
+        for (var i = 0; i < Math.Min(_statProfilerEntries.Count, maxEntriesRendered); i++)
+        {
+            var entry = _statProfilerEntries[i];
+            textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, entry);
+        }
+        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Render Thread (CPU) ----");
         
-        // _lastSeenProfilerBufferIndex = Profiler.CurrentBufferIndex;
-        // var line = 2;
-        // const int maxEntriesRendered = 16;
-        // for (var i = 0; i < Math.Min(_statProfilerEntries.Count, maxEntriesRendered); i++)
-        // {
-        //     var entry = _statProfilerEntries[i];
-        //     _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, entry);
-        // }
-        // _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Rendering ----");
-        // for (var i = 0; i < Math.Min(_renderingProfilerEntries.Count, maxEntriesRendered); i++)
-        // {
-        //     var entry = _renderingProfilerEntries[i];
-        //     _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, entry);
-        // }
-        //
-        // var drawCallCount = RenderContext.Current.ImmediateContext.GetStats().CommandCounters.DrawIndexed;
-        // var val = RenderContext.Current.ImmediateContext.GetStats().PrimitiveCounts;
-        // _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Stats ----");
-        // _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, $"Draws: {drawCallCount, 4}");
-        // _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, $"Instances: {RenderStats.InstancesDrawn, 4}");
-        // _textGrid.Draw(0, line++, DebugTextGrid.Anchor.TopRight, Color.White, $"Culled: {RenderStats.InstancesCulled, 4}");
-        // _textGrid.Draw(0, line,   DebugTextGrid.Anchor.TopRight, Color.White, $"Triangles: {val[1], 4}");
+        for (var i = 0; i < Math.Min(_renderingProfilerEntries.Count, maxEntriesRendered); i++)
+        {
+            var entry = _renderingProfilerEntries[i];
+            textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, entry);
+        }
+        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, "Other: " + _unaccountedCpuRenderingTime.ToString("F2") + "ms");
+
+        var drawCallCount = RenderContext.Current.ImmediateContext.GetStats().CommandCounters.DrawIndexed;
+        var val = RenderContext.Current.ImmediateContext.GetStats().PrimitiveCounts;
+        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Stats ----");
+        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Draws: {drawCallCount, 4}");
+        // TODO: Expose render stats
+        // textGrid.Draw(0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Instances: {RenderStats.InstancesDrawn, 4}");
+        // textGrid.Draw(0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Culled: {RenderStats.InstancesCulled, 4}");
+        textGrid.Draw(v, 0, line,   LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Triangles: {val[1], 4}");
     }
 }

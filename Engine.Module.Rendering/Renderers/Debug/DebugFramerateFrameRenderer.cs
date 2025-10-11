@@ -25,6 +25,7 @@ public class DebugFramerateFrameRenderer(RenderingHost host, TextRenderer textRe
 
     public void RenderFrame(double deltaTime)
     {
+        return;
         UpdateFramerate(deltaTime);
         RenderFramerate();
     }

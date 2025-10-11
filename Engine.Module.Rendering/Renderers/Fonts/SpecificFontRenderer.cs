@@ -188,8 +188,6 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
     {
         var verticesWritten = 0;
         
-        if (_glyphStream.Count != 1)
-            Logger.Info("Count is " + _glyphStream.Count);
         foreach (var (texture, vertexList) in _glyphStream)
         {
             if (verticesWritten + vertexList.Count >= BufferSizeGlyphs * 4)

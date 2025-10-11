@@ -51,17 +51,13 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         ImmediateContext.ClearStats();
         
         PrepareRenderers();
-        
-        ImmediateContext.ClearRenderTarget(RenderTargetView, new Vector4(0.35f, 0.35f, 0.35f, 1.0f), ResourceStateTransitionMode.Transition);
-        ImmediateContext.ClearDepthStencil(RenderDepthView, ClearDepthStencilFlags.Depth, 1.0f, 0, ResourceStateTransitionMode.Transition);
-        ImmediateContext.SetRenderTargets([RenderTargetView], RenderDepthView, ResourceStateTransitionMode.Transition);
+
+        var swapChainSize = new Vector2(SwapChain.GetDesc().Width, SwapChain.GetDesc().Height);
+        SetRenderTargets([RenderTargetView], RenderDepthView, swapChainSize, clearColor: new Vector4(0.35f, 0.35f, 0.35f, 1.0f));
         
         InvokeLaminaRenderers(deltaTime);
         
-        ImmediateContext.SetRenderTargets([RenderTargetView], RenderDepthView, ResourceStateTransitionMode.None);
-        var ctx = RenderContext.Current;
-        ctx.RenderTargetSize = new Vector2(SwapChain.GetDesc().Width, SwapChain.GetDesc().Height);
-        RenderContext.Current = ctx;
+        SetRenderTargets([RenderTargetView], RenderDepthView, swapChainSize);
         
         InvokeSceneRenderers(deltaTime);
         
@@ -92,37 +88,70 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
     private int _widgetsToRenderCount;
     private ILaminaRenderable[] _widgetsToRender = [];
 
-    private void PrepareRenderers()
+    internal void SetRenderTargets(
+        ITextureView[]? renderTargetView,
+        ITextureView? depthStencilView,
+        Vector2 renderTargetSize,
+        Vector4? clearColor = null)
     {
-        var activeCamera = host.RegisteredCameras.FindActive(GameplayContext == GameplayContext.Editor);
-        
-        ICamera.Plane[] frustumPlanes = [];
-        var wvpMatrix = Matrix.Identity;
-        if (activeCamera.HasValue)
+        if (clearColor.HasValue)
         {
-            frustumPlanes = activeCamera.Value.FrustumPlanes;
-            wvpMatrix = activeCamera.Value.InverseWorldTransform.Data;
+            if (renderTargetView != null)
+            {
+                foreach (var view in renderTargetView)
+                {
+                    ImmediateContext.ClearRenderTarget(view, clearColor.Value,
+                        ResourceStateTransitionMode.Transition);
+                }
+            }
+
+            if (depthStencilView != null)
+            {
+                ImmediateContext.ClearDepthStencil(depthStencilView, ClearDepthStencilFlags.Depth, 1.0f, 0,
+                    ResourceStateTransitionMode.Transition);
+            }
         }
+
+        ImmediateContext.SetRenderTargets(renderTargetView, depthStencilView, ResourceStateTransitionMode.Transition);
         
+        var ctx = RenderContext.Current;
+        ctx.RenderTargetSize = renderTargetSize;
+        RenderContext.Current = ctx;
+        
+        var activeCamera = host.RegisteredCameras.FindActive(GameplayContext == GameplayContext.Editor);
+        if (activeCamera.HasValue)
+            WriteConstants(activeCamera.Value, renderTargetSize);
+    }
+    
+    private void WriteConstants(CameraRenderableHandle camera, Vector2 renderTargetSize)
+    {
+        var wvpMatrix = camera.InverseWorldTransform.Data;
         var mapUniformBuffer = ImmediateContext.MapBuffer<Vector4Float>(host.ViewMatrixBuffer, MapType.Write, MapFlags.Discard);
         mapUniformBuffer[0] = wvpMatrix[0].Downgrade();
         mapUniformBuffer[1] = wvpMatrix[1].Downgrade();
         mapUniformBuffer[2] = wvpMatrix[2].Downgrade();
         mapUniformBuffer[3] = wvpMatrix[3].Downgrade();
-        mapUniformBuffer[4] = new Vector4Float(FramebufferSize.X, FramebufferSize.Y, 1.0f / FramebufferSize.X, 1.0f / FramebufferSize.Y);
+        mapUniformBuffer[4] = new Vector4(renderTargetSize.X, renderTargetSize.Y, 1.0 / renderTargetSize.X, 1.0 / renderTargetSize.Y).Downgrade();
         ImmediateContext.UnmapBuffer(host.ViewMatrixBuffer, MapType.Write);
+    }
+    
+    private void PrepareRenderers()
+    {
+        var activeCamera = host.RegisteredCameras.FindActive(GameplayContext == GameplayContext.Editor);
         
         host.InfiniteInstanceBuffer.FrameStart();
         var stopwatch = Profiler.Start();
         _cullingComputer.ReadResultsAndPrepare();
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCullingComputerRead);
-        if (activeCamera == null) return;
-
+        
+        if (!activeCamera.HasValue)
+            return;
+        
         stopwatch = Profiler.Start();
         CollectRegisteredAtomsToRender();
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCollectAtoms);
         stopwatch = Profiler.Start();
-        _cullingComputer.SubmitCurrentQueue(frustumPlanes);
+        _cullingComputer.SubmitCurrentQueue(activeCamera.Value.FrustumPlanes);
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCullingComputerWrite);
     }
     

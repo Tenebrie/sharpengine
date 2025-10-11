@@ -4,11 +4,7 @@ using Engine.Core.Modules;
 
 namespace Engine.Core.Lamina;
 
-public record FragmentLayout() : LaminaLayout(typeof(LaminaLayout));
-
 public record DivLayout(Vector2 Offset) : LaminaLayout(typeof(DivLayout));
-public record HeaderLayout(string Text) : LaminaLayout(typeof(HeaderLayout));
-public record LabelLayout(string Text) : LaminaLayout(typeof(LabelLayout));
 
 public record LaminaLayout(Type Type) : ILaminaLayout
 {
@@ -39,9 +35,24 @@ public record LaminaLayout(Type Type) : ILaminaLayout
     }
 
     public void Div(Vector2 position, Action<LaminaLayout> action) => Add(new DivLayout(position), action);
-    public void Header(string text) => Add(new HeaderLayout(text));
-    public void Label(string text) => Add(new LabelLayout(text));
-    public void Button(string label, Color? backgroundColor = null, Action? onClick = null) => Add(new ButtonLayout(new LaminaButtonProps()
+    public void Label(
+        string text,
+        string? font = null,
+        int? fontSize = null,
+        Color? color = null,
+        Vector2? position = null)
+    {
+        Add(new LabelLayout(new LaminaLabelProps
+        {
+            Text = text,
+            Font = font ?? "RobotoMono-Bold",
+            FontSize = fontSize ?? 18,
+            Color = color ?? Color.Black,
+            Position = position ?? Vector2.Zero,
+        }));
+    }
+
+    public void Button(string label, Color? backgroundColor = null, Action? onClick = null) => Add(new ButtonLayout(new LaminaButtonProps
     {
         Label = label,
         BackgroundColor = backgroundColor ?? Color.Gray,
@@ -54,6 +65,16 @@ public record LaminaLayout(Type Type) : ILaminaLayout
         Thickness = thickness,
     }));
 }
+
+public record struct LaminaLabelProps
+{
+    public required string Text;
+    public required string Font;
+    public required int FontSize;
+    public required Color Color;
+    public required Vector2 Position;
+}
+public record LabelLayout(LaminaLabelProps Props) : LaminaLayout(typeof(LabelLayout));
 
 public record struct LaminaButtonProps
 {

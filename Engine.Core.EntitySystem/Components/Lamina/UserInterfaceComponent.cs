@@ -23,22 +23,23 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
 {
     [Component] public StaticMeshComponent MeshComponent;
     [Component] protected WidgetComponent RootWidget;
-    
-    private Vector2 _inferredSize = new(1920, 1080);
-    public Vector2 TextureSize { get; private set; } = new(1920, 1080);
+
+    public Vector2? Size { get; set; } = null;
+    public Vector2 RenderedSize => Size ?? new Vector2(FramebufferSize.X, FramebufferSize.Y);
+    public Vector2 TextureSize { get; private set; } = new();
     
     private Vector2D<int> FramebufferSize => Backstage.Window.GetScaledFramebufferSize();
 
     [OnReady]
     protected void OnReady()
     {
-        _inferredSize = TextureSize = new Vector2(FramebufferSize.X, FramebufferSize.Y);
         MeshComponent.StaticMesh = InterfacePlaneMesh.Shared;
         MeshComponent.Material = MaterialBuilder.CreateFromDisk("Shaders/UserInterface/General").Compile();
         MeshComponent.MaterialInstance = MeshComponent.Material.Instantiate();
         MeshComponent.SortOrder = 1;
         MeshComponent.CullingEnabled = false;
-        Transform.Scale = new Vector3(TextureSize.X / FramebufferSize.X, TextureSize.Y / FramebufferSize.Y, 1) * 2;
+        Transform.Position = new Vector3(0, 0, 0);
+        Transform.Scale = new Vector3(RenderedSize.X, RenderedSize.Y, 1);
         Dirty = true;
     }
     
@@ -65,21 +66,18 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     
     public void EnsureRenderTarget()
     {
-        if (_activeRenderTargetIndex != -1 && _inferredSize.X <= TextureSize.X && _inferredSize.Y <= TextureSize.Y)
+        if (_activeRenderTargetIndex != -1 && Math.Abs(TextureSize.X - RenderedSize.X) < 1 && Math.Abs(TextureSize.Y - RenderedSize.Y) < 1)
             return;
         
+        Logger.Info(RenderedSize);
         foreach (var target in _renderTargets)
-        {
             target.Target.Dispose();
-            target.RenderTargetView.Dispose();
-            target.ShaderResourceView.Dispose();
-        }
         
         var targetTexture = RenderContext.Current.RenderDevice.CreateTexture(new TextureDesc
         {
             Type = ResourceDimension.Tex2d,
-            Width = (uint)TextureSize.X * 2,
-            Height = (uint)TextureSize.Y * 2,
+            Width = (uint)RenderedSize.X * 2,
+            Height = (uint)RenderedSize.Y * 2,
             Format = TextureFormat.RGBA8_UNorm_sRGB,
             BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource
         });
@@ -87,6 +85,9 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         var shaderResourceView = targetTexture.GetDefaultView(TextureViewType.ShaderResource);
         if (renderTargetView == null || shaderResourceView == null)
             throw new InvalidOperationException("Failed to create render target views for Lamina UI component");
+
+        Transform.Scale = new Vector3(RenderedSize.X, RenderedSize.Y, 1);
+        TextureSize = RenderedSize;
         _renderTargets.Add(new RenderTargetData
         {
             Target = targetTexture,
@@ -162,6 +163,7 @@ public class InterfacePlaneMesh : StaticMesh
         var indices = TessellatedPlaneMesh.CreateIndices();
         LoadCustomized(verts, indices, WindingOrder.Ccw, Usage.Immutable, builder =>
         {
+            builder.WithWindingOrder(WindingOrder.None);
             builder.WithDepthTest(false, false);
             builder.WithAlphaBlending(false, false);
         });

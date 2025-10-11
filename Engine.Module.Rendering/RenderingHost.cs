@@ -33,7 +33,7 @@ public class RenderingHost : IRenderingHost
     private IDeviceContext[] _deferredContexts = [];
     private ISwapChain _swapChain = null!;
 
-    private FrameRenderLoop _frameRenderLoop = null!;
+    internal FrameRenderLoop FrameRenderLoop = null!;
     
     internal ITexture RenderTarget = null!;
     private ITexture _renderDepth = null!;
@@ -134,7 +134,7 @@ public class RenderingHost : IRenderingHost
     
     public void InitializeRenderers()
     {
-        _frameRenderLoop = new FrameRenderLoop(this, new TextRenderer(_immediateContext));
+        FrameRenderLoop = new FrameRenderLoop(this, new TextRenderer(_immediateContext));
         
         CreateRenderTargets(FramebufferSize);
         
@@ -198,7 +198,7 @@ public class RenderingHost : IRenderingHost
         RegisteredLaminaElements.FlushPending();
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingFlushRegistrations);
         
-        _frameRenderLoop.RenderSingleFrame(deltaTime);
+        FrameRenderLoop.RenderSingleFrame(deltaTime);
     }
 
     private long _id = -1;
@@ -220,7 +220,7 @@ public class RenderingHost : IRenderingHost
         });
     }
 
-    public void ToggleLogRendering() => _frameRenderLoop.ToggleLogRendering();
+    public void ToggleLogRendering() => FrameRenderLoop.ToggleLogRendering();
     
     public void HotShutdown()
     { 

@@ -2,7 +2,7 @@ struct VSIn {
     float3 Pos   : ATTRIB0;
     float2 UV    : ATTRIB1;
     float4 Col   : ATTRIB2;
-    float3 Nrm   : ATTRIB3; // not used here
+    float3 Nrm   : ATTRIB3;
 };
 
 struct VSOut {
@@ -19,33 +19,35 @@ cbuffer Constants
 
 cbuffer g_ObjectIndex
 {
-    uint ObjectIndex;   // base index into the big instance buffer for this draw
-    uint3 _pad;         // keep 16-byte alignment
+    uint ObjectIndex;
+    uint3 _pad;
 };
 
 struct InstanceRecord
 {
-    row_major float4x4 World;
+    row_major float4x4 WorldTransform;
     float4 Tint;
     float2 UvOffset;
     float2 UvScale;
 };
 
 StructuredBuffer<InstanceRecord> g_InstanceData;
-
-VSOut main(VSIn IN, uint instId : SV_InstanceID)
+VSOut main(VSIn Vertex, uint InstanceID : SV_InstanceID)
 {
-    uint idx = ObjectIndex + instId;
-    InstanceRecord inst = g_InstanceData[idx];
-    
-    // float4 wp = float4(IN.Pos, 1.0);
-    float4 wp = mul(float4(IN.Pos * 1.0, 1.0), inst.World * 1.0);
-    float2 uv = float2(IN.UV.x, 1.0 - IN.UV.y);
-    // float4 wp = mul(float4(IN.Pos * 1.0, 1.0), inst.World);
-    // float2 uv = float2(IN.UV.x, 1.0 - IN.UV.y);
+    uint idx = ObjectIndex + InstanceID;
+    InstanceRecord instance = g_InstanceData[idx];
+
+    float4 pixelPos = mul(float4(Vertex.Pos, 1.0f), instance.WorldTransform);
+
+    float2 instanceSize = float2(instance.WorldTransform._11, instance.WorldTransform._22);
+    pixelPos.xy += instanceSize * 0.5f;
+
+    float2 uv01 = pixelPos.xy * ScreenSize.zw;
+    float2 clipXY = float2(uv01.x * 2.0f - 1.0f, 1.0f - uv01.y * 2.0f);
+
     VSOut OUT;
-    OUT.PosH  = wp;
-    OUT.UV    = uv * inst.UvScale + inst.UvOffset;
-    OUT.Color = IN.Col * inst.Tint;
+    OUT.PosH  = float4(clipXY, 0.0f, 1.0f);
+    OUT.UV    = float2(Vertex.UV.x, Vertex.UV.y) * instance.UvScale + instance.UvOffset;
+    OUT.Color = Vertex.Col * instance.Tint;
     return OUT;
 }

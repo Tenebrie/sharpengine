@@ -34,6 +34,11 @@ public partial class LaminaLabel : WidgetComponent
     {
         if (layout is not LabelLayout labelLayout)
             throw new ArgumentException($"Expected layout of type {nameof(LabelLayout)}, got {layout.GetType().Name}");
-        context.RenderText("RobotoMono-Bold", 27, labelLayout.Text, new Vector2(0, 0), Color.White, 2);
+        context.RenderText(labelLayout.Props.Font,
+            labelLayout.Props.FontSize,
+            labelLayout.Props.Text,
+            labelLayout.Props.Position,
+            labelLayout.Props.Color,
+            2);
     }
 }
