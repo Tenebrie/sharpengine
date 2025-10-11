@@ -188,7 +188,8 @@ public partial class FramerateCounterComponent : ActorComponent
             var entry = _renderingProfilerEntries[i];
             textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, entry);
         }
-        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, "Other: " + _unaccountedCpuRenderingTime.ToString("F2") + "ms");
+        if (_unaccountedCpuRenderingTime > 0.02)
+            textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, "Other: " + _unaccountedCpuRenderingTime.ToString("F2") + "ms");
 
         var drawCallCount = RenderContext.Current.ImmediateContext.GetStats().CommandCounters.DrawIndexed;
         var val = RenderContext.Current.ImmediateContext.GetStats().PrimitiveCounts;

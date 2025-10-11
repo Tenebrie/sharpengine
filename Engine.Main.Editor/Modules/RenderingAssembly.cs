@@ -117,6 +117,7 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
     private void StopRenderThread()
     {
         _renderThreadState = RenderThreadState.Stopped;
+        _renderBarrier.RemoveParticipant();
         _renderThread?.Join();
         _renderThread = null;
     }
