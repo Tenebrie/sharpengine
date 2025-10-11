@@ -25,6 +25,7 @@ public class InfiniteInstanceReadOnlyBuffer<T> : IDisposable where T : unmanaged
     
     private void AllocateBuffer()
     {
+        Logger.Info("Allocati");
         var writeBuffer = RenderContext.Current.RenderDevice.CreateBuffer(new BufferDesc
         {
             Name = $"InstanceBuffer<{typeof(T).Name}>_{_gpuBuffers.Count}",

@@ -15,7 +15,7 @@ public class LoadingSplashRenderLoop(RenderingHost host)
 
     public void RenderEngineLoadingScreen()
     {
-        host.CreateRenderTargets();
+        host.CreateRenderTargets(host.RootWindow.FramebufferSize);
         
         ImmediateContext.ClearRenderTarget(RenderTargetView, new Vector4(0.0, 0.0, 0.0, 1.0), ResourceStateTransitionMode.Transition);
         ImmediateContext.ClearDepthStencil(RenderDepthView, ClearDepthStencilFlags.Depth, 1.0f, 0, ResourceStateTransitionMode.Transition);

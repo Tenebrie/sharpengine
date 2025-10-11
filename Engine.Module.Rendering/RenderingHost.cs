@@ -4,12 +4,15 @@ using Engine.Core.Assets;
 using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
+using Engine.Core.Communication.Tasks;
 using Engine.Core.Enum;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Extensions;
+using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Core.Modules.EntitySystem;
 using Engine.Core.Profiling;
+using Engine.Module.Rendering.Computers;
 using Engine.Module.Rendering.Renderers;
 using Engine.Module.Rendering.Renderers.Fonts;
 using Engine.Module.Rendering.Renderers.Splash;
@@ -133,38 +136,46 @@ public class RenderingHost : IRenderingHost
     {
         _frameRenderLoop = new FrameRenderLoop(this, new TextRenderer(_immediateContext));
         
-        CreateRenderTargets();
+        CreateRenderTargets(FramebufferSize);
         
         // RootWindow.Render += RenderSingleFrameSync;
         RootWindow.FramebufferResize += OnFramebufferResize;
     }
 
-    internal void CreateRenderTargets()
+    internal void CreateRenderTargets(Vector2D<int> size)
     {
         var swapChain = _swapChain.GetDesc();
         RenderTarget = _renderDevice.CreateTexture(new TextureDesc
         {
             Type = ResourceDimension.Tex2d,
-            Width = (uint)FramebufferSize.X,
-            Height = (uint)FramebufferSize.Y,
+            Width = (uint)size.X,
+            Height = (uint)size.Y,
             MipLevels = 1,
             Format = swapChain.ColorBufferFormat,
             SampleCount = (uint)PipelineBuilder.MsaaSamples,
             BindFlags = BindFlags.RenderTarget
         });
+        if (RenderTarget == null)
+            throw new InvalidOperationException("Failed to create render target texture.");
         RenderTargetView = RenderTarget.GetDefaultView(TextureViewType.RenderTarget);
+        if (RenderTargetView == null)
+            throw new InvalidOperationException("Failed to create render target view.");
         
         _renderDepth = _renderDevice.CreateTexture(new TextureDesc
         {
             Type        = ResourceDimension.Tex2d,
-            Width       = (uint)FramebufferSize.X,
-            Height      = (uint)FramebufferSize.Y,
+            Width       = (uint)size.X,
+            Height      = (uint)size.Y,
             MipLevels   = 1,
             Format      = swapChain.DepthBufferFormat,
             SampleCount = (uint)PipelineBuilder.MsaaSamples,
             BindFlags   = BindFlags.DepthStencil
         });
+        if (_renderDepth == null)
+            throw new InvalidOperationException("Failed to create depth texture.");
         RenderDepthView = _renderDepth.GetDefaultView(TextureViewType.DepthStencil);
+        if (RenderDepthView == null)
+            throw new InvalidOperationException("Failed to create depth texture view.");
     }
     
     [SuppressMessage("ReSharper", "ConditionalAccessQualifierIsNonNullableAccordingToAPIContract")]
@@ -189,7 +200,8 @@ public class RenderingHost : IRenderingHost
         
         _frameRenderLoop.RenderSingleFrame(deltaTime);
     }
-    
+
+    private long _id = -1;
     private void OnFramebufferResize(Vector2D<int> size)
     {
         var width = size.X;
@@ -197,11 +209,15 @@ public class RenderingHost : IRenderingHost
 
         if (width == 0 || height == 0)
             return;
-        
-        DisposeRenderTargets();
-        _swapChain.Resize((uint)size.X, (uint)size.Y, SurfaceTransform.Identity);
-        CreateRenderTargets();
-        AssetManager.Shared.Pipelines.InvalidateAll();
+
+        RenderThreadTask.Cancel(_id);
+        _id = RenderThreadTask.Run("Resize SwapChain", () =>
+        {
+            DisposeRenderTargets();
+            _swapChain.Resize((uint)width, (uint)height, SurfaceTransform.Identity);
+            CreateRenderTargets(size);
+            AssetManager.Shared.Pipelines.InvalidateAll();
+        });
     }
 
     public void ToggleLogRendering() => _frameRenderLoop.ToggleLogRendering();

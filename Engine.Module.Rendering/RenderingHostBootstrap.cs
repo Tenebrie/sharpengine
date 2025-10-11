@@ -63,7 +63,7 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
                 case DebugMessageSeverity.Warning:
                 case DebugMessageSeverity.Error:
                 case DebugMessageSeverity.FatalError:
-                    // Console.WriteLine($"Diligent Engine: {severity} in {function}() ({file}, {line}): {message}");
+                    Console.WriteLine($"Diligent Engine: {severity} in {function}() ({file}, {line}): {message}");
                     // Hard exit the process now
                     if (Debugger.IsAttached)
                         Debugger.Break();

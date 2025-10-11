@@ -4,6 +4,7 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Enum;
 using Engine.Core.Extensions;
+using Engine.Core.Logging;
 using Engine.Core.Modules.EntitySystem;
 using Engine.Core.Profiling;
 using Engine.Module.Rendering.Computers;

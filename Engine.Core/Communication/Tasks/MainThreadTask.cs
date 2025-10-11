@@ -5,21 +5,36 @@ namespace Engine.Core.Communication.Tasks;
 
 public class MarshaledTask(string homeThreadName)
 {
+    private long _taskIdCounter = 0;
     private List<QueuedTask> _queue = [];
-    public void Run(Action action, string label, Assembly sourceAssembly)
+    public long Run(Action action, string label, Assembly sourceAssembly)
     {
         if (Thread.CurrentThread.Name == homeThreadName)
         {
             action();
-            return;
+            return -1;
         }
+
         lock (_queue)
         {
+            var taskId = _taskIdCounter;
             _queue.Add(new QueuedTask
             {
+                Id = _taskIdCounter,
                 SourceAssembly = sourceAssembly,
                 Action = action
             });
+            _taskIdCounter += 1;
+            return taskId;
+        }
+    }
+    public void Cancel(long taskId)
+    {
+        lock (_queue)
+        {
+            _queue = _queue
+                .Where(task => task.Id != taskId)
+                .ToList();
         }
     }
 
@@ -27,24 +42,27 @@ public class MarshaledTask(string homeThreadName)
     {
         lock (_queue)
         {
-            _queue.ForEach(task =>
+            for (var index = 0; index < _queue.Count; index++)
             {
+                var task = _queue[index];
                 try
                 {
                     task.Action();
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error($"Error executing main thread task: {ex.Message}");
+                    Logger.Error($"Error executing marshalled task: {ex.Message}");
                     Console.Error.WriteLine(ex);
                 }
-            });
+            }
+
             _queue.Clear();
         }
     }
     
     public void Purge(Assembly assembly)
     {
+        Logger.Info("Purge");
         lock (_queue)
         {
             _queue = _queue
@@ -57,7 +75,8 @@ public class MarshaledTask(string homeThreadName)
 public static class MainThreadTask
 {
     private static readonly MarshaledTask Handle = new("MainThread");
-    public static void Run(Action action) => Handle.Run(action, "", Assembly.GetCallingAssembly());
+    public static long Run(Action action) => Handle.Run(action, "", Assembly.GetCallingAssembly());
+    public static void Cancel(long taskId) => Handle.Cancel(taskId);
     public static void ExecuteAllQueued() => Handle.ExecuteAllQueued();
     public static void Purge(Assembly assembly) => Handle.Purge(assembly);
 }
@@ -65,13 +84,15 @@ public static class MainThreadTask
 public static class RenderThreadTask
 {
     private static readonly MarshaledTask Handle = new("RenderThread");
-    public static void Run(string label, Action action) => Handle.Run(action, label, Assembly.GetCallingAssembly());
+    public static long Run(string label, Action action) => Handle.Run(action, label, Assembly.GetCallingAssembly());
+    public static void Cancel(long taskId) => Handle.Cancel(taskId);
     public static void ExecuteAllQueued() => Handle.ExecuteAllQueued();
     public static void Purge(Assembly assembly) => Handle.Purge(assembly);
 }
 
-internal struct QueuedTask
+internal record struct QueuedTask
 {
-    public Assembly SourceAssembly { get; set; }
-    public Action Action { get; set; }
+    public required long Id { get; init; }
+    public required Assembly SourceAssembly { get; init; }
+    public required Action Action { get; init; }
 }

@@ -92,8 +92,8 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
                 var deltaTime = (currentTime - lastFrameTime) / 1000.0;
                 lastFrameTime = currentTime;
                 
-                RenderingHost?.RenderSingleFrame(deltaTime);
-                RenderThreadTask.ExecuteAllQueued();
+                RenderingHost?.RenderSingleFrame(deltaTime); // ends with present call
+                RenderThreadTask.ExecuteAllQueued(); // async task here
             }
         }
         catch (Exception ex)
