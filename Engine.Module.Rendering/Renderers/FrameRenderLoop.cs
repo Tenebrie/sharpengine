@@ -4,6 +4,7 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Enum;
 using Engine.Core.Extensions;
+using Engine.Core.Logging;
 using Engine.Core.Profiling;
 using Engine.Module.Rendering.Computers;
 using Engine.Module.Rendering.RegistrationHandlers;
@@ -45,8 +46,7 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingGpuWait);
         
         var fullFrameStopwatch = Profiler.Start();
-
-        RenderStats.Reset();
+        
         ImmediateContext.ClearStats();
         
         PrepareRenderers();
@@ -54,11 +54,13 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         var swapChainSize = new Vector2(SwapChain.GetDesc().Width, SwapChain.GetDesc().Height);
         SetRenderTargets([RenderTargetView], RenderDepthView, swapChainSize, clearColor: new Vector4(0.35f, 0.35f, 0.35f, 1.0f));
         
-        InvokeLaminaRenderers(deltaTime);
+        InvokeLaminaRenderers(deltaTime); // In here, we clip (see another snippet)
         
         SetRenderTargets([RenderTargetView], RenderDepthView, swapChainSize);
+        var r = new Rect { Left = 0, Top = 0, Right = (int)swapChainSize.X, Bottom = (int)swapChainSize.Y };
+        ImmediateContext.SetScissorRects([r], (uint)swapChainSize.X, (uint)swapChainSize.Y);
         
-        InvokeSceneRenderers(deltaTime);
+        InvokeSceneRenderers(deltaTime); 
         
         stopwatch = Profiler.Start();
         var rtv = SwapChain.GetCurrentBackBufferRTV();

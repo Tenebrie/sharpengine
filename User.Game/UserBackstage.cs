@@ -20,7 +20,7 @@ public partial class UserBackstage : GameplayHostBackstage
     protected void OnReady()
     {
         CreateScene<UserScene>();
-        // CreateScene<BasicEnemyScene>();
+        CreateScene<BasicEnemyScene>();
     }
     
     [OnUpdate]

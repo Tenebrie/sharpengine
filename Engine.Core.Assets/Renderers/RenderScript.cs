@@ -42,6 +42,7 @@ public class RenderScript : IRenderScript
         
         var pso = AssetManager.Shared.Pipelines.Produce(mesh.Pipeline, material.Pipeline);
         device.SetPipelineState(pso);
+
         mesh.BindForRendering();
         
         var srb = material.BindMaterial(pso);

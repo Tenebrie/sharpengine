@@ -4,6 +4,7 @@ using Diligent;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Filesystem;
+using Engine.Core.Logging;
 using Engine.Core.Modules.EntitySystem;
 using Engine.Module.Rendering.RegistrationHandlers;
 using Engine.Module.Rendering.Utilities;

@@ -27,8 +27,9 @@ public partial class UtilityHost : Backstage, IUtilityHost
     protected void RegisterLaminaRenderers()
     {
         LaminaRendererRepository.RegisterRenderer<LaminaLayout, LaminaDiv>();
-        LaminaRendererRepository.RegisterRenderer<DivLayout, LaminaDiv>();
         LaminaRendererRepository.RegisterRenderer<ButtonLayout, LaminaButton>();
+        LaminaRendererRepository.RegisterRenderer<DivLayout, LaminaDiv>();
+        LaminaRendererRepository.RegisterRenderer<ImageLayout, LaminaImage>();
         LaminaRendererRepository.RegisterRenderer<LabelLayout, LaminaLabel>();
         LaminaRendererRepository.RegisterRenderer<LineLayout, LaminaLine>();
     }
@@ -37,8 +38,9 @@ public partial class UtilityHost : Backstage, IUtilityHost
     protected void OnDestroy()
     {
         LaminaRendererRepository.Unregister<LaminaLayout>();
-        LaminaRendererRepository.Unregister<DivLayout>();
         LaminaRendererRepository.Unregister<ButtonLayout>();
+        LaminaRendererRepository.Unregister<DivLayout>();
+        LaminaRendererRepository.Unregister<ImageLayout>();
         LaminaRendererRepository.Unregister<LabelLayout>();
         LaminaRendererRepository.Unregister<LineLayout>();
     }

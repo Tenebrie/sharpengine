@@ -39,5 +39,7 @@ public struct LaminaRenderRequest
     public required TransformSnapshot[] InstanceTransforms;
     public required MaterialInstanceSnapshot[] MaterialInstances;
     
+    public Rect? ScissorRect;
+    
     public int HashCode => Mesh.GetHashCode() ^ Material.GetHashCode() ^ RenderScript.GetHashCode();
 }

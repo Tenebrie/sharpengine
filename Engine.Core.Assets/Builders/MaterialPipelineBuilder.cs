@@ -55,7 +55,6 @@ public static class PipelineBuilder
         {
             _layoutElements.Add(layout);
             // ReSharper disable once UsageOfDefaultStructEquality - it's fiiine here
-            // _hashCode ^= layout.GetHashCode();
             _incrementalHash.Write("LayoutElement", layout.GetHashCode().ToString());
             return this;
         }
@@ -69,7 +68,13 @@ public static class PipelineBuilder
                 _ => CullMode.None
             };
             _incrementalHash.Write("WindingOrder", windingOrder.ToString());
-            // _hashCode ^= windingOrder.GetHashCode();
+            return this;
+        }
+        
+        public Mesh WithScissorRect(bool enabled = true)
+        {
+            _handle.RasterizerDesc.ScissorEnable = enabled;
+            _incrementalHash.Write("ScissorRect", enabled.ToString());
             return this;
         }
         

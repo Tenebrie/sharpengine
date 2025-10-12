@@ -116,6 +116,8 @@ internal static class Editor
             if (AssemblyRepository.UpdatesSuspended)
                 return;
             
+            RenderingAssembly.StartFrameRender();
+            
             MainThreadTask.ExecuteAllQueued();
             
             foreach (var libraryAssembly in AssemblyRepository.LibraryAssemblies.Values)
@@ -138,13 +140,13 @@ internal static class Editor
             if (wantingBuild.Count > 0 && !allAssemblies.Any(a => a.Loader.DebounceTimer > 0.0))
             {
                 AssemblyRepository.RebuildCascading(wantingBuild);
-                RenderingAssembly.AwaitRenderThread();
+                RenderingAssembly.WaitUntilFrameEnd();
                 return;
             }
+            RenderingAssembly.WaitUntilFrameEnd();
 
             if (allAssemblies.Any(assembly => assembly.Loader.IsCompiling || assembly.Loader.HasErrors))
             {
-                RenderingAssembly.AwaitRenderThread();
                 return;
             }
 
@@ -169,7 +171,6 @@ internal static class Editor
                     (assembly, exception) => Logger.Error($"Failed to notify about module reload: {assembly}", exception)
                 );
             }
-            RenderingAssembly.AwaitRenderThread();
         };
 
         MainWindow.Closing += () =>

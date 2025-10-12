@@ -171,9 +171,11 @@ public class InterfacePlaneMesh : StaticMesh
         var indices = TessellatedPlaneMesh.CreateIndices();
         LoadCustomized(verts, indices, WindingOrder.Ccw, Usage.Immutable, builder =>
         {
-            builder.WithWindingOrder(WindingOrder.None);
-            builder.WithDepthTest(false, false);
-            builder.WithAlphaBlending(false, false);
+            builder
+                .WithScissorRect()
+                .WithWindingOrder(WindingOrder.None)
+                .WithDepthTest(false, false)
+                .WithAlphaBlending(false, false);
         });
         // AssetManager.Shared.Meshes.Put("Generated/InterfacePlaneMesh", this);
         return this;

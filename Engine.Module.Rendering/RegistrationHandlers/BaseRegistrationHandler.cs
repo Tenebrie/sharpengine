@@ -65,17 +65,17 @@ public abstract class BaseRegistrationHandler<TCreator, TData> where TCreator : 
 
 public class AtomList<TData> where TData : struct
 {
-    private int _count = 0;
     private TData[] _array = [];
-    
+    public int Length { get; private set; } = 0;
+
     public void Load(Dictionary<long, TData>.ValueCollection values)
     {
-        _count = values.Count;
+        Length = values.Count;
         if (_array.Length < values.Count)
             _array = new TData[values.Count * 2];
         values.CopyTo(_array, 0);
     }
     
-    public Span<TData> AsSpan() => _array.AsSpan(0, _count);
+    public Span<TData> AsSpan() => _array.AsSpan(0, Length);
 }
 

@@ -109,13 +109,19 @@ public partial class WidgetComponent : Actor, IWidget
     {
         if (_currentLayout == null)
             return;
-        
-        Render(_currentLayout, context);
-        foreach (var child in Children)
+
+        try
         {
-            if (child is WidgetComponent widget)
-                widget.PerformRender(context);
+            Render(_currentLayout, context);
+            foreach (var child in Children)
+            {
+                if (child is WidgetComponent widget)
+                    widget.PerformRender(context);
+            }
+            PostRender(_currentLayout, context);
+        } catch (Exception e)
+        {
+            Logger.Error("Exception during widget rendering: " + e.Message, e);
         }
-        PostRender(_currentLayout, context);
     }
 }

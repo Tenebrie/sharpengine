@@ -50,6 +50,16 @@ internal class LaminaRenderer : IDisposable
             
             foreach (var request in context.RenderRequests)
             {
+                if (request.ScissorRect is { } rect)
+                {
+                    _deviceContext.SetScissorRects([new Rect()
+                    {
+                        Top = rect.Top * 2,
+                        Left = rect.Left * 2,
+                        Right = rect.Right * 2,
+                        Bottom = rect.Bottom * 2
+                    }], (uint)renderable.TextureSize.X, (uint)renderable.TextureSize.Y);
+                }
                 request.RenderScript.Render(_deviceContext, request.InstanceCount, request.Mesh, request.InstanceTransforms, request.Material,
                     request.MaterialInstances);
             }

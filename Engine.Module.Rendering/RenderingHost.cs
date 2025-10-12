@@ -77,7 +77,12 @@ public class RenderingHost : IRenderingHost
     }
     
     public void UnregisterCamera(long rid) => RegisteredCameras.Remove(rid);
-    public void UnregisterRenderable(long rid) => RegisteredRenderables.Remove(rid);
+    public void UnregisterRenderable(long rid)
+    {
+        RegisteredRenderables.Remove(rid);
+        RegisteredCullables.Remove(rid);
+    }
+
     public void UnregisterLamina(long rid) => RegisteredLaminaElements.Remove(rid);
 
     public void InitializeResources(RenderingResources resources)
@@ -220,8 +225,8 @@ public class RenderingHost : IRenderingHost
         RootWindow.FramebufferResize -= OnFramebufferResize;
         try
         {
-            _immediateContext.SetPipelineState(null);
-            _immediateContext.Flush();
+            // _immediateContext.SetPipelineState(null);
+            _immediateContext.Flush(); 
             _renderDevice.IdleGPU();
             AssetManager.Shared.Pipelines.InvalidateAll();
         }

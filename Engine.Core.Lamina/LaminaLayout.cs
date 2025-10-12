@@ -1,10 +1,10 @@
 ﻿using System.Drawing;
+using Diligent;
 using Engine.Core.Common;
 using Engine.Core.Modules;
+using Box = Engine.Core.Common.Box;
 
 namespace Engine.Core.Lamina;
-
-public record DivLayout(Vector2 Offset) : LaminaLayout(typeof(DivLayout));
 
 public record CanvasContext
 {
@@ -38,8 +38,33 @@ public record LaminaLayout(Type Type) : ILaminaLayout
         Children.Add(w);
         render.Invoke(w);
     }
+    
+    public void Button(string label, Color? backgroundColor = null, Action? onClick = null) => Add(new ButtonLayout(new LaminaButtonProps
+    {
+        Label = label,
+        BackgroundColor = backgroundColor ?? Color.Gray,
+        OnClick = onClick,
+    }));
 
     public void Div(Vector2 position, Action<LaminaLayout> action) => Add(new DivLayout(position), action);
+    
+    public void Image(
+        string? imagePath = null,
+        Box? clippingRect = null,
+        Vector2? position = null,
+        Vector2? size = null,
+        Color? tint = null)
+    {
+        Add(new ImageLayout(new LaminaImageProps
+        {
+            ImagePath = imagePath,
+            ClippingRect = clippingRect,
+            Position = position ?? Vector2.Zero,
+            Size = size ?? new Vector2(100, 100),
+            Tint = tint ?? Color.White,
+        }));
+    }
+    
     public void Label(
         string text,
         string? font = null,
@@ -57,12 +82,7 @@ public record LaminaLayout(Type Type) : ILaminaLayout
         }));
     }
 
-    public void Button(string label, Color? backgroundColor = null, Action? onClick = null) => Add(new ButtonLayout(new LaminaButtonProps
-    {
-        Label = label,
-        BackgroundColor = backgroundColor ?? Color.Gray,
-        OnClick = onClick,
-    }));
+
     public void Line(IReadOnlyList<Vector2> points, Color? color = null, int thickness = 1) => Add(new LineLayout(new LaminaLineProps
     {
         Points = points,
@@ -71,6 +91,38 @@ public record LaminaLayout(Type Type) : ILaminaLayout
     }));
 }
 
+/// <summary>
+/// Button 
+/// </summary>
+public record struct LaminaButtonProps
+{
+    public required string Label;
+    public required Color BackgroundColor;
+    public required Action? OnClick;
+}
+public record ButtonLayout(LaminaButtonProps Props) : LaminaLayout(typeof(ButtonLayout));
+
+/// <summary>
+/// Div
+/// </summary>
+public record DivLayout(Vector2 Offset) : LaminaLayout(typeof(DivLayout));
+
+/// <summary>
+/// Image
+/// </summary>
+public record struct LaminaImageProps
+{
+    public required string? ImagePath;
+    public required Box? ClippingRect;
+    public required Vector2 Position;
+    public required Vector2 Size;
+    public required Color Tint;
+}
+public record ImageLayout(LaminaImageProps Props) : LaminaLayout(typeof(ImageLayout));
+
+/// <summary>
+/// Label
+/// </summary>
 public record struct LaminaLabelProps
 {
     public required string Text;
@@ -81,14 +133,9 @@ public record struct LaminaLabelProps
 }
 public record LabelLayout(LaminaLabelProps Props) : LaminaLayout(typeof(LabelLayout));
 
-public record struct LaminaButtonProps
-{
-    public required string Label;
-    public required Color BackgroundColor;
-    public required Action? OnClick;
-}
-public record ButtonLayout(LaminaButtonProps Props) : LaminaLayout(typeof(ButtonLayout));
-
+/// <summary>  
+/// Line
+/// </summary>
 public record struct LaminaLineProps
 {
     public required IReadOnlyList<Vector2> Points;
