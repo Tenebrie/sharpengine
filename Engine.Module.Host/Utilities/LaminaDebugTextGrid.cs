@@ -26,7 +26,7 @@ public partial class LaminaDebugTextGrid : ActorComponent
     private int _glyphWidth = 0;
     private int _glyphHeight = 0;
 
-    public void Draw(LaminaLayout v, int x, int y, Anchor anchor, Color color, string text)
+    public void Draw(LaminaLayout v, int x, int y, Anchor anchor, Color color, string text, Vector2 containerSize)
     {
         // var textRenderer = RenderContext.Current
         if (text.Length > 512)
@@ -47,11 +47,11 @@ public partial class LaminaDebugTextGrid : ActorComponent
         var position = anchor switch
         {
             Anchor.TopLeft => new Vector2(offset.X + Padding, offset.Y),
-            Anchor.TopRight => new Vector2(Backstage.Window.FramebufferSize.X - size - offset.X - Padding, offset.Y),
-            Anchor.BottomLeft => new Vector2(offset.X + Padding, Backstage.Window.FramebufferSize.Y - _glyphHeight - offset.Y - Padding),
+            Anchor.TopRight => new Vector2(containerSize.X - size - offset.X - Padding, offset.Y),
+            Anchor.BottomLeft => new Vector2(offset.X + Padding, containerSize.Y - _glyphHeight - offset.Y - Padding),
             Anchor.BottomRight => new Vector2(
-                Backstage.Window.FramebufferSize.X - size - offset.X - Padding,
-                Backstage.Window.FramebufferSize.Y - _glyphHeight - offset.Y - Padding
+                containerSize.X - size - offset.X - Padding,
+                containerSize.Y - _glyphHeight - offset.Y - Padding
             ),
             _ => throw new ArgumentOutOfRangeException(nameof(anchor), anchor, null)
         };

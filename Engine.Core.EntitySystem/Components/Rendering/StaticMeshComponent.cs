@@ -1,46 +1,35 @@
 ﻿using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Renderers;
-using Engine.Core.Attributes;
 using Engine.Core.Common;
 using Engine.Core.DataStructures;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
-using Engine.Core.Modules;
 using JetBrains.Annotations;
 
 namespace Engine.Core.EntitySystem.Components.Rendering;
 
 [UsedImplicitly]
-public partial class StaticMeshComponent : ActorComponent, IRenderable, ICullable
+public partial class StaticMeshComponent : ActorComponent, ICullable
 {
     [Component] private StaticMeshHolder _staticMeshHolder;
     public StaticMesh StaticMesh
     {
         get => _staticMeshHolder.Mesh;
-        set
-        {
-            _staticMeshHolder.Mesh = value;
-        }
+        set => _staticMeshHolder.Mesh = value;
     }
 
     public Material Material
     {
         get => _staticMeshHolder.Material;
-        set
-        {
-            _staticMeshHolder.Material = value;
-        }
+        set => _staticMeshHolder.Material = value;
     }
 
     public MaterialInstance MaterialInstance
     {
         get => _staticMeshHolder.MaterialInstance;
-        set
-        {
-            _staticMeshHolder.MaterialInstance = value;
-        }
+        set => _staticMeshHolder.MaterialInstance = value;
     }
 
     public BoundingSphereComponent BoundingSphere
@@ -68,34 +57,33 @@ public partial class StaticMeshComponent : ActorComponent, IRenderable, ICullabl
             InstanceTransforms = _worldTransformBuffer.Produce(WorldTransform.Snapshot()),
             MaterialInstances = _materialInstanceBuffer.Produce(MaterialInstance.Snapshot()),
 
-            SortOrder = SortOrder
+            SortOrder = SortOrder,
+            IsCullable = CullingEnabled
         }; 
     }
-    
-    public long Rid = -1;
-    
-    [OnReady]
-    [OnModuleReload(EngineModule.Rendering)]
-    protected void OnRegisterOnRenderingServer()
-    { 
-        var renderingModule = Backstage.RenderingModule;
-        if (renderingModule == null)
-            return;
-        Rid = renderingModule.Register(this);
+
+    public CullingRequest? ProduceCullingRequest()
+    {
+        if (!CullingEnabled)
+            return null;
+        
+        return new CullingRequest
+        {
+            Position = WorldTransform.Position,
+            BoundingSphereRadius = BoundingSphere.WorldRadius
+        };
     }
     
     [OnUpdate]
     protected void OnReregisterOnRenderingServer()
     {
         var renderingModule = Backstage.RenderingModule;
-        renderingModule?.UpdateRegistered(Rid, this);
+        renderingModule?.UpdateRegistered(Rid, this); 
     }
     
     [OnDestroy]
     protected void OnUnregisterOnRenderingServer()
     {
-        if (Rid == -1)
-            return;
         var renderingModule = Backstage.RenderingModule;
         renderingModule?.UnregisterRenderable(Rid);
     }

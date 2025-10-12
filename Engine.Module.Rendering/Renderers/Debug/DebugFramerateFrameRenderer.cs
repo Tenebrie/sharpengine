@@ -21,7 +21,7 @@ public class DebugFramerateFrameRenderer(RenderingHost host, TextRenderer textRe
     private List<string> _renderingProfilerEntries = [];
     
     // After profiler update, remember the number of frames the snapshot represents to calculate timing per frame
-    private int _lastSeenFrameIndex = -1;
+    private long _lastSeenFrameIndex = -1;
 
     public void RenderFrame(double deltaTime)
     {

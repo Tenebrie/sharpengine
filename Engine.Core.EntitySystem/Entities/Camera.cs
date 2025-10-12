@@ -1,8 +1,6 @@
-﻿using Engine.Core.Attributes;
-using Engine.Core.Common;
+﻿using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components;
-using Engine.Core.Modules;
 using Engine.Core.Modules.EntitySystem;
 using Silk.NET.Maths;
 
@@ -171,18 +169,6 @@ public partial class Camera : Actor, ICamera
         }
 
         return true;
-    }
-    
-    public long Rid = -1;
-    
-    [OnCreate]
-    [OnModuleReload(EngineModule.Rendering)]
-    protected void OnRegisterOnRenderingServer()
-    { 
-        var renderingModule = Backstage.RenderingModule;
-        if (renderingModule == null)
-            return;
-        Rid = renderingModule.Register(this);
     }
     
     [OnUpdate]

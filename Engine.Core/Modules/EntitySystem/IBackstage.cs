@@ -15,7 +15,7 @@ public interface IBackstage : IModularHost
 
 public interface IAtom;
 
-public interface ISpatial
+public interface ISpatial : IAtom
 {
     public Transform Transform { get; set; }
     public Transform WorldTransform { get; }

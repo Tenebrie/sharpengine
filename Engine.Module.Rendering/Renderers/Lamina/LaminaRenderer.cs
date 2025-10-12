@@ -3,6 +3,7 @@ using Diligent;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Interfaces;
+using Engine.Core.Extensions;
 using Engine.Core.Lamina;
 using Engine.Core.Logging;
 using Engine.Core.Profiling;
@@ -44,7 +45,7 @@ internal class LaminaRenderer : IDisposable
             _host.FrameRenderLoop.SetRenderTargets(_renderTargetViews,
                 null,
                 renderable.TextureSize,
-                clearColor: new Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+                clearColor: renderable.BackgroundColor);
             renderable.CollectCommandList(context);
             
             foreach (var request in context.RenderRequests)

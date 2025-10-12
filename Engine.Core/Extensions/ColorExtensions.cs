@@ -5,6 +5,7 @@ namespace Engine.Core.Extensions;
 
 public static class ColorExtensions
 {
+    // TODO: Delete (BGFX leftovers)
     public static uint ToAbgr(this Color color)
     {
         var a = (uint)color.A & 0xFF;

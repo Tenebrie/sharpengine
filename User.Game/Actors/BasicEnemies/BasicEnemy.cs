@@ -93,7 +93,8 @@ public partial class BasicEnemy : ActorInstance
         else if (DamageFlashTime > 0.0)
         {
             if (!IsDying)
-                DamageFlashTime = Math.Clamp(DamageFlashTime - deltaTime, 0.0, 1.0);
+                DamageFlashTime -= deltaTime;
+            DamageFlashTime = Math.Clamp(DamageFlashTime, 0.0, 1.0);
             MaterialInstance.SetTintColor(
                 Color.FromArgb(
                     255,

@@ -6,10 +6,15 @@ namespace Engine.Core.Lamina;
 
 public record DivLayout(Vector2 Offset) : LaminaLayout(typeof(DivLayout));
 
+public record CanvasContext
+{
+    public Vector2 Size = Vector2.One;
+}
+
 public record LaminaLayout(Type Type) : ILaminaLayout
 {
     public readonly List<LaminaLayout> Children = [];
-    
+
     public virtual bool Equals(LaminaLayout? other)
         => other is not null
            && Type == other.Type

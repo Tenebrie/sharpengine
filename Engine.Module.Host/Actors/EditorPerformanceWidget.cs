@@ -14,33 +14,34 @@ namespace Engine.Module.Host.Actors;
 public partial class EditorPerformanceWidget : Actor
 {
     [Component] protected FramerateCounterComponent FramerateCounter;
-    [Component] protected UserInterfaceComponent PerformanceMetricsWidget;
     [Component] protected UserInterfaceComponent FramerateLabelWidget;
     [Component] protected UserInterfaceComponent FramerateGraphWidget;
+    [Component] protected UserInterfaceComponent PerformanceMetricsWidget;
 
     [Component] protected LaminaDebugTextGrid TextGrid;
 
     [OnTimer(Seconds = 0.1)]
     protected void OnGraphUpdate()
     {
-        const double height = 48.0;
-
-        // FramerateLabelWidget.Size = (1024, Backstage.Window.FramebufferSize.Y);
-        // FramerateLabelWidget.Transform.Position = (Backstage.Window.FramebufferSize.X - 1024, 0, 0);
+        FramerateLabelWidget.Size = (512, Backstage.Window.FramebufferSize.Y);
+        FramerateLabelWidget.Transform.Position = (Backstage.Window.FramebufferSize.X - 512, 0, 0);
         FramerateLabelWidget.SetLayout(v =>
         {
-            v.Div(position: (0, 0), v =>
+            v.Div(position: (0, 0), v =>  
             {
-                FramerateCounter.WriteFramerateToGrid(TextGrid, v);
+                FramerateCounter.WriteFramerateToGrid(TextGrid, v, FramerateLabelWidget.Size);
             });
         });
 
-        FramerateGraphWidget.Size = new Vector2(128 + 2, height + 2);
-        FramerateGraphWidget.Transform.Position = new Vector3(Backstage.Window.FramebufferSize.X - 290, 8, 0);
-        FramerateGraphWidget.SetLayout(v =>
+        FramerateGraphWidget.Padding = (8, 4);
+        FramerateGraphWidget.Size = (FramerateCounterComponent.ValuesStored + FramerateGraphWidget.Padding.X * 2, 48);
+        FramerateGraphWidget.Transform.Position = new Vector3(Backstage.Window.FramebufferSize.X - 300, 8, 0);
+        FramerateGraphWidget.BackgroundColor = Color.FromArgb(50, 0, 0, 0);
+        FramerateGraphWidget.SetLayout(v => 
         {
             v.Div(position: (0, 0), v =>
             {
+                var height = FramerateGraphWidget.ContentSize.Y;
                 var scaleFactor = height / FramerateCounter.MaximumValue;
                 var graphData = FramerateCounter.FramerateHistory
                     .Select((val, index) => new Vector2(index, height - val * scaleFactor))
@@ -55,19 +56,22 @@ public partial class EditorPerformanceWidget : Actor
     }
     
     [OnTimer(Seconds = 1.0)]
-    protected void OnMetricsUpdate()
+    protected void OnMetricsUpdate()   
     {
+        PerformanceMetricsWidget.Size = (512, Backstage.Window.FramebufferSize.Y);
+        PerformanceMetricsWidget.Transform.Position = (Backstage.Window.FramebufferSize.X - 512, 0, 0);
         PerformanceMetricsWidget.SetLayout(v =>
         {
-            FramerateCounter.WriteMetricsToGrid(TextGrid, v);
+            FramerateCounter.WriteMetricsToGrid(TextGrid, v, PerformanceMetricsWidget.ContentSize);
         });
     }
 }
 
 public partial class FramerateCounterComponent : ActorComponent
 {
-    internal readonly List<double> FramerateHistory = Enumerable.Repeat(0.0, 128).ToList();
-    internal readonly List<double> LowFramerateHistory = Enumerable.Repeat(0.0, 128).ToList();
+    internal const int ValuesStored = 128;
+    internal readonly List<double> FramerateHistory = Enumerable.Repeat(0.0, ValuesStored).ToList();
+    internal readonly List<double> LowFramerateHistory = Enumerable.Repeat(0.0, ValuesStored).ToList();
     internal int MaximumValue = 240;
 
     private readonly List<double> _frameTimes = [];
@@ -165,39 +169,38 @@ public partial class FramerateCounterComponent : ActorComponent
         _updateFramesCollected = 0;
     }
     
-    public void WriteFramerateToGrid(LaminaDebugTextGrid textGrid, LaminaLayout v)
+    public void WriteFramerateToGrid(LaminaDebugTextGrid textGrid, LaminaLayout v, Vector2 canvasSize)
     {
-        textGrid.Draw(v, 0, 0, LaminaDebugTextGrid.Anchor.TopRight, Color.White, "FPS: " + _framerate);
-        textGrid.Draw(v, 0, 1, LaminaDebugTextGrid.Anchor.TopRight, Color.White, "1% Low: " + _onePercentLow);
+        textGrid.Draw(v, 0, 0, LaminaDebugTextGrid.Anchor.TopRight, Color.White, "FPS: " + _framerate, canvasSize);
+        textGrid.Draw(v, 0, 1, LaminaDebugTextGrid.Anchor.TopRight, Color.White, "1% Low: " + _onePercentLow, canvasSize);
     }
 
-    public void WriteMetricsToGrid(LaminaDebugTextGrid textGrid, LaminaLayout v)
+    public void WriteMetricsToGrid(LaminaDebugTextGrid textGrid, LaminaLayout v, Vector2 canvasSize)
     {
         var line = 2;
         const int maxEntriesRendered = 16;
-        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Main Thread (CPU) ----");
+        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Main Thread (CPU) ----", canvasSize);
         for (var i = 0; i < Math.Min(_statProfilerEntries.Count, maxEntriesRendered); i++)
         {
             var entry = _statProfilerEntries[i];
-            textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, entry);
+            textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, entry, canvasSize);
         }
-        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Render Thread (CPU) ----");
+        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Render Thread (CPU) ----", canvasSize);
         
         for (var i = 0; i < Math.Min(_renderingProfilerEntries.Count, maxEntriesRendered); i++)
         {
             var entry = _renderingProfilerEntries[i];
-            textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, entry);
+            textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, entry, canvasSize);
         }
         if (_unaccountedCpuRenderingTime > 0.02)
-            textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, "Other: " + _unaccountedCpuRenderingTime.ToString("F2") + "ms");
+            textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, "Other: " + _unaccountedCpuRenderingTime.ToString("F2") + "ms", canvasSize);
 
         var drawCallCount = RenderContext.Current.ImmediateContext.GetStats().CommandCounters.DrawIndexed;
         var val = RenderContext.Current.ImmediateContext.GetStats().PrimitiveCounts;
-        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Stats ----");
-        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Draws: {drawCallCount, 4}");
-        // TODO: Expose render stats
-        // textGrid.Draw(0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Instances: {RenderStats.InstancesDrawn, 4}");
-        // textGrid.Draw(0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Culled: {RenderStats.InstancesCulled, 4}");
-        textGrid.Draw(v, 0, line,   LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Triangles: {val[1], 4}");
+        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Stats ----", canvasSize);
+        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Draws: {drawCallCount, 4}", canvasSize);
+        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Instances: {RenderStats.InstancesDrawn, 4}", canvasSize);
+        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Culled: {RenderStats.InstancesCulled, 4}", canvasSize);
+        textGrid.Draw(v, 0, line,   LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Triangles: {val[1], 4}", canvasSize);
     }
 }

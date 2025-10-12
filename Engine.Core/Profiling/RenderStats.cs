@@ -1,4 +1,4 @@
-﻿namespace Engine.Module.Rendering.Utilities;
+﻿namespace Engine.Core.Profiling;
 
 public static class RenderStats
 {

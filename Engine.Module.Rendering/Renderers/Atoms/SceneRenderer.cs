@@ -3,11 +3,10 @@ using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Renderers;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
-using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
-using Engine.Core.Logging;
 using Engine.Core.Memory;
 using Engine.Core.Profiling;
+using Engine.Module.Rendering.RegistrationHandlers;
 using Engine.Module.Rendering.Utilities;
 
 namespace Engine.Module.Rendering.Renderers.Atoms;
@@ -24,8 +23,6 @@ public class SceneRenderer(RenderingHost host)
         for (var i = 0; i < atomsToRenderCount; i++)
         {
             var renderable = atomsToRender[i];
-            // if (renderable is Atom atom && !Atom.IsValid(atom))
-                // continue;
             var request = renderable.RenderRequest;
             if (!_renderRequestPool.TryGetValue(request.HashCode, out var mergedRequest))
             {
@@ -67,10 +64,6 @@ public class SceneRenderer(RenderingHost host)
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingSubmitAtoms);
     }
     
-    /**
-     * TODO: Instead of dynamically collecting the requests every frame, consider keeping them around, and rely on registration/deregistration
-     * when entities are added/removed or their materials/meshes change.
-     */
     private struct MergedRenderRequest
     {
         public required StaticMesh Mesh;

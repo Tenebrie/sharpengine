@@ -4,10 +4,9 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Enum;
 using Engine.Core.Extensions;
-using Engine.Core.Logging;
-using Engine.Core.Modules.EntitySystem;
 using Engine.Core.Profiling;
 using Engine.Module.Rendering.Computers;
+using Engine.Module.Rendering.RegistrationHandlers;
 using Engine.Module.Rendering.Renderers.Atoms;
 using Engine.Module.Rendering.Renderers.Debug;
 using Engine.Module.Rendering.Renderers.Fonts;
@@ -179,19 +178,21 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
 
     private void CollectRegisteredAtomsToRender()
     {
+        var cullables = host.RegisteredCullables.AsArray();
+        foreach (var handle in cullables.AsSpan())
+        {
+            _cullingComputer.QueueForCulling(handle);
+        }
+        
         var renderables = host.RegisteredRenderables.AsArray();
         foreach (var handle in renderables.AsSpan())
         {
             var instanceCount = GetInstanceCount(handle);
             
-            if (handle.Renderable is ICullable { CullingEnabled: true } cullable)
+            if (handle.RenderRequest.IsCullable && !_cullingComputer.IsVisible(handle.Rid))
             {
-                _cullingComputer.QueueForCulling(cullable);
-                if (!_cullingComputer.IsVisible(cullable))
-                {
-                    RenderStats.InstancesCulled += instanceCount;
-                    continue;
-                }
+                RenderStats.InstancesCulled += instanceCount;
+                continue;
             }
             
             if (_atomsToRenderCount >= _atomsToRender.Length)

@@ -9,7 +9,6 @@ namespace Engine.Core.EntitySystem.Components.Physics;
 
 public partial class PhysicsComponent : ActorComponent, IPhysicsComponent
 {
-    public long Rid = -1;
     public bool GravityEnabled = false;
     public Vector3 LinearVelocity = Vector3.Zero;
     public Vector3 AngularVelocity = Vector3.Zero;
@@ -28,16 +27,12 @@ public partial class PhysicsComponent : ActorComponent, IPhysicsComponent
     { 
         var parent = GetSpatialParent();
         var physicsModule = Backstage.PhysicsModule;
-        if (physicsModule == null)
-            return; 
-        Rid = physicsModule.Register(parent, this);
+        physicsModule?.Register(Rid, parent, this);
     }
     
     [OnDestroy]
     protected void OnUnregisterOnPhysicsServer()
     {
-        if (Rid == -1)
-            return;
         var physicsModule = Backstage.PhysicsModule;
         physicsModule?.Unregister(Rid);
     }

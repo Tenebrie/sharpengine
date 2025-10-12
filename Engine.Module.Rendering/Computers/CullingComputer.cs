@@ -3,12 +3,9 @@ using System.Runtime.InteropServices;
 using Diligent;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
-using Engine.Core.EntitySystem.Entities;
-using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Filesystem;
-using Engine.Core.Logging;
 using Engine.Core.Modules.EntitySystem;
-using Engine.Core.Profiling.Attributes;
+using Engine.Module.Rendering.RegistrationHandlers;
 using Engine.Module.Rendering.Utilities;
 
 namespace Engine.Module.Rendering.Computers;
@@ -98,11 +95,11 @@ public class CullingComputer : IDisposable
     }
 
     private int _activeBufferIndex = 0;
-    private readonly List<List<ICullable>> _submitQueues = [[], []];
-    private List<ICullable> BackQueue => _submitQueues[1 - _activeBufferIndex];
-    private List<ICullable> FrontQueue => _submitQueues[_activeBufferIndex];
+    private readonly List<List<CullableHandle>> _submitQueues = [[], []];
+    private List<CullableHandle> BackQueue => _submitQueues[1 - _activeBufferIndex];
+    private List<CullableHandle> FrontQueue => _submitQueues[_activeBufferIndex];
     
-    private readonly Dictionary<ICullable, bool> _currentResults = new();
+    private readonly Dictionary<long, bool> _currentResults = new();
 
     private List<float> _valuesBuffer = [];
     public void ReadResultsAndPrepare()
@@ -121,29 +118,28 @@ public class CullingComputer : IDisposable
         for (var i = 0; i < BackQueue.Count; i++)
         {
             var visible = _valuesBuffer[i] >= 0.5f;
-            var t = BackQueue[i];
-            _currentResults[t] = visible;
+            _currentResults[BackQueue[i].Rid] = visible;
         }
 
         FrontQueue.Clear();
         BackQueue.Clear();
     }
     
-    public void QueueForCulling(ICullable renderable)
+    public void QueueForCulling(CullableHandle request)
     {
         if (_deviceBusy)
             return;
-        FrontQueue.Add(renderable);
+        FrontQueue.Add(request);
     }
     
-    public bool IsVisible(ICullable renderable)
+    public bool IsVisible(long rid)
     {
-        if (_currentResults.TryGetValue(renderable, out var visible))
+        if (_currentResults.TryGetValue(rid, out var visible))
             return visible;
         return false;
     }
 
-    private InstanceEntry[] _tempEntries = [];
+    private InstanceEntry[] _tempEntries = []; 
     public void SubmitCurrentQueue(ICamera.Plane[] frustumPlanes)
     {
         if (FrontQueue.Count == 0 || _deviceBusy)
@@ -154,11 +150,7 @@ public class CullingComputer : IDisposable
             Array.Resize(ref _tempEntries, FrontQueue.Count);
         for (var index = 0; index < FrontQueue.Count; index++)
         {
-            var renderable = FrontQueue[index];
-            if (renderable is Atom atom && !Atom.IsValid(atom))
-                continue;
-            _tempEntries[index] = new InstanceEntry(
-                renderable.BoundingSphereWorldOrigin, renderable.BoundingSphereWorldRadius);
+            _tempEntries[index] = new InstanceEntry(FrontQueue[index].CullingRequest.Position, FrontQueue[index].CullingRequest.BoundingSphereRadius);
         }
 
         var inputBufferTickets = _instanceEntryBuffer.Write(FrontQueue.Count, _tempEntries);

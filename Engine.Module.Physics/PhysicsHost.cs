@@ -27,13 +27,13 @@ public class PhysicsHost : IPhysicsHost
     public void Initialize() => _workerPool.Initialize();
     public void Shutdown() => _workerPool.Shutdown();
 
-    public long Register(ISpatial maskedParent, IPhysicsComponent maskedComponent)
+    public void Register(long rid, ISpatial maskedParent, IPhysicsComponent maskedComponent)
     {
         if (maskedParent is not Spatial parent)
             throw new ArgumentException("Unable to unmask a Spatial"); 
         if (maskedComponent is not PhysicsComponent component)
             throw new ArgumentException("Unable to unmask a PhysicsComponent");
-        return _registeredAtoms.Add(parent, component);
+        _registeredAtoms.Add(rid, parent, component);
     }
     public void Unregister(long rid) => _registeredAtoms.Remove(rid);
 

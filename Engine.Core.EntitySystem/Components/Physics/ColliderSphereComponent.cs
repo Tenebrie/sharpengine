@@ -42,7 +42,9 @@ public partial class ColliderSphereComponent : ActorComponent
 
             InstanceCount = 1,
             InstanceTransforms = _singleComponentTransforms,
-            MaterialInstances = [Material.Instantiate().Snapshot()]
+            MaterialInstances = [Material.Instantiate().Snapshot()],
+            
+            IsCullable = true
         };
         // LineSphereMesh.Shared.Render(1, _singleComponentTransforms, [WireframeMaterial.Shared], LineSphereMesh.ColorMode.Collider);
     }

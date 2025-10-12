@@ -8,11 +8,10 @@ using Engine.Core.Communication.Tasks;
 using Engine.Core.Enum;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Extensions;
-using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Core.Modules.EntitySystem;
 using Engine.Core.Profiling;
-using Engine.Module.Rendering.Computers;
+using Engine.Module.Rendering.RegistrationHandlers;
 using Engine.Module.Rendering.Renderers;
 using Engine.Module.Rendering.Renderers.Fonts;
 using Engine.Module.Rendering.Renderers.Splash;
@@ -46,6 +45,7 @@ public class RenderingHost : IRenderingHost
     internal readonly CameraRegistrationHandler RegisteredCameras = new();
     internal readonly LaminaRegistrationHandler RegisteredLaminaElements = new();
     internal readonly RenderableRegistrationHandler RegisteredRenderables = new();
+    internal readonly CullableRegistrationHandler RegisteredCullables = new();
 
     private Vector2D<int> FramebufferSize => RootWindow.GetScaledFramebufferSize();
 
@@ -56,33 +56,24 @@ public class RenderingHost : IRenderingHost
     private IBuffer _instanceIndexBuffer = null!;
     // Holds the per-instance data for all instances
     internal InfiniteInstanceWriteOnlyBuffer<InstanceData> InfiniteInstanceBuffer = null!;
-
-    public long Register(ICamera camera) => RegisteredCameras.Add(camera);
-    public long Register(IMaskedRenderable maskedRenderable)
-    {
-        if (maskedRenderable is not IRenderable renderable)
-            throw new ArgumentException("Unable to unmask an IRenderable");
-        return RegisteredRenderables.Add(renderable);
-    }
-    public long Register(IMaskedLaminaRenderable maskedRenderable)
-    {
-        if (maskedRenderable is not ILaminaRenderable renderable)
-            throw new ArgumentException("Unable to unmask an ILaminaRenderable");
-        return RegisteredLaminaElements.Add(renderable);
-    }
     
-    public void UpdateRegistered(long rid, ICamera camera) => RegisteredCameras.Update(rid, camera);
+    public void UpdateRegistered(long rid, ICamera camera) => RegisteredCameras.AddOrUpdate(rid, camera);
     public void UpdateRegistered(long rid, IMaskedRenderable maskedRenderable)
     {
+        // TODO
+        // Debug.Assert(mr is IRenderable);
+        // var r = Unsafe.As<IRenderable>(mr);
         if (maskedRenderable is not IRenderable renderable)
             throw new ArgumentException("Unable to unmask an IRenderable");
-        RegisteredRenderables.Update(rid, renderable);
+        RegisteredRenderables.AddOrUpdate(rid, renderable);
+        if (maskedRenderable is ICullable cullable)
+            RegisteredCullables.AddOrUpdate(rid, cullable);
     }
     public void UpdateRegistered(long rid, IMaskedLaminaRenderable maskedRenderable)
     {
         if (maskedRenderable is not ILaminaRenderable renderable)
             throw new ArgumentException("Unable to unmask an ILaminaRenderable");
-        RegisteredLaminaElements.Update(rid, renderable);
+        RegisteredLaminaElements.AddOrUpdate(rid, renderable);
     }
     
     public void UnregisterCamera(long rid) => RegisteredCameras.Remove(rid);
@@ -195,6 +186,7 @@ public class RenderingHost : IRenderingHost
         var stopwatch = Profiler.Start();
         RegisteredCameras.FlushPending();
         RegisteredRenderables.FlushPending();
+        RegisteredCullables.FlushPending();
         RegisteredLaminaElements.FlushPending();
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingFlushRegistrations);
         

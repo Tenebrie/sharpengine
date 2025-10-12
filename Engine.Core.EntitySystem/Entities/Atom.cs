@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using Engine.Core.Common;
 using Engine.Core.Logging;
 using Engine.Core.Modules.EntitySystem;
 using Engine.Core.Profiling;
@@ -10,6 +11,8 @@ namespace Engine.Core.EntitySystem.Entities;
 [SuppressMessage("ReSharper", "MemberCanBeProtected.Global")]
 public partial class Atom : IAtom
 {
+    public long Rid { get; } = RidCounter.Next();
+    
     private Backstage? _backstage;
     public Backstage Backstage
     {

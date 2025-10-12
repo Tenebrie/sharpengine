@@ -12,9 +12,9 @@ public class DebugProfilerFrameRenderer(RenderingHost host, TextRenderer textRen
     
     private List<IProfilerEntry> _profilerEntries = [];
 
-    private int _lastSeenFrameIndex = -1;
+    private long _lastSeenFrameIndex = -1;
     private int _lastSeenProfilerBufferIndex = -1;
-    private int _framesForLatestUpdate = 1;
+    private long _framesForLatestUpdate = 1;
 
     public void RenderFrame(double deltaTime)
     {

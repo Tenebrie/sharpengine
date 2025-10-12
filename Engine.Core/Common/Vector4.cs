@@ -1,9 +1,11 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Drawing;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.X86;
+using Engine.Core.Extensions;
 
 namespace Engine.Core.Common;
 
@@ -234,6 +236,9 @@ public record struct Vector4(double X, double Y, double Z, double W)
     // Tuple (x, y)
     public static implicit operator Vector4((double x, double y, double z, double w) t) => new(t.x, t.y, t.z, t.w);
     public static implicit operator (double x, double y, double z, double w)(Vector4 v) => (v.X, v.Y, v.Z, v.W);
+    
+    // Color
+    public static implicit operator Vector4(Color c) => c.ToVector4();
     
     /**
      * Others

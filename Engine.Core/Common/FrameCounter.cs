@@ -1,14 +1,12 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿namespace Engine.Core.Common;
 
-namespace Engine.Core.Common;
-
-[SuppressMessage("ReSharper", "MemberCanBePrivate.Global")]
 public static class FrameCounter
 {
-    public static int Current { get; private set; } = 0;
+    private static long _current = 0;
+    public static long Current => Interlocked.Read(ref _current);
 
     public static void Increment()
     {
-        Current++;
+        Interlocked.Increment(ref _current);
     }
 }

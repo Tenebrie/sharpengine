@@ -2,14 +2,10 @@
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Renderers;
-using Engine.Core.Attributes;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
-using Engine.Core.Logging;
-using Engine.Core.Modules;
-using Engine.Core.Profiling.Attributes;
 using JetBrains.Annotations;
 
 namespace Engine.Core.EntitySystem.Components.Rendering;
@@ -23,7 +19,7 @@ public interface IInstancedActorComponent
 public partial class InstancedActorComponent<TInstance> : ActorComponent, IInstancedActorComponent where TInstance : ActorInstance, new()
 {
     internal const double ClusterSize = 100.0;
-    internal const double ClusterSizeSquared = ClusterSize * ClusterSize;
+    private const double ClusterSizeSquared = ClusterSize * ClusterSize;
     
     [Component] private StaticMeshHolder _instanceStaticMeshHolder;
     public StaticMesh InstanceStaticMesh
@@ -118,7 +114,7 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
 }
 
 [UsedImplicitly]
-internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRenderable, ICullable where TInstance : ActorInstance, new()
+internal partial class InstancedActorCluster<TInstance> : ActorComponent, ICullable where TInstance : ActorInstance, new()
 {
     internal InstancedActorComponent<TInstance> InstanceManager = null!;
     private List<TInstance> Instances { get; } = [];
@@ -238,20 +234,22 @@ internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRende
 
             InstanceCount = instanceCount,
             InstanceTransforms = _transformPool,
-            MaterialInstances = _materialPool
+            MaterialInstances = _materialPool,
+            
+            IsCullable = CullingEnabled
         };
     }
     
-    public long Rid = -1;
-    
-    [OnCreate]
-    [OnModuleReload(EngineModule.Rendering)]
-    protected void OnRegisterOnPhysicsServer()
-    { 
-        var renderingModule = Backstage.RenderingModule;
-        if (renderingModule == null)
-            return; 
-        Rid = renderingModule.Register(this);
+    public CullingRequest? ProduceCullingRequest()
+    {
+        if (!CullingEnabled || InstanceCount == 0)
+            return null;
+        
+        return new CullingRequest
+        {
+            Position = BoundingSphereWorldOrigin,
+            BoundingSphereRadius = BoundingSphereWorldRadius
+        };
     }
     
     [OnUpdate]
@@ -264,8 +262,6 @@ internal partial class InstancedActorCluster<TInstance> : ActorComponent, IRende
     [OnDestroy]
     protected void OnUnregisterOnPhysicsServer()
     {
-        if (Rid == -1)
-            return;
         var renderingModule = Backstage.RenderingModule;
         renderingModule?.UnregisterRenderable(Rid);
     }

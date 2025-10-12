@@ -27,10 +27,6 @@ public interface ILaminaWidgetRenderer;
 
 public interface IRenderingHost : IModularHost
 {
-    public long Register(ICamera camera);
-    public long Register(IMaskedRenderable maskedRenderable);
-    public long Register(IMaskedLaminaRenderable maskedRenderable);
-    
     public void UpdateRegistered(long rid, ICamera camera);
     public void UpdateRegistered(long rid, IMaskedRenderable maskedRenderable);
     public void UpdateRegistered(long rid, IMaskedLaminaRenderable maskedRenderable);

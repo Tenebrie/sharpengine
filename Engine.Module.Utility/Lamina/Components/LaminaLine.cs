@@ -5,11 +5,9 @@ using Engine.Core.Assets.Loaders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Renderers;
-using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.Lamina;
-using Engine.Core.Logging;
 using JetBrains.Annotations;
 
 namespace Engine.Module.Utility.Lamina.Components;
@@ -17,7 +15,7 @@ namespace Engine.Module.Utility.Lamina.Components;
 [UsedImplicitly]
 public partial class LaminaLine : WidgetComponent
 {
-    private List<Vector2> _points = [];
+    private readonly List<Vector2> _points = [];
     private LaminaLineMesh? _mesh = null;
     private Material? _material = null;
     private MaterialInstance? _materialInstance = null;

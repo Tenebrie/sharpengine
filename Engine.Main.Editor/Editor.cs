@@ -138,11 +138,15 @@ internal static class Editor
             if (wantingBuild.Count > 0 && !allAssemblies.Any(a => a.Loader.DebounceTimer > 0.0))
             {
                 AssemblyRepository.RebuildCascading(wantingBuild);
+                RenderingAssembly.AwaitRenderThread();
                 return;
             }
-            
+
             if (allAssemblies.Any(assembly => assembly.Loader.IsCompiling || assembly.Loader.HasErrors))
+            {
+                RenderingAssembly.AwaitRenderThread();
                 return;
+            }
 
             int awaitingCount;
             do

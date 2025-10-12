@@ -1,9 +1,9 @@
+using System.Drawing;
 using Diligent;
 using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Meshes.Builtins;
 using Engine.Core.Assets.Rendering;
-using Engine.Core.Attributes;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
@@ -12,7 +12,6 @@ using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Extensions;
 using Engine.Core.Lamina;
 using Engine.Core.Logging;
-using Engine.Core.Modules;
 using JetBrains.Annotations;
 using Silk.NET.Maths;
 
@@ -24,9 +23,30 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     [Component] public StaticMeshComponent MeshComponent;
     [Component] protected WidgetComponent RootWidget;
 
-    public Vector2? Size { get; set; } = null;
-    public Vector2 RenderedSize => Size ?? new Vector2(FramebufferSize.X, FramebufferSize.Y);
     public Vector2 TextureSize { get; private set; } = new();
+    
+    public Vector2 Padding { get; set; } = new(0, 0);
+    public Vector2 Size
+    {
+        get => _explicitSize ?? new Vector2(FramebufferSize.X, FramebufferSize.Y);
+        set => _explicitSize = value;
+    }
+    public Vector2 ContentSize => Size - Padding * 2;
+    
+    private Vector2? _explicitSize = null;
+
+
+    private Color _backgroundColor = Color.FromArgb(0, 0, 0, 0);
+    public Color BackgroundColor
+    {
+        get => _backgroundColor;
+        set
+        {
+            _backgroundColor = value.A == 0 ? Color.FromArgb(0, 0, 0, 0) : value;
+            Dirty = true;
+        }
+    }
+
     
     private Vector2D<int> FramebufferSize => Backstage.Window.GetScaledFramebufferSize();
 
@@ -39,7 +59,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         MeshComponent.SortOrder = 1;
         MeshComponent.CullingEnabled = false;
         Transform.Position = new Vector3(0, 0, 0);
-        Transform.Scale = new Vector3(RenderedSize.X, RenderedSize.Y, 1);
+        Transform.Scale = new Vector3(Size.X, Size.Y, 1);
         Dirty = true;
     }
     
@@ -53,31 +73,36 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
 
     public bool Dirty { get; set; }
 
-    private int _activeRenderTargetIndex = -1;
     private struct RenderTargetData
     {
         public ITexture Target;
         public ITextureView RenderTargetView;
         public ITextureView ShaderResourceView;
     }
-    private readonly List<RenderTargetData> _renderTargets = [];
-    public ITextureView RenderTargetView => _renderTargets[_activeRenderTargetIndex].RenderTargetView;
-    public ITextureView ShaderResourceView => _renderTargets[_activeRenderTargetIndex].ShaderResourceView;
+
+    private bool _renderTargetReady = false;
+    private RenderTargetData _renderTargets = default;
+    public ITextureView RenderTargetView => _renderTargets.RenderTargetView;
+    public ITextureView ShaderResourceView => _renderTargets.ShaderResourceView;
     
     public void EnsureRenderTarget()
     {
-        if (_activeRenderTargetIndex != -1 && Math.Abs(TextureSize.X - RenderedSize.X) < 1 && Math.Abs(TextureSize.Y - RenderedSize.Y) < 1)
+        if (_renderTargetReady && Math.Abs(TextureSize.X - Size.X) < 1 &&
+            Math.Abs(TextureSize.Y - Size.Y) < 1)
+        {
             return;
+        }
         
-        Logger.Info(RenderedSize);
-        foreach (var target in _renderTargets)
-            target.Target.Dispose();
         
+        if (_renderTargetReady)
+            _renderTargets.Target.Dispose();
+
+        var sizeCreated = Size;
         var targetTexture = RenderContext.Current.RenderDevice.CreateTexture(new TextureDesc
         {
             Type = ResourceDimension.Tex2d,
-            Width = (uint)RenderedSize.X * 2,
-            Height = (uint)RenderedSize.Y * 2,
+            Width = (uint)sizeCreated.X * 2,
+            Height = (uint)sizeCreated.Y * 2,
             Format = TextureFormat.RGBA8_UNorm_sRGB,
             BindFlags = BindFlags.RenderTarget | BindFlags.ShaderResource
         });
@@ -86,37 +111,27 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         if (renderTargetView == null || shaderResourceView == null)
             throw new InvalidOperationException("Failed to create render target views for Lamina UI component");
 
-        Transform.Scale = new Vector3(RenderedSize.X, RenderedSize.Y, 1);
-        TextureSize = RenderedSize;
-        _renderTargets.Add(new RenderTargetData
+        Transform.Scale = new Vector3(sizeCreated.X, sizeCreated.Y, 1);
+        TextureSize = sizeCreated;
+        _renderTargets = new RenderTargetData
         {
             Target = targetTexture,
             RenderTargetView = renderTargetView,
             ShaderResourceView = shaderResourceView
-        });
+        };
 
-        _activeRenderTargetIndex = 0;
+        _renderTargetReady = true;
+        MeshComponent.Material.InvalidateCache();
         MeshComponent.Material.SetRemoteTextureView(ShaderResourceView);
     }
 
     public void CollectCommandList(ILaminaRenderContext renderContext)
     {
+        renderContext.Position += Padding;
         foreach (var child in GetChildren<WidgetComponent>())
         {
             child.PerformRender(renderContext);
         }
-    }
-    
-    public long Rid = -1;
-    
-    [OnCreate]
-    [OnModuleReload(EngineModule.Rendering)]
-    protected void OnRegisterOnRenderingServer()
-    { 
-        var renderingModule = Backstage.RenderingModule;
-        if (renderingModule == null)
-            return; 
-        Rid = renderingModule.Register(this);
     }
     
     [OnUpdate]
@@ -129,8 +144,6 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     [OnDestroy]
     protected void OnUnregisterOnRenderingServer()
     {
-        if (Rid == -1)
-            return;
         var renderingModule = Backstage.RenderingModule;
         renderingModule?.UnregisterLamina(Rid);
     }
@@ -138,12 +151,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     public void Dispose()
     {
         GC.SuppressFinalize(this);
-        foreach (var target in _renderTargets)
-        {
-            target.RenderTargetView.Dispose();
-            target.ShaderResourceView.Dispose();
-            target.Target.Dispose();
-        }
+        _renderTargets.Target.Dispose();
     }
 }
 

@@ -7,15 +7,11 @@ namespace Engine.Module.Physics.Utilities;
 
 public class AtomRegistrationHandler
 {
-    private long _idCounter = 0;
     private bool _cacheValid = false;
-    private AtomHandle[] _cachedArray = [];
-    // private readonly ConcurrentDictionary<long, AtomHandle> _registeredAtoms = new();
     private readonly Dictionary<long, AtomHandle> _registeredAtoms = new();
 
-    public long Add(Spatial parent, PhysicsComponent component)
+    public void Add(long rid, Spatial parent, PhysicsComponent component)
     {
-        var rid = Interlocked.Increment(ref _idCounter);
         var atomHandle = new AtomHandle
         {
             Rid = rid,
@@ -24,9 +20,8 @@ public class AtomRegistrationHandler
             CollisionCandidates = [],
             WorldTransform = Transform.Identity,
         };
-        _registeredAtoms.TryAdd(rid, atomHandle);
+        _registeredAtoms[rid] = atomHandle;
         _cacheValid = false;
-        return rid;
     }
 
     public void Remove(long rid)
