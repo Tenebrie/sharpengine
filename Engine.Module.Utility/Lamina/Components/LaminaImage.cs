@@ -23,12 +23,14 @@ public partial class LaminaImage : WidgetComponent
         if (_material == null || _materialInstance == null)
         {
             _material = MaterialBuilder.CreateFromDisk("Shaders/UserInterface/General").Compile();
-            _materialInstance = _material.Instantiate().SetTintColor(imageLayout.Props.Tint);
+            _materialInstance = _material.Instantiate();
         }
 
-        if (_material != null && imageLayout.Props.ImagePath != null)
+        if (_material != null && _materialInstance != null)
         {
-            _material.UpdateTexture(Texture.CreateFromDisk(imageLayout.Props.ImagePath));
+            if (imageLayout.Props.ImagePath != null)
+                _material.UpdateTexture(Texture.CreateFromDisk(imageLayout.Props.ImagePath));
+            _materialInstance.SetTintColor(imageLayout.Props.Tint);
         }
         
         Position = context.Position + imageLayout.Props.Position;

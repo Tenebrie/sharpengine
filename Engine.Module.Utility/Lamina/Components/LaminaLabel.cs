@@ -13,10 +13,6 @@ namespace Engine.Module.Utility.Lamina.Components;
 [AttributeUsage(AttributeTargets.Class)]
 public class LaminaLayoutAttribute(string Alias) : Attribute;
 
-[MeansImplicitUse]
-[AttributeUsage(AttributeTargets.Method)]
-public class LaminaRendererAttribute : Attribute;
-
 [UsedImplicitly]
 public partial class LaminaLabel : WidgetComponent
 {

@@ -1,4 +1,5 @@
-﻿using Engine.Core.Makers;
+﻿using Engine.Core.Communication.Groups;
+using Engine.Core.Makers;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Entities;
@@ -15,6 +16,8 @@ namespace User.Game.Player;
 
 public partial class PlayerCharacter : Actor
 {
+    [DefaultGroup] public static Group<PlayerCharacter> All = new();
+    
     private Quaternion _desiredRotation = Quaternion.Identity;
     private const double MovementSpeed = 50.0;
     private const double RotationSpeed = 6;

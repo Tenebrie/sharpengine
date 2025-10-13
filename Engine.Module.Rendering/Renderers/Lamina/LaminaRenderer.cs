@@ -60,6 +60,16 @@ internal class LaminaRenderer : IDisposable
                         Bottom = rect.Bottom * 2
                     }], (uint)renderable.TextureSize.X, (uint)renderable.TextureSize.Y);
                 }
+                else
+                {
+                    _deviceContext.SetScissorRects([new Rect
+                    {
+                        Top = 0,
+                        Left = 0,
+                        Right = (int)renderable.TextureSize.X * 2,
+                        Bottom = (int)renderable.TextureSize.Y * 2
+                    }], (uint)renderable.TextureSize.X, (uint)renderable.TextureSize.Y);
+                }
                 request.RenderScript.Render(_deviceContext, request.InstanceCount, request.Mesh, request.InstanceTransforms, request.Material,
                     request.MaterialInstances);
             }

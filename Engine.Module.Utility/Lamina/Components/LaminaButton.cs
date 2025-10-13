@@ -1,3 +1,4 @@
+using System.Drawing;
 using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Renderers;
@@ -10,7 +11,7 @@ using JetBrains.Annotations;
 
 namespace Engine.Module.Utility.Lamina.Components;
 
-[UsedImplicitly]
+[LaminaRenderer]
 public partial class LaminaButton : WidgetComponent
 {
     protected override void PopulateIntrinsics(LaminaLayout layout)

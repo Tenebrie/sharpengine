@@ -101,10 +101,15 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
     {
         engineFactory.CreateDeviceAndContextsD3D12(new EngineD3D12CreateInfo
         {
-            EnableValidation = true,
-            ValidationFlags = ValidationFlags.None,
-            D3D12ValidationFlags = D3D12ValidationFlags.BreakOnCorruption,
-            // ValidationFlags = ValidationFlags.CheckShaderBufferSize,
+            #if RELEASE
+                EnableValidation = false,
+                ValidationFlags = ValidationFlags.None,
+                D3D12ValidationFlags = D3D12ValidationFlags.None,
+            #elif DEBUG
+                EnableValidation = true,
+                ValidationFlags = ValidationFlags.None,
+                D3D12ValidationFlags = D3D12ValidationFlags.BreakOnCorruption,
+            #endif
             NumDeferredContexts = 8
         }, out renderDevice, out IDeviceContext[] contextsOut);
         

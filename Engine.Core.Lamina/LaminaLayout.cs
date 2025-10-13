@@ -1,5 +1,4 @@
 ﻿using System.Drawing;
-using Diligent;
 using Engine.Core.Common;
 using Engine.Core.Modules;
 using Box = Engine.Core.Common.Box;
@@ -11,7 +10,7 @@ public record CanvasContext
     public Vector2 Size = Vector2.One;
 }
 
-public record LaminaLayout(Type Type) : ILaminaLayout
+public partial record LaminaLayout(Type Type) : ILaminaLayout
 {
     public readonly List<LaminaLayout> Children = [];
 
