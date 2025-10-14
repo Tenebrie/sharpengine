@@ -8,42 +8,35 @@ using Engine.Core.Assets.Renderers;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.Lamina;
-using JetBrains.Annotations;
 
 namespace Engine.Module.Utility.Lamina.Components;
 
-[UsedImplicitly]
-public partial class LaminaLine : WidgetComponent
+[LaminaWidget]
+public partial class LaminaLine : LaminaWidgetComponent<LineLayout>
 {
     private readonly List<Vector2> _points = [];
     private LaminaLineMesh? _mesh = null;
     private Material? _material = null;
     private MaterialInstance? _materialInstance = null;
 
-    protected override void PopulateIntrinsics(LaminaLayout layout)
+    public override void OnPopulateIntrinsics(LineLayout layout)
     {
-        if (layout is not LineLayout lineLayout)
-            throw new ArgumentException($"Expected layout of type {nameof(LineLayout)}, got {layout.GetType().Name}");
-
-        var points = lineLayout.Props.Points;
+        var points = layout.Props.Points;
         var minValues = new Vector2(points.Select(p => p.X).Min(), points.Select(p => p.Y).Min());
         var maxValues = new Vector2(points.Select(p => p.X).Max(), points.Select(p => p.Y).Max());
         Size = maxValues - minValues;
     }
 
-    protected override void Render(LaminaLayout layout, ILaminaRenderContext context)
+    public override void OnRender(LineLayout layout, ILaminaRenderContext context)
     {
-        if (layout is not LineLayout lineLayout)
-            throw new ArgumentException($"Expected layout of type {nameof(LineLayout)}, got {layout.GetType().Name}");
-
-        RegenerateMesh(lineLayout.Props);
+        RegenerateMesh(layout.Props);
         if (_mesh == null)
             return;
         
         if (_material == null || _materialInstance == null)
         {
             _material = MaterialBuilder.CreateFromDisk("Shaders/UserInterface/General").Compile();
-            _materialInstance = _material.Instantiate().SetTintColor(lineLayout.Props.Color);
+            _materialInstance = _material.Instantiate().SetTintColor(layout.Props.Color);
         }
         
         Position = context.Position;

@@ -1,26 +1,18 @@
-using Engine.Core.Common;
 using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.Lamina;
-using Engine.Core.Logging;
-using Engine.Module.Utility.Services;
-using JetBrains.Annotations;
 
 namespace Engine.Module.Utility.Lamina.Components;
 
-[UsedImplicitly]
-public partial class LaminaDiv : WidgetComponent
+[LaminaWidget]
+public partial class LaminaDiv : LaminaWidgetComponent<DivLayout>
 {
-    protected override void Render(LaminaLayout layout, ILaminaRenderContext context)
+    public override void OnRender(DivLayout layout, ILaminaRenderContext context)
     {
-        if (layout is not DivLayout divLayout)
-            throw new InvalidOperationException($"Expected layout of type {nameof(DivLayout)}, got {layout.GetType().Name}");
-        context.Position += divLayout.Offset;
+        context.Position += layout.Props.Position;
     }
 
-    protected override void PostRender(LaminaLayout layout, ILaminaRenderContext context)
+    public override void OnPostRender(DivLayout layout, ILaminaRenderContext context)
     {
-        if (layout is not DivLayout divLayout)
-            throw new InvalidOperationException($"Expected layout of type {nameof(DivLayout)}, got {layout.GetType().Name}");
-        context.Position -= divLayout.Offset;
+        context.Position -= layout.Props.Position;
     }
 }

@@ -17,11 +17,10 @@ using Silk.NET.Maths;
 
 namespace Engine.Core.EntitySystem.Components.Lamina;
 
-[UsedImplicitly]
 public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable, IDisposable
 {
     [Component] public StaticMeshComponent MeshComponent;
-    [Component] protected WidgetComponent RootWidget;
+    [Component] protected RootWidgetComponent RootWidget;
 
     public Vector2 TextureSize { get; private set; } = new();
     

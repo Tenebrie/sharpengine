@@ -15,6 +15,7 @@ public record struct Box(double Left, double Top, double Right, double Bottom)
     public Vector2 Size = new(Right - Left, Bottom - Top);
     
     public static Box Zero => new(0, 0, 0, 0);
+    public static Box Full => new(0, 0, 1, 1);
     public static Box FillFancy(double progress) => new(0, 0, progress, progress);
     public static Box FillTop(double progress) => new(0, 1 - progress, 1, 1);
     public static Box FillBottom(double progress) => new(0, 0, 1, progress);

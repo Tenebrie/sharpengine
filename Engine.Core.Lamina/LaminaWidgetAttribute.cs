@@ -4,4 +4,4 @@ namespace Engine.Core.Lamina;
 
 [MeansImplicitUse]
 [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
-public class LaminaRendererAttribute : Attribute;
+public class LaminaWidgetAttribute : Attribute;

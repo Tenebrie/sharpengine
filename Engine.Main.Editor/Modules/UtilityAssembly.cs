@@ -26,6 +26,7 @@ public class UtilityAssembly() : ModularAssembly("Engine.Module.Utility", Engine
         HostBackstage.Name = "util-" + Guid.NewGuid();
         HostBackstage.Hypervisor = Editor.Hypervisor.Instance;
         HostBackstage.StartupInitialize();
+        RegisterLaminaRenderers();
     }
 
     public override bool Update(double deltaTime)
@@ -48,6 +49,7 @@ public class UtilityAssembly() : ModularAssembly("Engine.Module.Utility", Engine
 
     public override void Unload()
     {
+        UnregisterLaminaRenderers();
         HostBackstage?.FreeImmediately();
         HostBackstage = null;
         base.Unload();

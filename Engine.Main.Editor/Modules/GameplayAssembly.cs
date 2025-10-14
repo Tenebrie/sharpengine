@@ -24,6 +24,7 @@ public class GameplayAssembly() : ModularAssembly("User.Game", EngineModule.Game
         HostBackstage.Name = "guest-" + Guid.NewGuid();
         HostBackstage.Hypervisor = Editor.Hypervisor.Instance;
         HostBackstage.StartupInitialize();
+        RegisterLaminaRenderers();
     }
 
     public override bool Update(double deltaTime)
@@ -46,6 +47,7 @@ public class GameplayAssembly() : ModularAssembly("User.Game", EngineModule.Game
 
     public override void Unload()
     {
+        UnregisterLaminaRenderers();
         HostBackstage?.FreeImmediately();
         HostBackstage = null;
         base.Unload();

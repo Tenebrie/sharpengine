@@ -39,6 +39,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Main.Game", "Engine.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core.Lamina", "Engine.Core.Lamina\Engine.Core.Lamina.csproj", "{26989E45-A768-4615-A1D7-7A7AF9CE65C5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Tooling.Collector", "Engine.Tooling.Collector\Engine.Tooling.Collector.csproj", "{E176399A-F937-4A73-855F-0812615AB9A8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -138,6 +140,10 @@ Global
 		{26989E45-A768-4615-A1D7-7A7AF9CE65C5}.Release|x64.Build.0 = Release|x64
 		{26989E45-A768-4615-A1D7-7A7AF9CE65C5}.Shipping|x64.ActiveCfg = Release|x64
 		{26989E45-A768-4615-A1D7-7A7AF9CE65C5}.Shipping|x64.Build.0 = Release|x64
+		{E176399A-F937-4A73-855F-0812615AB9A8}.Release|x64.ActiveCfg = Release|x64
+		{E176399A-F937-4A73-855F-0812615AB9A8}.Release|x64.Build.0 = Release|x64
+		{E176399A-F937-4A73-855F-0812615AB9A8}.Shipping|x64.ActiveCfg = Release|x64
+		{E176399A-F937-4A73-855F-0812615AB9A8}.Shipping|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

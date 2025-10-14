@@ -45,7 +45,7 @@ public partial class UserInterfaceService : Service
         UserInterface.Transform.Position = (windowSize.X / 2.0 - 256, windowSize.Y - 80, 0);
         UserInterface.SetLayout(v =>
         {
-            v.Div(position: (0, 0), v =>
+            v.Div(position: (0, 0), children: v =>
             {
                 var label =
                     $"Level {player.Experience.Level}: {player.Experience.Experience} / {player.Experience.ExpForNextLevel}";

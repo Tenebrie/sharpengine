@@ -27,7 +27,7 @@ public partial class EditorPerformanceWidget : Actor
         FramerateLabelWidget.Transform.Position = (Backstage.Window.FramebufferSize.X - 512, 0, 0);
         FramerateLabelWidget.SetLayout(v =>
         {
-            v.Div(position: (0, 0), v =>  
+            v.Div(position: (0, 0), children: v =>  
             {
                 FramerateCounter.WriteFramerateToGrid(TextGrid, v, FramerateLabelWidget.Size);
             });
@@ -39,7 +39,7 @@ public partial class EditorPerformanceWidget : Actor
         FramerateGraphWidget.BackgroundColor = Color.FromArgb(50, 0, 0, 0);
         FramerateGraphWidget.SetLayout(v => 
         {
-            v.Div(position: (0, 0), v =>
+            v.Div(position: (0, 0), children: v =>
             {
                 var height = FramerateGraphWidget.ContentSize.Y;
                 var scaleFactor = height / FramerateCounter.MaximumValue;

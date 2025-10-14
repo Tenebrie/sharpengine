@@ -48,7 +48,8 @@ public sealed class LifecycleAttributeOnPrivateMethod : DiagnosticAnalyzer
         if (methodSymbol is null)
             return;
 
-        if (IsAllowedAccessibility(methodSymbol.DeclaredAccessibility)) return;
+        if (IsAllowedAccessibility(methodSymbol.DeclaredAccessibility))
+            return;
         
         // Place the diagnostic on the attribute for clarity
         var attrLocation = methodDecl.AttributeLists

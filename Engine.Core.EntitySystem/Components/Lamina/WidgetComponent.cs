@@ -1,16 +1,27 @@
-using Engine.Core.Attributes;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.Lamina;
 using Engine.Core.Logging;
-using Engine.Core.Modules;
 
 namespace Engine.Core.EntitySystem.Components.Lamina;
+
+public abstract partial class LaminaWidgetComponent<T> : WidgetComponent
+{
+    public abstract void OnRender(T layout, ILaminaRenderContext context);
+    public virtual void OnPostRender(T layout, ILaminaRenderContext context) {}
+    public virtual void OnPopulateIntrinsics(T layout) {}
+}
+public partial class RootWidgetComponent : LaminaWidgetComponent<LaminaLayout>
+{
+    public override void OnRender(LaminaLayout layout, ILaminaRenderContext context)
+    {
+        
+    }
+}
 
 public partial class WidgetComponent : Actor, IWidget
 {
     private LaminaLayout? _currentLayout;
-
     public Box BoundingBox
     {
         get
@@ -51,7 +62,7 @@ public partial class WidgetComponent : Actor, IWidget
     private void SetLayoutWithIntrinsics(LaminaLayout layout)
     {
         _currentLayout = layout;
-        PopulateIntrinsics(layout);   
+        PopulateIntrinsics(layout);
     }
     
     private void InitializeChildren(LaminaLayout layout)
@@ -102,9 +113,21 @@ public partial class WidgetComponent : Actor, IWidget
         return true;
     }
 
-    protected virtual void PopulateIntrinsics(LaminaLayout layout) {}
-    protected virtual void Render(LaminaLayout layout, ILaminaRenderContext context) {}
-    protected virtual void PostRender(LaminaLayout layout, ILaminaRenderContext context) {}
+    private void PopulateIntrinsics(LaminaLayout layout)
+    {
+        // TODO: Optimize dynamic calls?
+        ((dynamic)this).OnPopulateIntrinsics((dynamic)layout);
+    }
+
+    private void Render(LaminaLayout layout, ILaminaRenderContext context)
+    {
+        ((dynamic)this).OnRender((dynamic)layout, context);
+    }
+
+    private void PostRender(LaminaLayout layout, ILaminaRenderContext context)
+    {
+        ((dynamic)this).OnPostRender((dynamic)layout, context);
+    }
     public void PerformRender(ILaminaRenderContext context)
     {
         if (_currentLayout == null)
