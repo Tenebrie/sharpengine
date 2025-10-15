@@ -26,12 +26,18 @@ public partial class HonseTerrain : Actor
             .Instantiate()
             .SetUvScale(4.5);
     }
+    
+    private Camera _camera;
+    [OnReady]
+    protected void OnReadyCamera()
+    {
+        _camera = ParentScene.Actors.OfType<Camera>().First();
+    }
 
     [OnUpdate]
     protected void OnUpdate(double deltaTime)
     {
-        var camera = ParentScene.Actors.OfType<Camera>().First();
-        Transform.Position = new Vector3(camera.WorldTransform.Position.X - 100, -5000, camera.WorldTransform.Position.Z - 2000);
-        Mesh.MaterialInstance.UvOffset = (new Vector2(camera.WorldTransform.Position.X, -camera.WorldTransform.Position.Z) / -Transform.Position.Y).Downgrade();
+        Transform.Position = new Vector3(_camera.WorldTransform.Position.X - 100, -5000, _camera.WorldTransform.Position.Z - 2000);
+        Mesh.MaterialInstance.UvOffset = (new Vector2(_camera.WorldTransform.Position.X, -_camera.WorldTransform.Position.Z) / -Transform.Position.Y).Downgrade();
     }
 }

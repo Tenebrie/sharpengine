@@ -6,6 +6,7 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
+using Engine.Core.Logging;
 using JetBrains.Annotations;
 
 namespace Engine.Core.EntitySystem.Components.Rendering;
@@ -55,20 +56,24 @@ public partial class InstancedActorComponent<TInstance> : ActorComponent, IInsta
             return;
         if (_currentUpdatedCluster >= Clusters.Count)
             _currentUpdatedCluster = 0;
+
+        var processedCluster = Clusters.ElementAtOrDefault(_currentUpdatedCluster);
+        if (processedCluster == null)
+            return;
         
-        Clusters[_currentUpdatedCluster].CheckClusterValidity(out var evictedInstances);
+        processedCluster.CheckClusterValidity(out var evictedInstances);
         foreach (var instance in evictedInstances)
         {
             var cluster = FindClusterForInstance(instance);
             cluster.AssignInstance(instance);
         }
-        if (Clusters[_currentUpdatedCluster].Redundant)
+        if (processedCluster.Redundant)
         {
-            Clusters[_currentUpdatedCluster].QueueFree();
+            processedCluster.QueueFree();
             Clusters.RemoveAt(_currentUpdatedCluster);
             _currentUpdatedCluster--;
         }
-        _currentUpdatedCluster = (_currentUpdatedCluster + 1) % Clusters.Count;
+        _currentUpdatedCluster = (_currentUpdatedCluster + 1) % Math.Max(1, Clusters.Count);
     }
     
     public TInstance CreateInstance()

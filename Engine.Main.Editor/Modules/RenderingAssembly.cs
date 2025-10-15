@@ -71,7 +71,6 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
         _renderThread.Start();
     }
     
-    private SemaphoreSlim _renderSemaphore = new(1, 1);
     private Barrier _renderStartBarrier = new(2);
     private Barrier _renderEndBarrier = new(2);
     private void RenderThreadLoop()

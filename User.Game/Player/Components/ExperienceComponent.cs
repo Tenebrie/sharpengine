@@ -43,8 +43,6 @@ public partial class ExperienceComponent : ActorComponent
             Level += 1;
             _expForPreviousLevel = ExpForNextLevel;
             ExpForNextLevel = Math.Round(100.0 * Math.Pow(Level, 1.5));
-            Logger.Info("Level up!");
         }
-        Logger.ShowPersistent(LogLevel.Info, "experience", $"Level: {Level} ({Experience}/{ExpForNextLevel} exp)");
     }
 }

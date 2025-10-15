@@ -210,8 +210,7 @@ public partial class Atom
 
 internal static class DelegateHelpers
 {
-    private static void InvokeDropFirst(Action target, double _)
-        => target();
+    private static void InvokeDropFirst(Action target, double _) => target();
 
     internal static Action<double> AsDoubleCallback(Action action)
     {
