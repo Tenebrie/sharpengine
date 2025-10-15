@@ -19,6 +19,9 @@ public partial class BasicProjectile : Actor
     
     private readonly List<BasicEnemy> _enemiesHit = [];
     
+    public double Damage { get; set; } = 100.0;
+    public int MaxPierce { get; set; } = 1;
+    
     [OnReady]
     protected void OnReady()
     {
@@ -33,11 +36,12 @@ public partial class BasicProjectile : Actor
     {
         foreach (var enemy in ParentScene.Actors.OfType<BasicEnemy>()
                      .Where(enemy => !_enemiesHit.Contains(enemy))
+                     .Where(enemy => !enemy.IsDying)
                      .Where(enemy => enemy.Transform.Position.DistanceTo(Transform.Position) <= MeshComponent.BoundingSphere.WorldRadius + 3))
         {
-            enemy.DealDamage(100.0);
+            enemy.DealDamage(Damage);
             _enemiesHit.Add(enemy);
-            if (_enemiesHit.Count >= 3)
+            if (_enemiesHit.Count >= MaxPierce)
             {
                 QueueFree();
                 return;

@@ -10,6 +10,9 @@ public partial class AbilityController : ActorComponent
 {
     [Component] public PiercingBladeAbility PiercingBlade;
     [Component] public LightningStrikeAbility LightningStrike;
+    
+    [Component] public PiercingBladeAbility PiercingBladeAuto;
+    [Component] public LightningStrikeAbility LightningStrikeAuto;
 
     private IAbility? _currentAbility;
     private List<IAbility?> _hotbar = [];
@@ -17,7 +20,7 @@ public partial class AbilityController : ActorComponent
     [OnReady]
     protected void OnReady()
     {
-        _hotbar = [PiercingBlade, LightningStrike, null, null];
+        _hotbar = [PiercingBlade, LightningStrike, null, null, PiercingBladeAuto, LightningStrikeAuto];
     }
 
     [OnUpdate]
@@ -28,11 +31,22 @@ public partial class AbilityController : ActorComponent
             return;
         if (!BasicEnemy.Alive.Any())
             return;
-        foreach (var ability in _hotbar)
-            ability?.OnCooldownReduce(deltaTime);
-        
-        foreach (var ability in _hotbar)
+
+        var player = PlayerCharacter.All.First();
+        for (var index = 0; index < 4; index++)
         {
+            var ability = _hotbar[index];
+            ability?.OnCooldownReduce(deltaTime + deltaTime * (player.Attributes.ActiveRechargeRate * 0.1));
+        }
+        for (var index = 4; index < _hotbar.Count; index++)
+        {
+            var ability = _hotbar[index];
+            ability?.OnCooldownReduce((deltaTime + deltaTime * (player.Attributes.PassiveRechargeRate * 0.1)) / 3);
+        }
+
+        for (var index = 3; index < _hotbar.Count; index++)
+        {
+            var ability = _hotbar[index];
             if (ability is not { Ready: true })
                 continue;
             var closestEnemy = BasicEnemy.Alive

@@ -20,7 +20,7 @@ public interface ILaminaRenderable : IAtom, IMaskedLaminaRenderable
     public bool Dirty { get; set; }
     public void EnsureRenderTarget();
     public void CollectCommandList(ILaminaRenderContext renderContext);
-    public Vector2 TextureSize { get; }
+    public Vector2 InternalTextureSize { get; }
     public Color BackgroundColor { get; }
     public ITextureView RenderTargetView { get; }
     public ITextureView ShaderResourceView { get; }

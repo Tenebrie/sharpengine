@@ -20,7 +20,7 @@ public partial class Atom
     }
     
     private readonly ReaderWriterLockSlim _lock = new();
-    public T AdoptChild<T>(T atom) where T : Atom, new()
+    public T AdoptChild<T>(T atom) where T : Atom
     {
         _lock.EnterWriteLock();
         atom.Parent?.RemoveChild(atom);

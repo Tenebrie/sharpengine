@@ -24,11 +24,15 @@ public enum InputAction
     Hotbar2,
     Hotbar3,
     Hotbar4,
+    SelectPerk1,
+    SelectPerk2,
+    SelectPerk3,
 }
 
 public partial class UserInputService : Service
 {
     private InputContext _baseContext = null!;
+    private InputContext _perkSelectorContext = null!;
 
     [OnReady]
     protected void OnReady()
@@ -53,6 +57,12 @@ public partial class UserInputService : Service
             .Add(InputAction.Hotbar3, Key.Number3)
             .Add(InputAction.Hotbar4, Key.Number4)
             .Build();
+        
+        _perkSelectorContext = InputContext.GetBuilder<InputAction>()
+            .Add(InputAction.SelectPerk1, Key.Number1)
+            .Add(InputAction.SelectPerk2, Key.Number2)
+            .Add(InputAction.SelectPerk3, Key.Number3)
+            .Build();
 
         RecalculateActiveContext();
     }
@@ -66,7 +76,19 @@ public partial class UserInputService : Service
             return;
         }
 
+        if (_selectingPerkMode)
+        {
+            GetService<InputService>().InputContext = _perkSelectorContext;
+            return;
+        }
         var activeContext = InputContext.From(_baseContext);
         GetService<InputService>().InputContext = activeContext;
+    }
+    
+    private bool _selectingPerkMode = false;
+    public void SetSelectingPerkMode(bool enabled)
+    {
+        _selectingPerkMode = enabled;
+        RecalculateActiveContext();
     }
 }

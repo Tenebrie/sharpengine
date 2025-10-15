@@ -44,7 +44,7 @@ internal class LaminaRenderer : IDisposable
             _renderTargetViews[0] = renderable.RenderTargetView;
             _host.FrameRenderLoop.SetRenderTargets(_renderTargetViews,
                 null,
-                renderable.TextureSize,
+                renderable.InternalTextureSize,
                 clearColor: renderable.BackgroundColor);
             renderable.CollectCommandList(context);
             
@@ -58,7 +58,7 @@ internal class LaminaRenderer : IDisposable
                         Left = rect.Left * 2,
                         Right = rect.Right * 2,
                         Bottom = rect.Bottom * 2
-                    }], (uint)renderable.TextureSize.X, (uint)renderable.TextureSize.Y);
+                    }], (uint)renderable.InternalTextureSize.X, (uint)renderable.InternalTextureSize.Y);
                 }
                 else
                 {
@@ -66,9 +66,9 @@ internal class LaminaRenderer : IDisposable
                     {
                         Top = 0,
                         Left = 0,
-                        Right = (int)renderable.TextureSize.X * 2,
-                        Bottom = (int)renderable.TextureSize.Y * 2
-                    }], (uint)renderable.TextureSize.X, (uint)renderable.TextureSize.Y);
+                        Right = (int)renderable.InternalTextureSize.X * 2,
+                        Bottom = (int)renderable.InternalTextureSize.Y * 2
+                    }], (uint)renderable.InternalTextureSize.X, (uint)renderable.InternalTextureSize.Y);
                 }
                 request.RenderScript.Render(_deviceContext, request.InstanceCount, request.Mesh, request.InstanceTransforms, request.Material,
                     request.MaterialInstances);

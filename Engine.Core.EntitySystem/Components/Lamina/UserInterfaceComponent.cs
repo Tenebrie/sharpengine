@@ -21,9 +21,23 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
 {
     [Component] public StaticMeshComponent MeshComponent;
     [Component] protected RootWidgetComponent RootWidget;
-
-    public Vector2 TextureSize { get; private set; } = new();
     
+    public Vector2 InternalTextureSize { get; private set; } = new();
+
+    /**
+     * Public API
+     */
+    
+    private bool _visible = true;
+    public bool Visible
+    {
+        get => _visible;
+        set
+        {
+            _visible = value;
+            Dirty = true;
+        }
+    }
     public Vector2 Padding { get; set; } = new(0, 0);
     public Vector2 Size
     {
@@ -31,9 +45,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         set => _explicitSize = value;
     }
     public Vector2 ContentSize => Size - Padding * 2;
-    
     private Vector2? _explicitSize = null;
-
 
     private Color _backgroundColor = Color.FromArgb(0, 0, 0, 0);
     public Color BackgroundColor
@@ -45,6 +57,10 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
             Dirty = true;
         }
     }
+    
+    /**
+     * End Public API
+     */
 
     
     private Vector2D<int> FramebufferSize => Backstage.Window.GetScaledFramebufferSize();
@@ -86,12 +102,11 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     
     public void EnsureRenderTarget()
     {
-        if (_renderTargetReady && Math.Abs(TextureSize.X - Size.X) < 1 &&
-            Math.Abs(TextureSize.Y - Size.Y) < 1)
+        if (_renderTargetReady && Math.Abs(InternalTextureSize.X - Size.X) < 1 &&
+            Math.Abs(InternalTextureSize.Y - Size.Y) < 1)
         {
             return;
         }
-        
         
         if (_renderTargetReady)
             _renderTargets.Target.Dispose();
@@ -111,7 +126,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
             throw new InvalidOperationException("Failed to create render target views for Lamina UI component");
 
         Transform.Scale = new Vector3(sizeCreated.X, sizeCreated.Y, 1);
-        TextureSize = sizeCreated;
+        InternalTextureSize = sizeCreated;
         _renderTargets = new RenderTargetData
         {
             Target = targetTexture,
@@ -126,6 +141,8 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
 
     public void CollectCommandList(ILaminaRenderContext renderContext)
     {
+        if (!Visible)
+            return;
         renderContext.Position += Padding;
         foreach (var child in GetChildren<WidgetComponent>())
         {

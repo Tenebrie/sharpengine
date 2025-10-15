@@ -41,6 +41,8 @@ public partial class Backstage : IBackstage
     
     public void TriggerLogicFrameUpdate(double deltaTime)
     {
+        if (deltaTime > 0.5)
+            return;
         var stopwatch = Profiler.Start();
         ProcessLogicFrame(deltaTime);
         stopwatch.StopAndReport(GetType(), ProfilingContext.BackstageUpdate);

@@ -50,10 +50,10 @@ public partial class LaminaImage : LaminaWidgetComponent<ImageLayout>
             MaterialInstances = [_materialInstance.Snapshot()],
             ScissorRect = layout.Props.ClippingRect is {} rect ? new Rect
             {
-                Top = (int)(rect.Top * layout.Props.Size.Y),
-                Left = (int)(rect.Left * layout.Props.Size.X),
-                Right = (int)(rect.Right * layout.Props.Size.X),
-                Bottom = (int)(rect.Bottom * layout.Props.Size.Y)
+                Top = (int)(Position.Y + rect.Top * layout.Props.Size.Y),
+                Left = (int)(Position.X + rect.Left * layout.Props.Size.X),
+                Right = (int)(Position.X + rect.Right * layout.Props.Size.X),
+                Bottom = (int)(Position.Y + rect.Bottom * layout.Props.Size.Y)
             } : null,
         });
     }

@@ -8,6 +8,8 @@ using Engine.Core.Extensions;
 using Silk.NET.Input;
 using User.Game.Player.Abilities;
 using User.Game.Player.Components;
+using User.Game.Player.PerkTree;
+using User.Game.Player.PlayerAttributes;
 using User.Game.Services;
 using Vector2 = Engine.Core.Common.Vector2;
 using Vector3 = Engine.Core.Common.Vector3;
@@ -19,7 +21,7 @@ public partial class PlayerCharacter : Actor
     [DefaultGroup] public static Group<PlayerCharacter> All = new();
     
     private Quaternion _desiredRotation = Quaternion.Identity;
-    private const double MovementSpeed = 50.0;
+    private const double MovementSpeed = 30.0;
     private const double RotationSpeed = 6;
     
     private Vector3 _velocity = Vector3.Zero;
@@ -32,6 +34,8 @@ public partial class PlayerCharacter : Actor
     [Component] public DragonMesh DragonMeshComponent;
     [Component] public PhysicsComponent PhysicsComponent;
     [Component] public ExperienceComponent Experience;
+    [Component] public PerkTreeComponent PerkTree;
+    [Component] public PlayerAttributesComponent Attributes;
 
     [OnInputHeld(InputAction.MoveForward,  +1.0, +0.0)]
     [OnInputHeld(InputAction.MoveBackward, -1.0, -0.0)]
@@ -43,7 +47,7 @@ public partial class PlayerCharacter : Actor
             return;
         
         var value = new Vector3(direction.Y, 0, -direction.X).Normalized();
-        _acceleration = value * 15 * deltaTime;
+        _acceleration = (value * 15 * deltaTime) * (1 + Attributes.Speed * 0.03);
         
         var forwardVector = Vector3.Forward;
         var dotProduct = value.DotProduct(forwardVector);
@@ -75,16 +79,19 @@ public partial class PlayerCharacter : Actor
             _acceleration = Vector3.Zero;
         _velocity += _acceleration;
 
-        var maxSpeed = 1.5;
+        var maxSpeed = 3.0;
         if (GetService<InputService>().IsKeyHeld(Key.ShiftLeft))
         {
             maxSpeed = 4.5;
         }
+
+        maxSpeed += Attributes.Speed * 0.03;
+        var currentMovementSpeed = MovementSpeed + Attributes.Speed * deltaTime;
         
         if (_velocity.Length > maxSpeed)
             _velocity = _velocity.SetLengthIfNotZero(maxSpeed);
         // Transform.TranslateGlobal(_velocity * MovementSpeed * deltaTime);
-        PhysicsComponent.LinearVelocity = _velocity * MovementSpeed;
+        PhysicsComponent.LinearVelocity = _velocity * currentMovementSpeed;
         if (!_inputHeldThisFrame)
             _velocity -= _velocity * 2.0 * deltaTime;
         

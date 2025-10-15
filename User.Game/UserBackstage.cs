@@ -1,10 +1,7 @@
 ﻿using System.Drawing;
-using System.Runtime;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
-using Engine.Core.Logging;
-using Engine.Core.Profiling.Attributes;
 using User.Game.Actors;
 using User.Game.Actors.BasicEnemies;
 using User.Game.Actors.CloudCover;
@@ -66,18 +63,18 @@ public partial class UserScene : Scene
         distantFog.MeshComponent.MaterialInstance.SetUvScale(75.0);
         
         // Shadow layer
-        var cloudLayer = CreateActor<CloudLayer>();
-        cloudLayer.Transform.Position = new Vector3(0, -5000, 0);
-        cloudLayer.LayerHeight = -5000;
-        cloudLayer.RenderOffset = 100;
-        cloudLayer.Transform.Scale = new Vector3(scale * 20, 1, scale * 20);
-        cloudLayer.MeshComponent.MaterialInstance.SetTintColor(Color.Black);
-        cloudLayer.MeshComponent.MaterialInstance.SetOpacity(2.5);
-        cloudLayer.MeshComponent.MaterialInstance.SetUvScale(75.0);
-        cloudLayer.IsShadow = true;
+        // var cloudLayer = CreateActor<CloudLayer>();
+        // cloudLayer.Transform.Position = new Vector3(0, -5000, 0);
+        // cloudLayer.LayerHeight = -5000;
+        // cloudLayer.RenderOffset = 100;
+        // cloudLayer.Transform.Scale = new Vector3(scale * 20, 1, scale * 20);
+        // cloudLayer.MeshComponent.MaterialInstance.SetTintColor(Color.Black);
+        // cloudLayer.MeshComponent.MaterialInstance.SetOpacity(2.5);
+        // cloudLayer.MeshComponent.MaterialInstance.SetUvScale(75.0);
+        // cloudLayer.IsShadow = true;
         
         const int cloudScale = 7000;
-        cloudLayer = CreateActor<CloudLayer>();
+        var cloudLayer = CreateActor<CloudLayer>();
         cloudLayer.LayerHeight = -4000;
         cloudLayer.MeshComponent.MaterialInstance.SetOpacity(0.8);
         cloudLayer.Transform.Scale = new Vector3(cloudScale * 2, 1, cloudScale * 2);

@@ -1,4 +1,5 @@
-﻿using Engine.Core.Assets.Builders;
+﻿using System.Drawing;
+using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Common;
@@ -30,6 +31,16 @@ public partial class SpaceshipEngineComponent : ActorComponent
             .Instantiate()
             .SetUvOffset(new Vector2(0, 0))
             .SetUvScale(new Vector2(1, 1));
+    }
+
+    public void MakeElite()
+    {
+        Mesh.MaterialInstance.SetTintColor(Color.Goldenrod);
+    }
+
+    public void MakeUltraElite()
+    {
+        Mesh.MaterialInstance.SetTintColor(Color.Red);
     }
 
     [OnTimer(Seconds = 0.10)]

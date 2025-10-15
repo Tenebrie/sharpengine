@@ -4,7 +4,6 @@ using Engine.Core.Communication.Groups;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Entities;
-using Engine.Core.Profiling.Attributes;
 using User.Game.Services;
 
 namespace User.Game.Actors.BasicEnemies;
@@ -42,7 +41,25 @@ public partial class BasicEnemy : ActorInstance
         IsDying = true;
         Physics.GravityEnabled = true;
         Physics.AngularVelocity += DeathDropRandom * 0.5 * 360.0;
-        GetService<ExperienceDropService>().SpawnExperienceDrop(WorldTransform.Position, 10.0);
+        GetService<ExperienceDropService>().SpawnExperienceDrop(WorldTransform.Position, 3.0);
+    }
+    
+    public void MakeElite()
+    {
+        Health *= 10;
+        foreach (var engine in GetChildren<SpaceshipEngineComponent>())
+        {
+            engine.MakeElite();
+        }
+    }
+
+    public void MakeUltraElite()
+    {
+        Health *= 100;
+        foreach (var engine in GetChildren<SpaceshipEngineComponent>())
+        {
+            engine.MakeUltraElite();
+        }
     }
     
     [OnReady]
@@ -52,7 +69,7 @@ public partial class BasicEnemy : ActorInstance
         
         // SpaceshipFlames.Mesh = PlaneMesh.Shared;
         // SpaceshipFlames.Material = Material.CreateFromDisk("Assets/Shaders/cube");
-
+        
         Alive.Join(this);
         for (var i = 0; i < 2; i++)
         {
