@@ -49,16 +49,10 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
     }
     
     private Thread? _renderThread;
-    private enum RenderThreadState { Stopped, Running, Pausing, Paused }
+    private enum RenderThreadState { Stopped, Running }
     private volatile RenderThreadState _renderThreadState = RenderThreadState.Stopped;
     private void StartRenderThread()
     {
-        if (_renderThreadState == RenderThreadState.Paused)
-        {
-            _renderThreadState = RenderThreadState.Running;
-            return;
-        }
-        
         if (_renderThread is { IsAlive: true } && _renderThreadState == RenderThreadState.Running)
             return;
         
@@ -71,8 +65,8 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
         _renderThread.Start();
     }
     
-    private Barrier _renderStartBarrier = new(2);
-    private Barrier _renderEndBarrier = new(2);
+    private readonly Barrier _renderStartBarrier = new(2);
+    private readonly Barrier _renderEndBarrier = new(2);
     private void RenderThreadLoop()
     {
         try
@@ -107,24 +101,9 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
         }
     }
 
-    public void StartFrameRender()
-    {
-        _renderStartBarrier.SignalAndWait();
-    }
+    public void StartFrameRender() => _renderStartBarrier.SignalAndWait();
+    public void WaitUntilFrameEnd() => _renderEndBarrier.SignalAndWait();
 
-    public void WaitUntilFrameEnd()
-    {
-        _renderEndBarrier.SignalAndWait();
-    }
-    
-    private void PauseRenderThread()
-    {
-        if (_renderThreadState is not RenderThreadState.Running)
-            return;
-        
-        _renderThreadState = RenderThreadState.Pausing;
-        StartFrameRender();
-    }
     private void StopRenderThread()
     {
         _renderThreadState = RenderThreadState.Stopped;
@@ -136,7 +115,6 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
 
     public override void Unload()
     {
-        // PauseRenderThread();
         RenderingHost?.HotShutdown();
         RenderingHost = null;
         base.Unload();

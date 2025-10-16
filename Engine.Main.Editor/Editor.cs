@@ -8,6 +8,7 @@ using Engine.Core.Modules;
 using Engine.Main.Editor.Modules;
 using Engine.Main.Editor.Modules.Abstract;
 using Engine.Main.Editor.Modules.Compiler;
+using Engine.Main.Editor.Modules.Threading;
 using Microsoft.Build.Locator;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -26,7 +27,9 @@ internal static class Editor
     internal static UtilityAssembly UtilityAssembly { get; private set; } = null!;
     internal static WorkspaceAssembly WorkspaceAssembly { get; private set; } = null!;
 
-    private static List<ModularAssembly> GuestAssemblies { get; set; } = [];
+    internal static List<ModularAssembly> GuestAssemblies { get; set; } = [];
+    
+    internal static GameLogicThread GameLogicThread { get; } = new();
 
     private static void Main()
     {
@@ -107,28 +110,29 @@ internal static class Editor
 
             // Save window state for hot reload
             WindowStateManager.SetupAutosaveHandler(MainWindow);
+            
+            GameLogicThread.Start();
 
             Logger.Info("Engine startup complete.");
         };
 
+        double deltaTotal = 0.0;
         MainWindow.Update += deltaTime =>
         {
             if (AssemblyRepository.UpdatesSuspended)
                 return;
             
-            RenderingAssembly.StartFrameRender();
+            deltaTotal += deltaTime;
+            if (deltaTotal < 0.5)
+                return;
+            deltaTotal = 0.0;
             
-            MainThreadTask.ExecuteAllQueued();
+            // RenderingAssembly.StartFrameRender();
+            // GameLogicThread.StartFrameRender();
+            //              
+            // GameLogicThread.WaitUntilFrameEnd();
+            // RenderingAssembly.WaitUntilFrameEnd();
             
-            foreach (var libraryAssembly in AssemblyRepository.LibraryAssemblies.Values)
-            {
-                libraryAssembly.Update(deltaTime);
-            }
-            foreach (var guestAssembly in GuestAssemblies)
-            {
-                guestAssembly.Update(deltaTime);
-            }
-
             var allAssemblies = AssemblyRepository.LibraryAssemblies.Values.ToList();
             allAssemblies.Add(RenderingAssembly);
             allAssemblies.Add(GameplayAssembly);
@@ -140,15 +144,12 @@ internal static class Editor
             if (wantingBuild.Count > 0 && !allAssemblies.Any(a => a.Loader.DebounceTimer > 0.0))
             {
                 AssemblyRepository.RebuildCascading(wantingBuild);
-                RenderingAssembly.WaitUntilFrameEnd();
-                return;
             }
-            RenderingAssembly.WaitUntilFrameEnd();
 
             if (allAssemblies.Any(assembly => assembly.Loader.IsCompiling || assembly.Loader.HasErrors))
-            {
                 return;
-            }
+            
+            GameLogicThread.Pause();
 
             int awaitingCount;
             do
@@ -171,6 +172,8 @@ internal static class Editor
                     (assembly, exception) => Logger.Error($"Failed to notify about module reload: {assembly}", exception)
                 );
             }
+            
+            GameLogicThread.Resume();
         };
 
         MainWindow.Closing += () =>

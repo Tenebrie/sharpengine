@@ -150,14 +150,16 @@ public abstract class ModularAssembly(string assemblyName, EngineModule module) 
 
     private static Type? FindTypeByName(string simpleName)
     {
-        foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+        var asm = AssemblyRepository.GetAssembly("Engine.Core.Lamina");
+        if (asm == null)
+            throw new Exception("Could not find assembly 'Engine.Core.Lamina'.");
+        if (asm.Loader.Assembly == null)
+            throw new Exception("Assembly 'Engine.Core.Lamina' is not loaded.");
+        foreach (var t in SafeGetTypes(asm.Loader.Assembly))
         {
-            foreach (var t in SafeGetTypes(asm))
-            {
-                if (t == null || !t.IsClass) continue;
-                if (string.Equals(t.Name, simpleName, StringComparison.Ordinal))
-                    return t;
-            }
+            if (t == null || !t.IsClass) continue;
+            if (string.Equals(t.Name, simpleName, StringComparison.Ordinal))
+                return t;
         }
         return null;
     }
