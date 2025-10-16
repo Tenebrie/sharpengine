@@ -22,10 +22,8 @@ public abstract class ModularAssembly(string assemblyName, EngineModule module) 
         base.Unload();
     }
 
-    // Provided by you.
     private Assembly GetTargetAssembly() => Loader.Assembly!;
 
-    // String-only references; no compile-time ties.
     private const string WidgetAttributeSimpleName = "LaminaWidgetAttribute"; // applied as [LaminaWidget]
     private const string WidgetAttributeUsageName  = "LaminaWidget";         // safety if emitted without "Attribute"
     private const string WidgetBaseName            = "LaminaWidgetComponent`1";

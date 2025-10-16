@@ -75,6 +75,10 @@ public partial class BasicEnemyManager : Actor
     protected void SpawnEnemy()
     {
         const int maxEnemies = 500;
+        var windowSize = Backstage.Window.GetScaledFramebufferSize();
+        EvolutionFactorWidget.Transform.Position = (windowSize.X / 2.0 - 256, windowSize.Y - 180, 0);
+        EvolutionFactorWidget.BackgroundColor = Color.FromArgb(128, 0, 0, 0);
+        EvolutionFactorWidget.Size = (512, 90);
         EvolutionFactorWidget.SetLayout(v =>
         {
             v.Div(position: (10, 0), children: v =>

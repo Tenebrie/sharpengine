@@ -53,14 +53,14 @@ public partial class UserScene : Scene
         honseTerrain.Transform.Scale = new Vector3(scale, scale, scale);
         
         CreateActor<BasicEnemyManager>();
-        var distantFog = CreateActor<DistantFogLayer>();
-        distantFog.Transform.Position = new Vector3(0, -5000, 0);
-        distantFog.LayerHeight = -5000;
-        distantFog.RenderOffset = 100;
-        distantFog.Transform.Scale = new Vector3(scale * 20, 1, scale * 20);
-        distantFog.MeshComponent.MaterialInstance.SetTintColor(Color.FromArgb(60,50,50));
-        distantFog.MeshComponent.MaterialInstance.SetOpacity(0.90);
-        distantFog.MeshComponent.MaterialInstance.SetUvScale(75.0);
+        // var distantFog = CreateActor<DistantFogLayer>();
+        // distantFog.Transform.Position = new Vector3(0, -5000, 0);
+        // distantFog.LayerHeight = -5000;
+        // distantFog.RenderOffset = 100;
+        // distantFog.Transform.Scale = new Vector3(scale * 20, 1, scale * 20);
+        // distantFog.MeshComponent.MaterialInstance.SetTintColor(Color.FromArgb(60,50,50));
+        // distantFog.MeshComponent.MaterialInstance.SetOpacity(0.90);
+        // distantFog.MeshComponent.MaterialInstance.SetUvScale(75.0);
         
         // Shadow layer
         // var cloudLayer = CreateActor<CloudLayer>();

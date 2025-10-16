@@ -72,6 +72,8 @@ internal static class Game
             GameplayAssembly.Load();
             ShippingPhysicsAssembly.Load();
             
+            ShippingUtilityAssembly.RegisterLaminaRenderers();
+            
             // Send the initial reload notification
             foreach (var reloadedAssembly in GuestAssemblies)
             {
