@@ -1,17 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <Platforms>x64</Platforms>
-    <Configurations>Debug;Release</Configurations>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Platforms>x64</Platforms>
+        <DebugType>embedded</DebugType>
+        <Configurations>Debug;Release</Configurations>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Engine.Core.Input\Engine.Core.Input.csproj" />
-    <ProjectReference Include="..\Engine.Core.EntitySystem\Engine.Core.EntitySystem.csproj" />
-    <ProjectReference Include="..\Engine.Tooling.Roslyn\Engine.Tooling.Roslyn.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Engine.Core.Input\Engine.Core.Input.csproj" />
+        <ProjectReference Include="..\Engine.Core.EntitySystem\Engine.Core.EntitySystem.csproj" />
+        <ProjectReference Include="..\Engine.Tooling.Roslyn\Engine.Tooling.Roslyn.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+    </ItemGroup>
 
+    <Import Project="..\Engine.Tooling.Weaver\Weaver.targets" />
 </Project>

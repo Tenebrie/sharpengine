@@ -74,9 +74,9 @@ public partial class PerkSelectorWidget : Actor
         foreach (var widget in _perkWidgets)
         {
             widget.Hide();
-        }
+        } 
 
-        UserScene.All.First().Unpause();
+        UserScene.All.First().Unpause(); 
         GetService<UserInputService>().SetSelectingPerkMode(false);
     }
 }

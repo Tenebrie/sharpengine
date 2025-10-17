@@ -1,0 +1,30 @@
+<Project>
+    <PropertyGroup>
+        <_WeaverDll>$(MSBuildThisFileDirectory)bin\$(Platform)\$(Configuration)\$(TargetFramework)\Engine.Tooling.Weaver.dll</_WeaverDll>
+    </PropertyGroup>
+
+    <!-- Build weaver -->
+    <Target Name="BuildWeaver" BeforeTargets="BeforeCompile"
+            Condition="'$(DesignTimeBuild)' != 'true' and '$(MSBuildProjectName)' != 'Engine.Tooling.Weaver'">
+        <MSBuild Projects="$(MSBuildThisFileDirectory)Engine.Tooling.Weaver.csproj"
+                 Targets="Build"
+                 Properties="Configuration=$(Configuration);Platform=$(Platform);TargetFramework=$(TargetFramework)" />
+    </Target>
+
+    <!-- Weave - only if assembly changed -->
+    <Target Name="Weave"
+            AfterTargets="CoreCompile"
+            Condition="'$(DesignTimeBuild)' != 'true' and '$(MSBuildProjectName)' != 'Engine.Tooling.Weaver'"
+            Inputs="$(IntermediateOutputPath)$(TargetFileName)"
+            Outputs="$(IntermediateOutputPath)$(TargetFileName).weaved">
+        <PropertyGroup>
+            <_TargetAssembly>$(IntermediateOutputPath)$(TargetFileName)</_TargetAssembly>
+        </PropertyGroup>
+
+        <Exec Command="dotnet &quot;$(_WeaverDll)&quot; &quot;$(_TargetAssembly)&quot;"
+              StandardOutputImportance="High" />
+
+        <!-- Touch marker file to track when weaving last ran -->
+        <Touch Files="$(IntermediateOutputPath)$(TargetFileName).weaved" AlwaysCreate="true" />
+    </Target>
+</Project>

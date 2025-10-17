@@ -1,9 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <OutputType>Exe</OutputType>
         <Platforms>x64</Platforms>
         <DebugType>embedded</DebugType>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -11,15 +11,17 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Build.Utilities.Core" PrivateAssets="all" />
-        <PackageReference Include="Microsoft.Build.Framework" PrivateAssets="all" />
+        <PackageReference Include="JetBrains.Annotations" PrivateAssets="all"  Version="2024.3.0" />
+        <PackageReference Include="Microsoft.Build.Utilities.Core" PrivateAssets="all" Version="17.14.28" />
+        <PackageReference Include="Microsoft.Build.Framework"         PrivateAssets="all" Version="17.14.28" />
         <PackageReference Include="Mono.Cecil" Version="0.11.6" />
     </ItemGroup>
 
-    <UsingTask TaskName="WeaverTask" AssemblyFile="$(TargetPath)" />
-
-    <Target Name="RunWeaver">
-        <HelloWeaverTask AssemblyPath="$(TargetAssembly)" />
+    <!-- Ensures all copy-local dependencies (like Mono.Cecil.dll) are in bin\ -->
+    <Target Name="EnsureWeaverDepsInBin" AfterTargets="Build">
+        <ItemGroup>
+            <_CopyLocal Include="@(ReferenceCopyLocalPaths)" />
+        </ItemGroup>
+        <Copy SourceFiles="@(_CopyLocal)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
     </Target>
-
 </Project>

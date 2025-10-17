@@ -12,8 +12,8 @@ public sealed class UserEngineContract : IEngineContract<UtilityHost>;
 
 public partial class UtilityHost : Backstage, IUtilityHost
 {
-    [OnReady] 
-    protected void OnReady()
+    [OnReady]
+    protected void OnReady() 
     {
         RegisterService<LaminaInputService>();
         RegisterService<PerformanceMonitoringService>();

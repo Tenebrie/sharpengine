@@ -15,6 +15,7 @@
         <ProjectReference Include="..\Engine.Core.Input\Engine.Core.Input.csproj" />
         <ProjectReference Include="..\Engine.Core.EntitySystem\Engine.Core.EntitySystem.csproj" />
         <ProjectReference Include="..\Engine.Tooling.Roslyn\Engine.Tooling.Roslyn.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+        <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -22,30 +23,5 @@
         <None Include="**/*.ResourceHash.g.cs" />
     </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
-    </ItemGroup>
-
-    <ItemGroup>
-        <ProjectReference Include="..\Engine.Tooling.Weaver\Engine.Tooling.Weaver.csproj" />
-    </ItemGroup>
-
-    <Target Name="RunEngineWeaver"
-            AfterTargets="AspectInjector"
-            BeforeTargets="CopyFilesToOutputDirectory">
-        <Message Importance="High"
-                 Text="[Consumer] WeaveInput=$(IntermediateOutputPath)$(TargetFileName)" />
-        <PropertyGroup>
-            <_WeaveInput>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)$(TargetFileName)'))</_WeaveInput>
-        </PropertyGroup>
-        <MSBuild
-                Projects="..\Engine.Tooling.Weaver\Engine.Tooling.Weaver.csproj"
-                Targets="Build;RunWeaver"
-                Properties="
-        Configuration=$(Configuration);
-        Platform=$(Platform);
-        TargetFramework=$(TargetFramework);
-        TargetAssembly=$(_WeaveInput)" />
-    </Target>
-
+    <Import Project="..\Engine.Tooling.Weaver\Weaver.targets" />
 </Project>

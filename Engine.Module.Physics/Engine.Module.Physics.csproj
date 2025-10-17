@@ -1,16 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-<PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <Platforms>x64</Platforms>
-    <Configurations>Debug;Release</Configurations>
-</PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Platforms>x64</Platforms>
+        <DebugType>embedded</DebugType>
+        <Configurations>Debug;Release</Configurations>
+    </PropertyGroup>
 
-<ItemGroup>
-    <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
-    <ProjectReference Include="..\Engine.Core.EntitySystem\Engine.Core.EntitySystem.csproj" />
-</ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
+        <ProjectReference Include="..\Engine.Core.EntitySystem\Engine.Core.EntitySystem.csproj" />
+    </ItemGroup>
 
+    <Import Project="..\Engine.Tooling.Weaver\Weaver.targets" />
 </Project>

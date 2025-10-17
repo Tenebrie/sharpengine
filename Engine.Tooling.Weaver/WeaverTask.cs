@@ -1,21 +1,16 @@
-﻿using Microsoft.Build.Framework;
-using Mono.Cecil;
+﻿using Mono.Cecil;
 using Mono.Cecil.Cil;
-using Task = Microsoft.Build.Utilities.Task;
 
 namespace Engine.Tooling.Weaver;
 
-public sealed class WeaverTask : Task
+internal static class WeaverTask
 {
-    [Required] public string AssemblyPath { get; set; } = "";
-
-    public override bool Execute()
+    public static void Execute(string assemblyPath)
     {
-        var asmPath = AssemblyPath;
-        var pdbPath = Path.ChangeExtension(asmPath, ".pdb");
-        Log.LogMessage(MessageImportance.High, $"[Weaver] Rewriting: {asmPath}");
+        var pdbPath = Path.ChangeExtension(assemblyPath, ".pdb");
+        Console.WriteLine($"[Weaver] Rewriting: {assemblyPath}");
 
-        using var fs = File.Open(asmPath, FileMode.Open, FileAccess.Read,
+        using var fs = File.Open(assemblyPath, FileMode.Open, FileAccess.Read,
                                  FileShare.ReadWrite | FileShare.Delete);
 
         var read = new ReaderParameters { ReadSymbols = File.Exists(pdbPath), InMemory = true };
@@ -27,35 +22,33 @@ public sealed class WeaverTask : Task
         var patched = 0;
 
         foreach (var type in module.Types.SelectMany(AllTypes))
-        foreach (var m in type.Methods)
+        foreach (var m in type.Methods.ToList())
         {
             if (!m.HasBody) continue;
 
-            var il = m.Body.GetILProcessor();
+            var il  = m.Body.GetILProcessor();
             var ins = m.Body.Instructions;
 
-            foreach (var op in ins)
+            foreach (var op in ins.ToArray())
             {
                 if ((op.OpCode != OpCodes.Call && op.OpCode != OpCodes.Callvirt) ||
                     op.Operand is not MethodReference mr)
                     continue;
 
-                // We only care about instance Pause()/Unpause() declared on Atom
                 var isPauseLike   = mr is { Name: "Pause", HasParameters: false };
                 var isUnpauseLike = mr is { Name: "Unpause", HasParameters: false };
                 if (!isPauseLike && !isUnpauseLike)
                     continue;
 
-                // IMPORTANT: match on the DECLARING TYPE FULL NAME from the callsite
                 if (mr.DeclaringType.FullName != atomFullName) continue;
 
                 if (m.IsStatic)
                 {
-                    Log.LogWarning($"[Weaver] Skipping static caller: {m.FullName}");
+                    Console.WriteLine($"[Weaver] Skipping static caller: {m.FullName}");
                     continue;
                 }
 
-                // Load caller 'this' (box if the caller is a struct)
+                // load 'this'
                 if (m.DeclaringType.IsValueType)
                 {
                     il.InsertBefore(op, il.Create(OpCodes.Ldarg_0));
@@ -66,12 +59,8 @@ public sealed class WeaverTask : Task
                     il.InsertBefore(op, il.Create(OpCodes.Ldarg_0));
                 }
 
-                // Build a reference to PauseButProperly/UnpauseButProperly on THE SAME declaring type as the original call
-                // This keeps the assembly/scope correct without resolving anything.
                 var newName = isPauseLike ? "PauseBy" : "UnpauseBy";
-
-                // parameter type is Atom (same declaring type as the original Pause), not object
-                var atomTypeRef = mr.DeclaringType; // this is the Engine's Atom in the correct scope
+                var atomTypeRef = mr.DeclaringType;
 
                 var newRef = new MethodReference(newName, module.TypeSystem.Void, atomTypeRef)
                 {
@@ -79,8 +68,7 @@ public sealed class WeaverTask : Task
                 };
                 newRef.Parameters.Add(new ParameterDefinition(atomTypeRef));
 
-                // Swap the call
-                op.Operand = module.ImportReference(newRef); // import into this module
+                op.Operand = module.ImportReference(newRef);
                 op.OpCode  = OpCodes.Callvirt;
 
                 patched++;
@@ -88,16 +76,15 @@ public sealed class WeaverTask : Task
         }
 
         // Write atomically
-        var tmp = asmPath + ".weave.tmp";
+        var tmp = assemblyPath + ".weave.tmp";
         var write = new WriterParameters { WriteSymbols = File.Exists(pdbPath) };
         asm.Write(tmp, write);
 
-        var bak = asmPath + ".bak";
-        if (!File.Exists(bak)) File.Copy(asmPath, bak, overwrite: false);
-        File.Replace(tmp, asmPath, bak);
+        var bak = assemblyPath + ".bak";
+        if (!File.Exists(bak)) File.Copy(assemblyPath, bak, overwrite: false);
+        File.Replace(tmp, assemblyPath, bak);
 
-        Log.LogMessage(MessageImportance.High, $"[Weaver] Patched {patched} callsite(s).");
-        return true;
+        Console.WriteLine($"[Weaver] Patched {patched} callsite(s).");
     }
 
     private static IEnumerable<TypeDefinition> AllTypes(TypeDefinition t)

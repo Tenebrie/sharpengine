@@ -16,4 +16,5 @@
       <ProjectReference Include="..\Engine.Tooling.Roslyn\Engine.Tooling.Roslyn.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
     </ItemGroup>
 
+    <Import Project="..\Engine.Tooling.Weaver\Weaver.targets" />
 </Project>
