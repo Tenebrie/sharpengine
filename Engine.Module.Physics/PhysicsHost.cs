@@ -96,6 +96,7 @@ public struct AtomHandle
     public Vector3 LinearVelocity;
     public Vector3 AngularVelocity;
     public double GravityFactor;
+    public double TimeScaleFactor;
 
     public bool HasColliders;
     public List<ColliderSphereComponent> SphereColliders;

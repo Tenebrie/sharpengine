@@ -111,6 +111,7 @@ public class WorkerPoolMember
         handle.LinearVelocity = handle.Component.LinearVelocity;
         handle.AngularVelocity = handle.Component.AngularVelocity;
         handle.SphereColliders = handle.Component.GetSphereColliders();
+        handle.TimeScaleFactor = handle.Component.GlobalTimeScale;
         handle.GravityFactor = Convert.ToDouble(handle.Component.GravityEnabled);
         handle.HasColliders = false;
         if (handle.SphereColliders.Count == 0)
@@ -123,7 +124,7 @@ public class WorkerPoolMember
 
     private void ProcessAtomMovement(ref AtomHandle handle)
     {
-        handle.LinearVelocity.Y -= 9.8 * _deltaTime * handle.GravityFactor;
+        handle.LinearVelocity.Y -= 9.8 * _deltaTime * handle.TimeScaleFactor * handle.GravityFactor;
 
         if (handle.LinearVelocity.LengthSquared <= 0.0001)
         {
@@ -131,20 +132,11 @@ public class WorkerPoolMember
             return;
         }
         
-        handle.WorldTransform.TranslateGlobal(handle.LinearVelocity * _deltaTime);
-        handle.WorldTransform.Rotate(handle.AngularVelocity * _deltaTime);
+        handle.WorldTransform.TranslateGlobal(handle.LinearVelocity * _deltaTime * handle.TimeScaleFactor);
+        handle.WorldTransform.Rotate(handle.AngularVelocity * _deltaTime * handle.TimeScaleFactor);
         handle.WorldPosition = handle.WorldTransform.Position;
         
         handle.WorldPosition = handle.WorldTransform.Position;
-        // if (handle.GravityFactor <= 0.0001 || handle.WorldTransform.Position.Y > 0)
-        // {
-        //     
-        //     return;
-        // }
-        //
-        // handle.WorldTransform.Position = new Vector3(handle.WorldTransform.Position.X, 0, handle.WorldTransform.Position.Z);
-        // handle.WorldPosition = handle.WorldTransform.Position;
-        // handle.LinearVelocity.Y = 0;
     }
     
     private static void CollectCollisionCandidates(ref AtomHandle handle, AtomList participants)

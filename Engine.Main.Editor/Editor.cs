@@ -116,22 +116,16 @@ internal static class Editor
             Logger.Info("Engine startup complete.");
         };
 
-        double deltaTotal = 0.0;
+        var deltaTotal = 0.0;
         MainWindow.Update += deltaTime =>
         {
             if (AssemblyRepository.UpdatesSuspended)
                 return;
             
             deltaTotal += deltaTime;
-            if (deltaTotal < 0.5)
+            if (deltaTotal < 0.05)
                 return;
             deltaTotal = 0.0;
-            
-            // RenderingAssembly.StartFrameRender();
-            // GameLogicThread.StartFrameRender();
-            //              
-            // GameLogicThread.WaitUntilFrameEnd();
-            // RenderingAssembly.WaitUntilFrameEnd();
             
             var allAssemblies = AssemblyRepository.LibraryAssemblies.Values.ToList();
             allAssemblies.Add(RenderingAssembly);
@@ -179,6 +173,8 @@ internal static class Editor
         MainWindow.Closing += () =>
         {
             WindowStateManager.SaveWindowState(MainWindow);
+            
+            GameLogicThread.Stop();
 
             GameplayAssembly.Destroy();
             PhysicsAssembly.Destroy();

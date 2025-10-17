@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Main.Game", "Engine.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Core.Lamina", "Engine.Core.Lamina\Engine.Core.Lamina.csproj", "{26989E45-A768-4615-A1D7-7A7AF9CE65C5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine.Tooling.Weaver", "Engine.Tooling.Weaver\Engine.Tooling.Weaver.csproj", "{35FBA4A0-F3F0-4E9A-865F-8267A9B105A5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -136,6 +138,12 @@ Global
 		{26989E45-A768-4615-A1D7-7A7AF9CE65C5}.Release|x64.Build.0 = Release|x64
 		{26989E45-A768-4615-A1D7-7A7AF9CE65C5}.Shipping|x64.ActiveCfg = Release|x64
 		{26989E45-A768-4615-A1D7-7A7AF9CE65C5}.Shipping|x64.Build.0 = Release|x64
+		{35FBA4A0-F3F0-4E9A-865F-8267A9B105A5}.Debug|x64.ActiveCfg = Debug|x64
+		{35FBA4A0-F3F0-4E9A-865F-8267A9B105A5}.Debug|x64.Build.0 = Debug|x64
+		{35FBA4A0-F3F0-4E9A-865F-8267A9B105A5}.Release|x64.ActiveCfg = Release|x64
+		{35FBA4A0-F3F0-4E9A-865F-8267A9B105A5}.Release|x64.Build.0 = Release|x64
+		{35FBA4A0-F3F0-4E9A-865F-8267A9B105A5}.Shipping|x64.ActiveCfg = Release|x64
+		{35FBA4A0-F3F0-4E9A-865F-8267A9B105A5}.Shipping|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

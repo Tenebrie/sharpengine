@@ -62,10 +62,13 @@ public class GuestAssemblyCompiler
     [MethodImpl(MethodImplOptions.NoInlining)]
     private bool Compile(bool filesChanged)
     {
+        Logger.Debug("Compiling assembly " + _assemblyName + " / " + filesChanged);
         if (filesChanged)
             _project.MarkDirty();
 
         EnsureProjectLoaded();
+        
+        
         var graph = new ProjectGraph(_project.FullPath, _globals, _projectCollection);
         var request = new GraphBuildRequestData(graph, ["Build"]);
         var result = BuildManager.DefaultBuildManager.Build(_buildParams, request);
@@ -74,6 +77,7 @@ public class GuestAssemblyCompiler
         Logger.Debug(isSuccess
             ? "Build succeeded for assembly " + _assemblyName
             : "Build failed for assembly " + _assemblyName);
+        
         return isSuccess;
     }
 

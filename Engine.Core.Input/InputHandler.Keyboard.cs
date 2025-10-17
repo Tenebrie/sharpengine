@@ -1,4 +1,5 @@
-﻿using Engine.Core.Logging;
+﻿using Engine.Core.Communication.Tasks;
+using Engine.Core.Logging;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
 
@@ -58,8 +59,12 @@ public partial class InputHandler
     {
         return _heldKeys.Contains(key);
     }
-    
+
     private void OnKeyDown(IKeyboard keyboard, Key key, int num)
+    {
+        MainThreadTask.Run(() => OnKeyDownHandler(key));
+    }
+    private void OnKeyDownHandler(Key key)
     {
         _heldKeys.Add(key);
         
@@ -100,7 +105,12 @@ public partial class InputHandler
 
     private void OnKeyUp(IKeyboard keyboard, Key key, int num)
     {
-        _heldKeys.Remove(key);
+        MainThreadTask.Run(() => OnKeyUpHandler(key));
+    }
+    
+    private void OnKeyUpHandler(Key key)
+    {
+        _heldKeys.Remove(key); 
         
         OnKeyboardKeyReleasedEvent.TryGetValue(key, out var boundKeyActionList);
         if (boundKeyActionList != null)

@@ -76,6 +76,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         Transform.Position = new Vector3(0, 0, 0);
         Transform.Scale = new Vector3(Size.X, Size.Y, 1);
         Dirty = true;
+        MeshComponent.Visible = false;
     }
     
     public void SetLayout(Action<LaminaLayout> renderFunction)
@@ -148,6 +149,8 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         {
             child.PerformRender(renderContext);
         }
+
+        MeshComponent.Visible = true;
     }
     
     [OnUpdate]

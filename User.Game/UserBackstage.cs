@@ -1,5 +1,6 @@
 ﻿using System.Drawing;
 using Engine.Core.Common;
+using Engine.Core.Communication.Groups;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using User.Game.Actors;
@@ -17,7 +18,9 @@ public partial class UserBackstage : GameplayHostBackstage
     protected void OnReady()
     {
         CreateScene<UserScene>();
-        CreateScene<BasicEnemyScene>();
+        // CreateScene<BasicEnemyScene>();
+        RegisterService<UserInputService>();
+        RegisterService<UserInterfaceService>();
     }
     
     [OnUpdate]
@@ -31,17 +34,16 @@ public partial class BasicEnemyScene : Scene
     [OnReady]
     protected void OnReady()
     {
-        RegisterService<UserInterfaceService>();
     }
 }
 
 public partial class UserScene : Scene
 {
+    [DefaultGroup] public static readonly Group<UserScene> All = new();
+    
     [OnReady]
     protected void OnReady()
     {
-        RegisterService<UserInputService>();
-        
         var player = CreateActor<PlayerCharacter>();
         var cameraFollower = CreateActor<PlayerCameraFollower>();
         cameraFollower.PlayerCharacter = player;

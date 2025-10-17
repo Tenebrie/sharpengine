@@ -4,7 +4,6 @@ using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.Extensions;
-using Engine.Core.Modules;
 using User.Game.Player;
 using User.Game.Player.PerkTree;
 using User.Game.Player.PlayerAttributes;
@@ -48,8 +47,7 @@ public partial class PerkSelectorWidget : Actor
         var maxValue = newLevel + 10;
         
         _displayedPerks.Clear();
-        Backstage.Hypervisor.SetTimeScale(EngineModule.Gameplay, 0.0);
-        Backstage.Hypervisor.SetTimeScale(EngineModule.Physics, 0.0);
+        UserScene.All.First().Pause();
         GetService<UserInputService>().SetSelectingPerkMode(true);
         for (var index = 0; index < _perkWidgets.Count; index++)
         {
@@ -64,12 +62,11 @@ public partial class PerkSelectorWidget : Actor
     
     private readonly List<PlayerPerk> _displayedPerks = [];
     
-    [OnInput(InputAction.SelectPerk1, 0.0)]
-    [OnInput(InputAction.SelectPerk2, 1.0)]
-    [OnInput(InputAction.SelectPerk3, 2.0)]
-    protected void OnSelectPerk(double index)
+    [OnInput(InputAction.SelectPerk1, 0)]
+    [OnInput(InputAction.SelectPerk2, 1)]
+    [OnInput(InputAction.SelectPerk3, 2)]
+    protected void OnSelectPerk(int perkIndex)
     {
-        var perkIndex = (int)index;
         if (perkIndex < 0 || perkIndex >= _displayedPerks.Count)
             return;
         
@@ -78,8 +75,8 @@ public partial class PerkSelectorWidget : Actor
         {
             widget.Hide();
         }
-        Backstage.Hypervisor.SetTimeScale(EngineModule.Gameplay, 1.0);
-        Backstage.Hypervisor.SetTimeScale(EngineModule.Physics, 1.0);
+
+        UserScene.All.First().Unpause();
         GetService<UserInputService>().SetSelectingPerkMode(false);
     }
 }

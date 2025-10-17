@@ -39,6 +39,7 @@ public partial class StaticMeshComponent : ActorComponent, ICullable
     }
     public int SortOrder { get; set; } = 0;
     private IRenderScript RenderScript { get; set; } = IRenderScript.Default;
+    public bool Visible { get; set; } = true;
     public bool CullingEnabled { get; set; } = true;
     public Vector3 BoundingSphereWorldOrigin => WorldTransform.Position;
     public double BoundingSphereWorldRadius => BoundingSphere.WorldRadius;
@@ -47,6 +48,8 @@ public partial class StaticMeshComponent : ActorComponent, ICullable
     private readonly FrameBufferedSingletonArray<MaterialInstanceSnapshot> _materialInstanceBuffer = new();
     public RenderRequest? ProduceRenderRequest()
     {
+        if (!Visible)
+            return null;
         return new RenderRequest
         {
             Mesh = StaticMesh,
@@ -64,7 +67,7 @@ public partial class StaticMeshComponent : ActorComponent, ICullable
 
     public CullingRequest? ProduceCullingRequest()
     {
-        if (!CullingEnabled)
+        if (!CullingEnabled || !Visible)
             return null;
         
         return new CullingRequest

@@ -52,6 +52,7 @@ public partial class UserInputService : Service
             .Add(InputAction.MoveRight, Key.Right)
             .Add(InputAction.Jump, Key.Space)
             .Add(InputAction.Primary, MouseButton.Left)
+            .Add(InputAction.Primary, MouseButton.Left, [KeyModifiers.Shift])
             .Add(InputAction.Hotbar1, Key.Number1)
             .Add(InputAction.Hotbar2, Key.Number2)
             .Add(InputAction.Hotbar3, Key.Number3)

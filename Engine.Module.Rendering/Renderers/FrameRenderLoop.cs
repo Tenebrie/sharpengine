@@ -54,7 +54,7 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         var swapChainSize = new Vector2(SwapChain.GetDesc().Width, SwapChain.GetDesc().Height);
         SetRenderTargets([RenderTargetView], RenderDepthView, swapChainSize, clearColor: new Vector4(0.35f, 0.35f, 0.35f, 1.0f));
         
-        InvokeLaminaRenderers(deltaTime); // In here, we clip (see another snippet)
+        InvokeLaminaRenderers(deltaTime);
         
         SetRenderTargets([RenderTargetView], RenderDepthView, swapChainSize);
         var r = new Rect { Left = 0, Top = 0, Right = (int)swapChainSize.X, Bottom = (int)swapChainSize.Y };
@@ -79,7 +79,7 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingResolveRenderTarget);
         
         stopwatch = Profiler.Start();
-        SwapChain.Present(0);
+        SwapChain.Present(1);
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingPresent);
         fullFrameStopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingTotal);
     }

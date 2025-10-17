@@ -14,7 +14,6 @@ public partial class Atom
     private Action? OnReadyCallback { get; set; }
 
     private bool IsTicking => HasOnUpdateCallbacks || HasOnTimerCallbacks;
-    public double TimeScale { get; set; } = 1.0;
     private bool HasOnUpdateCallbacks { get; set; }
     private Action<double>? OnUpdateCallback { get; set; }
 

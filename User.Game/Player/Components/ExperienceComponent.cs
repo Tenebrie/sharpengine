@@ -33,6 +33,10 @@ public partial class ExperienceComponent : ActorComponent
         var player = PlayerCharacter.All.FirstOrDefault();
         if (player == null)
             return;
+        if (Level < 2)
+        {
+            GainExperience(deltaTime * 150);
+        }
         GainExperience(player.Attributes.ExperienceGain * deltaTime);
     } 
     
@@ -46,7 +50,8 @@ public partial class ExperienceComponent : ActorComponent
         }
     }
 
-    private int PrestigeAfter = 30;
+    private const int PrestigeAfter = 30;
+
     private void GainExperience(double amount)
     {
         Experience += amount;

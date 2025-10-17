@@ -10,14 +10,11 @@ public interface IGroup
     public void Leave(object member);
 }
 
-[MeansImplicitUse]
-[SuppressMessage("ReSharper", "UnusedMember.Local")]
+[PublicAPI]
 public class Group<T> : IGroup, IEnumerable<T> where T : class
 {
     private List<T> Members { get; } = [];
 
-    private T? First => Members.Count > 0 ? Members[0] : null;
-    
     private void Join(T member)
     {
         ArgumentNullException.ThrowIfNull(member);
