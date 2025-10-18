@@ -29,6 +29,10 @@ public partial class Backstage : IBackstage
         {
             inputHandler.BindMouseEvents(inputMouse);
         }
+        foreach (var inputGamepad in Hypervisor.InputContext.Gamepads)
+        {
+            inputHandler.BindGamepadEvents(inputGamepad);
+        }
         
         try
         {

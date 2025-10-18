@@ -3,7 +3,9 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.EntitySystem.Services;
 using Engine.Core.Extensions;
+using Engine.Core.Input;
 using Engine.Core.Lamina;
 using User.Game.Player;
 using User.Game.Player.PerkTree;
@@ -100,6 +102,16 @@ public partial class PerkWidget : ActorComponent
         var windowCenter = new Vector2(windowCenterRaw.X, windowCenterRaw.Y);
         
         _userInterface.Size = (windowSize.X * 0.8, windowSize.Y * 0.8);
+        if (GetService<InputService>().UserInputMode == UserInputMode.Gamepad)
+        {
+            keyToPick = index switch
+            {
+                -1 => "X",
+                +0 => "Y",
+                +1 => "B",
+                _ => keyToPick
+            };
+        }
         
         _userInterface.SetLayout(v =>
         {

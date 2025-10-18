@@ -67,6 +67,7 @@ public partial class InputHandler
     private void OnKeyDownHandler(Key key)
     {
         _heldKeys.Add(key);
+        UserInputMode = UserInputMode.KeyboardAndMouse;
         
         OnKeyboardKeyEvent.TryGetValue(key, out var boundKeyActionList);
         if (boundKeyActionList != null)

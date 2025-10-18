@@ -3,9 +3,11 @@ using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
 using Engine.Core.Geometry.Intersections;
 using Engine.Core.Geometry.Shapes;
+using Engine.Core.Input;
 using Engine.Core.Makers;
 using JetBrains.Annotations;
 using User.Game.Actors;
+using User.Game.Actors.BasicEnemies;
 using User.Game.Player.PlayerAttributes;
 
 namespace User.Game.Player.Abilities.Definitions;
@@ -22,12 +24,25 @@ public partial class PiercingBladeAbility : ActorComponent, IAbility
         if (_cooldownRemaining > 0)
             return;
         
-        var mousePos = GetService<InputService>().GetMousePosition();
-        // Get the intersection point with the ground plane (Y=0)
-        if (!Raycast.IntersectPlane(Backstage.ActiveCamera, PlaneShape.FromNormal(Vector3.Up), mousePos, out var targetPoint))
-            return;
+        if (GetService<InputService>().UserInputMode == UserInputMode.KeyboardAndMouse)
+        {
+            var mousePos = GetService<InputService>().GetMousePosition();
 
-        OnAutoCast(targetPoint);
+            // Get the intersection point with the ground plane (Y=0)
+            if (Raycast.IntersectPlane(Backstage.ActiveCamera, PlaneShape.FromNormal(Vector3.Up), mousePos, out var targetPoint))
+                OnAutoCast(targetPoint);
+        }
+        else
+        {
+            var parent = GetParent<PlayerCharacter>();
+            var closestEnemy = BasicEnemy.Alive
+                .Where(enemy => enemy.WorldTransform.Position.DistanceTo(parent!.WorldTransform.Position) < 100)
+                .OrderBy(enemy => enemy.WorldTransform.Position.DistanceTo(parent!.WorldTransform.Position))
+                .FirstOrDefault();
+            if (closestEnemy == null)
+                return;
+            OnAutoCast(closestEnemy.WorldTransform.Position);
+        }
     }
     
     public void OnAutoCast(Vector3 targetPoint)

@@ -84,6 +84,8 @@ public partial class InputHandler
 
     private void OnMouseMove(IMouse mouse, System.Numerics.Vector2 position)
     {
+        UserInputMode = UserInputMode.KeyboardAndMouse;
+        
         var deltaX = position.X - _lastMousePosition.X;
         var deltaY = position.Y - _lastMousePosition.Y;
         _lastMousePosition = new Vector2(position.X, position.Y);

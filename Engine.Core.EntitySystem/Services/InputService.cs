@@ -30,9 +30,11 @@ public partial class InputService : Service
     public bool IsKeyHeld(Key key) => _inputHandler.IsKeyHeld(key);
     public bool IsMouseButtonHeld(MouseButton button) => _inputHandler.IsMouseButtonHeld(button);
     public void BindMouseEvents(IMouse mouse) => _inputHandler.BindMouseEvents(mouse);
+    public void BindGamepadEvents(IGamepad gamepad) => _inputHandler.BindGamepadEvents(gamepad);
     public void BindKeyboardEvents(IKeyboard keyboard) => _inputHandler.BindKeyboardEvents(keyboard);
     public void SendKeyboardHeldEvents(double deltaTime) => _inputHandler.SendHeldInputEvents(deltaTime);
     public void ClearSubscriptions(Atom owner) => _inputHandler.ClearSubscriptions(owner);
+    public UserInputMode UserInputMode => _inputHandler.UserInputMode;
     
     public Vector2 GetMousePosition() => _inputHandler.GetMousePosition();
     public void SetMousePosition(Vector2 position) => _inputHandler.SetMousePosition(position);
@@ -43,6 +45,7 @@ public partial class InputService : Service
     protected void OnDestroy()
     {
         _inputHandler.UnbindMouseEvents();
+        _inputHandler.UnbindGamepadEvents();
         _inputHandler.UnbindKeyboardEvents();
     }
     

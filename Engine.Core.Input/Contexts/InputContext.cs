@@ -43,6 +43,24 @@ public class InputContext
             .Select(entry => entry.Action)
             .ToList();
     }
+
+    public List<long> Match(Button button)
+    {
+        return _entries.Values
+            .SelectMany(list => list)
+            .Where(entry => entry.GamepadButtons.Contains(button.Name))
+            .Select(entry => entry.Action)
+            .ToList();
+    }
+    
+    public List<long> Match(GamepadAnalog analog)
+    {
+        return _entries.Values
+            .SelectMany(list => list)
+            .Where(entry => entry.GamepadAnalogs.Contains(analog))
+            .Select(entry => entry.Action)
+            .ToList();
+    }
     
     public InputContext Combine(InputContext other)
     {
@@ -141,6 +159,42 @@ public class InputContext
             return this;
         }
 
+        public Builder<TInputAction> Add(TInputAction action, ButtonName button)
+        {
+            if (_entries.TryGetValue(action, out var list))
+            {
+                list.Add(new InputContextEntry(Convert.ToInt64(action))
+                {
+                    GamepadButtons = [button],
+                });
+                return this;
+            }
+
+            _entries[action] = [new InputContextEntry(Convert.ToInt64(action))
+            {
+                GamepadButtons = [button],
+            }];
+            return this;
+        }
+        
+        public Builder<TInputAction> Add(TInputAction action, GamepadAnalog analog)
+        {
+            if (_entries.TryGetValue(action, out var list))
+            {
+                list.Add(new InputContextEntry(Convert.ToInt64(action))
+                {
+                    GamepadAnalogs = [analog],
+                });
+                return this;
+            }
+
+            _entries[action] = [new InputContextEntry(Convert.ToInt64(action))
+            {
+                GamepadAnalogs = [analog],
+            }];
+            return this;
+        }
+
         public InputContext Build()
         {
             var dictionaryEntries = _entries.ToDictionary(
@@ -158,5 +212,7 @@ public readonly struct InputContextEntry(long action)
     public List<Key> Keys { get; internal init; } = [];
     public List<MouseAxis> MouseAxes { get; internal init; } = [];
     public List<MouseButton> MouseButtons { get; internal init; } = [];
+    public List<ButtonName> GamepadButtons { get; internal init; } = [];
+    public List<GamepadAnalog> GamepadAnalogs { get; internal init; } = [];
     public List<KeyModifiers> Modifiers { get; internal init; } = [];
 }

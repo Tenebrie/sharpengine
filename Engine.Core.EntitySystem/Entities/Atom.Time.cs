@@ -114,7 +114,7 @@ public partial class Atom
     }
 
     [OnDestroy]
-    protected void OnDestroy() 
+    protected void OnCleanUpTemporalModifiers() 
     {
         while (_incomingTemporalModifiers is { Count: > 0 })
             _incomingTemporalModifiers.First().Dispose();
