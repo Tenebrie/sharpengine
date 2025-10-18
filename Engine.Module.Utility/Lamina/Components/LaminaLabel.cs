@@ -11,7 +11,7 @@ public partial class LaminaLabel : LaminaWidgetComponent<LabelLayout>
         context.RenderText(layout.Props.Font,
             layout.Props.FontSize,
             layout.Props.Text,
-            layout.Props.Position,
+            layout.Props.Position + WorldTransformNoScale.Position.ToVector2(),
             layout.Props.Color,
             2);
     }

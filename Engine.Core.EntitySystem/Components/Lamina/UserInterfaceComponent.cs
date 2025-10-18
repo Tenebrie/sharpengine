@@ -12,7 +12,6 @@ using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Extensions;
 using Engine.Core.Lamina;
 using Engine.Core.Logging;
-using JetBrains.Annotations;
 using Silk.NET.Maths;
 
 namespace Engine.Core.EntitySystem.Components.Lamina;
@@ -77,6 +76,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         Transform.Scale = new Vector3(Size.X, Size.Y, 1);
         Dirty = true;
         MeshComponent.Visible = false;
+        RootWidget.IgnoreParentPosition();
     }
     
     public void SetLayout(Action<LaminaLayout> renderFunction)
@@ -144,11 +144,15 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     {
         if (!Visible)
             return;
-        renderContext.Position += Padding;
+        renderContext.PushWidget(RootWidget);
+        RootWidget.Transform.Position = (Padding.X, Padding.Y, 0);
+        RootWidget.Transform.Scale = Transform.Scale - new Vector3(Padding.X * 2, Padding.Y * 2, 0);
+        renderContext.ChildrenPosition = Padding;
         foreach (var child in GetChildren<WidgetComponent>())
         {
             child.PerformRender(renderContext);
         }
+        renderContext.PopWidget();
 
         MeshComponent.Visible = true;
     }

@@ -123,7 +123,10 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
             {
                 BufferCount = 3,
             },
-            new FullScreenModeDesc(),
+            new FullScreenModeDesc()
+            {
+                
+            },
             new Win32NativeWindow
             {
                 Wnd = window.Native!.Win32!.Value.Hwnd

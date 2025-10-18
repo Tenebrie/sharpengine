@@ -79,7 +79,7 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingResolveRenderTarget);
         
         stopwatch = Profiler.Start();
-        SwapChain.Present(1);
+        SwapChain.Present(0);
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingPresent);
         fullFrameStopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingTotal);
     }

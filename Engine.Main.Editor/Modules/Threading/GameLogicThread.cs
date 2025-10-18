@@ -29,6 +29,7 @@ internal class GameLogicThread
         {
             var stopwatch = Stopwatch.StartNew();
             double lastFrameTime = 0;
+            
         
             while (_threadState != ThreadState.Stopped)
             {

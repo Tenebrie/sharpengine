@@ -4,6 +4,7 @@ using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.Extensions;
+using Engine.Core.Lamina;
 using User.Game.Player;
 using User.Game.Player.PerkTree;
 using User.Game.Player.PlayerAttributes;
@@ -76,7 +77,7 @@ public partial class PerkSelectorWidget : Actor
             widget.Hide();
         } 
 
-        UserScene.All.First().Unpause(); 
+        UserScene.All.First().Unpause();
         GetService<UserInputService>().SetSelectingPerkMode(false);
     }
 }
@@ -94,15 +95,20 @@ public partial class PerkWidget : ActorComponent
     public void DisplayPerk(PlayerPerk perk, int index, string keyToPick)
     {
         _userInterface.Visible = true;
+        var windowSize = Backstage.Window.GetScaledFramebufferSize();
         var windowCenterRaw = Backstage.Window.GetScaledFramebufferSize() / 2;
         var windowCenter = new Vector2(windowCenterRaw.X, windowCenterRaw.Y);
+        
+        _userInterface.Size = (windowSize.X * 0.8, windowSize.Y * 0.8);
         
         _userInterface.SetLayout(v =>
         {
             Vector2 perkSize = (300, 600);
             const int perkSpacing = 50;
             var offset = new Vector2(perkSpacing + perkSize.X, 0) * index;
-            v.Div(position: windowCenter - perkSize / 2 + offset, children: v =>
+            v.Div(
+                position: windowCenter - perkSize / 2 + offset, 
+                children: v =>     
             {
                 var rarityColor = perk.Rarity switch
                 {
@@ -114,28 +120,29 @@ public partial class PerkWidget : ActorComponent
                     _ => Color.White
                 };
                 
-                v.Image(position: (-5, -5), size: perkSize + (10, 10), tint: rarityColor);
+                v.Image(position: (-5, -5), size: perkSize + (10, 10), tint: rarityColor); 
                 v.Image(size: perkSize, tint: Color.FromArgb(255, 40, 20,20));
                 v.Label(text: perk.Name, position: (10, 5), fontSize: 28, color: Color.White);
                 v.Label(text: perk.Rarity.ToString(), position: (10, 40), fontSize: 20, color: Color.White);
                 v.Label(text: perk.Description, position: (10, 80), color: Color.White); 
                 
-                var positionY = 150;
-                foreach (var (attribute, value) in perk.BoostedAttributes)
+                v.Div(gap: 20, position: (10, 150), children: v =>
                 {
-                    var statColor = attribute switch
+                    foreach (var (attribute, value) in perk.BoostedAttributes)
                     {
-                        AttributeType.Power => Color.Red,
-                        AttributeType.Speed => Color.Green,
-                        AttributeType.Health => Color.Blue,
-                        AttributeType.ExperienceGain => Color.Gold,
-                        AttributeType.ActiveRechargeRate => Color.Cyan,
-                        AttributeType.PassiveRechargeRate => Color.Magenta,
-                        _ => Color.White
-                    };
-                    v.Label(text: $"+{value} {attribute}", position: (10, positionY), color: statColor);
-                    positionY += 20;
-                }
+                        var statColor = attribute switch
+                        {
+                            AttributeType.Power => Color.Red,
+                            AttributeType.Speed => Color.Green,
+                            AttributeType.Health => Color.Blue,  
+                            AttributeType.ExperienceGain => Color.Gold,
+                            AttributeType.ActiveRechargeRate => Color.Cyan,
+                            AttributeType.PassiveRechargeRate => Color.Magenta,
+                            _ => Color.White
+                        };
+                        v.Label(text: $"+{value} {attribute}", color: statColor);
+                    }
+                });
                 
                 v.Label(text: $"Press {keyToPick} to pick",
                     position: (10, perkSize.Y - 40),

@@ -60,6 +60,7 @@ public record struct Vector2(double X, double Y)
 
     public double DotProduct(Vector2 other) => Promote().DotProduct(other);
     public Vector2 Normalized() => Promote().Normalized();
+    public Vector2 Rounded() => new(Math.Round(X), Math.Round(Y));
     public Vector2 SetLengthIfNotZero(double length)
     {
         var currentLength = Length;

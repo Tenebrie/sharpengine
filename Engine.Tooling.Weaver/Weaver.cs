@@ -10,10 +10,7 @@ internal static class Weaver
             return 1;
         }
 
-        Console.WriteLine("Beginning weaving process...");
         var assemblyPath = args[0];
-        // Your weaving logic here using Mono.Cecil
-        // WeaveAssembly(assemblyPath);
         WeaverTask.Execute(assemblyPath);
         
         return 0;

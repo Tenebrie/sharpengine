@@ -92,14 +92,50 @@ internal class LaminaRenderer : IDisposable
 
 internal class LaminaRenderContext(TextRenderer textRenderer, IDeviceContext deviceContext) : ILaminaRenderContext
 {
-    public Vector2 Position { get; set; } = Vector2.Zero;
-    public IDeviceContext DeviceContext => deviceContext;
+    private struct WidgetStackEntry
+    {
+        public required IWidget Widget { get; init; }
+        public required Vector2 Position { get; set; }
+    }
+
+    public Vector2 ChildrenPosition
+    {
+        get => _widgetStack.Count == 0 ? throw new InvalidOperationException("No widget in stack") : _widgetStack.Last().Position;
+        set
+        {
+            if (_widgetStack.Count == 0)
+                throw new InvalidOperationException("No widget in stack to set position for.");
+            var entry = _widgetStack.Last();
+            entry.Position = value;
+            _widgetStack[^1] = entry;
+        }
+    }
+    public Vector2 OffsetToParent => _widgetStack.Count <= 1 ? throw new InvalidOperationException("No widget in stack") : _widgetStack[^2].Position;
+    
+    public IWidget Parent => _widgetStack.Count <= 1 ? null! : _widgetStack[^2].Widget;
+
+    private readonly List<WidgetStackEntry> _widgetStack = [];
+    public void PushWidget(IWidget widget)
+    {
+        _widgetStack.Add(new WidgetStackEntry
+        {
+            Widget = widget,
+            Position = Vector2.Zero,
+        });
+    }
+
+    public void PopWidget()
+    {
+        if (_widgetStack.Count == 0)
+            return;
+        _widgetStack.RemoveAt(_widgetStack.Count - 1);
+    }
 
     public readonly List<LaminaRenderRequest> RenderRequests = [];
 
     public void RenderText(string font, int size, string text, Vector2 position, Color color, int shadowBlur = 2)
     {
-        textRenderer.RenderText(font, size, text, position + Position, color, shadowBlur);
+        textRenderer.RenderText(font, size, text, position + OffsetToParent, color, shadowBlur);
     }
 
     public void RenderRequest(LaminaRenderRequest request)

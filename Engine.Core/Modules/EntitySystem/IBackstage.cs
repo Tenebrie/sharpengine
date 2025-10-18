@@ -20,6 +20,7 @@ public interface ISpatial : IAtom
     public Transform Transform { get; set; }
     public Transform WorldTransform { get; }
     public Transform WorldTransformInverse { get; }
+    public Transform WorldTransformNoScale { get; }
 }
 public interface IPhysicsComponent;
 

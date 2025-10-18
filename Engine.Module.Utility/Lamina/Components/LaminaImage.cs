@@ -6,6 +6,7 @@ using Engine.Core.Assets.Renderers;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.Lamina;
+using Engine.Core.Logging;
 using Box = Engine.Core.Common.Box;
 
 namespace Engine.Module.Utility.Lamina.Components;
@@ -31,29 +32,29 @@ public partial class LaminaImage : LaminaWidgetComponent<ImageLayout>
             _materialInstance.SetTintColor(layout.Props.Tint);
         }
         
-        Position = context.Position + layout.Props.Position;
-            
-        Transform = Transform.Identity;
-        Transform.Position = Position.ToVector3();
-        Transform.Scale = new Vector3(layout.Props.Size.X, layout.Props.Size.Y, 1.0);
+        var position = context.OffsetToParent + layout.Props.Position;
         
+        Transform = Transform.Identity;
+        Transform.Position = position.ToVector3().Rounded();
+        Transform.Scale = new Vector3(layout.Props.Size.X, layout.Props.Size.Y, 1.0);
         if (_material == null || _materialInstance == null)
             return;
-        
+
+        var globalPos = WorldTransformNoScale.Position;
         context.RenderRequest(new LaminaRenderRequest
         {
             InstanceCount = 1,
-            InstanceTransforms = [Transform.Snapshot()],
+            InstanceTransforms = [WorldTransformNoScale.Snapshot()],
             Material = _material,
             Mesh = InterfacePlaneMesh.Shared,
             RenderScript = IRenderScript.Default,
             MaterialInstances = [_materialInstance.Snapshot()],
             ScissorRect = layout.Props.ClippingRect is {} rect ? new Rect
             {
-                Top = (int)(Position.Y + rect.Top * layout.Props.Size.Y),
-                Left = (int)(Position.X + rect.Left * layout.Props.Size.X),
-                Right = (int)(Position.X + rect.Right * layout.Props.Size.X),
-                Bottom = (int)(Position.Y + rect.Bottom * layout.Props.Size.Y)
+                Top = (int)(globalPos.Y + rect.Top * layout.Props.Size.Y),
+                Left = (int)(globalPos.X + rect.Left * layout.Props.Size.X),
+                Right = (int)(globalPos.X + rect.Right * layout.Props.Size.X),
+                Bottom = (int)(globalPos.Y + rect.Bottom * layout.Props.Size.Y)
             } : null,
         });
     }

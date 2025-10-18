@@ -28,16 +28,16 @@ public partial class LaminaButton : LaminaWidgetComponent<ButtonLayout>
             _materialInstance = _material.Instantiate().SetTintColor(layout.Props.BackgroundColor);
         }
         
-        Position = context.Position;
-        Size = new Vector2(100, 50);
+        // Position = context.Position;
+        // Size = new Vector2(100, 50);
             
         Transform = Transform.Identity;
-        Transform.Position = context.Position.ToVector3();
+        Transform.Position = context.OffsetToParent.ToVector3();
         
         context.RenderRequest(new LaminaRenderRequest
         {
             InstanceCount = 1,
-            InstanceTransforms = [Transform.Snapshot()],
+            InstanceTransforms = [WorldTransformNoScale.Snapshot()],
             Material = _material,
             Mesh = InterfacePlaneMesh.Shared,
             RenderScript = IRenderScript.Default,

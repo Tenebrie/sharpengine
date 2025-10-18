@@ -32,7 +32,7 @@ public partial class EditorPerformanceWidget : Actor
             v.Div(position: (0, 0), children: v =>  
             {
                 FramerateCounter.WriteFramerateToGrid(TextGrid, v, FramerateLabelWidget.Size);
-            });
+            }); 
         });
 
         FramerateGraphWidget.Padding = (8, 4);
@@ -58,7 +58,7 @@ public partial class EditorPerformanceWidget : Actor
     }
     
     [OnTimer(Seconds = 1.0)]
-    protected void OnMetricsUpdate()   
+    protected void OnMetricsUpdate()
     {
         PerformanceMetricsWidget.Size = (512, Backstage.Window.FramebufferSize.Y);
         PerformanceMetricsWidget.Transform.Position = (Backstage.Window.FramebufferSize.X - 512, 0, 0);
@@ -94,7 +94,7 @@ public partial class FramerateCounterComponent : ActorComponent
         _updateFramesCollected++;
     }
     
-    [OnTimer(Seconds = 1.0)]
+    [OnTimer(Seconds = 0.5)]
     protected void CollectFrameTimes()
     {
         var averageFrameTime = _frameTimes.Count > 0 ? _frameTimes.Average() : 0.0;
@@ -196,13 +196,14 @@ public partial class FramerateCounterComponent : ActorComponent
         }
         if (_unaccountedCpuRenderingTime > 0.02)
             textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, "Other: " + _unaccountedCpuRenderingTime.ToString("F2") + "ms", canvasSize);
-
+        
         var drawCallCount = RenderContext.Current.ImmediateContext.GetStats().CommandCounters.DrawIndexed;
         var val = RenderContext.Current.ImmediateContext.GetStats().PrimitiveCounts;
+        var renderStats = RenderStats.GetPreviousFrameStats();
         textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.LightGreen, "---- Stats ----", canvasSize);
         textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Draws: {drawCallCount, 4}", canvasSize);
-        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Instances: {RenderStats.InstancesDrawn, 4}", canvasSize);
-        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Culled: {RenderStats.InstancesCulled, 4}", canvasSize);
+        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Instances: {renderStats.NumInstancesDrawn, 4}", canvasSize);
+        textGrid.Draw(v, 0, line++, LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Culled: {renderStats.NumInstancesCulled, 4}", canvasSize);
         textGrid.Draw(v, 0, line,   LaminaDebugTextGrid.Anchor.TopRight, Color.White, $"Triangles: {val[1], 4}", canvasSize);
     }
 }

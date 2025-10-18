@@ -8,6 +8,7 @@ using Engine.Core.Assets.Renderers;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.Lamina;
+using Engine.Core.Logging;
 
 namespace Engine.Module.Utility.Lamina.Components;
 
@@ -24,7 +25,7 @@ public partial class LaminaLine : LaminaWidgetComponent<LineLayout>
         var points = layout.Props.Points;
         var minValues = new Vector2(points.Select(p => p.X).Min(), points.Select(p => p.Y).Min());
         var maxValues = new Vector2(points.Select(p => p.X).Max(), points.Select(p => p.Y).Max());
-        Size = maxValues - minValues;
+        // Size = maxValues - minValues;
     }
 
     public override void OnRender(LineLayout layout, ILaminaRenderContext context)
@@ -39,15 +40,13 @@ public partial class LaminaLine : LaminaWidgetComponent<LineLayout>
             _materialInstance = _material.Instantiate().SetTintColor(layout.Props.Color);
         }
         
-        Position = context.Position;
-            
         Transform = Transform.Identity;
-        Transform.Position = context.Position.ToVector3();
+        Transform.Position = (Math.Round(context.OffsetToParent.X), Math.Round(context.OffsetToParent.Y), 0.0);
         
         context.RenderRequest(new LaminaRenderRequest
         {
             InstanceCount = 1,
-            InstanceTransforms = [Transform.Snapshot()],
+            InstanceTransforms = [WorldTransformNoScale.Snapshot()],
             Material = _material,
             Mesh = _mesh,
             RenderScript = IRenderScript.Default,
@@ -66,11 +65,12 @@ public partial class LaminaLine : LaminaWidgetComponent<LineLayout>
         _points.Clear();
         foreach (var point in props.Points)
         {
-            _points.Add(new Vector2(point.X, point.Y));
+            // TODO: Where is the 0.25 coming from?
+            _points.Add(new Vector2(Math.Round(point.X), Math.Round(point.Y)) + (0.25, 0.25));
         }
         var minValues = new Vector2(_points.Select(p => p.X).Min(), _points.Select(p => p.Y).Min());
         var maxValues = new Vector2(_points.Select(p => p.X).Max(), _points.Select(p => p.Y).Max());
-        Size = maxValues - minValues;
+        // Size = maxValues - minValues;
 
         _mesh ??= new LaminaLineMesh();
         _mesh.Generate(_points);

@@ -74,6 +74,7 @@ public record struct Vector3(double X, double Y, double Z)
     public static Vector3 Cross(Vector3 a, Vector3 b) => a.CrossProduct(b);
     
     public Vector3 Normalized() => Promote().Normalized();
+    public Vector3 Rounded() => new(Math.Round(X), Math.Round(Y), Math.Round(Z));
     
     public Vector3 SetLengthIfNotZero(double length)
     {

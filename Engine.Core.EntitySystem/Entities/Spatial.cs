@@ -1,5 +1,4 @@
 ﻿using Engine.Core.Common;
-using Engine.Core.DataStructures;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Primitives;
 using Engine.Core.Modules.EntitySystem;
@@ -25,10 +24,14 @@ public abstract partial class Spatial : Atom, ISpatial
         Transform = SharedTransformPool.Get();
     }
 
+    private bool _ignoreParentPosition = false;
+
     private bool _cachedWorldTransformValid = false;
     private Transform _cachedWorldTransform = SharedTransformPool.Get();
     private bool _cachedWorldTransformInverseValid = false;
     private Transform _cachedWorldTransformInverse = SharedTransformPool.Get();
+    private bool _cachedWorldTransformNoScaleValid = false;
+    private Transform _cachedWorldTransformNoScale = SharedTransformPool.Get();
     public Transform WorldTransform
     {
         get
@@ -36,8 +39,12 @@ public abstract partial class Spatial : Atom, ISpatial
             if (_cachedWorldTransformValid)
                 return _cachedWorldTransform;
 
-            if (Parent is not Spatial parent)
-                return Transform;
+            if (Parent is not Spatial parent || _ignoreParentPosition)
+            {
+                Transform.Copy(Transform, ref _cachedWorldTransform);
+                _cachedWorldTransformValid = true;
+                return _cachedWorldTransform;
+            }
             
             parent.WorldTransform.Multiply(Transform, ref _cachedWorldTransform);
             _cachedWorldTransformValid = true;
@@ -56,11 +63,32 @@ public abstract partial class Spatial : Atom, ISpatial
             return _cachedWorldTransformInverse;
         }
     }
+    public Transform WorldTransformNoScale
+    {
+        get
+        {
+            if (_cachedWorldTransformNoScaleValid)
+                return _cachedWorldTransformNoScale;
+
+            if (Parent is not Spatial parent || _ignoreParentPosition)
+            {
+                Transform.Copy(Transform, ref _cachedWorldTransformNoScale);
+                _cachedWorldTransformNoScale.Scale = Vector3.One;
+                _cachedWorldTransformNoScaleValid = true;
+                return _cachedWorldTransformNoScale;
+            }
+            
+            parent.WorldTransformNoScale.Multiply(Transform, ref _cachedWorldTransformNoScale);
+            _cachedWorldTransformNoScaleValid = true;
+            return _cachedWorldTransformNoScale;
+        }
+    }
      
     internal void InvalidateWorldTransform() 
     {
         _cachedWorldTransformValid = false;
-        _cachedWorldTransformInverseValid = false;  
+        _cachedWorldTransformInverseValid = false;
+        _cachedWorldTransformNoScaleValid = false;
     }
  
     [OnDestroy] 
@@ -69,14 +97,19 @@ public abstract partial class Spatial : Atom, ISpatial
         _transform.ResetToIdentity();
         _cachedWorldTransform.ResetToIdentity();
         _cachedWorldTransformInverse.ResetToIdentity();
+        _cachedWorldTransformNoScale.ResetToIdentity();
         
         SharedTransformPool.Return(_transform); 
         SharedTransformPool.Return(_cachedWorldTransform);
         SharedTransformPool.Return(_cachedWorldTransformInverse);
+        SharedTransformPool.Return(_cachedWorldTransformNoScale);
         _transform = null!;
-        _cachedWorldTransform = null!;   
-        _cachedWorldTransformInverse = null!;   
-    }   
+        _cachedWorldTransform = null!;
+        _cachedWorldTransformInverse = null!;
+        _cachedWorldTransformNoScale = null!;
+    }
+    
+    public void IgnoreParentPosition() => _ignoreParentPosition = true;
 }        
  
 public static class SpatialExternals

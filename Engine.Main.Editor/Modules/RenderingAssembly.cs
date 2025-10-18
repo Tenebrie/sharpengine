@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Engine.Core.Common;
 using Engine.Core.Communication.Tasks;
 using Engine.Core.Logging;
@@ -73,11 +74,11 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
         {
             var stopwatch = Stopwatch.StartNew();
             double lastFrameTime = 0;
-        
+
             while (_renderThreadState != RenderThreadState.Stopped)
             {
-                RenderStats.Reset();
                 FrameCounter.Increment();
+                RenderStats.Reset();
                 
                 _renderStartBarrier.SignalAndWait();
                 if (_renderThreadState == RenderThreadState.Stopped)

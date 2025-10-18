@@ -17,14 +17,18 @@ public struct LaminaWidgetRenderer : ILaminaWidgetRenderer
 
 public interface ILaminaRenderContext
 {
-    public Vector2 Position { get; set; }
-    IDeviceContext DeviceContext { get; } 
+    public Vector2 OffsetToParent { get; }
+    public Vector2 ChildrenPosition { get; set; }
+    public IWidget Parent { get; }
+    
+    public void PushWidget(IWidget widget);
+    public void PopWidget();
     
     public void RenderText(string font, int size, string text, Vector2 position, Color color, int shadowBlur = 0);
     public void RenderRequest(LaminaRenderRequest request);
 }
 
-public interface IWidget : IAtom
+public interface IWidget : ISpatial
 {
      
 }

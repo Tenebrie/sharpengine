@@ -140,7 +140,6 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
         ref VertexPositionColorTexture bottomLeftVertex,
         ref VertexPositionColorTexture bottomRightVertex)
     {
-        
         var sc = RenderContext.Current.RenderTargetSize;
         var sx = 2f / sc.X;
         var sy = 2f / sc.Y;
@@ -191,7 +190,10 @@ public class SpecificFontRenderer : IFontStashRenderer2, IDisposable
         foreach (var (texture, vertexList) in _glyphStream)
         {
             if (verticesWritten + vertexList.Count >= BufferSizeGlyphs * 4)
+            {
+                vertexList.Clear();
                 return;
+            }
             
             if (!_materialInstances.TryGetValue(texture, out var materialInstance))
             {

@@ -1,8 +1,6 @@
 ﻿using System.Runtime;
-using Engine.Core.Communication.Tasks;
 using Engine.Core.Enum;
 using Engine.Core.Extensions;
-using Engine.Core.Filesystem;
 using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Main.Editor.Modules;
@@ -30,7 +28,7 @@ internal static class Editor
     internal static List<ModularAssembly> GuestAssemblies { get; set; } = [];
     
     internal static GameLogicThread GameLogicThread { get; } = new();
-
+    
     private static void Main()
     {
         MSBuildLocator.RegisterDefaults();
@@ -39,7 +37,7 @@ internal static class Editor
             Title = "Custom Engine",
             Size = new Vector2D<int>(1920, 1080),
             API = new GraphicsAPI(ContextAPI.None, new APIVersion()),
-            IsVisible = false,
+            IsVisible = false
         };
         if (OperatingSystem.IsMacOS())
             opts.Size /= 2;
@@ -81,6 +79,7 @@ internal static class Editor
         ];
         
         GCSettings.LatencyMode = GCLatencyMode.LowLatency;
+        AppContext.SetSwitch("System.GC.Server", true);
 
         MainWindow.Load += () =>
         {
@@ -90,6 +89,9 @@ internal static class Editor
             // First: Rendering to show the splash screen
             RenderingAssembly.Load();
             MainWindow.IsVisible = true;
+ 
+            // MainWindow.Position = new Vector2D<int>(-2560, 400);
+            // MainWindow.Size = new Vector2D<int>(2560, 1440);
             
             // Second: Utility assembly to run DI
             UtilityAssembly.Load();
@@ -141,6 +143,8 @@ internal static class Editor
             }
 
             if (allAssemblies.Any(assembly => assembly.Loader.IsCompiling || assembly.Loader.HasErrors))
+                return;
+            if (!allAssemblies.Any(assembly => assembly.NeedsReload()))
                 return;
             
             GameLogicThread.Pause();

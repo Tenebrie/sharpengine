@@ -130,6 +130,7 @@ public record struct Vector4(double X, double Y, double Z, double W)
     }
 
     public Vector4 Normalized() => SetLengthIfNotZero(1);
+    public Vector4 Rounded() => new(Math.Round(X), Math.Round(Y), Math.Round(Z), Math.Round(W));
 
     /**
      * Uncommon methods

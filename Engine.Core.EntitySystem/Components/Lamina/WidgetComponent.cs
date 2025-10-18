@@ -8,6 +8,14 @@ namespace Engine.Core.EntitySystem.Components.Lamina;
 public abstract partial class LaminaWidgetComponent<T> : WidgetComponent
 {
     public abstract void OnRender(T layout, ILaminaRenderContext context);
+    public virtual void OnRenderChildren(T layout, ILaminaRenderContext context)
+    {
+        foreach (var child in Children)
+        {
+            if (child is WidgetComponent widget)
+                widget.PerformRender(context);
+        }
+    }
     public virtual void OnPostRender(T layout, ILaminaRenderContext context) {}
     public virtual void OnPopulateIntrinsics(T layout) {}
 }
@@ -22,32 +30,32 @@ public partial class RootWidgetComponent : LaminaWidgetComponent<LaminaLayout>
 public partial class WidgetComponent : Actor, IWidget
 {
     private LaminaLayout? _currentLayout;
-    public Box BoundingBox
-    {
-        get
-        {
-            if (_currentLayout == null)
-                return Box.Zero;
-
-            var boxMin = Position;
-            var boxMax = Position + Size;
-            
-            foreach (var child in GetChildren<WidgetComponent>())
-            {
-                var childBox = child.BoundingBox;
-                boxMin.X = Math.Min(boxMin.X, childBox.Left);
-                boxMin.Y = Math.Min(boxMin.Y, childBox.Top);
-                boxMax.X = Math.Max(boxMax.X, childBox.Right);
-                boxMax.Y = Math.Max(boxMax.Y, childBox.Bottom);
-            }
-            return new Box(boxMin.X, boxMin.Y, boxMax.X, boxMax.Y);
-        }
-    }
+    // public Box BoundingBox
+    // {
+    //     get
+    //     {
+    //         if (_currentLayout == null)
+    //             return Box.Zero;
+    //
+    //         var boxMin = Position;
+    //         var boxMax = Position + Size;
+    //         
+    //         foreach (var child in GetChildren<WidgetComponent>())
+    //         {
+    //             var childBox = child.BoundingBox;
+    //             boxMin.X = Math.Min(boxMin.X, childBox.Left);
+    //             boxMin.Y = Math.Min(boxMin.Y, childBox.Top);
+    //             boxMax.X = Math.Max(boxMax.X, childBox.Right);
+    //             boxMax.Y = Math.Max(boxMax.Y, childBox.Bottom);
+    //         }
+    //         return new Box(boxMin.X, boxMin.Y, boxMax.X, boxMax.Y);
+    //     }
+    // }
 
     // TODO: Rely on existing local -> global transformations?
     // Currently Transform is global (due to context)
-    public Vector2 Position = Vector2.Zero;
-    public Vector2 Size = Vector2.Zero;
+    // public Vector2 Position = Vector2.Zero;
+    // public Vector2 Size = Vector2.Zero;
 
     public void Initialize(LaminaLayout layout)
     {
@@ -124,6 +132,11 @@ public partial class WidgetComponent : Actor, IWidget
         ((dynamic)this).OnRender((dynamic)layout, context);
     }
 
+    private void RenderChildren(LaminaLayout layout, ILaminaRenderContext context)
+    {
+        ((dynamic)this).OnRenderChildren((dynamic)layout, context);
+    }
+
     private void PostRender(LaminaLayout layout, ILaminaRenderContext context)
     {
         ((dynamic)this).OnPostRender((dynamic)layout, context);
@@ -133,18 +146,21 @@ public partial class WidgetComponent : Actor, IWidget
         if (_currentLayout == null)
             return;
 
+        context.PushWidget(this);
+        
         try
         {
             Render(_currentLayout, context);
-            foreach (var child in Children)
-            {
-                if (child is WidgetComponent widget)
-                    widget.PerformRender(context);
-            }
+            RenderChildren(_currentLayout, context);
             PostRender(_currentLayout, context);
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
             Logger.Error("Exception during widget rendering: " + e.Message, e);
+        }
+        finally
+        {
+            context.PopWidget();
         }
     }
 }

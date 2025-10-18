@@ -40,6 +40,7 @@ public partial record LaminaLayout(Type Type) : ILaminaLayout
 public record ButtonLayout(LaminaButtonProps Props) : LaminaLayout(typeof(ButtonLayout));
 public record struct LaminaButtonProps()
 {
+    public Vector2 Position = Vector2.Zero;
     public string Label = "";
     public Color BackgroundColor = Color.Gray;
     public Action? OnClick;
@@ -52,7 +53,25 @@ public record DivLayout(LaminaDivProps Props) : LaminaLayout(typeof(DivLayout));
 public record struct LaminaDivProps()
 {
     public Vector2 Position = Vector2.Zero;
+    public double Gap = 0;
+    public LaminaFlexAlign AlignContent = LaminaFlexAlign.Center;
+    public LaminaFlexAlign JustifyContent = LaminaFlexAlign.Center;
+    public LaminaDivDirection Direction = LaminaDivDirection.Column;
     public Action<LaminaLayout> Children;
+}
+public enum LaminaDivDirection
+{
+    Row,
+    Column
+}
+
+public enum LaminaFlexAlign
+{
+    Start,
+    Center,
+    End,
+    SpaceBetween,
+    SpaceAround
 }
 
 /// <summary>
@@ -61,10 +80,10 @@ public record struct LaminaDivProps()
 public record ImageLayout(LaminaImageProps Props) : LaminaLayout(typeof(ImageLayout));
 public record struct LaminaImageProps()
 {
+    public Vector2 Position = Vector2.Zero;
     public string? ImagePath = null;
     public Box ClippingRect = Box.Full;
-    public Vector2 Position = Vector2.Zero;
-    public Vector2 Size = new Vector2(100, 100);
+    public Vector2 Size = new(100, 100);
     public Color Tint = Color.White;
 }
 
@@ -74,11 +93,11 @@ public record struct LaminaImageProps()
 public record LabelLayout(LaminaLabelProps Props) : LaminaLayout(typeof(LabelLayout));
 public record struct LaminaLabelProps()
 {
+    public Vector2 Position = Vector2.Zero;
     public string Text;
     public string Font = "RobotoMono-Bold";
     public int FontSize = 18;
     public Color Color = Color.Black;
-    public Vector2 Position = Vector2.Zero;
 }
 
 /// <summary>  
@@ -87,13 +106,8 @@ public record struct LaminaLabelProps()
 public record LineLayout(LaminaLineProps Props) : LaminaLayout(typeof(LineLayout));
 public record struct LaminaLineProps()
 {
+    public Vector2 Position = Vector2.Zero;
     public IReadOnlyList<Vector2> Points;
     public Color Color = Color.Black;
     public int Thickness = 1;
-}
-
-public record SpacerLayout(SpacerProps Props) : LaminaLayout(typeof(SpacerLayout));
-public record struct SpacerProps()
-{
-    public Vector2 Size = new(10, 10);
 }
