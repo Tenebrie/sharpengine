@@ -14,6 +14,7 @@ public class WindowHandle
 
     public Signal Load { get; } = new();
     public Signal<Vector2> Resize { get; } = new();
+    public Signal<Vector2> ResizeDebounced { get; } = new();
 
     private readonly TimeSpan _resizeDebounce;
     private Vector2 _pendingResize;
@@ -25,6 +26,7 @@ public class WindowHandle
         SystemWindow = baseWindow;
 
         SystemWindow.Load += () => Load.Emit();
+        SystemWindow.Resize += size => Resize.Emit(size);
         SystemWindow.Resize += size => OnSystemResize(size);
     }
 
@@ -54,6 +56,6 @@ public class WindowHandle
     private void EmitResize(Vector2 size)
     {
         // If Signal must be on the UI thread, marshal here.
-        Resize.Emit(size);
+        ResizeDebounced.Emit(size);
     }
 }

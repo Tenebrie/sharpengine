@@ -77,7 +77,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         MeshComponent.Visible = false;
         RootWidget.IgnoreParentPosition();
         
-        Backstage.Window.Resize.Connect(this, _ =>
+        Backstage.Window.ResizeDebounced.Connect(this, _ =>
         {
             MainThreadTask.Run(() =>
             {
