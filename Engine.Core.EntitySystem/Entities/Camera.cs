@@ -36,15 +36,8 @@ public partial class Camera : Actor, ICamera
             0, 0, (far + near) / (near - far), -1,
             0, 0, (2 * far * near) / (near - far), 0
         );
-        Backstage.Window.Load += OnLoad;
-        Backstage.Window.Resize += OnResize;
-    }
-
-    [OnDestroy]
-    internal void OnDestroy()
-    {
-        Backstage.Window.Load -= OnLoad;
-        Backstage.Window.Resize -= OnResize;
+        Backstage.Window.Load.Connect(this, OnLoad);
+        Backstage.Window.Resize.Connect(this, OnResize);
     }
 
     private void OnLoad()
@@ -52,7 +45,7 @@ public partial class Camera : Actor, ICamera
         OnResize(Backstage.Window.FramebufferSize);
     }
 
-    private void OnResize(Vector2D<int> size)
+    private void OnResize(Vector2 size)
     {
         Width = size.X;
         Height = size.Y;

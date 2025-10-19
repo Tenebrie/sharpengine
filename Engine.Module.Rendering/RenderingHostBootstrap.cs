@@ -4,6 +4,7 @@ using Diligent;
 using Engine.Core.Assets;
 using Engine.Core.Logging;
 using Engine.Core.Modules;
+using Engine.Core.Windowing;
 using JetBrains.Annotations;
 using Silk.NET.Windowing;
 
@@ -93,7 +94,7 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
         out IDeviceContext immediateContext,
         out IDeviceContext[] deferredContexts,
         out ISwapChain swapChain,
-        IWindow window)
+        WindowHandle window)
     {
         engineFactory.CreateDeviceAndContextsD3D12(new EngineD3D12CreateInfo
         {
@@ -125,7 +126,7 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
             },
             new Win32NativeWindow
             {
-                Wnd = window.Native!.Win32!.Value.Hwnd
+                Wnd = window.SystemWindow.Native!.Win32!.Value.Hwnd
             });
     }
 

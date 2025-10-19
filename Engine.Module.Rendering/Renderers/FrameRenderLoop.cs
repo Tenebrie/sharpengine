@@ -3,8 +3,6 @@ using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Enum;
-using Engine.Core.Extensions;
-using Engine.Core.Logging;
 using Engine.Core.Profiling;
 using Engine.Module.Rendering.Computers;
 using Engine.Module.Rendering.RegistrationHandlers;
@@ -12,8 +10,6 @@ using Engine.Module.Rendering.Renderers.Atoms;
 using Engine.Module.Rendering.Renderers.Debug;
 using Engine.Module.Rendering.Renderers.Fonts;
 using Engine.Module.Rendering.Renderers.Lamina;
-using Engine.Module.Rendering.Utilities;
-using Silk.NET.Maths;
 
 namespace Engine.Module.Rendering.Renderers;
 
@@ -37,8 +33,6 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
     private ITexture RenderTarget => host.RenderTarget;
     private ITextureView RenderTargetView => host.RenderTargetView;
     private ITextureView RenderDepthView => host.RenderDepthView;
-
-    private Vector2D<int> FramebufferSize => host.Hypervisor.Window.GetScaledFramebufferSize();
 
     public void RenderSingleFrame(double deltaTime)
     {

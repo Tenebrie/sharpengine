@@ -40,11 +40,14 @@ public partial class Atom
     
     public T? GetChild<T>() where T : Atom
     {
-        foreach (var child in Children)
+        // ReSharper disable once ForCanBeConvertedToForeach
+        for (var index = 0; index < Children.Count; index++)
         {
+            var child = Children[index];
             if (child is T t)
                 return t;
         }
+
         return null;
     }
     

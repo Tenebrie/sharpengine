@@ -5,6 +5,7 @@ using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Meshes.Builtins;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
+using Engine.Core.Communication.Tasks;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
@@ -40,7 +41,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     public Vector2 Padding { get; set; } = new(0, 0);
     public Vector2 Size
     {
-        get => _explicitSize ?? new Vector2(FramebufferSize.X, FramebufferSize.Y);
+        get => _explicitSize ?? Backstage.Window.FramebufferSize;
         set => _explicitSize = value;
     }
     public Vector2 ContentSize => Size - Padding * 2;
@@ -62,8 +63,6 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
      */
 
     
-    private Vector2D<int> FramebufferSize => Backstage.Window.GetScaledFramebufferSize();
-
     [OnReady]
     protected void OnReady()
     {
@@ -77,10 +76,22 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         Dirty = true;
         MeshComponent.Visible = false;
         RootWidget.IgnoreParentPosition();
+        
+        Backstage.Window.Resize.Connect(this, _ =>
+        {
+            MainThreadTask.Run(() =>
+            {
+                Dirty = true;
+                if (_layoutFunction != null)
+                    SetLayout(_layoutFunction);
+            });
+        });
     }
     
+    private Action<LaminaLayout>? _layoutFunction;
     public void SetLayout(Action<LaminaLayout> renderFunction)
     {
+        _layoutFunction = renderFunction;
         var layout = new LaminaLayout(typeof(LaminaLayout));
         renderFunction(layout);
         RootWidget.Initialize(layout);

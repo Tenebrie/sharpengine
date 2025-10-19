@@ -50,7 +50,7 @@ internal sealed class ShippingRenderingAssembly(IEntryPoint entryPoint) : Bundle
         _renderThread = new Thread(RenderThreadLoop)
         {
             Name = "RenderThread",
-            IsBackground = true
+            IsBackground = false
         };
         _renderThread.Start();
     }

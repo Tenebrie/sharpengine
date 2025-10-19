@@ -40,11 +40,12 @@ public partial class ExperienceBarWidget : Actor
         }
 
         _smoothProgress += (progress - _smoothProgress) * Math.Min(1.0, deltaTime * 75.0);
-
-        var windowSize = Backstage.Window.GetScaledFramebufferSize();
-        _userInterface.Transform.Position = (windowSize.X / 2.0 - 256, windowSize.Y - 80, 0);
+        
         _userInterface.SetLayout(v =>
         {
+            var windowSize = Backstage.Window.FramebufferSize;
+            _userInterface.Transform.Position = (windowSize.X / 2.0 - 256, windowSize.Y - 80, 0);
+            
             var exp = Math.Floor(player.Experience.Experience);
             v.Div(position: (0, 0), children: v =>
             {

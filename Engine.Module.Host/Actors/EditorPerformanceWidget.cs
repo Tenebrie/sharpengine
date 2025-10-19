@@ -25,22 +25,24 @@ public partial class EditorPerformanceWidget : Actor
     [OnTimer(Seconds = 0.1)]
     protected void OnGraphUpdate()
     {
-        FramerateLabelWidget.Size = (512, Backstage.Window.FramebufferSize.Y);
-        FramerateLabelWidget.Transform.Position = (Backstage.Window.FramebufferSize.X - 512, 0, 0);
         FramerateLabelWidget.SetLayout(v =>
         {
+            FramerateLabelWidget.Size = (512, Backstage.Window.FramebufferSize.Y);
+            FramerateLabelWidget.Transform.Position = (Backstage.Window.FramebufferSize.X - 512, 0, 0);
+            
             v.Div(position: (0, 0), children: v =>  
             {
                 FramerateCounter.WriteFramerateToGrid(TextGrid, v, FramerateLabelWidget.Size);
             }); 
         });
-
-        FramerateGraphWidget.Padding = (8, 4);
-        FramerateGraphWidget.Size = (FramerateCounterComponent.ValuesStored + FramerateGraphWidget.Padding.X * 2, 48);
-        FramerateGraphWidget.Transform.Position = new Vector3(Backstage.Window.FramebufferSize.X - 300, 8, 0);
-        FramerateGraphWidget.BackgroundColor = Color.FromArgb(50, 0, 0, 0);
+        
         FramerateGraphWidget.SetLayout(v => 
         {
+            FramerateGraphWidget.Padding = (8, 4);
+            FramerateGraphWidget.Size = (FramerateCounterComponent.ValuesStored + FramerateGraphWidget.Padding.X * 2, 48);
+            FramerateGraphWidget.Transform.Position = new Vector3(Backstage.Window.FramebufferSize.X - 300, 8, 0);
+            FramerateGraphWidget.BackgroundColor = Color.FromArgb(50, 0, 0, 0);
+            
             v.Div(position: (0, 0), children: v =>
             {
                 var height = FramerateGraphWidget.ContentSize.Y;
@@ -60,10 +62,10 @@ public partial class EditorPerformanceWidget : Actor
     [OnTimer(Seconds = 1.0)]
     protected void OnMetricsUpdate()
     {
-        PerformanceMetricsWidget.Size = (512, Backstage.Window.FramebufferSize.Y);
-        PerformanceMetricsWidget.Transform.Position = (Backstage.Window.FramebufferSize.X - 512, 0, 0);
         PerformanceMetricsWidget.SetLayout(v =>
         {
+            PerformanceMetricsWidget.Size = (512, Backstage.Window.FramebufferSize.Y);
+            PerformanceMetricsWidget.Transform.Position = (Backstage.Window.FramebufferSize.X - 512, 0, 0);
             FramerateCounter.WriteMetricsToGrid(TextGrid, v, PerformanceMetricsWidget.ContentSize);
         });
     }

@@ -19,7 +19,7 @@ public class GameLogicThread(IEntryPoint entryPoint)
         _threadHandle = new Thread(ThreadLoop)
         {
             Name = "GameLogicThread",
-            IsBackground = true
+            Priority = ThreadPriority.AboveNormal,
         };
         _threadHandle.Start();
     }

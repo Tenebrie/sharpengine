@@ -119,6 +119,11 @@ public record struct Vector3(double X, double Y, double Z)
     public static implicit operator Vector3(Silk.NET.Maths.Vector3D<double> v) => new(v.X, v.Y, v.Z);
     public static implicit operator Silk.NET.Maths.Vector3D<double>(Vector3 v) => new(v.X, v.Y, v.Z);
     
+    // Silk.NET.Maths.Vector3D<int>
+    
+    public static implicit operator Vector3(Silk.NET.Maths.Vector3D<int> v) => new(v.X, v.Y, v.Z);
+    public static implicit operator Silk.NET.Maths.Vector3D<int>(Vector3 v) => new((int)v.X, (int)v.Y, (int)v.Z);
+    
     // Tuple (x, y)
     
     public static implicit operator Vector3((double x, double y, double z) t) => new(t.x, t.y, t.z);

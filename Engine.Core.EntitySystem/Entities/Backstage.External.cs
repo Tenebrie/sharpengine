@@ -4,6 +4,7 @@ using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Core.Modules.EntitySystem;
 using Engine.Core.Profiling;
+using Engine.Core.Windowing;
 using JetBrains.Annotations;
 using Silk.NET.Windowing;
 
@@ -15,7 +16,7 @@ public partial class Backstage : IBackstage
     public string Name { get; set; } = "Backstage";
     public IRootHypervisor Hypervisor { get; set; }
 
-    public IWindow Window => Hypervisor.Window;
+    public WindowHandle Window => Hypervisor.Window;
     public IPhysicsHost? PhysicsModule => Hypervisor.PhysicsModule;
     public IRenderingHost? RenderingModule => Hypervisor.RenderingModule;
     public IUtilityHost? UtilityModule => Hypervisor.UtilityModule;

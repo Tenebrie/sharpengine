@@ -31,7 +31,7 @@ public partial class BasicEnemyManager : Actor
             .AsSharedMaterial()
             .Compile();
             
-        var windowSize = Backstage.Window.GetScaledFramebufferSize();
+        var windowSize = Backstage.Window.FramebufferSize;
         EvolutionFactorWidget.Transform.Position = (windowSize.X / 2.0 - 256, windowSize.Y - 180, 0);
         EvolutionFactorWidget.BackgroundColor = Color.FromArgb(128, 0, 0, 0);
         EvolutionFactorWidget.Size = (512, 90);
@@ -65,12 +65,13 @@ public partial class BasicEnemyManager : Actor
     protected void SpawnEnemy()
     {
         const int maxEnemies = 500;
-        var windowSize = Backstage.Window.GetScaledFramebufferSize();
-        EvolutionFactorWidget.Transform.Position = (windowSize.X / 2.0 - 256, windowSize.Y - 180, 0);
-        EvolutionFactorWidget.BackgroundColor = Color.FromArgb(128, 0, 0, 0);
-        EvolutionFactorWidget.Size = (512, 90);
         EvolutionFactorWidget.SetLayout(v =>
         {
+            var windowSize = Backstage.Window.FramebufferSize;
+            EvolutionFactorWidget.Transform.Position = (windowSize.X / 2.0 - 256, windowSize.Y - 180, 0);
+            EvolutionFactorWidget.BackgroundColor = Color.FromArgb(128, 0, 0, 0);
+            EvolutionFactorWidget.Size = (512, 90);
+            
             v.Div(position: (10, 0), children: v =>
             {
                 v.Label($"Evolution Factor: {_evolutionFactor:F2}", fontSize: 28, color: Color.White);

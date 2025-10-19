@@ -11,6 +11,7 @@ using Engine.Core.Extensions;
 using Engine.Core.Modules;
 using Engine.Core.Modules.EntitySystem;
 using Engine.Core.Profiling;
+using Engine.Core.Windowing;
 using Engine.Module.Rendering.RegistrationHandlers;
 using Engine.Module.Rendering.Renderers;
 using Engine.Module.Rendering.Renderers.Fonts;
@@ -40,14 +41,12 @@ public class RenderingHost : IRenderingHost
     internal ITextureView RenderDepthView = null!;
     
     public IRootHypervisor Hypervisor { get; set; } = null!;
-    internal IWindow RootWindow => Hypervisor.Window;
+    internal WindowHandle RootWindow => Hypervisor.Window;
     
     internal readonly CameraRegistrationHandler RegisteredCameras = new();
     internal readonly LaminaRegistrationHandler RegisteredLaminaElements = new();
     internal readonly RenderableRegistrationHandler RegisteredRenderables = new();
     internal readonly CullableRegistrationHandler RegisteredCullables = new();
-
-    private Vector2D<int> FramebufferSize => RootWindow.GetScaledFramebufferSize();
 
     // Constant camera matrix buffer
     internal IBuffer ViewMatrixBuffer = null!;
@@ -132,10 +131,10 @@ public class RenderingHost : IRenderingHost
     {
         FrameRenderLoop = new FrameRenderLoop(this, new TextRenderer(_immediateContext));
         
-        CreateRenderTargets(FramebufferSize);
+        CreateRenderTargets(Hypervisor.Window.FramebufferSize);
         
         // RootWindow.Render += RenderSingleFrameSync;
-        RootWindow.FramebufferResize += OnFramebufferResize;
+        RootWindow.SystemWindow.FramebufferResize += OnFramebufferResize;
     }
 
     internal void CreateRenderTargets(Vector2D<int> size)
@@ -222,7 +221,7 @@ public class RenderingHost : IRenderingHost
     public void HotShutdown()
     { 
         // RootWindow.Render -= RenderSingleFrameSync;
-        RootWindow.FramebufferResize -= OnFramebufferResize;
+        RootWindow.SystemWindow.FramebufferResize -= OnFramebufferResize;
         try
         {
             // _immediateContext.SetPipelineState(null);

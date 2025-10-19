@@ -103,6 +103,11 @@ public record struct Vector2(double X, double Y)
     public static implicit operator Vector2(Silk.NET.Maths.Vector2D<double> v) => new(v.X, v.Y);
     public static implicit operator Silk.NET.Maths.Vector2D<double>(Vector2 v) => new(v.X, v.Y);
     
+    // Silk.NET.Maths.Vector2D<int>
+    
+    public static implicit operator Vector2(Silk.NET.Maths.Vector2D<int> v) => new(v.X, v.Y);
+    public static implicit operator Silk.NET.Maths.Vector2D<int>(Vector2 v) => new((int)v.X, (int)v.Y);
+    
     // Tuple (x, y)
     
     public static implicit operator Vector2((double x, double y) t) => new(t.x, t.y);

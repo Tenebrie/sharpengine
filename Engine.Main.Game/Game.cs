@@ -5,6 +5,7 @@ using Engine.Core.Enum;
 using Engine.Core.Extensions;
 using Engine.Core.Logging;
 using Engine.Core.Modules;
+using Engine.Core.Windowing;
 using Engine.Main.Game.Modules;
 using Engine.Main.Game.Modules.Abstract;
 using Engine.Main.Shared;
@@ -53,7 +54,7 @@ internal class EntryPoint : IEntryPoint
     internal ShippingUtilityAssembly UtilityAssembly { get; }
 
     internal List<BundledAssembly> HotReloadRoots { get; }
-    public IRootHypervisor Hypervisor { get; }
+    public Hypervisor Hypervisor { get; }
 
     internal EntryPoint()
     {
@@ -81,6 +82,7 @@ internal class EntryPoint : IEntryPoint
             opts.Size /= 2;
         
         MainWindow = Window.Create(opts);
+        Hypervisor.Window = new WindowHandle(MainWindow);
     }
 
     internal void Run()
@@ -134,13 +136,14 @@ internal class EntryPoint : IEntryPoint
     
     IRenderingAssembly IEntryPoint.RenderingAssembly => RenderingAssembly;
     IReadOnlyList<IRootAssembly> IEntryPoint.GuestAssemblies => HotReloadRoots;
+    IRootHypervisor IEntryPoint.Hypervisor => Hypervisor;
 }
 
 public class Hypervisor : IRootHypervisor
 {
     private static EntryPoint EntryPoint => Game.EntryPoint;
 
-    public IWindow Window => EntryPoint.MainWindow;
+    public WindowHandle Window { get; set; } = null!;
     public IInputContext InputContext => EntryPoint.MainInputContext;
     public IGameplayHost GameplayModule => EntryPoint.GameplayAssembly.HostBackstage;
     public IPhysicsHost PhysicsModule => EntryPoint.PhysicsAssembly.PhysicsModule;

@@ -62,7 +62,7 @@ internal class RenderingAssembly(IEntryPoint entryPoint) : ModularAssembly("Engi
         _renderThread = new Thread(RenderThreadLoop)
         {
             Name = "RenderThread",
-            IsBackground = true
+            IsBackground = false
         };
         _renderThread.Start();
     }

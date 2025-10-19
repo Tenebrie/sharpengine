@@ -97,24 +97,25 @@ public partial class PerkWidget : ActorComponent
     public void DisplayPerk(PlayerPerk perk, int index, string keyToPick)
     {
         _userInterface.Visible = true;
-        var windowSize = Backstage.Window.GetScaledFramebufferSize();
-        var windowCenterRaw = Backstage.Window.GetScaledFramebufferSize() / 2;
-        var windowCenter = new Vector2(windowCenterRaw.X, windowCenterRaw.Y);
-        
-        _userInterface.Size = (windowSize.X * 0.8, windowSize.Y * 0.8);
-        if (GetService<InputService>().UserInputMode == UserInputMode.Gamepad)
-        {
-            keyToPick = index switch
-            {
-                -1 => "X",
-                +0 => "Y",
-                +1 => "B",
-                _ => keyToPick
-            };
-        }
         
         _userInterface.SetLayout(v =>
         {
+            var windowSize = Backstage.Window.FramebufferSize;
+            var windowCenterRaw = windowSize / 2;
+            var windowCenter = new Vector2(windowCenterRaw.X, windowCenterRaw.Y);
+        
+            _userInterface.Size = (windowSize.X, windowSize.Y);
+            if (GetService<InputService>().UserInputMode == UserInputMode.Gamepad)
+            {
+                keyToPick = index switch
+                {
+                    -1 => "X",
+                    +0 => "Y",
+                    +1 => "B",
+                    _ => keyToPick
+                };
+            }
+            
             Vector2 perkSize = (300, 600);
             const int perkSpacing = 50;
             var offset = new Vector2(perkSpacing + perkSize.X, 0) * index;

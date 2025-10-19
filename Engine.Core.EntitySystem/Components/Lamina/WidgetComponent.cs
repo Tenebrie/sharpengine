@@ -10,8 +10,10 @@ public abstract partial class LaminaWidgetComponent<T> : WidgetComponent
     public abstract void OnRender(T layout, ILaminaRenderContext context);
     public virtual void OnRenderChildren(T layout, ILaminaRenderContext context)
     {
-        foreach (var child in Children)
+        // ReSharper disable once ForCanBeConvertedToForeach
+        for (var index = 0; index < Children.Count; index++)
         {
+            var child = Children[index];
             if (child is WidgetComponent widget)
                 widget.PerformRender(context);
         }

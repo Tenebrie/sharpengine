@@ -1,4 +1,8 @@
-﻿using Engine.Core.Enum;
+﻿using Engine.Core.Common;
+using Engine.Core.Communication.Signals;
+using Engine.Core.Enum;
+using Engine.Core.Extensions;
+using Engine.Core.Windowing;
 using Silk.NET.Input;
 using Silk.NET.Windowing;
 
@@ -6,7 +10,7 @@ namespace Engine.Core.Modules;
 
 public interface IRootHypervisor
 {
-    public IWindow Window { get; }
+    public WindowHandle Window { get; }
     public IInputContext InputContext { get; }
     public IGameplayHost? GameplayModule { get; }
     public IPhysicsHost? PhysicsModule { get; }

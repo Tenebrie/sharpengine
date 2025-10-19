@@ -3,6 +3,7 @@ using Engine.Core.Enum;
 using Engine.Core.Extensions;
 using Engine.Core.Logging;
 using Engine.Core.Modules;
+using Engine.Core.Windowing;
 using Engine.Main.Editor.Modules;
 using Engine.Main.Editor.Modules.Abstract;
 using Engine.Main.Editor.Modules.Compiler;
@@ -38,7 +39,7 @@ internal class EntryPoint : IEntryPoint
     internal WorkspaceAssembly WorkspaceAssembly { get; }
 
     internal List<ModularAssembly> HotReloadRoots { get; }
-    public IRootHypervisor Hypervisor { get; }
+    private Hypervisor Hypervisor { get; }
     
     internal EntryPoint()
     {
@@ -77,6 +78,7 @@ internal class EntryPoint : IEntryPoint
 
         WindowStateManager.TryLoadWindowState(ref opts);
         MainWindow = Window.Create(opts);
+        Hypervisor.Window = new WindowHandle(MainWindow);
     }
     
     internal void Run()
@@ -199,13 +201,14 @@ internal class EntryPoint : IEntryPoint
     
     IRenderingAssembly IEntryPoint.RenderingAssembly => RenderingAssembly;
     IReadOnlyList<IRootAssembly> IEntryPoint.GuestAssemblies => HotReloadRoots;
+    IRootHypervisor IEntryPoint.Hypervisor => Hypervisor;
 }
 
 public class Hypervisor : IRootHypervisor
 {
     private static EntryPoint EntryPoint => Editor.EntryPoint;
 
-    public IWindow Window => EntryPoint.MainWindow;
+    public WindowHandle Window { get; set; } = null!;
     public IInputContext InputContext => EntryPoint.MainInputContext;
     public IGameplayHost? GameplayModule => EntryPoint.GameplayAssembly.HostBackstage;
     public IPhysicsHost? PhysicsModule => EntryPoint.PhysicsAssembly.PhysicsModule;
