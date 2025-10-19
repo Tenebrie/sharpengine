@@ -1,10 +1,11 @@
 ﻿using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Main.Editor.Modules.Abstract;
+using Engine.Main.Shared;
 
 namespace Engine.Main.Editor.Modules;
 
-internal class PhysicsAssembly() : ModularAssembly("Engine.Module.Physics", EngineModule.Physics)
+internal class PhysicsAssembly(IEntryPoint entryPoint) : ModularAssembly("Engine.Module.Physics", EngineModule.Physics)
 {
     internal IPhysicsHost? PhysicsModule { get; private set; }
     
@@ -20,11 +21,11 @@ internal class PhysicsAssembly() : ModularAssembly("Engine.Module.Physics", Engi
             Logger.Error("PhysicsAssembly: Failed to instantiate the host.");
             return;
         }
-        PhysicsModule.Hypervisor = Editor.Hypervisor.Instance;
+        PhysicsModule.Hypervisor = entryPoint.Hypervisor;
         PhysicsModule.Initialize();
     }
     
-    public override bool Update(double deltaTime)
+    public override void Update(double deltaTime)
     {
         try
         {
@@ -35,7 +36,7 @@ internal class PhysicsAssembly() : ModularAssembly("Engine.Module.Physics", Engi
             Logger.Error($"Error during Physics update: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
         }
-        return base.Update(deltaTime);
+        base.Update(deltaTime);
     }
 
     public override void Unload()

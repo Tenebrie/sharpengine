@@ -1,11 +1,11 @@
 ﻿using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Main.Editor.Modules.Abstract;
-using SharpGen.Runtime;
+using Engine.Main.Shared;
 
 namespace Engine.Main.Editor.Modules;
 
-public class UtilityAssembly() : ModularAssembly("Engine.Module.Utility", EngineModule.Workspace)
+public class UtilityAssembly(IEntryPoint entryPoint) : ModularAssembly("Engine.Module.Utility", EngineModule.Workspace)
 {
     internal IUtilityHost? HostBackstage { get; private set; }
     private IBaseEngineContract? Contract { get; set; }
@@ -24,15 +24,18 @@ public class UtilityAssembly() : ModularAssembly("Engine.Module.Utility", Engine
         }
         HostBackstage = (IUtilityHost)Activator.CreateInstance(Contract.MainBackstage)!;
         HostBackstage.Name = "util-" + Guid.NewGuid();
-        HostBackstage.Hypervisor = Editor.Hypervisor.Instance;
+        HostBackstage.Hypervisor = entryPoint.Hypervisor;
         HostBackstage.StartupInitialize();
         RegisterLaminaRenderers();
     }
 
-    public override bool Update(double deltaTime)
+    public override void Update(double deltaTime)
     {
         if (HostBackstage == null)
-            return base.Update(deltaTime);
+        {
+            base.Update(deltaTime);
+            return;
+        }
 
         try
         {
@@ -42,9 +45,8 @@ public class UtilityAssembly() : ModularAssembly("Engine.Module.Utility", Engine
         {
             Logger.Error($"[UtilityAssembly] Error during OnUpdate: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
-            return base.Update(deltaTime);
         }
-        return base.Update(deltaTime);
+        base.Update(deltaTime);
     }
 
     public override void Unload()

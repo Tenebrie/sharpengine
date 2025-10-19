@@ -81,7 +81,7 @@ public partial class PlayerCharacter : Actor
         _velocity += _acceleration;
 
         var maxSpeed = 3.0;
-        if (GetService<InputService>().IsKeyHeld(Key.ShiftLeft))
+        if (GetService<InputService>().IsKeyHeld(Key.ShiftLeft) || GetService<InputService>().IsGamepadButtonHeld(ButtonName.A))
         {
             maxSpeed = 4.5;
         }

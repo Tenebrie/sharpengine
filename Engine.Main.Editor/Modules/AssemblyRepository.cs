@@ -14,8 +14,6 @@ public class AssemblyReferenceNode
 
 public static class AssemblyRepository
 {
-    public static bool UpdatesSuspended { get; set; } = false;
-    
     public static Dictionary<string, LibraryAssembly> LibraryAssemblies { get; } = new();
     public static Dictionary<string, Assembly> ExternalAssemblies { get; } = new();
 
@@ -68,16 +66,16 @@ public static class AssemblyRepository
             anyInvalidated = true;
             if (LibraryAssemblies.TryGetValue(depName, out var result))
                 result.QueueReload();
-            else if (depName == Editor.RenderingAssembly.Name)
-                Editor.RenderingAssembly.QueueReload();
-            else if (depName == Editor.GameplayAssembly.Name)
-                Editor.GameplayAssembly.QueueReload();
-            else if (depName == Editor.PhysicsAssembly.Name)
-                Editor.PhysicsAssembly.QueueReload();
-            else if (depName == Editor.UtilityAssembly.Name)
-                Editor.UtilityAssembly.QueueReload();
-            else if (depName == Editor.WorkspaceAssembly.Name)
-                Editor.WorkspaceAssembly.QueueReload();
+            else if (depName == Editor.EntryPoint.RenderingAssembly.Name)
+                Editor.EntryPoint.RenderingAssembly.QueueReload();
+            else if (depName == Editor.EntryPoint.GameplayAssembly.Name)
+                Editor.EntryPoint.GameplayAssembly.QueueReload();
+            else if (depName == Editor.EntryPoint.PhysicsAssembly.Name)
+                Editor.EntryPoint.PhysicsAssembly.QueueReload();
+            else if (depName == Editor.EntryPoint.UtilityAssembly.Name)
+                Editor.EntryPoint.UtilityAssembly.QueueReload();
+            else if (depName == Editor.EntryPoint.WorkspaceAssembly.Name)
+                Editor.EntryPoint.WorkspaceAssembly.QueueReload();
         }
         return anyInvalidated;
     }
@@ -120,18 +118,18 @@ public static class AssemblyRepository
     public static List<LibraryAssembly> GetSortedAssemblies()
     {
         var allAssemblies = LibraryAssemblies.Values.ToList();
-        allAssemblies.Add(Editor.RenderingAssembly);
-        allAssemblies.Add(Editor.GameplayAssembly);
-        allAssemblies.Add(Editor.PhysicsAssembly);
-        allAssemblies.Add(Editor.UtilityAssembly);
-        allAssemblies.Add(Editor.WorkspaceAssembly);
+        allAssemblies.Add(Editor.EntryPoint.RenderingAssembly);
+        allAssemblies.Add(Editor.EntryPoint.GameplayAssembly);
+        allAssemblies.Add(Editor.EntryPoint.PhysicsAssembly);
+        allAssemblies.Add(Editor.EntryPoint.UtilityAssembly);
+        allAssemblies.Add(Editor.EntryPoint.WorkspaceAssembly);
         UpdateReloadPriority(allAssemblies);
         return allAssemblies
             .OrderByDescending(assembly => assembly.ReloadPriority)
             .ToList();
     }
 
-    public static List<LibraryAssembly> GetDependents(string assemblyName)
+    private static List<LibraryAssembly> GetDependents(string assemblyName)
     {
         return GetSortedAssemblies().Where(assembly => assembly.Dependencies.Contains(assemblyName)).ToList();
     }
@@ -195,14 +193,12 @@ public static class AssemblyRepository
     {
         if (AssembliesAwaitingReload.Count == 0)
             return [];
-
-        UpdatesSuspended = true;
         
         var allAssemblies = LibraryAssemblies.Values.ToList();
-        allAssemblies.Add(Editor.RenderingAssembly);
-        allAssemblies.Add(Editor.GameplayAssembly);
-        allAssemblies.Add(Editor.PhysicsAssembly);
-        allAssemblies.Add(Editor.WorkspaceAssembly);
+        allAssemblies.Add(Editor.EntryPoint.RenderingAssembly);
+        allAssemblies.Add(Editor.EntryPoint.GameplayAssembly);
+        allAssemblies.Add(Editor.EntryPoint.PhysicsAssembly);
+        allAssemblies.Add(Editor.EntryPoint.WorkspaceAssembly);
 
         UpdateReloadPriority(allAssemblies);
         
@@ -226,7 +222,6 @@ public static class AssemblyRepository
 
         Logger.ClearPersistent("AssembliesReloadNotice");
         
-        UpdatesSuspended = false;
         return assembliesToReload.Where(assembly => assembly is ModularAssembly).Cast<ModularAssembly>().ToList();
     }
 }

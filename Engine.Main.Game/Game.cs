@@ -1,36 +1,79 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using System.Runtime;
-using Engine.Core.Communication.Tasks;
 using Engine.Core.Enum;
 using Engine.Core.Extensions;
 using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Main.Game.Modules;
 using Engine.Main.Game.Modules.Abstract;
+using Engine.Main.Shared;
 using Silk.NET.Input;
-using Silk.NET.Maths;
 using Silk.NET.Windowing;
 
 namespace Engine.Main.Game;
 
 internal static class Game
 {
-    private static IWindow MainWindow { get; set; } = null!;
-    private static IInputContext MainInputContext { get; set; } = null!;
-
-    private static ShippingGameplayAssembly GameplayAssembly { get; set; } = null!;
-    private static ShippingPhysicsAssembly ShippingPhysicsAssembly { get; set; } = null!;
-    private static ShippingRenderingAssembly ShippingRenderingAssembly { get; set; } = null!;
-    private static ShippingUtilityAssembly ShippingUtilityAssembly { get; set; } = null!;
-
-    private static List<BundledAssembly> GuestAssemblies { get; set; } = [];
-
+    internal static EntryPoint EntryPoint { get; private set; } = null!;
+    
     private static void Main()
     {
+        RedirectLogsToFile();
+        EntryPoint = new EntryPoint();
+        EntryPoint.Run();
+    }
+    
+    private static void RedirectLogsToFile()
+    {
+        var baseDir = AppContext.BaseDirectory;
+        var logDir  = Path.Combine(baseDir, "logs");
+        Directory.CreateDirectory(logDir);
+        var logPath = Path.Combine(logDir, $"run-{DateTime.UtcNow:yyyyMMdd-HHmmss}.log");
+
+        var fs = new FileStream(logPath, FileMode.Create, FileAccess.Write, FileShare.Read);
+        var tw = new StreamWriter(fs) { AutoFlush = true };
+
+        // Capture Console, Trace, and Debug
+        Console.SetOut(tw);
+        Console.SetError(tw);
+        Trace.Listeners.Clear();
+        Trace.Listeners.Add(new TextWriterTraceListener(tw));
+    }
+}
+
+internal class EntryPoint : IEntryPoint
+{
+    internal IWindow MainWindow { get; }
+    internal IInputContext MainInputContext { get; private set; } = null!;
+
+    internal ShippingGameplayAssembly GameplayAssembly { get; }
+    internal ShippingPhysicsAssembly PhysicsAssembly { get; }
+    internal ShippingRenderingAssembly RenderingAssembly { get; }
+    internal ShippingUtilityAssembly UtilityAssembly { get; }
+
+    internal List<BundledAssembly> HotReloadRoots { get; }
+    public IRootHypervisor Hypervisor { get; }
+
+    internal EntryPoint()
+    {
+        Hypervisor = new Hypervisor();
+        GameplayAssembly = new ShippingGameplayAssembly(this);
+        PhysicsAssembly = new ShippingPhysicsAssembly(this);
+        RenderingAssembly = new ShippingRenderingAssembly(this);
+        UtilityAssembly = new ShippingUtilityAssembly(this);
+        HotReloadRoots =
+        [
+            GameplayAssembly,
+            PhysicsAssembly,
+            RenderingAssembly,
+            UtilityAssembly,
+        ];
+        
         var opts = WindowOptions.Default with
         {
             Title = "Custom Engine (Release)",
-            Size = new Vector2D<int>(1920, 1080),
+            // Size = new Vector2D<int>(1920, 1080),
             API = new GraphicsAPI(ContextAPI.None, new APIVersion()),
             IsVisible = false,
         };
@@ -38,112 +81,99 @@ internal static class Game
             opts.Size /= 2;
         
         MainWindow = Window.Create(opts);
-        
-        Assembly.Load("User.Game");
-        
-        GameplayAssembly = new ShippingGameplayAssembly();
-        ShippingPhysicsAssembly = new ShippingPhysicsAssembly();
-        ShippingRenderingAssembly = new ShippingRenderingAssembly();
-        ShippingUtilityAssembly = new ShippingUtilityAssembly();
+    }
 
-        GuestAssemblies =
-        [
-            GameplayAssembly,
-            ShippingPhysicsAssembly,
-            ShippingRenderingAssembly,
-            ShippingUtilityAssembly,
-        ];
-
+    internal void Run()
+    {
         GCSettings.LatencyMode = GCLatencyMode.LowLatency;
+        AppContext.SetSwitch("System.GC.Server", true);
+        
+        var gameLogicThread = new GameLogicThread(this);
 
         MainWindow.Load += () =>
         {
-            // Create input context
             MainInputContext = MainWindow.CreateInput();
             
+            // var gameAssembly = Assembly.Load("User.Game");
             // First: Rendering to show the splash screen
-            ShippingRenderingAssembly.Load();
+            RenderingAssembly.Load();
             MainWindow.IsVisible = true;
             
             // Second: Utility assembly to run DI
-            ShippingUtilityAssembly.Load();
+            Assembly.Load("Engine.Core.Lamina");
+            UtilityAssembly.Load();
             
             // Then: The rest of the owl
             GameplayAssembly.Load();
-            ShippingPhysicsAssembly.Load();
-            
-            ShippingUtilityAssembly.RegisterLaminaRenderers();
+            PhysicsAssembly.Load();
             
             // Send the initial reload notification
-            foreach (var reloadedAssembly in GuestAssemblies)
+            foreach (var reloadedAssembly in HotReloadRoots)
             {
-                GuestAssemblies.ForEachTry(
+                HotReloadRoots.ForEachTry(
                     assembly => assembly.GetHost().NotifyModuleReloaded(reloadedAssembly.Module),
                     (assembly, exception) => Logger.Error($"Failed to notify about module reload: {assembly}", exception)
                 );
             }
-        };
-
-        MainWindow.Update += deltaTime =>
-        {
-            MainThreadTask.ExecuteAllQueued();
             
-            foreach (var guestAssembly in GuestAssemblies)
-            {
-                guestAssembly.Update(deltaTime);
-            }
+            gameLogicThread.Start();
         };
 
         MainWindow.Closing += () =>
         {
+            gameLogicThread.Stop();
+            
             GameplayAssembly.Destroy();
-            ShippingPhysicsAssembly.Destroy();
-            ShippingRenderingAssembly.Destroy();
-            ShippingUtilityAssembly.Destroy();
+            PhysicsAssembly.Destroy();
+            RenderingAssembly.Destroy();
+            UtilityAssembly.Destroy();
         };
 
         MainWindow.Run();
     }
+    
+    IRenderingAssembly IEntryPoint.RenderingAssembly => RenderingAssembly;
+    IReadOnlyList<IRootAssembly> IEntryPoint.GuestAssemblies => HotReloadRoots;
+}
 
+public class Hypervisor : IRootHypervisor
+{
+    private static EntryPoint EntryPoint => Game.EntryPoint;
+
+    public IWindow Window => EntryPoint.MainWindow;
+    public IInputContext InputContext => EntryPoint.MainInputContext;
+    public IGameplayHost GameplayModule => EntryPoint.GameplayAssembly.HostBackstage;
+    public IPhysicsHost PhysicsModule => EntryPoint.PhysicsAssembly.PhysicsModule;
+    public IRenderingHost RenderingModule => EntryPoint.RenderingAssembly.RenderingHost;
+    public IUtilityHost UtilityModule => EntryPoint.UtilityAssembly.HostBackstage;
+    public IWorkspaceHost? WorkspaceModule => null;
+        
+    public GameplayContext GameplayContext { get; private set; } = GameplayContext.StandalonePlay;
+
+    public void ReloadEngineModule(EngineModule module) {}
+
+    public void SetGameplayContext(GameplayContext context)
+    {
+        GameplayContext = context;
+        EntryPoint.HotReloadRoots.ForEachTry(
+            assembly => assembly.GetHost().NotifyGameplayContextChanged(context),
+            (assembly, exception) => Logger.Error($"Failed to notify about gameplay context change: {assembly}", exception)
+        );
+    }
+
+    public double GetTimeScale(EngineModule module) => FindModularAssembly(module).TimeScale;
+    public void SetTimeScale(EngineModule module, double timeScale) => FindModularAssembly(module).TimeScale = timeScale;
+    
     private static BundledAssembly FindModularAssembly(EngineModule module)
     {
         return module switch
         {
-            EngineModule.Gameplay => GameplayAssembly,
-            EngineModule.Rendering => ShippingRenderingAssembly,
-            EngineModule.Physics => ShippingPhysicsAssembly,
-            EngineModule.Utility => ShippingUtilityAssembly,
+            EngineModule.Gameplay => EntryPoint.GameplayAssembly,
+            EngineModule.Rendering => EntryPoint.RenderingAssembly,
+            EngineModule.Physics => EntryPoint.PhysicsAssembly,
+            EngineModule.Utility => EntryPoint.UtilityAssembly,
             EngineModule.Workspace => throw new ArgumentOutOfRangeException(nameof(module), module, "Unmapped engine module."),
             _ => throw new ArgumentOutOfRangeException(nameof(module), module, "Unmapped engine module.")
         };
-    }
-    
-    public class Hypervisor : IRootHypervisor
-    {
-        public static Hypervisor Instance { get; } = new();
-
-        public IWindow Window => MainWindow;
-        public IInputContext InputContext => MainInputContext;
-        public IGameplayHost GameplayModule => GameplayAssembly.HostBackstage;
-        public IPhysicsHost PhysicsModule => ShippingPhysicsAssembly.PhysicsModule;
-        public IRenderingHost RenderingModule => ShippingRenderingAssembly.RenderingHost;
-        public IUtilityHost UtilityModule => ShippingUtilityAssembly.HostBackstage;
-        public IWorkspaceHost? WorkspaceModule => null;
-        
-        public GameplayContext GameplayContext { get; private set; } = GameplayContext.StandalonePlay;
-
-        public void ReloadEngineModule(EngineModule module) {}
-
-        public void SetGameplayContext(GameplayContext context)
-        {
-            GameplayContext = context;
-            GuestAssemblies.ForEachTry(
-                assembly => assembly.GetHost().NotifyGameplayContextChanged(context),
-                (assembly, exception) => Logger.Error($"Failed to notify about gameplay context change: {assembly}", exception)
-            );
-        }
-
-        public double GetTimeScale(EngineModule module) => FindModularAssembly(module).TimeScale;
-        public void SetTimeScale(EngineModule module, double timeScale) => FindModularAssembly(module).TimeScale = timeScale;
     }
 }

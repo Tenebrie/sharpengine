@@ -1,10 +1,11 @@
 ﻿using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Main.Editor.Modules.Abstract;
+using Engine.Main.Shared;
 
 namespace Engine.Main.Editor.Modules;
 
-public class WorkspaceAssembly() : ModularAssembly("Engine.Module.Host", EngineModule.Workspace)
+public class WorkspaceAssembly(IEntryPoint entryPoint) : ModularAssembly("Engine.Module.Host", EngineModule.Workspace)
 {
     internal IWorkspaceHost? HostBackstage { get; private set; }
     private IBaseEngineContract? Contract { get; set; }
@@ -22,14 +23,17 @@ public class WorkspaceAssembly() : ModularAssembly("Engine.Module.Host", EngineM
         }
         HostBackstage = (IWorkspaceHost)Activator.CreateInstance(Contract.MainBackstage)!;
         HostBackstage.Name = "host-" + Guid.NewGuid();
-        HostBackstage.Hypervisor = Editor.Hypervisor.Instance;
+        HostBackstage.Hypervisor = entryPoint.Hypervisor;
         HostBackstage.StartupInitialize();
     }
 
-    public override bool Update(double deltaTime)
+    public override void Update(double deltaTime)
     {
         if (HostBackstage == null)
-            return base.Update(deltaTime);
+        {
+            base.Update(deltaTime);
+            return;
+        }
 
         try
         {
@@ -39,9 +43,8 @@ public class WorkspaceAssembly() : ModularAssembly("Engine.Module.Host", EngineM
         {
             Logger.Error($"[WorkspaceAssembly] Error during OnUpdate: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
-            return base.Update(deltaTime);
         }
-        return base.Update(deltaTime);
+        base.Update(deltaTime);
     }
 
     public override void Unload()

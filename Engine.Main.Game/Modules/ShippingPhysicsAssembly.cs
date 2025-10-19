@@ -1,11 +1,12 @@
 ﻿using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Main.Game.Modules.Abstract;
+using Engine.Main.Shared;
 using Engine.Module.Physics;
 
 namespace Engine.Main.Game.Modules;
 
-internal class ShippingPhysicsAssembly() : BundledAssembly("Engine.Module.Physics", EngineModule.Physics)
+internal sealed class ShippingPhysicsAssembly(IEntryPoint entryPoint) : BundledAssembly("Engine.Module.Physics", EngineModule.Physics)
 {
     internal PhysicsHost PhysicsModule { get; private set; } = null!;
     
@@ -13,14 +14,15 @@ internal class ShippingPhysicsAssembly() : BundledAssembly("Engine.Module.Physic
     
     internal override void Load()
     {
+        base.Load();
         PhysicsModule = new PhysicsHost
         {
-            Hypervisor = Game.Hypervisor.Instance
+            Hypervisor = entryPoint.Hypervisor
         };
         PhysicsModule.Initialize();
     }
     
-    internal override void Update(double deltaTime)
+    public override void Update(double deltaTime)
     {
         try
         {
@@ -33,7 +35,7 @@ internal class ShippingPhysicsAssembly() : BundledAssembly("Engine.Module.Physic
         }
     }
 
-    internal override void Destroy()
+    internal void Destroy()
     {
         PhysicsModule.Shutdown();
     }

@@ -12,11 +12,11 @@ public partial record LaminaLayout(Type Type) : ILaminaLayout
     public virtual bool Equals(LaminaLayout? other)
         => other is not null
            && Type == other.Type
-           && Children.SequenceEqual(other.Children); 
-
+           && Children.SequenceEqual(other.Children);  
+ 
     public override int GetHashCode()
     {
-        var hc = new HashCode();  
+        var hc = new HashCode();
         hc.Add(Type);
         foreach (var child in Children)
             hc.Add(child);

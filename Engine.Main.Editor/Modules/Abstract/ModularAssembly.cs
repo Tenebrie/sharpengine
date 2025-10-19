@@ -1,10 +1,11 @@
 ﻿using System.Reflection;
 using Engine.Core.Communication.Tasks;
 using Engine.Core.Modules;
+using Engine.Main.Shared;
 
 namespace Engine.Main.Editor.Modules.Abstract;
 
-public abstract class ModularAssembly(string assemblyName, EngineModule module) : LibraryAssembly(assemblyName)
+public abstract class ModularAssembly(string assemblyName, EngineModule module) : LibraryAssembly(assemblyName), IRootAssembly
 {
     internal EngineModule Module => module;
 

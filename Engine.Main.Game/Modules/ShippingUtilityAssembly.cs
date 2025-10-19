@@ -1,11 +1,12 @@
 ﻿using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Main.Game.Modules.Abstract;
+using Engine.Main.Shared;
 using Engine.Module.Utility;
 
 namespace Engine.Main.Game.Modules;
 
-public class ShippingUtilityAssembly() : BundledAssembly("Engine.Module.Utility", EngineModule.Workspace)
+public sealed class ShippingUtilityAssembly(IEntryPoint entryPoint) : BundledAssembly("Engine.Module.Utility", EngineModule.Workspace)
 {
     internal UtilityHost HostBackstage { get; private set; } = null!;
     
@@ -13,13 +14,17 @@ public class ShippingUtilityAssembly() : BundledAssembly("Engine.Module.Utility"
 
     internal override void Load()
     {
-        HostBackstage = new UtilityHost();
-        HostBackstage.Name = "util-" + Guid.NewGuid();
-        HostBackstage.Hypervisor = Game.Hypervisor.Instance;
+        base.Load();
+        HostBackstage = new UtilityHost
+        {
+            Name = "util-" + Guid.NewGuid(),
+            Hypervisor = entryPoint.Hypervisor
+        };
+        LaminaDiscoveryManager.RegisterLaminaRenderers(Assembly);
         HostBackstage.StartupInitialize();
     }
 
-    internal override void Update(double deltaTime)
+    public override void Update(double deltaTime)
     {
         try
         {
@@ -32,7 +37,7 @@ public class ShippingUtilityAssembly() : BundledAssembly("Engine.Module.Utility"
         }
     }
 
-    internal override void Destroy()
+    internal void Destroy()
     {
         HostBackstage.FreeImmediately();
     }

@@ -58,10 +58,10 @@ public partial class PlayerAttributesComponent : ActorComponent
             }
         }
         
-        Logger.Info("Current stats: ");
-        foreach (var (attribute, value) in Attributes)
-        {
-            Logger.Info($" - {attribute}: {value}");
-        }
+        // Logger.Info("Current stats: ");
+        // foreach (var (attribute, value) in Attributes)
+        // {
+        //     Logger.Info($" - {attribute}: {value}");
+        // }
     }
 }

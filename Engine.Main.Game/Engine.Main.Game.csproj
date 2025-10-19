@@ -40,6 +40,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
+        <ProjectReference Include="..\Engine.Main.Shared\Engine.Main.Shared.csproj" />
         <ProjectReference Include="..\Engine.Tooling.Roslyn\Engine.Tooling.Roslyn.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
         <ProjectReference Include="..\Engine.Module.Physics\Engine.Module.Physics.csproj" />
         <ProjectReference Include="..\Engine.Module.Rendering\Engine.Module.Rendering.csproj" />

@@ -60,9 +60,9 @@ public partial class InputHandler
         KnownGamepads.Clear();
     }
     
-    public bool IsGamepadButtonHeld(Button button)
+    public bool IsGamepadButtonHeld(ButtonName button)
     {
-        return _heldGamepadButtons.Contains(button);
+        return _heldGamepadButtons.Any(b => b.Name == button);
     }
 
     private void OnGamepadButtonDown(IGamepad mouse, Button button)

@@ -6,7 +6,7 @@ using Engine.Core.Modules;
 using Engine.Main.Editor.Modules;
 using Engine.Main.Editor.Modules.Abstract;
 using Engine.Main.Editor.Modules.Compiler;
-using Engine.Main.Editor.Modules.Threading;
+using Engine.Main.Shared;
 using Microsoft.Build.Locator;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -16,22 +16,48 @@ namespace Engine.Main.Editor;
 
 internal static class Editor
 {
-    private static IWindow MainWindow { get; set; } = null!;
-    private static IInputContext MainInputContext { get; set; } = null!;
-
-    internal static GameplayAssembly GameplayAssembly { get; private set; } = null!;
-    internal static PhysicsAssembly PhysicsAssembly { get; private set; } = null!;
-    internal static RenderingAssembly RenderingAssembly { get; private set; } = null!;
-    internal static UtilityAssembly UtilityAssembly { get; private set; } = null!;
-    internal static WorkspaceAssembly WorkspaceAssembly { get; private set; } = null!;
-
-    internal static List<ModularAssembly> GuestAssemblies { get; set; } = [];
-    
-    internal static GameLogicThread GameLogicThread { get; } = new();
+    internal static EntryPoint EntryPoint { get; private set; } = null!;
     
     private static void Main()
     {
         MSBuildLocator.RegisterDefaults();
+        EntryPoint = new EntryPoint();
+        EntryPoint.Run();
+    }
+}
+
+internal class EntryPoint : IEntryPoint
+{
+    internal IWindow MainWindow { get; }
+    internal IInputContext MainInputContext { get; private set; } = null!;
+
+    internal GameplayAssembly GameplayAssembly { get; }
+    internal PhysicsAssembly PhysicsAssembly { get; }
+    internal RenderingAssembly RenderingAssembly { get; }
+    internal UtilityAssembly UtilityAssembly { get; }
+    internal WorkspaceAssembly WorkspaceAssembly { get; }
+
+    internal List<ModularAssembly> HotReloadRoots { get; }
+    public IRootHypervisor Hypervisor { get; }
+    
+    internal EntryPoint()
+    {
+        Hypervisor = new Hypervisor();
+        GameplayAssembly = new GameplayAssembly(this);
+        PhysicsAssembly = new PhysicsAssembly(this);
+        RenderingAssembly = new RenderingAssembly(this);
+        UtilityAssembly = new UtilityAssembly(this);
+        WorkspaceAssembly = new WorkspaceAssembly(this);
+
+        HotReloadRoots =
+        [
+            GameplayAssembly,
+            PhysicsAssembly,
+            RenderingAssembly,
+            UtilityAssembly,
+            WorkspaceAssembly,
+        ];
+        
         var opts = WindowOptions.Default with
         {
             Title = "Custom Engine",
@@ -41,58 +67,33 @@ internal static class Editor
         };
         if (OperatingSystem.IsMacOS())
             opts.Size /= 2;
-        
-        // AppDomain.CurrentDomain.FirstChanceException += (sender, e) =>
-        // {
-        //     Logger.Log($"First chance exception: {e.Exception}" +
-        //                $"\nSender: {sender}" +
-        //                $"\nStack trace: {e.Exception.StackTrace}");
-        // };
-        // TaskScheduler.UnobservedTaskException += (s, e) =>
-        // {
-        //     Logger.Error($"Unobserved task exception: {e.Exception}");
-        //     e.SetObserved(); // optional
-        // };
-        AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
         {
-            Logger.Fatal($"UNHANDLED (IsTerminating={e.IsTerminating}): {e.ExceptionObject}");
+            Logger.Fatal($"{e.ExceptionObject}");
         };
         
         GuestAssemblyLoader.CleanTempFolder();
 
         WindowStateManager.TryLoadWindowState(ref opts);
         MainWindow = Window.Create(opts);
-
-        GameplayAssembly = new GameplayAssembly();
-        PhysicsAssembly = new PhysicsAssembly();
-        RenderingAssembly = new RenderingAssembly();
-        UtilityAssembly = new UtilityAssembly();
-        WorkspaceAssembly = new WorkspaceAssembly();
-
-        GuestAssemblies =
-        [
-            GameplayAssembly,
-            PhysicsAssembly,
-            RenderingAssembly,
-            UtilityAssembly,
-            WorkspaceAssembly,
-        ];
-        
+    }
+    
+    internal void Run()
+    {
         GCSettings.LatencyMode = GCLatencyMode.LowLatency;
         AppContext.SetSwitch("System.GC.Server", true);
 
+        var gameLogicThread = new GameLogicThread(this);
+
         MainWindow.Load += () =>
         {
-            // Create input context
             MainInputContext = MainWindow.CreateInput();
             
             // First: Rendering to show the splash screen
             RenderingAssembly.Load();
             MainWindow.IsVisible = true;
  
-            // MainWindow.Position = new Vector2D<int>(-2560, 400);
-            // MainWindow.Size = new Vector2D<int>(2560, 1440);
-            
             // Second: Utility assembly to run DI
             UtilityAssembly.Load();
             
@@ -102,34 +103,38 @@ internal static class Editor
             WorkspaceAssembly.Load();
             
             // Send the initial reload notification
-            foreach (var reloadedAssembly in GuestAssemblies)
+            foreach (var reloadedAssembly in HotReloadRoots)
             {
-                GuestAssemblies.ForEachTry(
+                HotReloadRoots.ForEachTry(
                     assembly => assembly.GetHost()?.NotifyModuleReloaded(reloadedAssembly.Module),
                     (assembly, exception) => Logger.Error($"Failed to notify about module reload: {assembly}", exception)
                 );
             }
 
-            // Save window state for hot reload
             WindowStateManager.SetupAutosaveHandler(MainWindow);
             
-            GameLogicThread.Start();
+            gameLogicThread.Start();
 
             Logger.Info("Engine startup complete.");
         };
 
         var deltaTotal = 0.0;
+        
+        /*
+         * Internal editor update loop to handle hot-reloading
+         * See GameLogicThread for the main update loop
+         */
         MainWindow.Update += deltaTime =>
         {
-            if (AssemblyRepository.UpdatesSuspended)
-                return;
-            
             deltaTotal += deltaTime;
             if (deltaTotal < 0.05)
                 return;
-            deltaTotal = 0.0;
             
             var allAssemblies = AssemblyRepository.LibraryAssemblies.Values.ToList();
+            foreach (var libraryAssembly in AssemblyRepository.LibraryAssemblies.Values)
+                libraryAssembly.Update(deltaTotal);
+            deltaTotal = 0.0;
+            
             allAssemblies.Add(RenderingAssembly);
             allAssemblies.Add(GameplayAssembly);
             allAssemblies.Add(PhysicsAssembly);
@@ -142,12 +147,12 @@ internal static class Editor
                 AssemblyRepository.RebuildCascading(wantingBuild);
             }
 
-            if (allAssemblies.Any(assembly => assembly.Loader.IsCompiling || assembly.Loader.HasErrors))
-                return;
-            if (!allAssemblies.Any(assembly => assembly.NeedsReload()))
+            var anyBlocked = allAssemblies.Any(assembly => assembly.Loader.IsCompiling || assembly.Loader.HasErrors);
+            var anyNeedsReload = allAssemblies.Any(assembly => assembly.NeedsReload());
+            if (anyBlocked || !anyNeedsReload)
                 return;
             
-            GameLogicThread.Pause();
+            gameLogicThread.Pause();
 
             int awaitingCount;
             do
@@ -165,20 +170,20 @@ internal static class Editor
             var reloadedModules = AssemblyRepository.ReloadAllAwaiting();
             foreach (var reloadedModule in reloadedModules)
             {
-                GuestAssemblies.ForEachTry(
+                HotReloadRoots.ForEachTry(
                     assembly => assembly.GetHost()?.NotifyModuleReloaded(reloadedModule.Module),
                     (assembly, exception) => Logger.Error($"Failed to notify about module reload: {assembly}", exception)
                 );
             }
             
-            GameLogicThread.Resume();
+            gameLogicThread.Resume();
         };
 
         MainWindow.Closing += () =>
         {
             WindowStateManager.SaveWindowState(MainWindow);
             
-            GameLogicThread.Stop();
+            gameLogicThread.Stop();
 
             GameplayAssembly.Destroy();
             PhysicsAssembly.Destroy();
@@ -191,60 +196,59 @@ internal static class Editor
 
         MainWindow.Run();
     }
+    
+    IRenderingAssembly IEntryPoint.RenderingAssembly => RenderingAssembly;
+    IReadOnlyList<IRootAssembly> IEntryPoint.GuestAssemblies => HotReloadRoots;
+}
 
-    /**
-     * Reloads the guest assembly and its backstage (if applicable).
-     * In other words, perform the hot reload on the guest assembly (user game).
-     */
-    private static void ReloadAssembly(ModularAssembly modularAssembly)
+public class Hypervisor : IRootHypervisor
+{
+    private static EntryPoint EntryPoint => Editor.EntryPoint;
+
+    public IWindow Window => EntryPoint.MainWindow;
+    public IInputContext InputContext => EntryPoint.MainInputContext;
+    public IGameplayHost? GameplayModule => EntryPoint.GameplayAssembly.HostBackstage;
+    public IPhysicsHost? PhysicsModule => EntryPoint.PhysicsAssembly.PhysicsModule;
+    public IRenderingHost? RenderingModule => EntryPoint.RenderingAssembly.RenderingHost;
+    public IUtilityHost? UtilityModule => EntryPoint.UtilityAssembly.HostBackstage;
+    public IWorkspaceHost? WorkspaceModule => EntryPoint.WorkspaceAssembly.HostBackstage;
+        
+    public GameplayContext GameplayContext { get; private set; } = GameplayContext.Editor;
+
+    public void ReloadEngineModule(EngineModule module) => ReloadAssembly(FindModularAssembly(module));
+
+    public void SetGameplayContext(GameplayContext context)
     {
-        modularAssembly.Reload();
-
-        GuestAssemblies.ForEachTry(
-            assembly => assembly.GetHost()?.NotifyModuleReloaded(modularAssembly.Module),
-            (assembly, exception) => Logger.Error($"Failed to notify about module reload: {assembly}", exception)
+        GameplayContext = context;
+        EntryPoint.HotReloadRoots.ForEachTry(
+            assembly => assembly.GetHost()?.NotifyGameplayContextChanged(context),
+            (assembly, exception) => Logger.Error($"Failed to notify about gameplay context change: {assembly}", exception)
         );
     }
 
+    public double GetTimeScale(EngineModule module) => FindModularAssembly(module).TimeScale;
+    public void SetTimeScale(EngineModule module, double timeScale) => FindModularAssembly(module).TimeScale = timeScale;
+    
     private static ModularAssembly FindModularAssembly(EngineModule module)
     {
         return module switch
         {
-            EngineModule.Gameplay => GameplayAssembly,
-            EngineModule.Rendering => RenderingAssembly,
-            EngineModule.Physics => PhysicsAssembly,
-            EngineModule.Utility => UtilityAssembly,
-            EngineModule.Workspace => WorkspaceAssembly,
+            EngineModule.Gameplay => EntryPoint.GameplayAssembly,
+            EngineModule.Rendering => EntryPoint.RenderingAssembly,
+            EngineModule.Physics => EntryPoint.PhysicsAssembly,
+            EngineModule.Utility => EntryPoint.UtilityAssembly,
+            EngineModule.Workspace => EntryPoint.WorkspaceAssembly,
             _ => throw new ArgumentOutOfRangeException(nameof(module), module, "Unmapped engine module.")
         };
     }
     
-    public class Hypervisor : IRootHypervisor
+    private static void ReloadAssembly(ModularAssembly modularAssembly)
     {
-        public static Hypervisor Instance { get; } = new();
+        modularAssembly.Reload();
 
-        public IWindow Window => MainWindow;
-        public IInputContext InputContext => MainInputContext;
-        public IGameplayHost? GameplayModule => GameplayAssembly.HostBackstage;
-        public IPhysicsHost? PhysicsModule => PhysicsAssembly.PhysicsModule;
-        public IRenderingHost? RenderingModule => RenderingAssembly.RenderingHost;
-        public IUtilityHost? UtilityModule => UtilityAssembly.HostBackstage;
-        public IWorkspaceHost? WorkspaceModule => WorkspaceAssembly.HostBackstage;
-        
-        public GameplayContext GameplayContext { get; private set; } = GameplayContext.Editor;
-
-        public void ReloadEngineModule(EngineModule module) => ReloadAssembly(FindModularAssembly(module));
-
-        public void SetGameplayContext(GameplayContext context)
-        {
-            GameplayContext = context;
-            GuestAssemblies.ForEachTry(
-                assembly => assembly.GetHost()?.NotifyGameplayContextChanged(context),
-                (assembly, exception) => Logger.Error($"Failed to notify about gameplay context change: {assembly}", exception)
-            );
-        }
-
-        public double GetTimeScale(EngineModule module) => FindModularAssembly(module).TimeScale;
-        public void SetTimeScale(EngineModule module, double timeScale) => FindModularAssembly(module).TimeScale = timeScale;
+        EntryPoint.HotReloadRoots.ForEachTry(
+            assembly => assembly.GetHost()?.NotifyModuleReloaded(modularAssembly.Module),
+            (assembly, exception) => Logger.Error($"Failed to notify about module reload: {assembly}", exception)
+        );
     }
 }

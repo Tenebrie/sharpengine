@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Runtime.InteropServices;
 using Engine.Core.Common;
 using Engine.Core.Communication.Tasks;
 using Engine.Core.Logging;
@@ -7,10 +6,11 @@ using Engine.Core.Memory;
 using Engine.Core.Modules;
 using Engine.Core.Profiling;
 using Engine.Main.Editor.Modules.Abstract;
+using Engine.Main.Shared;
 
 namespace Engine.Main.Editor.Modules;
 
-internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", EngineModule.Rendering)
+internal class RenderingAssembly(IEntryPoint entryPoint) : ModularAssembly("Engine.Module.Rendering", EngineModule.Rendering), IRenderingAssembly
 {
     private bool _isInitialized = false;
     internal IRenderingHost? RenderingHost { get; private set; }
@@ -30,8 +30,9 @@ internal class RenderingAssembly() : ModularAssembly("Engine.Module.Rendering", 
             Logger.Error("RenderingAssembly: Failed to instantiate the host or bootstrapper.");
             return;
         }
-        RenderingHost.Hypervisor = Editor.Hypervisor.Instance;
-        RenderingBootstrap.Hypervisor = Editor.Hypervisor.Instance;
+
+        RenderingHost.Hypervisor = entryPoint.Hypervisor;
+        RenderingBootstrap.Hypervisor = entryPoint.Hypervisor;
         if (_isInitialized)
         {
             RenderingHost.InitializeResources(Resources);

@@ -7,6 +7,7 @@ using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Filesystem;
 using Engine.Core.Logging;
+using Version = Diligent.Version;
 
 namespace Engine.Core.Assets.Builders;
 
@@ -159,6 +160,8 @@ public class MaterialBuilder
         var pixelFilePath = File.Exists(oldPixelPath) ? oldPixelPath : FileResolver.Resolve($"Assets/{_shaderPath}.frag.hlsl");
         var vertexFilePath = File.Exists(oldVertexPath) ? oldVertexPath : FileResolver.Resolve($"Assets/{_shaderPath}.vert.hlsl");
         
+        vertexFilePath = vertexFilePath.Replace('\\', '/');
+        pixelFilePath = pixelFilePath.Replace('\\', '/');
         var vertexShader = RenderContext.Current.RenderDevice.CreateShader(new ShaderCreateInfo
         {
             FilePath = vertexFilePath,
@@ -168,7 +171,9 @@ public class MaterialBuilder
                 ShaderType = ShaderType.Vertex,
                 UseCombinedTextureSamplers = true
             },
-            SourceLanguage = ShaderSourceLanguage.Hlsl
+            SourceLanguage = ShaderSourceLanguage.Hlsl,
+            HLSLVersion = new Version(5, 0),
+            ShaderCompiler = ShaderCompiler.Dxc
         }, out var compilerOutput);
         if (vertexShader == null)
         {
@@ -185,7 +190,9 @@ public class MaterialBuilder
                 ShaderType = ShaderType.Pixel,
                 UseCombinedTextureSamplers = true
             },
-            SourceLanguage = ShaderSourceLanguage.Hlsl
+            SourceLanguage = ShaderSourceLanguage.Hlsl,
+            HLSLVersion = new Version(5, 0),
+            ShaderCompiler = ShaderCompiler.Dxc
         }, out _);
         if (pixelShader == null)
             throw new InvalidOperationException($"Failed to create pixel shader from Assets/{_shaderPath}.psh");

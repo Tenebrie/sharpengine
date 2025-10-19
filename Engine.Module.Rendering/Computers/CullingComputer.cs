@@ -8,6 +8,7 @@ using Engine.Core.Logging;
 using Engine.Core.Modules.EntitySystem;
 using Engine.Module.Rendering.RegistrationHandlers;
 using Engine.Module.Rendering.Utilities;
+using Version = Diligent.Version;
 
 namespace Engine.Module.Rendering.Computers;
 
@@ -29,15 +30,19 @@ public class CullingComputer : IDisposable
 
     public CullingComputer(RenderingHost host)
     {
+        var path = FileResolver.Resolve("Assets/Shaders/Compute/Culling.comp.hlsl");
+        path = path.Replace("\\", "/");
         var computeShader = RenderContext.Current.RenderDevice.CreateShader(new ShaderCreateInfo
         {
-            FilePath = FileResolver.Resolve("Assets/Shaders/Compute/Culling.comp.hlsl"),
+            FilePath = path,
             ShaderSourceStreamFactory = RenderContext.Current.ShaderFactory,
             Desc = new ShaderDesc
             {
                 ShaderType = ShaderType.Compute
             },
-            SourceLanguage = ShaderSourceLanguage.Hlsl
+            SourceLanguage = ShaderSourceLanguage.Hlsl,
+            HLSLVersion = new Version(5, 0),
+            ShaderCompiler = ShaderCompiler.Dxc
         }, out _);
         
         _pipelineState = RenderContext.Current.RenderDevice.CreateComputePipelineState(new ComputePipelineStateCreateInfo

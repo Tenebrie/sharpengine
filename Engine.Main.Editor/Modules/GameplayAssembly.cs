@@ -1,10 +1,11 @@
 ﻿using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Main.Editor.Modules.Abstract;
+using Engine.Main.Shared;
 
 namespace Engine.Main.Editor.Modules;
 
-public class GameplayAssembly() : ModularAssembly("User.Game", EngineModule.Gameplay)
+public class GameplayAssembly(IEntryPoint entryPoint) : ModularAssembly("User.Game", EngineModule.Gameplay)
 {
     internal IGameplayHost? HostBackstage { get; private set; }
     private IBaseEngineContract? Contract { get; set; }
@@ -22,15 +23,19 @@ public class GameplayAssembly() : ModularAssembly("User.Game", EngineModule.Game
         }
         HostBackstage = (IGameplayHost)Activator.CreateInstance(Contract.MainBackstage)!;
         HostBackstage.Name = "guest-" + Guid.NewGuid();
-        HostBackstage.Hypervisor = Editor.Hypervisor.Instance;
+        HostBackstage.Hypervisor = entryPoint.Hypervisor;
+        
         HostBackstage.StartupInitialize();
-        RegisterLaminaRenderers();
+        // RegisterLaminaRenderers();
     }
 
-    public override bool Update(double deltaTime)
+    public override void Update(double deltaTime)
     {
         if (HostBackstage == null)
-            return base.Update(deltaTime);
+        {
+            base.Update(deltaTime);
+            return;
+        }
 
         try
         {
@@ -40,9 +45,8 @@ public class GameplayAssembly() : ModularAssembly("User.Game", EngineModule.Game
         {
             Logger.Error($"Error during Backstage update: {ex.Message}");
             Console.Error.WriteLine(ex.StackTrace);
-            return base.Update(deltaTime);
         }
-        return base.Update(deltaTime);
+        base.Update(deltaTime);
     }
 
     public override void Unload()

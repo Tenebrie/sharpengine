@@ -29,6 +29,7 @@ public partial class InputService : Service
     }
     public bool IsKeyHeld(Key key) => _inputHandler.IsKeyHeld(key);
     public bool IsMouseButtonHeld(MouseButton button) => _inputHandler.IsMouseButtonHeld(button);
+    public bool IsGamepadButtonHeld(ButtonName button) => _inputHandler.IsGamepadButtonHeld(button);
     public void BindMouseEvents(IMouse mouse) => _inputHandler.BindMouseEvents(mouse);
     public void BindGamepadEvents(IGamepad gamepad) => _inputHandler.BindGamepadEvents(gamepad);
     public void BindKeyboardEvents(IKeyboard keyboard) => _inputHandler.BindKeyboardEvents(keyboard);

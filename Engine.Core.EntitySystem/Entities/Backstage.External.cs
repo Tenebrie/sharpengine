@@ -4,10 +4,12 @@ using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Core.Modules.EntitySystem;
 using Engine.Core.Profiling;
+using JetBrains.Annotations;
 using Silk.NET.Windowing;
 
 namespace Engine.Core.EntitySystem.Entities;
 
+[PublicAPI]
 public partial class Backstage : IBackstage
 {
     public string Name { get; set; } = "Backstage";
@@ -16,6 +18,8 @@ public partial class Backstage : IBackstage
     public IWindow Window => Hypervisor.Window;
     public IPhysicsHost? PhysicsModule => Hypervisor.PhysicsModule;
     public IRenderingHost? RenderingModule => Hypervisor.RenderingModule;
+    public IUtilityHost? UtilityModule => Hypervisor.UtilityModule;
+    public IWorkspaceHost? WorkspaceModule => Hypervisor.WorkspaceModule;
     public GameplayContext GameplayContext => Hypervisor.GameplayContext;
     
     public void StartupInitialize()

@@ -17,8 +17,8 @@ public partial class LaminaDiv : LaminaWidgetComponent<DivLayout>
             : layout.Props.JustifyContent;
 
         Transform.Position = (layout.Props.Position + context.OffsetToParent).ToVector3();
-        // Logger.Info(context.Parent);
-        // Logger.Info(context.Parent.Transform.Position);
+        // Logger.Log(context.Parent);
+        // Logger.Log(context.Parent.Transform.Position);
         // context.Position += layout.Props.Position;
     }
 

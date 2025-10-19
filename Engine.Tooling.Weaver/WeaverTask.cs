@@ -84,7 +84,8 @@ internal static class WeaverTask
         if (!File.Exists(bak)) File.Copy(assemblyPath, bak, overwrite: false);
         File.Replace(tmp, assemblyPath, bak);
 
-        Console.WriteLine($"[Weaver] Patched {patched} callsite(s).");
+        var dllName = Path.GetFileNameWithoutExtension(assemblyPath);
+        Console.WriteLine($"[Weaver] Patched {patched} callsite(s) in {dllName}");
     }
 
     private static IEnumerable<TypeDefinition> AllTypes(TypeDefinition t)

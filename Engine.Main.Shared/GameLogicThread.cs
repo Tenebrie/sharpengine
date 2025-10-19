@@ -2,13 +2,14 @@ using System.Diagnostics;
 using Engine.Core.Communication.Tasks;
 using Engine.Core.Logging;
 
-namespace Engine.Main.Editor.Modules.Threading;
+namespace Engine.Main.Shared;
 
-internal class GameLogicThread
+public class GameLogicThread(IEntryPoint entryPoint)
 {
     private Thread? _threadHandle;
     private enum ThreadState { Stopped, Running, Pausing, Paused }
     private volatile ThreadState _threadState = ThreadState.Stopped;
+    
     public void Start()
     {
         if (_threadHandle is { IsAlive: true } && _threadState == ThreadState.Running)
@@ -33,7 +34,7 @@ internal class GameLogicThread
         
             while (_threadState != ThreadState.Stopped)
             {
-                Editor.RenderingAssembly.StartFrameRender();
+                entryPoint.RenderingAssembly.StartFrameRender();
                 if (_threadState == ThreadState.Stopped)
                     break;
                 if (_threadState == ThreadState.Pausing)
@@ -49,21 +50,12 @@ internal class GameLogicThread
                 var deltaTime = (currentTime - lastFrameTime) / 1000000.0;
                 lastFrameTime = currentTime;
                 
-                foreach (var libraryAssembly in AssemblyRepository.LibraryAssemblies.Values)
-                {
-                    libraryAssembly.Update(deltaTime);
-                }
-                foreach (var guestAssembly in Editor.GuestAssemblies)
+                foreach (var guestAssembly in entryPoint.GuestAssemblies)
                 {
                     guestAssembly.Update(deltaTime);
                 }
                 
-                //
-                // RenderingHost?.RenderSingleFrame(deltaTime);
-                // RenderThreadTask.ExecuteAllQueued();
-                // MemoryManager.FreeDomain(MemoryDomain.Rendering);
-                
-                Editor.RenderingAssembly.WaitUntilFrameEnd();
+                entryPoint.RenderingAssembly.WaitUntilFrameEnd();
             }
         }
         catch (Exception ex)

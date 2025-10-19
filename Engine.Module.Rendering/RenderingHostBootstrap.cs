@@ -42,7 +42,7 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
         );
         _renderDevice = renderDeviceOut;
         _swapChain = swapChainOut;
-
+        
         return new RenderingResources
         {
             EngineFactory = _engineFactory,
@@ -67,7 +67,7 @@ public class RenderingHostBootstrap : IRenderingModuleBootstrap
                     // Hard exit the process now
                     if (Debugger.IsAttached)
                         Debugger.Break();
-                    // Logger.Info("Crashing due to Diligent Engine fatal error.");
+                    // Logger.Log("Crashing due to Diligent Engine fatal error.");
                     // Environment.FailFast($"Diligent Engine: {severity} in {function}() ({file}, {line}): {message}");
                     break;
                 case DebugMessageSeverity.Info:

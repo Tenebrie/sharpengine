@@ -12,6 +12,7 @@ public interface IRootHypervisor
     public IPhysicsHost? PhysicsModule { get; }
     public IRenderingHost? RenderingModule { get; }
     public IWorkspaceHost? WorkspaceModule { get; }
+    public IUtilityHost? UtilityModule { get; }
     
     public GameplayContext GameplayContext { get; }
     

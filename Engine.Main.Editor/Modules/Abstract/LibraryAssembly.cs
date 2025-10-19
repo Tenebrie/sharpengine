@@ -23,9 +23,9 @@ public class LibraryAssembly(string assemblyName)
         AssemblyRepository.RegisterAssemblyDeps(assemblyName, Dependencies.ToList());
     }
     
-    public virtual bool Update(double deltaTime)
+    public virtual void Update(double deltaTime)
     {
-        return Loader.Update(deltaTime);
+        Loader.Update(deltaTime);
     }
     
     public bool NeedsRebuild() => Loader.IsAssemblyDirty;
