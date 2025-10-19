@@ -1,29 +1,33 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Platforms>x64</Platforms>
-    <DebugType>embedded</DebugType>
-    <Configurations>Debug;Release</Configurations>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Platforms>x64</Platforms>
+        <DebugType>embedded</DebugType>
+        <Configurations>Debug;Release</Configurations>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
-  </ItemGroup>
+    <PropertyGroup Condition="'$(Configuration)'=='Shipping'">
+        <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <EmbeddedResource Include="Builders\Templates\**\*.glsl" />
-    <EmbeddedResource Include="Builders\Templates\**\*.sc" />
-    <AdditionalFiles Include="Materials\Meshes\**\*.vert.glsl" />
-    <AdditionalFiles Include="Materials\Meshes\**\*.frag.glsl" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="DiligentGraphics.DiligentEngine.Core" Version="2.5.6" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
-  </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="Builders\Templates\**\*.glsl" />
+        <EmbeddedResource Include="Builders\Templates\**\*.sc" />
+        <AdditionalFiles Include="Materials\Meshes\**\*.vert.glsl" />
+        <AdditionalFiles Include="Materials\Meshes\**\*.frag.glsl" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="DiligentGraphics.DiligentEngine.Core" Version="2.5.6" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
+    </ItemGroup>
 
 </Project>

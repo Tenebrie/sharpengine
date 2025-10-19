@@ -6,10 +6,6 @@ using Engine.Core.Logging;
 using Engine.Core.Modules;
 using JetBrains.Annotations;
 using Silk.NET.Windowing;
-using Vortice.Direct3D;
-using Vortice.Direct3D12;
-using Vortice.Direct3D12.Debug;
-using Vortice.DXGI;
 
 namespace Engine.Module.Rendering;
 

@@ -9,6 +9,10 @@
         <Configurations>Debug;Release</Configurations>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)'=='Shipping'">
+        <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
         <ProjectReference Include="..\Engine.Core.EntitySystem\Engine.Core.EntitySystem.csproj" />

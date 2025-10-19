@@ -8,19 +8,19 @@
     </PropertyGroup>
 
     <PropertyGroup>
-      <OutputType>WinExe</OutputType>
-      <TargetFramework>net9.0</TargetFramework>
-      <ImplicitUsings>enable</ImplicitUsings>
-      <Nullable>enable</Nullable>
-      <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-      <Platforms>x64</Platforms>
-      <Configurations>Debug;Release</Configurations>
-      <PublishAot>true</PublishAot>
-      <DebugSymbols>false</DebugSymbols>
+        <OutputType>WinExe</OutputType>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <Platforms>x64</Platforms>
+        <Configurations>Debug;Release</Configurations>
+        <PublishAot>true</PublishAot>
+        <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
 
-      <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+        <RuntimeIdentifiers>win-x64;linux-x64;osx-arm64</RuntimeIdentifiers>
 
-      <InvariantGlobalization>true</InvariantGlobalization>
-      <StripSymbolsDuringPublish>true</StripSymbolsDuringPublish>
-   </PropertyGroup>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <StripSymbolsDuringPublish>true</StripSymbolsDuringPublish>
+    </PropertyGroup>
 </Project>

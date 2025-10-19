@@ -24,22 +24,12 @@ public partial class BasicEnemyManager : Actor
     [OnReady]
     protected void OnReady()
     {
-        // if (!AssetManager.Meshes.TryGet("Assets/Virtual/BasicEnemy", out var mesh))
-        // {
-        //     mesh = TessellatedPlaneMesh.CreateWithoutCache();
-        //     AssetManager.Meshes.Put("Assets/Virtual/BasicEnemy", mesh);
-        // }
         InstanceManager.InstanceStaticMesh = StaticMesh.CreateFromDisk("Meshes/invader01-crab.obj");
         InstanceManager.InstanceMaterial = MaterialBuilder
             .CreateFromDisk("Shaders/cube")
             .SetTexture(Texture.CreateFromDisk("Textures/metal-albedo.png"))
             .AsSharedMaterial()
             .Compile();
-        // InstanceManager.Material =
-        //     MaterialBuilder.Begin(typeof(BasicEnemyManager)).SetSamplingTexture(false).Compile();
-            // .CreateFromDisk("Meshes/BillboardSprite/BillboardSprite");
-            // .Instantiate()
-            // .LoadTexture(Texture.CreateFromDisk("Textures/godot.png"));
             
         var windowSize = Backstage.Window.GetScaledFramebufferSize();
         EvolutionFactorWidget.Transform.Position = (windowSize.X / 2.0 - 256, windowSize.Y - 180, 0);
@@ -49,7 +39,7 @@ public partial class BasicEnemyManager : Actor
         {
             v.Div(position: (10, 0), children: v =>
             {
-                v.Label($"Evolution Factor: {evolutionFactor:F2}", fontSize: 28, color: Color.White);
+                v.Label($"Evolution Factor: {_evolutionFactor:F2}", fontSize: 28, color: Color.White);
             });
             v.Div(position: (10, 32), children: v =>
             {
@@ -62,12 +52,12 @@ public partial class BasicEnemyManager : Actor
         });
     }
     
-    private double evolutionFactor = 0.25;
+    private double _evolutionFactor = 0.25;
 
     [OnUpdate]
     protected void OnUpdate(double deltaTime)
     {
-        evolutionFactor += deltaTime * 0.02 * (1.0 + evolutionFactor * 0.01);
+        _evolutionFactor += deltaTime * 0.02 * (1.0 + _evolutionFactor * 0.01);
     }
     
     private int _enemiesQueued = 0;
@@ -83,7 +73,7 @@ public partial class BasicEnemyManager : Actor
         {
             v.Div(position: (10, 0), children: v =>
             {
-                v.Label($"Evolution Factor: {evolutionFactor:F2}", fontSize: 28, color: Color.White);
+                v.Label($"Evolution Factor: {_evolutionFactor:F2}", fontSize: 28, color: Color.White);
             });
             v.Div(position: (10, 32), children: v =>
             {
@@ -109,7 +99,7 @@ public partial class BasicEnemyManager : Actor
         if (player is null) 
             return;
         
-        var enemiesWantToSpawn = Math.Min(10, 1 + (int)(evolutionFactor * 0.3));
+        var enemiesWantToSpawn = Math.Min(10, 1 + (int)(_evolutionFactor * 0.3));
         _enemiesQueued += Math.Min(enemiesWantToSpawn, maxEnemies - InstanceManager.InstanceCount - _enemiesQueued);
         var enemiesSpawned = Math.Min(_enemiesQueued, 3);
         
@@ -121,7 +111,7 @@ public partial class BasicEnemyManager : Actor
             transform.TranslateLocal(200, 0, 0);
             transform.TranslateGlobal(player.WorldTransform.Position);
             
-            instance.Health *= evolutionFactor;
+            instance.Health *= _evolutionFactor;
         
             // TODO: Understand why rotation is affected by scale
             // transform.Scale = new Vector3(2,2,2);
@@ -132,12 +122,12 @@ public partial class BasicEnemyManager : Actor
             // transform.RotateAroundLocal(Vector3.Right, -2);
             transform.Rescale(1.5, 1.5, 1.5);
 
-            if (evolutionFactor > 1 && Random.Shared.NextDouble() < 0.02 + evolutionFactor * 0.002)
+            if (_evolutionFactor > 1 && Random.Shared.NextDouble() < 0.02 + _evolutionFactor * 0.002)
             {
                 transform.Rescale(1.5,1.5,1.5);
                 instance.MakeElite();
                 
-                if (evolutionFactor > 3 && Random.Shared.NextDouble() < 0.02 + evolutionFactor * 0.01)
+                if (_evolutionFactor > 3 && Random.Shared.NextDouble() < 0.02 + _evolutionFactor * 0.01)
                 {
                     transform.Rescale(1.5,1.5,1.5);
                     instance.MakeUltraElite();

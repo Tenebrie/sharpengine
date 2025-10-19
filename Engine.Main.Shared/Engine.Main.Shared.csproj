@@ -5,8 +5,14 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Platforms>x64</Platforms>
+        <DebugType>embedded</DebugType>
     </PropertyGroup>
-    
+
+    <PropertyGroup Condition="'$(Configuration)'=='Shipping'">
+        <DebugType>none</DebugType>
+        <CopyOutputSymbolsToPublishDirectory>false</CopyOutputSymbolsToPublishDirectory>
+    </PropertyGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
         <ProjectReference Include="..\Engine.Tooling.Roslyn\Engine.Tooling.Roslyn.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />

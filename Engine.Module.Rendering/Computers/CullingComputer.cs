@@ -41,7 +41,7 @@ public class CullingComputer : IDisposable
                 ShaderType = ShaderType.Compute
             },
             SourceLanguage = ShaderSourceLanguage.Hlsl,
-            HLSLVersion = new Version(5, 0),
+            HLSLVersion = new Version(6, 0),
             ShaderCompiler = ShaderCompiler.Dxc
         }, out _);
         

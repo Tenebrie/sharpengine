@@ -15,6 +15,7 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <Platforms>x64</Platforms>
         <Configurations>Debug;Release</Configurations>
+        <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     </PropertyGroup>
 
     <ItemGroup>
@@ -31,7 +32,9 @@
         <PackageReference Include="JetBrains.Annotations" Version="2024.3.0" />
         <PackageReference Include="Silk.NET.Input" Version="2.22.0" />
         <PackageReference Include="Silk.NET.Windowing" Version="2.22.0" />
-        <PackageReference Include="Vortice.Direct3D12" Version="3.6.2" />
+        <PackageReference Include="Microsoft.Direct3D.DXC"
+                          Version="1.8.2505.32"
+                          GeneratePathProperty="true" />
     </ItemGroup>
 
     <ItemGroup>
@@ -48,6 +51,15 @@
         <ProjectReference Include="..\Engine.Tooling.Roslyn\Engine.Tooling.Roslyn.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
     </ItemGroup>
 
+    <Target Name="CopyDxcBinaries" AfterTargets="Build">
+        <ItemGroup>
+            <_DxcFiles Include="$(PkgMicrosoft_Direct3D_DXC)\build\native\bin\$(PlatformTarget)\dxcompiler.dll" />
+            <_DxcFiles Include="$(PkgMicrosoft_Direct3D_DXC)\build\native\bin\$(PlatformTarget)\dxil.dll" />
+        </ItemGroup>
+
+        <Copy SourceFiles="@(_DxcFiles)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+    </Target>
+    
     <ItemGroup>
         <Folder Include="Assets\Shaders\" />
     </ItemGroup>

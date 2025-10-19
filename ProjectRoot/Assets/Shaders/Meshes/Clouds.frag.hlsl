@@ -62,7 +62,7 @@ float4 main(PSIn IN) : SV_Target
     // Final color
     float alpha = mask * IN.Color.a;
     float3 cloudColor = lerp(float3(0.8, 0.8, 0.8), float3(1.0, 1.0, 1.0), light);
-    cloudColor *= IN.Color;
+    cloudColor *= IN.Color.rgb;
 
     return float4(min(1.0, cloudColor.r), min(1.0, cloudColor.g), min(1.0, cloudColor.b), min(1.0, alpha));
 }
