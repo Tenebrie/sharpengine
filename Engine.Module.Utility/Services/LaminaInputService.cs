@@ -6,13 +6,15 @@ using Engine.Core.Input;
 using Engine.Core.Input.Attributes;
 using Engine.Core.Input.Contexts;
 using Engine.Core.Logging;
+using Silk.NET.Input;
 
 namespace Engine.Module.Utility.Services;
 
 [InputActions]
 public enum InputAction
 {
-    MouseMove
+    MouseMove,
+    MouseClick
 }
 
 public partial class LaminaInputService : Service
@@ -25,8 +27,9 @@ public partial class LaminaInputService : Service
         _baseContext = InputContext.GetBuilder<InputAction>()
             .Add(InputAction.MouseMove, MouseAxis.MoveX)
             .Add(InputAction.MouseMove, MouseAxis.MoveY)
+            .Add(InputAction.MouseClick, MouseButton.Left)
             .Build();
         var activeContext = InputContext.From(_baseContext);
-        GetService<InputService>().InputContext = activeContext;
+        GetService<InputService>().SetInputContext(this, activeContext);
     }
 }

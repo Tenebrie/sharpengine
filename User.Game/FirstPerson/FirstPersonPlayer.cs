@@ -40,7 +40,7 @@ public partial class FirstPersonPlayer : Actor
     {
         if (!Backstage.Window.HasFocus)
         {
-            GetService<InputService>().SetMouseCursorMode(CursorMode.Normal);
+            GetService<InputService>().ClearMouseCursor(this);
             return;
         }
         var screenSize = Backstage.Window.Size;
@@ -52,7 +52,10 @@ public partial class FirstPersonPlayer : Actor
             .RotateAroundGlobal(Vector3.Up, _yaw)
             .Rotation;
         GetService<InputService>().SetMousePosition(Backstage.Window.Size / 2);
-        GetService<InputService>().SetMouseCursorMode(CursorMode.Hidden);
+        GetService<InputService>().SetMouseCursor(new CursorModifier(this)
+        {
+            Mode = CursorMode.Hidden
+        });
     }
     
     [OnInputHeld(InputAction.CameraLookX, 1.0, 0.0)]

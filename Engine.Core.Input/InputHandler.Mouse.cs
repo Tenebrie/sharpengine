@@ -55,6 +55,48 @@ public partial class InputHandler
         }
     }
     
+    private List<CursorModifier> _mouseCursorModifiers = [];
+    public CursorModifier AddMouseCursorModifier(CursorModifier modifier)
+    {
+        _mouseCursorModifiers.RemoveAll(mod => mod.Identity == modifier.Identity);
+        _mouseCursorModifiers.Add(modifier);
+        _mouseCursorModifiers = _mouseCursorModifiers.OrderByDescending(mod => mod.Priority).ToList();
+        RecalculateMouseCursor();
+        return modifier;
+    }
+    public void RemoveMouseCursorModifier(object identity)
+    {
+        _mouseCursorModifiers.RemoveAll(mod => mod.Identity == identity);
+        RecalculateMouseCursor();
+    }
+    public void RemoveMouseCursorModifier(CursorModifier modifier)
+    {
+        _mouseCursorModifiers.RemoveAll(mod => mod.Guid == modifier.Guid);
+        RecalculateMouseCursor();
+    }
+
+    private StandardCursor GetStandardCursor()
+    {
+        var match = _mouseCursorModifiers.FirstOrDefault(mod =>
+            mod.Cursor != null && mod.Provider.RunsInGameplayContext.HasFlag(hypervisor.GameplayContext));
+        return match.Cursor ?? StandardCursor.Arrow;
+    }
+
+    private CursorMode GetCursorMode()
+    {
+        var match = _mouseCursorModifiers.FirstOrDefault(mod =>
+            mod.Mode != null && mod.Provider.RunsInGameplayContext.HasFlag(hypervisor.GameplayContext));
+        return match.Mode ?? CursorMode.Normal;
+    }
+    
+    public void RecalculateMouseCursor()
+    {
+        var cursor = GetStandardCursor();
+        var mode = GetCursorMode();
+        SetMouseCursor(cursor);
+        SetMouseCursorMode(mode);
+    }
+    
     public void BindMouseEvents(IMouse mouse)
     {
         if (KnownMice.Contains(mouse))
@@ -92,6 +134,7 @@ public partial class InputHandler
         var deltaY = position.Y - _lastMousePosition.Y;
         if (deltaX == 0 && deltaY == 0)
             return;
+
         _lastMousePosition = new Vector2(position.X, position.Y);
         var modifiers = GetModifiers();
         var triggeredActions = CurrentContext.Match(MouseAxis.MoveX, modifiers);
@@ -139,4 +182,19 @@ public partial class InputHandler
             TriggerOnInputHeld(identity, triggeredActions, Vector3.One, ref triggeredHandlers);
         }
     }
+}
+
+public record struct CursorModifier(object Identity, StandardCursor? Cursor = null, CursorMode? Mode = null, int Priority = 0)
+{
+    public CursorModifier(CursorModifier other)
+        : this(other.Identity, other.Cursor, other.Mode, other.Priority)
+    {
+        Guid = other.Guid;
+        Provider = other.Provider;
+        Backstage = other.Backstage;
+    }
+    
+    public Guid Guid { get; } = Guid.NewGuid();
+    public IInputContextProvider Provider { get; set; }
+    public IBackstage Backstage { get; set; }
 }

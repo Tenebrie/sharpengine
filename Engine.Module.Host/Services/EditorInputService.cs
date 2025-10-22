@@ -182,18 +182,12 @@ public partial class EditorInputService : Service
     [OnInputReleased(InputAction.HoldToControlCamera)]
     protected void RecalculateActiveContext()
     {
-        if (WorkspaceHost.GameplayContext != GameplayContext.Editor)
-        {
-            GetService<InputService>().InputContext = InputContext.Empty;
-            return;
-        }
-        
         var activeContext = InputContext.From(_baseContext);
         if (GetService<InputService>().IsInputHeld(InputAction.HoldToControlCamera))
         {
             activeContext = activeContext.Combine(_cameraControlContext);
         }
         
-        GetService<InputService>().InputContext = activeContext;
+        GetService<InputService>().SetInputContext(this, activeContext);
     }
 }

@@ -269,7 +269,7 @@ public abstract class InputServiceTest
             };
             backstage.GetService<ReflectionService>().SetUserInputActionsEnum<UserInputActions>();
             backstage.GetService<InputService>().BindKeyboardEvents(backstage.Keyboard);
-            backstage.GetService<InputService>().InputContext = InputContext.GetBuilder<UserInputActions>()
+            backstage.GetService<InputService>().SetInputContext(backstage, InputContext.GetBuilder<UserInputActions>()
                 .Add(UserInputActions.Simple, Key.Number0)
                 .Add(UserInputActions.WithDouble, Key.Number1)
                 .Add(UserInputActions.WithVector, Key.Number2)
@@ -281,7 +281,7 @@ public abstract class InputServiceTest
                 .Add(UserInputActions.Down, Key.S)
                 .Add(UserInputActions.Left, Key.A)
                 .Add(UserInputActions.Right, Key.D)
-                .Build();
+                .Build());
             backstage.Initialize();
             return backstage;
         }

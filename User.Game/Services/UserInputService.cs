@@ -36,27 +36,16 @@ public enum InputAction
     CameraLookY,
 }
 
-[InputActions]
-public enum ExtraInputAction
-{
-    TogglePauseMenu,
-}
-
 public partial class UserInputService : Service
 {
     private InputContext _baseContext = null!;
     private InputContext _perkSelectorContext = null!;
+    private InputContext _mouseLookContext = null!;
 
     [OnReady]
     protected void OnReady()
     {
         _baseContext = InputContext.GetBuilder<InputAction>()
-            .Add(InputAction.CameraLookX, MouseAxis.MoveX)
-            .Add(InputAction.CameraLookX, MouseAxis.MoveX, [KeyModifiers.Shift])
-            .Add(InputAction.CameraLookX, GamepadAnalog.RightThumbstickX)
-            .Add(InputAction.CameraLookY, MouseAxis.MoveY)
-            .Add(InputAction.CameraLookY, MouseAxis.MoveY, [KeyModifiers.Shift])
-            .Add(InputAction.CameraLookY, GamepadAnalog.RightThumbstickY)
             .Add(InputAction.MoveForward, Key.W)
             .Add(InputAction.MoveForward, Key.W, [KeyModifiers.Shift])
             .Add(InputAction.MoveForward, Key.Up)
@@ -97,25 +86,43 @@ public partial class UserInputService : Service
             .Add(InputAction.SelectPerk3, Key.Number3)
             .Add(InputAction.SelectPerk3, ButtonName.B)
             .Build();
+        
+        _mouseLookContext = InputContext.GetBuilder<InputAction>()
+            .Add(InputAction.CameraLookX, MouseAxis.MoveX)
+            .Add(InputAction.CameraLookX, MouseAxis.MoveX, [KeyModifiers.Shift])
+            .Add(InputAction.CameraLookX, GamepadAnalog.RightThumbstickX)
+            .Add(InputAction.CameraLookY, MouseAxis.MoveY)
+            .Add(InputAction.CameraLookY, MouseAxis.MoveY, [KeyModifiers.Shift])
+            .Add(InputAction.CameraLookY, GamepadAnalog.RightThumbstickY)
+            .Build();
 
         RecalculateActiveContext();
     }
 
     private void RecalculateActiveContext()
     {
-        if (_selectingPerkMode)
+        if (_selectingPerkMode || _pauseMenuOpened)
         {
-            GetService<InputService>().InputContext = _perkSelectorContext;
+            GetService<InputService>().SetInputContext(this, _perkSelectorContext);
             return;
         }
         var activeContext = InputContext.From(_baseContext);
-        GetService<InputService>().InputContext = activeContext;
+        activeContext = activeContext.Combine(_mouseLookContext);
+        GetService<InputService>().SetInputContext(this, activeContext);
     }
     
     private bool _selectingPerkMode = false;
     public void SetSelectingPerkMode(bool enabled)
     {
         _selectingPerkMode = enabled;
+        RecalculateActiveContext();
+    }
+    
+    private bool _pauseMenuOpened = false;
+
+    public void SetPauseMenuOpened(bool opened)
+    {
+        _pauseMenuOpened = opened;
         RecalculateActiveContext();
     }
 }

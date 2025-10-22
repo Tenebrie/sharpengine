@@ -112,6 +112,7 @@ public static partial class Logger
             _log[_index].Timestamp = DateTime.Now;
             _log[_index].Level = level;
             _log[_index].Message = message;
+            _log[_index].EventCount = 1;
             _index += 1;
             if (_index >= _capacity - 1)
             {

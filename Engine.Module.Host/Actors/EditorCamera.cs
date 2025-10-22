@@ -1,8 +1,11 @@
-﻿using Engine.Core.Common;
+﻿using Engine.Core.Attributes;
+using Engine.Core.Common;
 using Engine.Module.Host.Services;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
+using Engine.Core.Enum;
+using Engine.Core.Input;
 using Engine.Core.Input.Attributes;
 using Engine.Core.Logging;
 using Silk.NET.Input;
@@ -75,7 +78,10 @@ public partial class EditorCamera : Camera
         var inputService = GetService<InputService>();
         
         _savedMousePosition = inputService.GetMousePosition();
-        inputService.SetMouseCursorMode(CursorMode.Hidden);
+        GetService<InputService>().SetMouseCursor(new CursorModifier(this)
+        {
+            Mode = CursorMode.Hidden
+        });
     }
     
     [OnInputReleased(InputAction.HoldToControlCamera)]
@@ -83,7 +89,19 @@ public partial class EditorCamera : Camera
     {
         var inputService = GetService<InputService>();
 
-        inputService.SetMouseCursorMode(CursorMode.Normal);
+        GetService<InputService>().SetMouseCursor(new CursorModifier(this)
+        {
+            Mode = CursorMode.Normal
+        });
         inputService.SetMousePosition(_savedMousePosition);
+    }
+
+    [OnGameplayContextChange]
+    protected void OnGameplayContextChange()
+    {
+        if (Backstage.Hypervisor.GameplayContext == GameplayContext.Editor)
+            return;
+        
+        GetService<InputService>().ClearMouseCursor(this);
     }
 }

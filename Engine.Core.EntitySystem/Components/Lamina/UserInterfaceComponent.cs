@@ -36,6 +36,12 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
             Dirty = true;
         }
     }
+
+    public Vector2 Position
+    {
+        get => Transform.Position.ToVector2();
+        set => Transform.Position = new Vector3(value.X, value.Y, Transform.Position.Z);
+    }
     public Vector2 Padding { get; set; } = new(0, 0);
     public Vector2 Size
     {

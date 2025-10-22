@@ -85,6 +85,13 @@ public partial class Atom : IAtom
         _isReady = true;
     }
 
+    public T Get<T>() where T : Service, new()
+    {
+        if (Backstage == null)
+            throw new InvalidOperationException("Atom is not registered in a Backstage.");
+        return Backstage.ServiceRegistry.Get<T>();
+    } 
+    
     public T GetService<T>() where T : Service, new()
     {
         if (Backstage == null)

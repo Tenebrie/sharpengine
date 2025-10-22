@@ -19,14 +19,14 @@ public enum UserInputMode
 public class InputContextList(IRootHypervisor hypervisor)
 {
     internal record struct InputContextEntry(
+        IInputContextProvider Provider,
         object Identity,
-        InputContext InputContext,
-        GameplayContext GameplayContext);
+        InputContext InputContext);
 
     internal readonly List<InputContextEntry> ContextEntries = [];
     
     private List<InputContextEntry> ActiveContextEntries => ContextEntries
-        .Where(entry => entry.GameplayContext.HasFlag(hypervisor.GameplayContext))
+        .Where(entry => entry.Provider.RunsInGameplayContext.HasFlag(hypervisor.GameplayContext))
         .ToList();
     
     public List<long> Match(Key key, List<KeyModifiers> modifiers) =>
@@ -53,20 +53,26 @@ public partial class InputHandler(IRootHypervisor hypervisor)
     
     public UserInputMode UserInputMode { get; set; } = UserInputMode.KeyboardAndMouse;
 
-    public void Register(object identity, InputContext inputContext, GameplayContext gameplayContextFlags)
+    public void SetInputContext(IInputContextProvider provider, object identity, InputContext inputContext)
     {
         CurrentContext.ContextEntries.RemoveAll(entry => entry.Identity == identity);
-        
         CurrentContext.ContextEntries.Add(new InputContextList.InputContextEntry
         {
+            Provider = provider,
             Identity = identity,
             InputContext = inputContext,
-            GameplayContext = gameplayContextFlags
         });
     }
-    public void Unregister(object identity)
+    public void RemoveInputContext(object identity)
     {
         CurrentContext.ContextEntries.RemoveAll(entry => entry.Identity == identity);
+    }
+    public void PurgeAll(IInputContextProvider provider)
+    {
+        CurrentContext.ContextEntries.RemoveAll(entry => entry.Provider == provider);
+        _mouseCursorModifiers.RemoveAll(entry => entry.Provider == provider);
+        RecalculateMouseCursor();
+        
         if (CurrentContext.ContextEntries.Count != 0)
             return;
         
@@ -217,4 +223,9 @@ public struct BoundHeldAction(object owner, string groupId, double x, double y, 
         Y = other.Y * arguments.Y;
         Z = other.Z * arguments.Z;
     }
+}
+
+public interface IInputContextProvider
+{
+    public GameplayContext RunsInGameplayContext { get; }
 }

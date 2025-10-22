@@ -3,6 +3,7 @@ using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Renderers;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Components.Lamina;
+using Engine.Core.EntitySystem.Services;
 using Engine.Core.Input.Attributes;
 using Engine.Core.Lamina;
 using Engine.Core.Logging;
@@ -46,10 +47,21 @@ public partial class LaminaButton : LaminaWidgetComponent<ButtonLayout>
         });
     }
     
-    [OnInput(InputAction.MouseMove, 1.0, 1.0)]
-    protected void OnMouseMove(Vector2 direction)
+    [OnInput(InputAction.MouseClick)]
+    protected void OnMouseClick()
     {
-        Logger.Info(direction);
+        var inputService = GetService<InputService>();
+
+        var parentPos = GetParent<UserInterfaceComponent>()!.Transform.Position;
+
+        var size = new Vector2(200, 200);
+
+        var position = (parentPos + WorldTransformNoScale.Position).ToVector2();
+        var clickPos = inputService.GetMousePosition();
+        if (clickPos.X >= position.X && clickPos.Y >= position.Y && clickPos.X <= (position + size).X && clickPos.Y <= (position + size).Y)
+        {
+            Logger.Info("Button clicked!");
+        }
     }
 }
 
