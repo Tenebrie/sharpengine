@@ -2,9 +2,6 @@
 
 namespace Engine.Core.Input.Attributes;
 
-[MeansImplicitUse]
+[PublicAPI]
 [AttributeUsage(AttributeTargets.Enum)]
-public class InputActionsAttribute : Attribute
-{
-    
-}
+public class InputActionsAttribute : Attribute;

@@ -1,8 +1,12 @@
 ﻿using Engine.Core.Common;
+using Engine.Core.Enum;
 using Engine.Core.Input.Contexts;
 using Engine.Core.Logging;
+using Engine.Core.Modules;
+using Engine.Core.Modules.EntitySystem;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
+using MouseButton = Silk.NET.Input.MouseButton;
 
 namespace Engine.Core.Input;
 
@@ -12,26 +16,77 @@ public enum UserInputMode
     Gamepad
 }
 
-public partial class InputHandler
+public class InputContextList(IRootHypervisor hypervisor)
 {
-    public InputContext CurrentContext { get; set; } = InputContext.Empty;
+    internal record struct InputContextEntry(
+        object Identity,
+        InputContext InputContext,
+        GameplayContext GameplayContext);
+
+    internal readonly List<InputContextEntry> ContextEntries = [];
+    
+    private List<InputContextEntry> ActiveContextEntries => ContextEntries
+        .Where(entry => entry.GameplayContext.HasFlag(hypervisor.GameplayContext))
+        .ToList();
+    
+    public List<long> Match(Key key, List<KeyModifiers> modifiers) =>
+        ActiveContextEntries.SelectMany(entry => entry.InputContext.Match(key, modifiers)).ToList();
+
+    public List<long> Match(MouseAxis axis, List<KeyModifiers> modifiers) =>
+        ActiveContextEntries.SelectMany(entry => entry.InputContext.Match(axis, modifiers)).ToList();
+
+    public List<long> Match(MouseButton button, List<KeyModifiers> modifiers) =>
+        ActiveContextEntries.SelectMany(entry => entry.InputContext.Match(button, modifiers)).ToList();
+
+    public List<long> Match(Button button) =>
+        ActiveContextEntries.SelectMany(entry => entry.InputContext.Match(button)).ToList();
+    
+    public List<long> Match(GamepadAnalog analog) =>
+        ActiveContextEntries.SelectMany(entry => entry.InputContext.Match(analog)).ToList();
+}
+
+public partial class InputHandler(IRootHypervisor hypervisor)
+{
+    private InputContextList CurrentContext { get; set; } = new(hypervisor);
     
     private Dictionary<string, List<BoundHeldAction>> _triggeredHandlers = new();
     
     public UserInputMode UserInputMode { get; set; } = UserInputMode.KeyboardAndMouse;
+
+    public void Register(object identity, InputContext inputContext, GameplayContext gameplayContextFlags)
+    {
+        CurrentContext.ContextEntries.RemoveAll(entry => entry.Identity == identity);
+        
+        CurrentContext.ContextEntries.Add(new InputContextList.InputContextEntry
+        {
+            Identity = identity,
+            InputContext = inputContext,
+            GameplayContext = gameplayContextFlags
+        });
+    }
+    public void Unregister(object identity)
+    {
+        CurrentContext.ContextEntries.RemoveAll(entry => entry.Identity == identity);
+        if (CurrentContext.ContextEntries.Count != 0)
+            return;
+        
+        UnbindMouseEvents();
+        UnbindGamepadEvents();
+        UnbindKeyboardEvents();
+    }
     
-    public void SendHeldInputEvents(double deltaTime)
+    public void SendHeldInputEvents(IBackstage identity, double deltaTime)
     {
         var modifiers = GetModifiers();
-        SendHeldKeyboardEvents(modifiers, ref _triggeredHandlers);
-        SendHeldMouseButtonEvents(modifiers, ref _triggeredHandlers);
-        SendHeldGamepadButtonEvents(ref _triggeredHandlers);
+        SendHeldKeyboardEvents(identity, modifiers, ref _triggeredHandlers);
+        SendHeldMouseButtonEvents(identity, modifiers, ref _triggeredHandlers);
+        SendHeldGamepadButtonEvents(identity, ref _triggeredHandlers);
         
         foreach (var handler in _triggeredHandlers.Values)
         {
             var parameterSum = new Vector3();
             foreach (var action in handler)
-            {   
+            {
                 parameterSum.X += action.X;
                 parameterSum.Y += action.Y;
                 parameterSum.Z += action.Z;
@@ -50,6 +105,8 @@ public partial class InputHandler
     
     private void TriggerOnInputEngaged(List<long> actions, Vector3 values)
     {
+        if (values is { X: 0, Y: 0, Z: 0 })
+            return;
         foreach (var triggeredActionId in actions)
         {
             OnInputEvent.TryGetValue(triggeredActionId, out var inputActionList);
@@ -92,11 +149,11 @@ public partial class InputHandler
         }
     }
 
-    private void TriggerOnInputHeld(List<long> triggeredActions, Vector3 values, ref Dictionary<string, List<BoundHeldAction>> triggeredHandlers)
+    private void TriggerOnInputHeld(IBackstage identity, List<long> triggeredActions, Vector3 values, ref Dictionary<string, List<BoundHeldAction>> triggeredHandlers)
     {
         foreach (var triggeredActionId in triggeredActions)
         {
-            OnInputHeldEvent.TryGetValue(triggeredActionId, out var boundActionList);
+            OnInputHeldEvent.TryGetValue((identity, triggeredActionId), out var boundActionList);
             if (boundActionList == null) continue;
                 
             foreach (var boundAction in boundActionList)
@@ -140,7 +197,7 @@ public partial class InputHandler
     }
      
     public readonly Dictionary<long, List<BoundHeldAction>> OnInputEvent = new();
-    public readonly Dictionary<long, List<BoundHeldAction>> OnInputHeldEvent = new();
+    public readonly Dictionary<(IBackstage identity, long actionId), List<BoundHeldAction>> OnInputHeldEvent = new();
     public readonly Dictionary<long, List<BoundHeldAction>> OnInputReleasedEvent = new();
 }
 

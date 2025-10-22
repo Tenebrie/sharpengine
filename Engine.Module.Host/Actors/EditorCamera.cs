@@ -3,6 +3,8 @@ using Engine.Module.Host.Services;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
+using Engine.Core.Input.Attributes;
+using Engine.Core.Logging;
 using Silk.NET.Input;
 
 namespace Engine.Module.Host.Actors;
@@ -80,7 +82,7 @@ public partial class EditorCamera : Camera
     protected void OnStopMovingCamera()
     {
         var inputService = GetService<InputService>();
-        
+
         inputService.SetMouseCursorMode(CursorMode.Normal);
         inputService.SetMousePosition(_savedMousePosition);
     }

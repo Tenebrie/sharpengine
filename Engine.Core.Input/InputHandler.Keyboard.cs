@@ -1,5 +1,7 @@
-﻿using Engine.Core.Communication.Tasks;
+﻿using Engine.Core.Common;
+using Engine.Core.Communication.Tasks;
 using Engine.Core.Logging;
+using Engine.Core.Modules.EntitySystem;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
 
@@ -10,7 +12,7 @@ public partial class InputHandler
     public List<IKeyboard> KnownKeyboards { get; } = [];
     
     public readonly Dictionary<Key, List<BoundHeldAction>> OnKeyboardKeyEvent = new();
-    public readonly Dictionary<Key, List<BoundHeldAction>> OnKeyboardKeyHeldEvent = new();
+    public readonly Dictionary<(IBackstage identity, Key key), List<BoundHeldAction>> OnKeyboardKeyHeldEvent = new();
     public readonly Dictionary<Key, List<BoundHeldAction>> OnKeyboardKeyReleasedEvent = new();
     
     private readonly HashSet<Key> _heldKeys = [];
@@ -85,23 +87,7 @@ public partial class InputHandler
         }
             
         var triggeredActions = CurrentContext.Match(key, GetModifiers());
-        triggeredActions.ForEach(triggeredActionId =>
-        {
-            OnInputEvent.TryGetValue(triggeredActionId, out var inputActionList);
-            if (inputActionList == null) return;
-                
-            foreach (var boundAction in inputActionList)
-            {
-                try
-                {
-                    boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error("Error in OnInput: " + e.Message, e);
-                }
-            }
-        });
+        TriggerOnInputEngaged(triggeredActions, Vector3.One);
     }
 
     private void OnKeyUp(IKeyboard keyboard, Key key, int num)
@@ -130,34 +116,18 @@ public partial class InputHandler
         }
             
         var triggeredActions = CurrentContext.Match(key, GetModifiers());
-        triggeredActions.ForEach(triggeredActionId =>
-        {
-            OnInputReleasedEvent.TryGetValue(triggeredActionId, out var inputActionList);
-            if (inputActionList == null) return;
-                
-            foreach (var boundAction in inputActionList)
-            {
-                try 
-                {
-                    boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error("Error in OnInputReleased: " + e.Message, e);
-                }
-            }
-        });
+        TriggerOnInputReleased(triggeredActions, Vector3.One);
     }
 
     /// <summary>
     /// Process OnKeyHeld and OnInputHeld events for all currently held keys.
     /// </summary>
     /// <returns>List of triggered input actions (by long representation of the bound enum)</returns>
-    private void SendHeldKeyboardEvents(List<KeyModifiers> modifiers, ref Dictionary<string, List<BoundHeldAction>> triggeredHandlers)
+    private void SendHeldKeyboardEvents(IBackstage identity, List<KeyModifiers> modifiers, ref Dictionary<string, List<BoundHeldAction>> triggeredHandlers)
     {
         foreach (var heldKey in _heldKeys)
         {
-            OnKeyboardKeyHeldEvent.TryGetValue(heldKey, out var boundKeyActionList);
+            OnKeyboardKeyHeldEvent.TryGetValue((identity, heldKey), out var boundKeyActionList);
             if (boundKeyActionList != null)
             {
                 foreach (var boundAction in boundKeyActionList)
@@ -169,18 +139,7 @@ public partial class InputHandler
             }
 
             var triggeredActions = CurrentContext.Match(heldKey, modifiers);
-            foreach (var triggeredActionId in triggeredActions)
-            {
-                OnInputHeldEvent.TryGetValue(triggeredActionId, out var boundActionList);
-                if (boundActionList == null) continue;
-                
-                foreach (var boundAction in boundActionList)
-                {
-                    if (!triggeredHandlers.ContainsKey(boundAction.GroupId))
-                        triggeredHandlers[boundAction.GroupId] = [];
-                    triggeredHandlers[boundAction.GroupId].Add(boundAction);
-                }
-            }
+            TriggerOnInputHeld(identity, triggeredActions, Vector3.One, ref triggeredHandlers);
         }
     }
 }

@@ -25,23 +25,22 @@ public partial class Backstage : IBackstage
     
     public void StartupInitialize()
     {
-        var inputHandler = GetService<InputService>();
-        foreach (var inputKeyboard in Hypervisor.InputContext.Keyboards)
-        {
-            inputHandler.BindKeyboardEvents(inputKeyboard);
-        }
-        foreach (var inputMouse in Hypervisor.InputContext.Mice)
-        {
-            inputHandler.BindMouseEvents(inputMouse);
-        }
-        foreach (var inputGamepad in Hypervisor.InputContext.Gamepads)
-        {
-            inputHandler.BindGamepadEvents(inputGamepad);
-        }
-        
         try
         {
             Initialize();
+            var inputHandler = GetService<InputService>();
+            foreach (var inputKeyboard in Hypervisor.InputContext.Keyboards)
+            {
+                inputHandler.BindKeyboardEvents(inputKeyboard);
+            }
+            foreach (var inputMouse in Hypervisor.InputContext.Mice)
+            {
+                inputHandler.BindMouseEvents(inputMouse);
+            }
+            foreach (var inputGamepad in Hypervisor.InputContext.Gamepads)
+            {
+                inputHandler.BindGamepadEvents(inputGamepad);
+            }
         } catch (Exception e)
         {
             Logger.Error("Failed to initialize backstage", e);

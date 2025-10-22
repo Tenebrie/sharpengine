@@ -2,6 +2,7 @@ using System.Drawing;
 using Engine.Core.Communication.Groups;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Input.Attributes;
 using User.Game.Player.Abilities;
 using User.Game.Services;
 

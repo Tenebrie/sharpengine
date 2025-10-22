@@ -1,5 +1,6 @@
 ﻿using Engine.Core.Common;
 using Engine.Core.Logging;
+using Engine.Core.Modules.EntitySystem;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
 using MouseButton = Silk.NET.Input.MouseButton;
@@ -188,12 +189,12 @@ public partial class InputHandler
     /// Process OnGamepadButtonHeld and OnInputHeld events for all currently held gamepad buttons and analogs.
     /// </summary>
     /// <returns>List of triggered input actions (by long representation of the bound enum)</returns>
-    private void SendHeldGamepadButtonEvents(ref Dictionary<string, List<BoundHeldAction>> triggeredHandlers)
+    private void SendHeldGamepadButtonEvents(IBackstage identity, ref Dictionary<string, List<BoundHeldAction>> triggeredHandlers)
     {
         foreach (var heldButton in _heldGamepadButtons)
         {
             var triggeredActions = CurrentContext.Match(heldButton);
-            TriggerOnInputHeld(triggeredActions, Vector3.One, ref triggeredHandlers);
+            TriggerOnInputHeld(identity, triggeredActions, Vector3.One, ref triggeredHandlers);
         }
         for (var i = 0; i < _lastThumbstickPositions.Length; i++)
         {
@@ -207,7 +208,7 @@ public partial class InputHandler
                     _ => throw new Exception("Unsupported thumbstick index " + i)
                 };
                 var triggeredActions = CurrentContext.Match(analog);
-                TriggerOnInputHeld(triggeredActions, (position.X, position.X, position.X), ref triggeredHandlers);
+                TriggerOnInputHeld(identity, triggeredActions, (position.X, position.X, position.X), ref triggeredHandlers);
             }
 
             if (Math.Abs(position.Y) > 0.1)
@@ -219,7 +220,7 @@ public partial class InputHandler
                     _ => throw new Exception("Unsupported thumbstick index " + i)
                 };
                 var triggeredActions = CurrentContext.Match(analog);
-                TriggerOnInputHeld(triggeredActions, (-position.Y, -position.Y, -position.Y), ref triggeredHandlers);
+                TriggerOnInputHeld(identity, triggeredActions, (-position.Y, -position.Y, -position.Y), ref triggeredHandlers);
             }
         }
     }

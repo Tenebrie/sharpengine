@@ -1,5 +1,6 @@
 ﻿using Engine.Core.Common;
 using Engine.Core.Logging;
+using Engine.Core.Modules.EntitySystem;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
 using MouseButton = Silk.NET.Input.MouseButton;
@@ -65,8 +66,8 @@ public partial class InputHandler
         mouse.Scroll += OnMouseScroll;
         KnownMice.Add(mouse);
     }
-    
-    public void UnbindMouseEvents()
+
+    private void UnbindMouseEvents()
     {
         foreach (var mouse in KnownMice)
         {
@@ -89,87 +90,25 @@ public partial class InputHandler
         
         var deltaX = position.X - _lastMousePosition.X;
         var deltaY = position.Y - _lastMousePosition.Y;
+        if (deltaX == 0 && deltaY == 0)
+            return;
         _lastMousePosition = new Vector2(position.X, position.Y);
         var modifiers = GetModifiers();
         var triggeredActions = CurrentContext.Match(MouseAxis.MoveX, modifiers);
-        triggeredActions.ForEach(triggeredActionId =>
-        {
-            OnInputEvent.TryGetValue(triggeredActionId, out var inputActionList);
-            if (inputActionList == null) return;
-                
-            foreach (var boundAction in inputActionList)
-            {
-                try
-                {
-                    boundAction.Action.Invoke(deltaX * boundAction.X, deltaX * boundAction.Y, deltaX * boundAction.Z, 0.0f);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error($"Error in OnInput: {e.Message}", e);
-                }
-            }
-        });
+        TriggerOnInputEngaged(triggeredActions, (deltaX, deltaX, deltaX));
         
         triggeredActions = CurrentContext.Match(MouseAxis.MoveY, modifiers);
-        triggeredActions.ForEach(triggeredActionId =>
-        {
-            OnInputEvent.TryGetValue(triggeredActionId, out var inputActionList);
-            if (inputActionList == null) return;
-                
-            foreach (var boundAction in inputActionList)
-            {
-                try 
-                {
-                    boundAction.Action.Invoke(deltaY * boundAction.X, deltaY * boundAction.Y, deltaY * boundAction.Z, 0.0f);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error($"Error in OnInput: {e.Message}", e);
-                }
-            }
-        });
+        TriggerOnInputEngaged(triggeredActions, (deltaY, deltaY, deltaY));
     }
     
     private void OnMouseScroll(IMouse mouse, ScrollWheel delta)
     {
         var modifiers = GetModifiers();
         var triggeredActions = CurrentContext.Match(MouseAxis.WheelX, modifiers);
-        triggeredActions.ForEach(triggeredActionId =>
-        {
-            OnInputEvent.TryGetValue(triggeredActionId, out var inputActionList);
-            if (inputActionList == null) return;
-                
-            foreach (var boundAction in inputActionList)
-            {
-                try 
-                {
-                    boundAction.Action.Invoke(delta.X * boundAction.X, delta.X * boundAction.Y, delta.X * boundAction.Z, 0.0f);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error($"Error in OnInput: {e.Message}", e);
-                }
-            }
-        });
+        TriggerOnInputEngaged(triggeredActions, (delta.X, delta.X, delta.X));
         
         triggeredActions = CurrentContext.Match(MouseAxis.WheelY, modifiers);
-        triggeredActions.ForEach(triggeredActionId =>
-        {
-            OnInputEvent.TryGetValue(triggeredActionId, out var inputActionList);
-            if (inputActionList == null) return;
-                
-            foreach (var boundAction in inputActionList)
-            {
-                try 
-                {
-                    boundAction.Action.Invoke(delta.Y * boundAction.X, delta.Y * boundAction.Y, delta.Y * boundAction.Z, 0.0f);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error($"Error in OnInput: {e.Message}", e);
-                }
-            }
-        });
+        TriggerOnInputEngaged(triggeredActions, (delta.Y, delta.Y, delta.Y));
     }
     
     private void OnMouseButtonDown(IMouse mouse, MouseButton button)
@@ -177,23 +116,7 @@ public partial class InputHandler
         _heldMouseButtons.Add(button);
         
         var triggeredActions = CurrentContext.Match(button, GetModifiers());
-        triggeredActions.ForEach(triggeredActionId =>
-        {
-            OnInputEvent.TryGetValue(triggeredActionId, out var inputActionList);
-            if (inputActionList == null) return;
-                
-            foreach (var boundAction in inputActionList)
-            {
-                try 
-                {
-                    boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error($"Error in OnInput: {e.Message}", e);
-                }
-            }
-        });
+        TriggerOnInputEngaged(triggeredActions, Vector3.One);
     }
     
     private void OnMouseButtonUp(IMouse mouse, MouseButton button)
@@ -201,46 +124,19 @@ public partial class InputHandler
         _heldMouseButtons.Remove(button);
         
         var triggeredActions = CurrentContext.Match(button, GetModifiers());
-        triggeredActions.ForEach(triggeredActionId =>
-        {
-            OnInputReleasedEvent.TryGetValue(triggeredActionId, out var inputActionList);
-            if (inputActionList == null) return;
-                
-            foreach (var boundAction in inputActionList)
-            {
-                try 
-                {
-                    boundAction.Action.Invoke(boundAction.X, boundAction.Y, boundAction.Z, 0.0f);
-                }
-                catch (Exception e)
-                {
-                    Logger.Error($"Error in OnInputReleased: {e.Message}", e);
-                }
-            }
-        });
+        TriggerOnInputReleased(triggeredActions, Vector3.One);
     }
 
     /// <summary>
     /// Process OnMouseButtonHeld and OnInputHeld events for all currently held mouse buttons.
     /// </summary>
     /// <returns>List of triggered input actions (by long representation of the bound enum)</returns>
-    private void SendHeldMouseButtonEvents(List<KeyModifiers> modifiers, ref Dictionary<string, List<BoundHeldAction>> triggeredHandlers)
+    private void SendHeldMouseButtonEvents(IBackstage identity, List<KeyModifiers> modifiers, ref Dictionary<string, List<BoundHeldAction>> triggeredHandlers)
     {
         foreach (var heldButton in _heldMouseButtons)
         {
             var triggeredActions = CurrentContext.Match(heldButton, modifiers);
-            foreach (var triggeredActionId in triggeredActions)
-            {
-                OnInputHeldEvent.TryGetValue(triggeredActionId, out var boundActionList);
-                if (boundActionList == null) continue;
-                
-                foreach (var boundAction in boundActionList)
-                {
-                    if (!triggeredHandlers.ContainsKey(boundAction.GroupId))
-                        triggeredHandlers[boundAction.GroupId] = [];
-                    triggeredHandlers[boundAction.GroupId].Add(boundAction);
-                }
-            }
+            TriggerOnInputHeld(identity, triggeredActions, Vector3.One, ref triggeredHandlers);
         }
     }
 }

@@ -76,7 +76,7 @@ public class SignalTest
         Assert.Equal(10, compactEvents);
     }
 
-    private class SignalSubscriber(Signal signal, Action onSignalReceived) : StandaloneBackstage
+    private partial class SignalSubscriber(Signal signal, Action onSignalReceived) : StandaloneBackstage
     {
         [OnReady]
         public void OnReady()

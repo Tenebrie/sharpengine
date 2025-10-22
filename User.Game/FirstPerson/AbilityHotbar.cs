@@ -37,7 +37,7 @@ public partial class AbilityHotbar : Actor
         });
     }
 
-    [OnTimer(Seconds = 1 / 120.0)]
+    [OnTimer(Seconds = 1 / 60.0)]
     protected void OnTimer()
     {
         HotbarWidget.SetLayout(v =>

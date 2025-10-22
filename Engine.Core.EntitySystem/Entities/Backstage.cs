@@ -37,7 +37,7 @@ public partial class Backstage : Scene
     internal void OnUpdate(double deltaTime)
     {
         ServiceRegistry.Get<ReaperService>().Reap();
-        ServiceRegistry.Get<InputService>().SendKeyboardHeldEvents(deltaTime);
+        GetService<InputService>().SendKeyboardHeldEvents(deltaTime);
     }
 
     public Camera ActiveCamera => GetActiveCameraOrThrow();

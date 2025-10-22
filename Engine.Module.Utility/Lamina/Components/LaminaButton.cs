@@ -3,6 +3,7 @@ using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Renderers;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Components.Lamina;
+using Engine.Core.Input.Attributes;
 using Engine.Core.Lamina;
 using Engine.Core.Logging;
 using Engine.Module.Utility.Services;

@@ -6,7 +6,6 @@ using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
 using Engine.Core.Input;
-using Engine.Core.Logging;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
 using MouseButton = Silk.NET.Input.MouseButton;
@@ -102,15 +101,8 @@ public partial class UserInputService : Service
         RecalculateActiveContext();
     }
 
-    [OnGameplayContextChange]
-    protected void RecalculateActiveContext()
+    private void RecalculateActiveContext()
     {
-        if (Backstage.GameplayContext == GameplayContext.Editor)
-        {
-            GetService<InputService>().InputContext = InputContext.Empty;
-            return;
-        }
-
         if (_selectingPerkMode)
         {
             GetService<InputService>().InputContext = _perkSelectorContext;

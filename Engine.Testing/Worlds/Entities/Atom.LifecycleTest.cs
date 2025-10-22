@@ -80,7 +80,7 @@ public class AtomLifecycleTest
     }
 }
 
-internal class MockAtom : Atom
+internal partial class MockAtom : Atom
 {
     public int OnInitCallCount { get; private set; }
     public int OnSimpleUpdateCallCount { get; private set; }

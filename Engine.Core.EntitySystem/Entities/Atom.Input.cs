@@ -1,9 +1,10 @@
 ﻿using System.Reflection;
 using Engine.Core.Common;
+using Engine.Core.EntitySystem.Services;
 using Engine.Core.Input;
 using Engine.Core.Input.Attributes;
+using Engine.Core.Logging;
 using Silk.NET.Input;
-using EntitySystem_Services_InputService = Engine.Core.EntitySystem.Services.InputService;
 
 namespace Engine.Core.EntitySystem.Entities;
 
@@ -14,7 +15,7 @@ public partial class Atom
         // var methods = GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
         var guid = Guid.NewGuid();
 
-        var inputService = GetService<EntitySystem_Services_InputService>();
+        var inputService = GetService<InputService>();
         
         // var onInputActionMethods = methods
         //     .Where(m => m.IsDefined(typeof(IOnInputAttribute), false))
@@ -63,17 +64,20 @@ public partial class Atom
                 var entry = MakeInputHeldActionHandler(method, attr, groupId);
                 if (attr.HasInputAction)
                 {
-                    if (!inputService.OnInputHeldEvent.ContainsKey(attr.InputActionId))
-                        inputService.OnInputHeldEvent[attr.InputActionId] = [];
-                    inputService.OnInputHeldEvent[attr.InputActionId].Add(entry);
+                    var combinedDictionaryKey = (Backstage, attr.InputActionId);
+                    if (!inputService.OnInputHeldEvent.ContainsKey(combinedDictionaryKey))
+                        inputService.OnInputHeldEvent[combinedDictionaryKey] = [];
+                    inputService.OnInputHeldEvent[combinedDictionaryKey].Add(entry);
                 }
 
                 var key = attr.ExplicitKey;
-                if (key == null) continue;
+                if (key == null)
+                    continue;
                 
-                if (!inputService.OnKeyboardKeyHeldEvent.ContainsKey((Key)key))
-                    inputService.OnKeyboardKeyHeldEvent[(Key)key] = [];
-                inputService.OnKeyboardKeyHeldEvent[(Key)key].Add(entry);
+                var combinedKey = (Backstage, (Key)key);
+                if (!inputService.OnKeyboardKeyHeldEvent.ContainsKey(combinedKey))
+                    inputService.OnKeyboardKeyHeldEvent[combinedKey] = [];
+                inputService.OnKeyboardKeyHeldEvent[combinedKey].Add(entry);
             }
         }
 

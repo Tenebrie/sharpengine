@@ -174,12 +174,6 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         renderingModule?.UpdateRegistered(Rid, this);
     }
 
-    [OnGameplayContextChange]
-    protected void OnGameplayContextChanged()
-    {
-        
-    }
-    
     [OnDestroy]
     protected void OnUnregisterOnRenderingServer()
     {

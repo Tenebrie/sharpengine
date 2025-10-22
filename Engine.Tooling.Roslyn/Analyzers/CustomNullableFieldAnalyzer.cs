@@ -99,23 +99,27 @@ public class CustomNullableFieldAnalyzer : DiagnosticAnalyzer
             .FirstOrDefault(v => v.Identifier.ValueText == field.Name);
     }
 
+
     private bool ShouldReportUninitializedField(IFieldSymbol field)
     {
         // Skip static fields, const fields, readonly fields with initializers
         if (field.IsStatic || field.IsConst || field.IsReadOnly) return false;
-        
+
         // Skip if field has an initializer
         if (field.HasConstantValue || field.DeclaringSyntaxReferences.Any(HasInitializer)) return false;
-        
+
         // Skip if field is nullable
         if (field.Type.CanBeReferencedByName && field.NullableAnnotation == NullableAnnotation.Annotated) return false;
-        
+
         // Skip if field type is nullable value type
         if (field.Type is { IsValueType: true, OriginalDefinition.SpecialType: SpecialType.System_Nullable_T }) return false;
-        
-        // Skip if field is marked as required
+
+        // NEW: Skip if the field is 'required'
+        if (IsRequiredField(field)) return false;
+
+        // Skip if field is marked as required (legacy/custom attribute)
         if (field.GetAttributes().Any(a => a.AttributeClass?.Name == "RequiredAttribute")) return false;
-        
+
         // Report for non-nullable reference types and non-nullable value types
         return field.Type.IsReferenceType || field.Type.IsValueType;
     }
@@ -166,5 +170,52 @@ public class CustomNullableFieldAnalyzer : DiagnosticAnalyzer
                 return SymbolEqualityComparer.Default.Equals(symbolInfo.Symbol, field);
             }
         }
+    }
+    
+    
+    private static bool IsRequiredField(IFieldSymbol field)
+    {
+        // 1) Prefer symbol API if available (Roslyn for C# 11).
+        if (field.TryGetIsRequired(out var isReqFromSymbol) && isReqFromSymbol)
+            return true;
+
+        // 2) Fall back to syntax: look for the 'required' modifier on the FieldDeclaration.
+        foreach (var syntaxRef in field.DeclaringSyntaxReferences)
+        {
+            if (syntaxRef.GetSyntax() is VariableDeclaratorSyntax v &&
+                v.Parent?.Parent is FieldDeclarationSyntax fd &&
+                fd.Modifiers.Any(m => m.IsKind(SyntaxKind.RequiredKeyword)))
+            {
+                return true;
+            }
+        }
+
+        // 3) Very defensive: handle attributes if someone polyfills.
+        //    (Real C# 11 uses System.Runtime.CompilerServices.RequiredMemberAttribute.)
+        if (field.GetAttributes().Any(a =>
+                a.AttributeClass?.Name is "RequiredMemberAttribute" or "RequiredAttribute" ||
+                a.AttributeClass?.ToDisplayString() == "System.Runtime.CompilerServices.RequiredMemberAttribute"))
+        {
+            return true;
+        }
+
+        return false;
+    }
+}
+
+public static class RandomExtensions
+{
+    public static bool TryGetIsRequired(this IFieldSymbol field, out bool isRequired)
+    {
+        // Use reflection to check for the IsRequired property if you target older Roslyn packages.
+        var prop = field.GetType().GetProperty("IsRequired");
+        if (prop is not null && prop.PropertyType == typeof(bool))
+        {
+            isRequired = (bool)prop.GetValue(field)!;
+            return true;
+        }
+
+        isRequired = false;
+        return false;
     }
 }

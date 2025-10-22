@@ -24,57 +24,57 @@ public abstract class InputServiceTest
             return backstage;
         }
         
-        internal class InputBackstage() : StandaloneBackstage(skipInit: true)
+        internal partial class InputBackstage() : StandaloneBackstage(skipInit: true)
         {
             public required MockKeyboard Keyboard;
             
             // OnInput event handlers
-            public int ActionCallCount;
-            public double ActionWithDoubleCallSum;
-            public Vector2 ActionWithVectorCallSum;
+            public int ActionCallCount = 0;
+            public double ActionWithDoubleCallSum = 0;
+            public Vector2 ActionWithVectorCallSum = Vector2.Zero;
 
             [OnKeyInput(Key.Number0)]
-            private void OnAction() => ActionCallCount += 1;
+            protected void OnAction() => ActionCallCount += 1;
             [OnKeyInput(Key.Number1, 1.0)]
-            private void OnActionWithDouble(double value) => ActionWithDoubleCallSum += value;
+            protected void OnActionWithDouble(double value) => ActionWithDoubleCallSum += value;
             [OnKeyInput(Key.Number2, 1.0, 2.0)]
-            private void OnActionWithVector(Vector2 data) => ActionWithVectorCallSum += data;
+            protected void OnActionWithVector(Vector2 data) => ActionWithVectorCallSum += data;
             
             // OnInputHeld event handlers
-            public int ActionHeldCallCount;
-            public double ActionHeldCallSum;
-            public double ActionHeldWithDoubleCallSum;
-            public Vector2 ActionHeldWithVectorCallSum;
+            public int ActionHeldCallCount = 0;
+            public double ActionHeldCallSum = 0;
+            public double ActionHeldWithDoubleCallSum = 0;
+            public Vector2 ActionHeldWithVectorCallSum = Vector2.Zero;
 
             [OnKeyInputHeld(Key.Number0)]
-            private void OnSimpleActionHeld() => ActionHeldCallCount += 1;
+            protected void OnSimpleActionHeld() => ActionHeldCallCount += 1;
             [OnKeyInputHeld(Key.Number0)]
-            private void OnSimpleActionHeld(double deltaTime) => ActionHeldCallSum += deltaTime;
+            protected void OnSimpleActionHeld(double deltaTime) => ActionHeldCallSum += deltaTime;
             [OnKeyInputHeld(Key.Number1, 1.0)]
-            private void OnWithDoubleActionHeld(double deltaTime, double value) => ActionHeldWithDoubleCallSum += value;
+            protected void OnWithDoubleActionHeld(double deltaTime, double value) => ActionHeldWithDoubleCallSum += value;
             [OnKeyInputHeld(Key.Number2, 1.0, 2.0)]
-            private void OnWithVector2ActionHeld(double deltaTime, Vector2 data) => ActionHeldWithVectorCallSum += data;
+            protected void OnWithVector2ActionHeld(double deltaTime, Vector2 data) => ActionHeldWithVectorCallSum += data;
             
             // OnInputReleased event handlers
-            public int ActionReleasedCallCount;
-            public double ActionReleasedWithDoubleCallSum;
-            public Vector2 ActionReleasedWithVectorCallSum;
+            public int ActionReleasedCallCount = 0;
+            public double ActionReleasedWithDoubleCallSum = 0;
+            public Vector2 ActionReleasedWithVectorCallSum = Vector2.Zero;
 
             [OnKeyInputReleased(Key.Number0)]
-            private void OnSimpleActionReleased() => ActionReleasedCallCount += 1;
+            protected void OnSimpleActionReleased() => ActionReleasedCallCount += 1;
             [OnKeyInputReleased(Key.Number1, 1.0)]
-            private void OnWithDoubleActionReleased(double value) => ActionReleasedWithDoubleCallSum += value;
+            protected void OnWithDoubleActionReleased(double value) => ActionReleasedWithDoubleCallSum += value;
             [OnKeyInputReleased(Key.Number2, 1.0, 2.0)]
-            private void OnWithVector2ActionReleased(Vector2 data) => ActionReleasedWithVectorCallSum += data;
+            protected void OnWithVector2ActionReleased(Vector2 data) => ActionReleasedWithVectorCallSum += data;
             
             // Multiple key bound actions
-            public int MultiActionCallCount;
+            public int MultiActionCallCount = 0;
             
             [OnKeyInput(Key.A)]
             [OnKeyInput(Key.B)]
             [OnKeyInput(Key.C)]
             [OnKeyInput(Key.D)]
-            private void OnMultiAction() => MultiActionCallCount += 1;
+            protected void OnMultiAction() => MultiActionCallCount += 1;
         }
         
         [Fact]
@@ -249,7 +249,8 @@ public abstract class InputServiceTest
     }
     public class WithActions
     {
-        private enum UserInputActions
+        [InputActions]
+        public enum UserInputActions
         {
             Simple,
             WithDouble,
@@ -285,58 +286,58 @@ public abstract class InputServiceTest
             return backstage;
         }
         
-        internal class InputBackstage() : StandaloneBackstage(skipInit: true)
+        internal partial class InputBackstage() : StandaloneBackstage(skipInit: true)
         {
             public required MockKeyboard Keyboard;
             
             // OnInput event handlers
-            public int ActionCallCount;
-            public double ActionWithDoubleCallSum;
-            public Vector2 ActionWithVectorCallSum;
-
-            [OnInput<UserInputActions>(UserInputActions.Simple)]
-            private void OnAction() => ActionCallCount += 1;
-            [OnInput<UserInputActions>(UserInputActions.WithDouble, 1.0)]
-            private void OnActionWithDouble(double value) => ActionWithDoubleCallSum += value;
-            [OnInput<UserInputActions>(UserInputActions.WithVector, 1.0, 2.0)]
-            private void OnActionWithVector(Vector2 data) => ActionWithVectorCallSum += data;
+            public int ActionCallCount = 0;
+            public double ActionWithDoubleCallSum = 0;
+            public Vector2 ActionWithVectorCallSum = Vector2.Zero;
+            
+            [OnInput(UserInputActions.Simple)]
+            protected void OnAction() => ActionCallCount += 1;
+            [OnInput(UserInputActions.WithDouble, 1.0)]
+            protected void OnActionWithDouble(double value) => ActionWithDoubleCallSum += value;
+            [OnInput(UserInputActions.WithVector, 1.0, 2.0)]
+            protected void OnActionWithVector(Vector2 data) => ActionWithVectorCallSum += data;
             
             // OnInputHeld event handlers
-            public int ActionHeldCallCount;
-            public double ActionHeldCallSum;
-            public double ActionHeldWithDoubleCallSum;
-            public Vector2 ActionHeldWithVectorCallSum;
+            public int ActionHeldCallCount = 0;
+            public double ActionHeldCallSum = 0;
+            public double ActionHeldWithDoubleCallSum = 0;
+            public Vector2 ActionHeldWithVectorCallSum = Vector2.Zero;
 
-            [OnInputHeld<UserInputActions>(UserInputActions.Simple)]
-            private void OnSimpleActionHeld() => ActionHeldCallCount += 1;
-            [OnInputHeld<UserInputActions>(UserInputActions.Simple)]
-            private void OnSimpleActionHeld(double deltaTime) => ActionHeldCallSum += deltaTime;
-            [OnInputHeld<UserInputActions>(UserInputActions.WithDouble, 1.0)]
-            private void OnWithDoubleActionHeld(double deltaTime, double value) => ActionHeldWithDoubleCallSum += value;
-            [OnInputHeld<UserInputActions>(UserInputActions.WithVector, 1.0, 2.0)]
-            private void OnWithVector2ActionHeld(double deltaTime, Vector2 data) => ActionHeldWithVectorCallSum += data;
+            [OnInputHeld(UserInputActions.Simple)]
+            protected void OnSimpleActionHeld() => ActionHeldCallCount += 1;
+            [OnInputHeld(UserInputActions.Simple)]
+            protected void OnSimpleActionHeld(double deltaTime) => ActionHeldCallSum += deltaTime;
+            [OnInputHeld(UserInputActions.WithDouble, 1.0)]
+            protected void OnWithDoubleActionHeld(double deltaTime, double value) => ActionHeldWithDoubleCallSum += value;
+            [OnInputHeld(UserInputActions.WithVector, 1.0, 2.0)]
+            protected void OnWithVector2ActionHeld(double deltaTime, Vector2 data) => ActionHeldWithVectorCallSum += data;
             
             // OnInputReleased event handlers
-            public int ActionReleasedCallCount;
-            public double ActionReleasedWithDoubleCallSum;
-            public Vector2 ActionReleasedWithVectorCallSum;
+            public int ActionReleasedCallCount = 0;
+            public double ActionReleasedWithDoubleCallSum = 0;
+            public Vector2 ActionReleasedWithVectorCallSum = Vector2.Zero;
 
-            [OnInputReleased<UserInputActions>(UserInputActions.Simple)]
-            private void OnSimpleActionReleased() => ActionReleasedCallCount += 1;
-            [OnInputReleased<UserInputActions>(UserInputActions.WithDouble, 1.0)]
-            private void OnWithDoubleActionReleased(double value) => ActionReleasedWithDoubleCallSum += value;
-            [OnInputReleased<UserInputActions>(UserInputActions.WithVector, 1.0, 2.0)]
-            private void OnWithVector2ActionReleased(Vector2 data) => ActionReleasedWithVectorCallSum += data;
+            [OnInputReleased(UserInputActions.Simple)]
+            protected void OnSimpleActionReleased() => ActionReleasedCallCount += 1;
+            [OnInputReleased(UserInputActions.WithDouble, 1.0)]
+            protected void OnWithDoubleActionReleased(double value) => ActionReleasedWithDoubleCallSum += value;
+            [OnInputReleased(UserInputActions.WithVector, 1.0, 2.0)]
+            protected void OnWithVector2ActionReleased(Vector2 data) => ActionReleasedWithVectorCallSum += data;
             
             // Multiple key bound actions
-            public int MultiActionWithVectorCallCount;
-            public Vector2 MultiActionWithVectorCallSum;
+            public int MultiActionWithVectorCallCount = 0;
+            public Vector2 MultiActionWithVectorCallSum = Vector2.Zero;
             
-            [OnInputHeld<UserInputActions>(UserInputActions.Up, 0.0, 1.0)]
-            [OnInputHeld<UserInputActions>(UserInputActions.Down, 0.0, -1.0)]
-            [OnInputHeld<UserInputActions>(UserInputActions.Left, -1.0, 0.0)]
-            [OnInputHeld<UserInputActions>(UserInputActions.Right, 1.0, 0.0)]
-            private void OnMultiActionWithVector(double deltaTime, Vector2 direction)
+            [OnInputHeld(UserInputActions.Up, 0.0, 1.0)]
+            [OnInputHeld(UserInputActions.Down, 0.0, -1.0)]
+            [OnInputHeld(UserInputActions.Left, -1.0, 0.0)]
+            [OnInputHeld(UserInputActions.Right, 1.0, 0.0)]
+            protected void OnMultiActionWithVector(double deltaTime, Vector2 direction)
             {
                 MultiActionWithVectorCallCount += 1;
                 MultiActionWithVectorCallSum += direction;

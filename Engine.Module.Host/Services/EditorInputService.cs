@@ -6,6 +6,7 @@ using Engine.Core.Input.Contexts;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
+using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Silk.NET.Input;
 
@@ -47,6 +48,7 @@ public partial class EditorInputService : Service
     [OnReady]
     protected void OnReady()
     {
+        GetService<InputService>().RunsInGameplayContext = GameplayContext.Editor;
         _baseContext = InputContext.GetBuilder<InputAction>()
             .Add(InputAction.HoldToControlCamera, MouseButton.Right)
             .Build();

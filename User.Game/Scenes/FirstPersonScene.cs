@@ -1,5 +1,6 @@
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Input.Attributes;
 using User.Game.FirstPerson;
 
 namespace User.Game.Scenes;

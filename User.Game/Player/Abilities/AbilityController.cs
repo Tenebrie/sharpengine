@@ -1,5 +1,6 @@
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Input.Attributes;
 using User.Game.Actors.BasicEnemies;
 using User.Game.Player.Abilities.Definitions;
 using User.Game.Services;

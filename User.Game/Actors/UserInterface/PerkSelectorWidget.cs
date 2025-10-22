@@ -6,6 +6,7 @@ using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Services;
 using Engine.Core.Extensions;
 using Engine.Core.Input;
+using Engine.Core.Input.Attributes;
 using Engine.Core.Lamina;
 using User.Game.Player;
 using User.Game.Player.PerkTree;

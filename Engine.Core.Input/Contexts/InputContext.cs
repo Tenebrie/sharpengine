@@ -1,4 +1,6 @@
-﻿using Silk.NET.GLFW;
+﻿using Engine.Core.Enum;
+using Engine.Core.Logging;
+using Silk.NET.GLFW;
 using Silk.NET.Input;
 using MouseButton = Silk.NET.Input.MouseButton;
 
@@ -93,13 +95,14 @@ public class InputContext
 
     public class Builder<TInputAction> where TInputAction : System.Enum
     {
+        private readonly long _enumBaseId = EnumBaseId.GetFor(typeof(TInputAction));
         private readonly Dictionary<TInputAction, List<InputContextEntry>> _entries = new();
 
         public Builder<TInputAction> Add(TInputAction action, Key key, List<KeyModifiers>? modifiers = null)
         {
             if (_entries.TryGetValue(action, out var list))
             {
-                list.Add(new InputContextEntry(Convert.ToInt64(action))
+                list.Add(new InputContextEntry(_enumBaseId + Convert.ToInt64(action))
                 {
                     Keys = [key],
                     Modifiers = modifiers ?? []
@@ -107,7 +110,7 @@ public class InputContext
                 return this;
             }
 
-            _entries[action] = [new InputContextEntry(Convert.ToInt64(action))
+            _entries[action] = [new InputContextEntry(_enumBaseId + Convert.ToInt64(action))
             {
                 Keys = [key],
                 Modifiers = modifiers ?? []
@@ -119,7 +122,7 @@ public class InputContext
         {
             if (_entries.TryGetValue(action, out var list))
             {
-                list.Add(new InputContextEntry(Convert.ToInt64(action))
+                list.Add(new InputContextEntry(_enumBaseId + Convert.ToInt64(action))
                 {
                     MouseAxes = [axis],
                     Modifiers = modifiers ?? []
@@ -127,7 +130,7 @@ public class InputContext
                 return this;
             }
 
-            _entries[action] = [new InputContextEntry(Convert.ToInt64(action))
+            _entries[action] = [new InputContextEntry(_enumBaseId + Convert.ToInt64(action))
             {
                 MouseAxes = [axis],
                 Modifiers = modifiers ?? []
@@ -139,7 +142,7 @@ public class InputContext
         {
             if (_entries.TryGetValue(action, out var list))
             {
-                list.Add(new InputContextEntry(Convert.ToInt64(action))
+                list.Add(new InputContextEntry(_enumBaseId + Convert.ToInt64(action))
                 {
                     MouseButtons = [button],
                     Modifiers = modifiers ?? []
@@ -147,7 +150,7 @@ public class InputContext
                 return this;
             }
 
-            _entries[action] = [new InputContextEntry(Convert.ToInt64(action))
+            _entries[action] = [new InputContextEntry(_enumBaseId + Convert.ToInt64(action))
             {
                 MouseButtons = [button],
                 Modifiers = modifiers ?? []
@@ -159,14 +162,14 @@ public class InputContext
         {
             if (_entries.TryGetValue(action, out var list))
             {
-                list.Add(new InputContextEntry(Convert.ToInt64(action))
+                list.Add(new InputContextEntry(_enumBaseId + Convert.ToInt64(action))
                 {
                     GamepadButtons = [button],
                 });
                 return this;
             }
 
-            _entries[action] = [new InputContextEntry(Convert.ToInt64(action))
+            _entries[action] = [new InputContextEntry(_enumBaseId + Convert.ToInt64(action))
             {
                 GamepadButtons = [button],
             }];
@@ -177,14 +180,14 @@ public class InputContext
         {
             if (_entries.TryGetValue(action, out var list))
             {
-                list.Add(new InputContextEntry(Convert.ToInt64(action))
+                list.Add(new InputContextEntry(_enumBaseId + Convert.ToInt64(action))
                 {
                     GamepadAnalogs = [analog],
                 });
                 return this;
             }
 
-            _entries[action] = [new InputContextEntry(Convert.ToInt64(action))
+            _entries[action] = [new InputContextEntry(_enumBaseId + Convert.ToInt64(action))
             {
                 GamepadAnalogs = [analog],
             }];
@@ -194,7 +197,7 @@ public class InputContext
         public InputContext Build()
         {
             var dictionaryEntries = _entries.ToDictionary(
-                kvp => Convert.ToInt64(kvp.Key),
+                kvp => _enumBaseId + Convert.ToInt64(kvp.Key),
                 kvp => kvp.Value
             );
             return new InputContext(dictionaryEntries);
@@ -212,3 +215,4 @@ public readonly struct InputContextEntry(long action)
     public List<GamepadAnalog> GamepadAnalogs { get; internal init; } = [];
     public List<KeyModifiers> Modifiers { get; internal init; } = [];
 }
+

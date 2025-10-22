@@ -5,8 +5,10 @@ using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Renderers;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Components.Lamina;
+using Engine.Core.Input.Attributes;
 using Engine.Core.Lamina;
 using Engine.Core.Logging;
+using Engine.Module.Utility.Services;
 using Box = Engine.Core.Common.Box;
 
 namespace Engine.Module.Utility.Lamina.Components;
@@ -49,7 +51,7 @@ public partial class LaminaImage : LaminaWidgetComponent<ImageLayout>
             Mesh = InterfacePlaneMesh.Shared,
             RenderScript = IRenderScript.Default,
             MaterialInstances = [_materialInstance.Snapshot()],
-            ScissorRect = layout.Props.ClippingRect is {} rect ? new Rect
+            ScissorRect = layout.Props.ClippingRect is var rect ? new Rect
             {
                 Top = (int)(globalPos.Y + rect.Top * layout.Props.Size.Y),
                 Left = (int)(globalPos.X + rect.Left * layout.Props.Size.X),
