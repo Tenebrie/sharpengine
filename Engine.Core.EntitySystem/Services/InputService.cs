@@ -38,6 +38,7 @@ public partial class InputService : Service
     public UserInputMode UserInputMode => _inputHandler.UserInputMode;
     
     public Vector2 GetMousePosition() => _inputHandler.GetMousePosition();
+    public Vector2 GetGamepadAnalogPosition(GamepadAnalog analog) => _inputHandler.GetGamepadAnalogPosition(analog);
     public void SetMousePosition(Vector2 position) => _inputHandler.SetMousePosition(position);
     public void SetMouseCursor(StandardCursor cursor) => _inputHandler.SetMouseCursor(cursor);
     public void SetMouseCursorMode(CursorMode mode) => _inputHandler.SetMouseCursorMode(mode);

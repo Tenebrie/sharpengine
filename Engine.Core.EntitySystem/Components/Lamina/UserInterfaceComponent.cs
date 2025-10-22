@@ -4,16 +4,14 @@ using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Meshes.Builtins;
 using Engine.Core.Assets.Rendering;
+using Engine.Core.Attributes;
 using Engine.Core.Common;
 using Engine.Core.Communication.Tasks;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
-using Engine.Core.Extensions;
 using Engine.Core.Lamina;
-using Engine.Core.Logging;
-using Silk.NET.Maths;
 
 namespace Engine.Core.EntitySystem.Components.Lamina;
 
@@ -75,6 +73,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         Transform.Scale = new Vector3(Size.X, Size.Y, 1);
         Dirty = true;
         MeshComponent.Visible = false;
+        IgnoreParentPosition();
         RootWidget.IgnoreParentPosition();
         
         Backstage.Window.ResizeDebounced.Connect(this, _ =>
@@ -173,6 +172,12 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     { 
         var renderingModule = Backstage.RenderingModule;
         renderingModule?.UpdateRegistered(Rid, this);
+    }
+
+    [OnGameplayContextChange]
+    protected void OnGameplayContextChanged()
+    {
+        
     }
     
     [OnDestroy]

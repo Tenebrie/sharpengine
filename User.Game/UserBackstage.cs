@@ -7,6 +7,8 @@ using User.Game.Actors;
 using User.Game.Actors.BasicEnemies;
 using User.Game.Actors.CloudCover;
 using User.Game.Player;
+using User.Game.Scenes;
+using User.Game.Scenes.PauseMenu;
 using User.Game.Services;
 
 namespace User.Game;
@@ -17,8 +19,10 @@ public partial class UserBackstage : GameplayHostBackstage
     [OnReady]
     protected void OnReady()
     {
-        CreateScene<UserScene>();
+        CreateScene<FirstPersonScene>();
+        // CreateScene<UserScene>();
         // CreateScene<BasicEnemyScene>();
+        CreateScene<SettingsMenuScene>();
         RegisterService<UserInputService>();
         RegisterService<UserInterfaceService>();
     }

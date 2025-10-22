@@ -19,7 +19,7 @@ namespace User.Game.Player;
 
 public partial class PlayerCharacter : Actor
 {
-    [DefaultGroup] public static Group<PlayerCharacter> All = new();
+    [DefaultGroup] public static readonly Group<PlayerCharacter> All = new();
     
     private Quaternion _desiredRotation = Quaternion.Identity;
     private const double MovementSpeed = 30.0;

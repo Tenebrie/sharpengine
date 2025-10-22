@@ -2,6 +2,7 @@
 using Engine.Core.EntitySystem.Components.Physics;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.Enum;
+using Engine.Core.Logging;
 using Engine.Core.Modules;
 using Engine.Core.Modules.EntitySystem;
 using Engine.Core.Profiling;
@@ -37,7 +38,7 @@ public class PhysicsHost : IPhysicsHost
     }
     public void Unregister(long rid) => _registeredAtoms.Remove(rid);
 
-    private const double PhysicsStepDuration = 1.0 / 120.0;
+    private const double PhysicsStepDuration = 1.0 / 240.0;
     private double _leftoverTime = 0.0;
     public void ProcessPhysicsFrame(double deltaTime)
     {

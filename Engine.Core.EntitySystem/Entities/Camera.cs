@@ -26,7 +26,7 @@ public partial class Camera : Actor, ICamera
         Height = Backstage.Window.FramebufferSize.Y;
         AspectRatio = Width / Height;
         
-        const double near = 0.1;
+        const double near = 0.01;
         const double far = 20000.0;
         var f = 1.0 / Math.Tan(double.DegreesToRadians(FieldOfView) / 2.0);
         

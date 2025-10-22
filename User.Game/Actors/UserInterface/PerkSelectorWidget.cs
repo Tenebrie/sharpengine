@@ -23,7 +23,10 @@ public partial class PerkSelectorWidget : Actor
     [OnReady]
     protected void OnReady()
     {
-        _playerCharacter = PlayerCharacter.All.First();
+        var playerCharacter = PlayerCharacter.All.FirstOrDefault();
+        if (playerCharacter == null)
+            return;
+        _playerCharacter = playerCharacter;
         _playerCharacter.Experience.OnLevelUp.Connect(this, OnPlayerLevelUp);
         
         for (var i = 0; i < 3; i++)

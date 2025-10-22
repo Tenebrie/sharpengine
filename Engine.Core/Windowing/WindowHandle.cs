@@ -11,10 +11,13 @@ public class WindowHandle
 
     public Vector2 Size => SystemWindow.Size;
     public Vector2 FramebufferSize => SystemWindow.GetScaledFramebufferSize();
+    public bool HasFocus = false;
 
     public Signal Load { get; } = new();
     public Signal<Vector2> Resize { get; } = new();
     public Signal<Vector2> ResizeDebounced { get; } = new();
+    public Signal Focused { get; } = new();
+    public Signal Unfocused { get; } = new();
 
     private readonly TimeSpan _resizeDebounce;
     private Vector2 _pendingResize;
@@ -28,6 +31,13 @@ public class WindowHandle
         SystemWindow.Load += () => Load.Emit();
         SystemWindow.Resize += size => Resize.Emit(size);
         SystemWindow.Resize += size => OnSystemResize(size);
+        SystemWindow.FocusChanged += value => {
+            HasFocus = value;
+            if (value)
+                Focused.Emit();
+            else
+                Unfocused.Emit();
+        };
     }
 
     private void OnSystemResize(Vector2 size)

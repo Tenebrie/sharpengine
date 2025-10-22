@@ -4,7 +4,7 @@ using Silk.NET.Input;
 
 namespace Engine.Core.Input.Attributes;
 
-[MeansImplicitUse]
+[PublicAPI]
 [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
 [SuppressMessage("ReSharper", "IntroduceOptionalParameters.Global")]
 public class OnInputAttribute<T>(T? action, double x, double y, double z, InputParamBinding bindingParams)

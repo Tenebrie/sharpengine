@@ -26,9 +26,7 @@ public class InputContext
     {
         return _entries.Values
             .SelectMany(list => list)
-            .Where(entry => entry.MouseAxes.Contains(axis) && 
-                            (modifiers.Count == 0 || 
-                             modifiers.All(m => entry.Modifiers.Contains(m))))
+            .Where(entry => entry.MouseAxes.Contains(axis) && entry.Modifiers.All(modifiers.Contains) && entry.Modifiers.Count == modifiers.Count)
             .Select(entry => entry.Action)
             .ToList();
     }
@@ -37,9 +35,7 @@ public class InputContext
     {
         return _entries.Values
             .SelectMany(list => list)
-            .Where(entry => entry.MouseButtons.Contains(button) && 
-                            (modifiers.Count == 0 || 
-                             modifiers.All(m => entry.Modifiers.Contains(m))))
+            .Where(entry => entry.MouseButtons.Contains(button) && entry.Modifiers.All(modifiers.Contains) && entry.Modifiers.Count == modifiers.Count)
             .Select(entry => entry.Action)
             .ToList();
     }

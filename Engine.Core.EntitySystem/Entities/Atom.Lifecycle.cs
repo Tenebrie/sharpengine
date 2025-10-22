@@ -13,7 +13,9 @@ public partial class Atom
     private Action? OnCreateCallback { get; set; }
     private Action? OnReadyCallback { get; set; }
 
-    private bool IsTicking => HasOnUpdateCallbacks || HasOnTimerCallbacks;
+    public bool IsTicking { get; set; } = true;
+
+    private bool CanEverTick => IsTicking && (HasOnUpdateCallbacks || HasOnTimerCallbacks);
     private bool HasOnUpdateCallbacks { get; set; }
     private Action<double>? OnUpdateCallback { get; set; }
 
@@ -77,7 +79,7 @@ public partial class Atom
     protected void ProcessLogicFrame(double deltaTime)
     {
         var localDelta = deltaTime * TimeScale;
-        if (IsTicking)
+        if (CanEverTick)
         {
             var selfPf = Profiler.Start();
             OnUpdateCallback?.Invoke(localDelta);

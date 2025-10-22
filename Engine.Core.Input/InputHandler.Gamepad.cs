@@ -60,6 +60,18 @@ public partial class InputHandler
         KnownGamepads.Clear();
     }
     
+    public Vector2 GetGamepadAnalogPosition(GamepadAnalog analog)
+    {
+        return analog switch
+        {
+            GamepadAnalog.LeftThumbstickX => new Vector2(_lastThumbstickPositions[0].X, 0),
+            GamepadAnalog.LeftThumbstickY => new Vector2(0, _lastThumbstickPositions[0].Y),
+            GamepadAnalog.RightThumbstickX => new Vector2(_lastThumbstickPositions[1].X, 0),
+            GamepadAnalog.RightThumbstickY => new Vector2(0, _lastThumbstickPositions[1].Y),
+            _ => throw new ArgumentOutOfRangeException(nameof(analog), "Unsupported gamepad analog " + analog)
+        };
+    }
+    
     public bool IsGamepadButtonHeld(ButtonName button)
     {
         return _heldGamepadButtons.Any(b => b.Name == button);

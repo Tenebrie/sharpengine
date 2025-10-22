@@ -28,9 +28,10 @@ public partial class InputHandler
         
         return KnownMice[0].Position;
     }
+    
     public void SetMousePosition(Vector2 position)
     {
-        _lastMousePosition = position;
+        _lastMousePosition = (Math.Floor(position.X), Math.Floor(position.Y));
         foreach (var knownMouse in KnownMice)
         {
             knownMouse.Position = new System.Numerics.Vector2((float)position.X, (float)position.Y);

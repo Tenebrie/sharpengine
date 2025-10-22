@@ -27,9 +27,20 @@ public enum InputAction
     Hotbar2,
     Hotbar3,
     Hotbar4,
+    NextHotbar,
+    PreviousHotbar,
     SelectPerk1,
     SelectPerk2,
     SelectPerk3,
+    
+    CameraLookX,
+    CameraLookY,
+}
+
+[InputActions]
+public enum ExtraInputAction
+{
+    TogglePauseMenu,
 }
 
 public partial class UserInputService : Service
@@ -41,6 +52,12 @@ public partial class UserInputService : Service
     protected void OnReady()
     {
         _baseContext = InputContext.GetBuilder<InputAction>()
+            .Add(InputAction.CameraLookX, MouseAxis.MoveX)
+            .Add(InputAction.CameraLookX, MouseAxis.MoveX, [KeyModifiers.Shift])
+            .Add(InputAction.CameraLookX, GamepadAnalog.RightThumbstickX)
+            .Add(InputAction.CameraLookY, MouseAxis.MoveY)
+            .Add(InputAction.CameraLookY, MouseAxis.MoveY, [KeyModifiers.Shift])
+            .Add(InputAction.CameraLookY, GamepadAnalog.RightThumbstickY)
             .Add(InputAction.MoveForward, Key.W)
             .Add(InputAction.MoveForward, Key.W, [KeyModifiers.Shift])
             .Add(InputAction.MoveForward, Key.Up)
@@ -60,15 +77,17 @@ public partial class UserInputService : Service
             .Add(InputAction.MoveRight, ButtonName.DPadRight)
             .Add(InputAction.MoveRight, GamepadAnalog.LeftThumbstickX)
             .Add(InputAction.Jump, Key.Space)
+            .Add(InputAction.Jump, Key.Space, [KeyModifiers.Shift])
+            .Add(InputAction.Jump, ButtonName.A)
             .Add(InputAction.Primary, MouseButton.Left)
             .Add(InputAction.Primary, MouseButton.Left, [KeyModifiers.Shift])
-            .Add(InputAction.Primary, ButtonName.A)
+            .Add(InputAction.Primary, ButtonName.X)
             .Add(InputAction.Hotbar1, Key.Number1)
-            .Add(InputAction.Hotbar1, ButtonName.LeftBumper)
             .Add(InputAction.Hotbar2, Key.Number2)
-            .Add(InputAction.Hotbar2, ButtonName.RightBumper)
             .Add(InputAction.Hotbar3, Key.Number3)
             .Add(InputAction.Hotbar4, Key.Number4)
+            .Add(InputAction.NextHotbar, ButtonName.RightBumper)
+            .Add(InputAction.PreviousHotbar, ButtonName.LeftBumper)
             .Build();
         
         _perkSelectorContext = InputContext.GetBuilder<InputAction>()

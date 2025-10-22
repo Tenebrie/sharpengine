@@ -6,18 +6,21 @@ namespace Engine.Core.EntitySystem.Services;
 
 public partial class ReflectionService : Service
 {
-    private Dictionary<Type, Type?> LookupCache { get; } = new();
-    public Type? GetUserInputActionsEnum()
+    private Dictionary<Type, HashSet<Type>> LookupCache { get; } = new();
+    public HashSet<Type> GetUserInputActionsEnum()
     {
         return GetUserTypeByAttributeCached<InputActionsAttribute>();
     }
 
     public void SetUserInputActionsEnum<TUserInputActions>() where TUserInputActions : System.Enum
     {
-        LookupCache[typeof(InputActionsAttribute)] = typeof(TUserInputActions);
+        if (!LookupCache.TryGetValue(typeof(InputActionsAttribute), out var set))
+            LookupCache[typeof(InputActionsAttribute)] = set = [];
+
+        set.Add(typeof(TUserInputActions));
     }
 
-    private Type? GetUserTypeByAttributeCached<T>() where T : Attribute
+    private HashSet<Type> GetUserTypeByAttributeCached<T>() where T : Attribute
     {
         if (LookupCache.TryGetValue(typeof(T), out var type))
             return type;
@@ -26,15 +29,16 @@ public partial class ReflectionService : Service
         return value;
     }
 
-    private Type? GetUserTypeByAttribute<T>() where T : Attribute
+    private static HashSet<Type> GetUserTypeByAttribute<T>() where T : Attribute
     {
         var inputActionEnum =
             AppDomain.CurrentDomain
                 .GetAssemblies()
                 .SelectMany(a => a.GetTypes())
-                .FirstOrDefault(t =>
+                .Where(t =>
                     t.IsEnum &&
-                    t.GetCustomAttribute<T>() != null);
+                    t.GetCustomAttribute<T>() != null)
+                .ToHashSet();
 
         return inputActionEnum;
     }

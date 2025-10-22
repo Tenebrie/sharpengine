@@ -76,4 +76,9 @@ public partial class PiercingBladeAbility : ActorComponent, IAbility
             return;
         _cooldownRemaining -= deltaTime;
     }
+    
+    public double GetCooldownProgress()
+    {
+        return Math.Clamp(1.0 - (_cooldownRemaining / CooldownTime), 0.0, 1.0);
+    }
 }
