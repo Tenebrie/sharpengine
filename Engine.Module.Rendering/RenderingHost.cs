@@ -55,11 +55,12 @@ public class RenderingHost : IRenderingHost
     private IBuffer _instanceIndexBuffer = null!;
     // Holds the per-instance data for all instances
     internal InfiniteInstanceWriteOnlyBuffer<InstanceData> InfiniteInstanceBuffer = null!;
+    internal InfiniteInstanceWriteOnlyBuffer<LaminaInstanceData> InfiniteLaminaInstanceBuffer = null!;
     
     public void UpdateRegistered(long rid, ICamera camera) => RegisteredCameras.AddOrUpdate(rid, camera);
     public void UpdateRegistered(long rid, IMaskedRenderable maskedRenderable)
     {
-        // TODO
+        // TODO:
         // Debug.Assert(mr is IRenderable);
         // var r = Unsafe.As<IRenderable>(mr);
         if (maskedRenderable is not IRenderable renderable)
@@ -111,6 +112,7 @@ public class RenderingHost : IRenderingHost
         
         using var engineFactory = Native.GetEngineFactoryD3D12();
         InfiniteInstanceBuffer = new InfiniteInstanceWriteOnlyBuffer<InstanceData>();
+        InfiniteLaminaInstanceBuffer = new InfiniteInstanceWriteOnlyBuffer<LaminaInstanceData>();
         var renderContext = new RenderContext
         {
             ImmediateContext = _immediateContext,
@@ -120,6 +122,7 @@ public class RenderingHost : IRenderingHost
             ViewMatrixBuffer = ViewMatrixBuffer,
             ObjectIndexBuffer = _instanceIndexBuffer,
             InstanceBuffer = InfiniteInstanceBuffer,
+            LaminaInstanceBuffer = InfiniteLaminaInstanceBuffer,
             RenderTargetSize = new Vector2(_swapChain.GetDesc().Width, _swapChain.GetDesc().Height),
             ShaderFactory = engineFactory.CreateDefaultShaderSourceStreamFactory("Assets/Shaders"),
         };
@@ -234,6 +237,7 @@ public class RenderingHost : IRenderingHost
         ViewMatrixBuffer.Dispose();
         _instanceIndexBuffer.Dispose();
         InfiniteInstanceBuffer.Dispose();
+        InfiniteLaminaInstanceBuffer.Dispose();
         DisposeRenderTargets();
     }
 

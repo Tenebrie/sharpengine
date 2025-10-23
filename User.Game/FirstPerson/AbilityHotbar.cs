@@ -47,7 +47,7 @@ public partial class AbilityHotbar : Actor
 
             var controller = FirstPersonAbilityController.All.First();
             v.Label(text: "Hotbar", fontSize: 24, color: Color.White, position: (16, 8));
-            v.Image(tint: Color.FromArgb(120, 0, 0, 0), size: (256 + 48 + 32, 64 + 48 + 8));
+            v.Image(tint: Color.FromArgb(120, 0, 0, 0), size: (256 + 48 + 32, 64 + 48 + 8), borderRadius: (10, 10, 20, 20));
             v.Div(position: (16, 40), gap: 64 + 16, direction: LaminaDivDirection.Row, children: v =>
             {
                 v.Div(children: v =>

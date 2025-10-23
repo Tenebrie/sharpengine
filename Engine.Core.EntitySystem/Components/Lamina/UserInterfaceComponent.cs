@@ -3,6 +3,7 @@ using Diligent;
 using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Meshes;
 using Engine.Core.Assets.Meshes.Builtins;
+using Engine.Core.Assets.Renderers;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Attributes;
 using Engine.Core.Common;
@@ -75,6 +76,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         MeshComponent.MaterialInstance = MeshComponent.Material.Instantiate();
         MeshComponent.SortOrder = 1;
         MeshComponent.CullingEnabled = false;
+        MeshComponent.RenderScript = IRenderScript.LaminaWidget;
         Transform.Position = new Vector3(0, 0, 0);
         Transform.Scale = new Vector3(Size.X, Size.Y, 1);
         Dirty = true;

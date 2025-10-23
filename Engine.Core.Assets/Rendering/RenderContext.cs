@@ -13,6 +13,7 @@ public struct RenderContext
     public required IBuffer ViewMatrixBuffer;
     public required IBuffer ObjectIndexBuffer;
     public required IInstanceBuffer<InstanceData> InstanceBuffer;
+    public required IInstanceBuffer<LaminaInstanceData> LaminaInstanceBuffer;
     public required IShaderSourceInputStreamFactory ShaderFactory;
     public required Vector2 RenderTargetSize;
 
@@ -31,6 +32,16 @@ public struct InstanceData
     public required Vector4Float Tint;
     public required Vector2Float UvOffset;
     public required Vector2Float UvScale;
+}
+
+[StructLayout(LayoutKind.Sequential, Pack = 1)]
+public struct LaminaInstanceData
+{
+    public required MatrixFloat WorldTransform;
+    public required Vector4Float Tint;
+    public required Vector2Float UvOffset;
+    public required Vector2Float UvScale;
+    public required Vector4Float BorderRadius; // BorderRadius.x = top-left, y = top-right, z = bottom-right, w = bottom-left
 }
 
 public struct InstanceBufferTicket

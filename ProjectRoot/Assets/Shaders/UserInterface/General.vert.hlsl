@@ -6,9 +6,11 @@ struct VSIn {
 };
 
 struct VSOut {
-    float4 PosH  : SV_Position;
-    float2 UV    : TEXCOORD0;
-    float4 Color : COLOR0;
+    float4 PosH         : SV_Position;
+    float4 Color        : COLOR0;
+    float2 UV           : TEXCOORD0;
+    float2 SizePx       : TEXCOORD1; // on-screen size of the quad in pixels
+    float4 BorderRadius : TEXCOORD2; // border radius in pixels
 };
 
 cbuffer Constants
@@ -29,6 +31,7 @@ struct InstanceRecord
     float4 Tint;
     float2 UvOffset;
     float2 UvScale;
+    float4 BorderRadius;
 };
 
 StructuredBuffer<InstanceRecord> g_InstanceData;
@@ -46,8 +49,10 @@ VSOut main(VSIn Vertex, uint InstanceID : SV_InstanceID)
     float2 clipXY = float2(uv01.x * 2.0f - 1.0f, 1.0f - uv01.y * 2.0f);
 
     VSOut OUT;
-    OUT.PosH  = float4(clipXY, 0.0f, 1.0f);
-    OUT.UV    = float2(Vertex.UV.x, Vertex.UV.y) * instance.UvScale + instance.UvOffset;
+    OUT.PosH = float4(clipXY, 0.0f, 1.0f);
+    OUT.UV = float2(Vertex.UV.x, Vertex.UV.y) * instance.UvScale + instance.UvOffset;
     OUT.Color = Vertex.Col * instance.Tint;
+    OUT.SizePx = instanceSize;
+    OUT.BorderRadius = instance.BorderRadius;
     return OUT;
 }

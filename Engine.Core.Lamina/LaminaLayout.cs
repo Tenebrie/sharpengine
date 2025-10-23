@@ -44,6 +44,7 @@ public record struct LaminaButtonProps()
     public string Label = "";
     public Color BackgroundColor = Color.Gray;
     public Action? OnClick;
+    public Vector4Shorthand BorderRadius = 0;
 }
 
 /// <summary>
@@ -85,6 +86,7 @@ public record struct LaminaImageProps()
     public Box ClippingRect = Box.Full;
     public Vector2 Size = new(100, 100);
     public Color Tint = Color.White;
+    public Vector4Shorthand BorderRadius = 0;
 }
 
 /// <summary>

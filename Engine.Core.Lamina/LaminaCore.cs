@@ -37,13 +37,12 @@ public struct LaminaRenderRequest
 {
     public required StaticMesh Mesh;
     public required Material Material;
-    public required IRenderScript RenderScript;
+    public required LaminaRenderScript RenderScript;
     
     public required int InstanceCount;
     public required TransformSnapshot[] InstanceTransforms;
     public required MaterialInstanceSnapshot[] MaterialInstances;
     
     public Rect? ScissorRect;
-    
-    public int HashCode => Mesh.GetHashCode() ^ Material.GetHashCode() ^ RenderScript.GetHashCode();
+    public required LaminaRenderScript.UserData ShaderParams;
 }

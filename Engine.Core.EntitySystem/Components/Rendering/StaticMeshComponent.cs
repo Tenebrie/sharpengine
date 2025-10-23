@@ -38,7 +38,7 @@ public partial class StaticMeshComponent : ActorComponent, ICullable
         set => _staticMeshHolder.BoundingSphere = value;
     }
     public int SortOrder { get; set; } = 0;
-    private IRenderScript RenderScript { get; set; } = IRenderScript.Default;
+    public IRenderScript RenderScript { get; set; } = IRenderScript.Default;
     public bool Visible { get; set; } = true;
     public bool CullingEnabled { get; set; } = true;
     public Vector3 BoundingSphereWorldOrigin => WorldTransform.Position;

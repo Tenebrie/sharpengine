@@ -8,7 +8,6 @@ using Engine.Core.Assets.Renderers;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.Lamina;
-using Engine.Core.Logging;
 
 namespace Engine.Module.Utility.Lamina.Components;
 
@@ -49,8 +48,12 @@ public partial class LaminaLine : LaminaWidgetComponent<LineLayout>
             InstanceTransforms = [WorldTransformNoScale.Snapshot()],
             Material = _material,
             Mesh = _mesh,
-            RenderScript = IRenderScript.Default,
-            MaterialInstances = [_materialInstance.Snapshot()]
+            RenderScript = IRenderScript.LaminaWidget,
+            MaterialInstances = [_materialInstance.Snapshot()],
+            ShaderParams = new LaminaRenderScript.UserData
+            {
+                BorderRadius = Vector4.Zero
+            }
         });
     }
     

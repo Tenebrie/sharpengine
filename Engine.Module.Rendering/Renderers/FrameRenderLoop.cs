@@ -135,6 +135,7 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         var activeCamera = host.RegisteredCameras.FindActive(GameplayContext == GameplayContext.Editor);
         
         host.InfiniteInstanceBuffer.FrameStart();
+        host.InfiniteLaminaInstanceBuffer.FrameStart();
         var stopwatch = Profiler.Start();
         _cullingComputer.ReadResultsAndPrepare();
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingCullingComputerRead);

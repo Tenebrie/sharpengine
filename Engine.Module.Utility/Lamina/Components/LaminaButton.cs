@@ -42,8 +42,12 @@ public partial class LaminaButton : LaminaWidgetComponent<ButtonLayout>
             InstanceTransforms = [WorldTransformNoScale.Snapshot()],
             Material = _material,
             Mesh = InterfacePlaneMesh.Shared,
-            RenderScript = IRenderScript.Default,
-            MaterialInstances = [_materialInstance.Snapshot()]
+            RenderScript = IRenderScript.LaminaWidget,
+            MaterialInstances = [_materialInstance.Snapshot()],
+            ShaderParams = new LaminaRenderScript.UserData
+            {
+                BorderRadius = layout.Props.BorderRadius,
+            }
         });
     }
     

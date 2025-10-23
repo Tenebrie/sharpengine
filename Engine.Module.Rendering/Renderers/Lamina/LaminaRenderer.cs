@@ -1,14 +1,9 @@
 using System.Drawing;
 using Diligent;
-using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Interfaces;
-using Engine.Core.Extensions;
 using Engine.Core.Lamina;
-using Engine.Core.Logging;
 using Engine.Core.Profiling;
-using Engine.Core.Profiling.Attributes;
-using Engine.Module.Rendering.Renderers.Atoms;
 using Engine.Module.Rendering.Renderers.Debug;
 using Engine.Module.Rendering.Renderers.Fonts;
 
@@ -52,7 +47,7 @@ internal class LaminaRenderer : IDisposable
             {
                 if (request.ScissorRect is { } rect)
                 {
-                    _deviceContext.SetScissorRects([new Rect()
+                    _deviceContext.SetScissorRects([new Rect
                     {
                         Top = rect.Top * 2,
                         Left = rect.Left * 2,
@@ -70,8 +65,14 @@ internal class LaminaRenderer : IDisposable
                         Bottom = (int)renderable.InternalTextureSize.Y * 2
                     }], (uint)renderable.InternalTextureSize.X, (uint)renderable.InternalTextureSize.Y);
                 }
-                request.RenderScript.Render(_deviceContext, request.InstanceCount, request.Mesh, request.InstanceTransforms, request.Material,
-                    request.MaterialInstances);
+
+                request.RenderScript.Render(_deviceContext,
+                    request.InstanceCount,
+                    request.Mesh,
+                    request.InstanceTransforms,
+                    request.Material,
+                    request.MaterialInstances,
+                    request.ShaderParams);
             }
             _textRenderer.Flush();
         }

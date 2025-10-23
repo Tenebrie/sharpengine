@@ -1,15 +1,10 @@
-using System.Drawing;
 using Diligent;
 using Engine.Core.Assets.Builders;
 using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Renderers;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Components.Lamina;
-using Engine.Core.Input.Attributes;
 using Engine.Core.Lamina;
-using Engine.Core.Logging;
-using Engine.Module.Utility.Services;
-using Box = Engine.Core.Common.Box;
 
 namespace Engine.Module.Utility.Lamina.Components;
 
@@ -49,7 +44,7 @@ public partial class LaminaImage : LaminaWidgetComponent<ImageLayout>
             InstanceTransforms = [WorldTransformNoScale.Snapshot()],
             Material = _material,
             Mesh = InterfacePlaneMesh.Shared,
-            RenderScript = IRenderScript.Default,
+            RenderScript = IRenderScript.LaminaWidget,
             MaterialInstances = [_materialInstance.Snapshot()],
             ScissorRect = layout.Props.ClippingRect is var rect ? new Rect
             {
@@ -58,6 +53,10 @@ public partial class LaminaImage : LaminaWidgetComponent<ImageLayout>
                 Right = (int)(globalPos.X + rect.Right * layout.Props.Size.X),
                 Bottom = (int)(globalPos.Y + rect.Bottom * layout.Props.Size.Y)
             } : null,
+            ShaderParams = new LaminaRenderScript.UserData
+            {
+                BorderRadius = layout.Props.BorderRadius,
+            }
         });
     }
 }
