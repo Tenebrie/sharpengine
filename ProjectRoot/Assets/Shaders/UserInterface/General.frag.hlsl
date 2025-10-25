@@ -13,16 +13,24 @@ SamplerState g_Texture_sampler;
 // Hardcoded pixel corner radius
 static const float kSoftnessPx = 0.2;  // AA falloff width in pixels
 
-float RoundedBoxSDF_Px(float2 relativePixelPosition, float2 halfPixelSize, float cornerRadius)
+float RoundedBoxSDF_Px(float2 relativePixelPosition, float2 halfPixelSize, float4 radiusPerCorner)
 {
+    bool right  = relativePixelPosition.x >= 0.0;
+    bool bottom = relativePixelPosition.y >= 0.0;
+
+    float chosenRadius = !right && !bottom ? radiusPerCorner.x :   // TL
+                          right && !bottom ? radiusPerCorner.y :   // TR
+                          right && bottom  ? radiusPerCorner.z :   // BR
+                                             radiusPerCorner.w;    // BL
+    
     // clamp radius so it never exceeds the smallest half-size
-    cornerRadius = max(0.0, min(cornerRadius, min(halfPixelSize.x, halfPixelSize.y)));
+    chosenRadius = max(0.0, min(chosenRadius, min(halfPixelSize.x, halfPixelSize.y)));
 
     // standard rounded-rect SDF
-    float2 q = abs(relativePixelPosition) - (halfPixelSize - cornerRadius);
+    float2 q = abs(relativePixelPosition) - (halfPixelSize - chosenRadius);
     float outside = length(max(q, 0.0));
     float inside  = min(max(q.x, q.y), 0.0);
-    return outside + inside - cornerRadius;   // <0 inside
+    return outside + inside - chosenRadius;   // <0 inside
 }
 
 float4 main(PSIn IN) : SV_Target
@@ -34,7 +42,7 @@ float4 main(PSIn IN) : SV_Target
     float2 relativePixelPosition = IN.UV * sizePx - halfPixelSize;
 
     // TODO: Support different radius per corner
-    float dist = RoundedBoxSDF_Px(relativePixelPosition, halfPixelSize, IN.BorderRadius.x);
+    float dist = RoundedBoxSDF_Px(relativePixelPosition, halfPixelSize, IN.BorderRadius);
 
     float aa = max(kSoftnessPx, fwidth(dist));
     float coverage = saturate(0.5 - dist / aa);

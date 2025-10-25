@@ -83,7 +83,14 @@ public record struct Vector2(double X, double Y)
     public static Vector2 operator *(Vector2 a, Vector2 b) => a.Promote() * b.Promote();
     public static Vector2 operator /(Vector2 a, double b) => a.Promote() / b;
     public static Vector2 operator /(Vector2 a, Vector2 b) => a.Promote() / b.Promote();
-    
+    public static bool operator >(Vector2 a, Vector2 b) => a.X > b.X && a.Y > b.Y;
+    public static bool operator <(Vector2 a, Vector2 b) => a.X < b.X && a.Y < b.Y;
+    public static bool operator >=(Vector2 a, Vector2 b) => a.X >= b.X && a.Y >= b.Y;
+    public static bool operator <=(Vector2 a, Vector2 b) => a.X <= b.X && a.Y <= b.Y;
+
+    public static Vector2 Min(Vector2 a, Vector2 b) => new(Math.Min(a.X, b.X), Math.Min(a.Y, b.Y));
+    public static Vector2 Max(Vector2 a, Vector2 b) => new(Math.Max(a.X, b.X), Math.Max(a.Y, b.Y));
+
     /**
      * Implicit conversions
      */

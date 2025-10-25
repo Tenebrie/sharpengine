@@ -123,7 +123,7 @@ public partial class PerkWidget : ActorComponent
             Vector2 perkSize = (300, 600);
             const int perkSpacing = 50;
             var offset = new Vector2(perkSpacing + perkSize.X, 0) * index;
-            v.Div(
+            v.Flex(
                 position: windowCenter - perkSize / 2 + offset, 
                 children: v =>     
             {
@@ -143,7 +143,7 @@ public partial class PerkWidget : ActorComponent
                 v.Label(text: perk.Rarity.ToString(), position: (10, 40), fontSize: 20, color: Color.White);
                 v.Label(text: perk.Description, position: (10, 80), color: Color.White); 
                 
-                v.Div(gap: 20, position: (10, 150), children: v =>
+                v.Flex(gap: 20, position: (10, 150), children: v =>
                 {
                     foreach (var (attribute, value) in perk.BoostedAttributes)
                     {

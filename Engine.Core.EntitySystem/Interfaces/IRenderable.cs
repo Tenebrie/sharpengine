@@ -18,8 +18,8 @@ public interface IRenderable : IAtom, IMaskedRenderable
 public interface ILaminaRenderable : IAtom, IMaskedLaminaRenderable
 {
     public bool Dirty { get; set; }
-    public void EnsureRenderTarget();
-    public void CollectCommandList(ILaminaRenderContext renderContext);
+    public void EnsureRenderTarget(ILaminaRenderContext renderContext, ILaminaReflowContext reflowContext);
+    public void CollectCommandList(ILaminaRenderContext renderContext, ILaminaReflowContext reflowContext);
     public Vector2 InternalTextureSize { get; }
     public Color BackgroundColor { get; }
     public ITextureView RenderTargetView { get; }

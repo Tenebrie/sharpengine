@@ -42,49 +42,45 @@ public partial class AbilityHotbar : Actor
     {
         HotbarWidget.SetLayout(v =>
         {
+            var controller = FirstPersonAbilityController.All.FirstOrDefault();
+            if (controller == null)
+                return;
             var screenSize = Backstage.Window.Size;
-            HotbarWidget.Transform.Position = (screenSize.X / 2 - 128 - 32, screenSize.Y - 148, 0);
+            HotbarWidget.Transform.Position = (screenSize.X / 2 - HotbarWidget.Size.X / 2, screenSize.Y - HotbarWidget.Size.Y - 16, 0);
+            HotbarWidget.Padding = (0, 0);
 
-            var controller = FirstPersonAbilityController.All.First();
-            v.Label(text: "Hotbar", fontSize: 24, color: Color.White, position: (16, 8));
-            v.Image(tint: Color.FromArgb(120, 0, 0, 0), size: (256 + 48 + 32, 64 + 48 + 8), borderRadius: (10, 10, 20, 20));
-            v.Div(position: (16, 40), gap: 64 + 16, direction: LaminaDivDirection.Row, children: v =>
+            v.Image(tint: Color.FromArgb(120, 0, 0, (int)FrameCounter.Current % 2), borderRadius: (4, 20));
+            v.Flex(direction: LaminaFlexDirection.Column, padding: (16, 8), gap: 12, children: v =>
             {
-                v.Div(children: v =>
+                v.Label(text: "Hotbar", fontSize: 24, padding: (0, 0), color: Color.White);
+                v.Label(text: "Subtitle describing the hotbar!", fontSize: 18, padding: (0, 0), color: Color.Yellow);
+                
+                v.Flex(gap: 8, direction: LaminaFlexDirection.Row, children: v =>
                 {
-                    var progress = 1 - controller.GetProgress(0);
-                    v.Image(size: (64, 64), tint: Color.DarkRed);
-                    v.Image(size: (64, 64), tint: Color.FromArgb(120, 0, 0, 0), clippingRect: Box.FillTop(progress));
-                    var textColor = controller.CurrentAbilityIndex == 0 ? Color.Gold : Color.White;
-                    v.Label("1", fontSize: 24, color: textColor, position: (48, 36));
-                    v.Label("Pew-pew", fontSize: 16, color: textColor, position: (4, 4));
-                });
-                v.Div(children: v =>
-                {
-                    var progress = 1 - controller.GetProgress(1);
-                    v.Image(size: (64, 64), tint: Color.DarkGreen);
-                    v.Image(size: (64, 64), tint: Color.FromArgb(120, 0, 0, 0), clippingRect: Box.FillTop(progress));
-                    var textColor = controller.CurrentAbilityIndex == 1 ? Color.Gold : Color.White;
-                    v.Label("2", fontSize: 24, color: textColor, position: (48, 36));
-                    v.Label("Pew-pew", fontSize: 16, color: textColor, position: (4, 4));
-                });
-                v.Div(children: v =>
-                {
-                    var progress = 1 - controller.GetProgress(2);
-                    v.Image(size: (64, 64), tint: Color.DarkBlue);
-                    v.Image(size: (64, 64), tint: Color.FromArgb(120, 0, 0, 0), clippingRect: Box.FillTop(progress));
-                    var textColor = controller.CurrentAbilityIndex == 2 ? Color.Gold : Color.White;
-                    v.Label("3", fontSize: 24, color: textColor, position: (48, 36));
-                    v.Label("Pew-pew", fontSize: 16, color: textColor, position: (4, 4));
-                });
-                v.Div(children: v =>
-                {
-                    var progress = 1 - controller.GetProgress(3);
-                    v.Image(size: (64, 64), tint: Color.DodgerBlue);
-                    v.Image(size: (64, 64), tint: Color.FromArgb(120, 0, 0, 0), clippingRect: Box.FillTop(progress));
-                    var textColor = controller.CurrentAbilityIndex == 3 ? Color.DarkGoldenrod : Color.White;
-                    v.Label("4", fontSize: 24, color: textColor, position: (48, 36));
-                    v.Label("Clean\npew-pews", fontSize: 14, color: textColor, position: (4, 4));
+                    var abilityCount = controller.AbilityCount;
+                    for (var i = 0; i < abilityCount; i++)
+                    {
+                        var abilityIndex = i;
+                        v.Box(size: (64, 64), children: v =>
+                        {
+                            var ability = controller.GetAbilityAt(abilityIndex);
+                            var name = ability == null ? "" : "Name";
+                            var keybind = ability == null ? "" : (abilityIndex + 1).ToString();
+                            
+                            var progress = 1 - controller.GetProgress(abilityIndex);
+                            if (ability == null)
+                                progress = 0;
+                            
+                            if (ability == null)
+                                v.Image(tint: Color.FromArgb(120, 0,0,(int)FrameCounter.Current % 2), borderRadius: 6);
+                            else
+                                v.Image(imagePath: ability.GetIconPath(), borderRadius: 6);
+                            v.Image(tint: Color.FromArgb(120, 0, 0, 0), clippingRect: Box.FillTop(progress));
+                            var textColor = controller.CurrentAbilityIndex == abilityIndex ? Color.Gold : Color.White;
+                            v.Label(name, fontSize: 16, color: textColor, position: (4, 4));
+                            v.Label(keybind, fontSize: 24, color: textColor, position: (48, 36));
+                        });
+                    }
                 });
             });
         });

@@ -13,13 +13,13 @@ using User.Game.Player.PlayerAttributes;
 namespace User.Game.Player.Abilities.Definitions;
 
 [UsedImplicitly]
-public partial class PiercingBladeAbility : ActorComponent, IAbility
+public partial class PiercingBladeAbility : BaseAbility
 {
     private const double CooldownTime = 0.4;
     private double _cooldownRemaining = 0.0;
     
-    public bool Ready => _cooldownRemaining <= 0.0;
-    public void OnCast()
+    public override bool Ready => _cooldownRemaining <= 0.0;
+    public override void OnCast()
     {
         if (_cooldownRemaining > 0)
             return;
@@ -45,7 +45,7 @@ public partial class PiercingBladeAbility : ActorComponent, IAbility
         }
     }
     
-    public void OnAutoCast(Vector3 targetPoint)
+    public override void OnAutoCast(Vector3 targetPoint)
     {
         var forwardVector = Vector3.Forward;
         var value = targetPoint - WorldTransform.Position;
@@ -70,14 +70,14 @@ public partial class PiercingBladeAbility : ActorComponent, IAbility
         _cooldownRemaining = CooldownTime;
     }
 
-    public void OnCooldownReduce(double deltaTime)
+    public override void OnCooldownReduce(double deltaTime)
     {
         if (_cooldownRemaining <= 0.0)
             return;
         _cooldownRemaining -= deltaTime;
     }
     
-    public double GetCooldownProgress()
+    public override double GetCooldownProgress()
     {
         return Math.Clamp(1.0 - (_cooldownRemaining / CooldownTime), 0.0, 1.0);
     }

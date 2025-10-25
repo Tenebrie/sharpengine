@@ -150,6 +150,26 @@ public record struct Vector4(double X, double Y, double Z, double W)
         return this;
     }
     
+    public Vector4 SetLengthOrInitialize(double length, in Vector4 initial)
+    {
+        var currentLength = Length;
+        if (currentLength < 1e-50)
+        {
+            X = initial.X;
+            Y = initial.Y;
+            Z = initial.Z;
+            W = initial.W;
+            currentLength = Length;
+        }
+        
+        var factor = length / currentLength;
+        X *= factor;
+        Y *= factor;
+        Z *= factor;
+        W *= factor;
+        return this;
+    }
+    
     /**
      * Operator overloads
      */

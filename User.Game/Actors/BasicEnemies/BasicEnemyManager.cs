@@ -37,15 +37,15 @@ public partial class BasicEnemyManager : Actor
         EvolutionFactorWidget.Size = (512, 90);
         EvolutionFactorWidget.SetLayout(v =>
         {
-            v.Div(position: (10, 0), children: v =>
+            v.Flex(position: (10, 0), children: v =>
             {
                 v.Label($"Evolution Factor: {_evolutionFactor:F2}", fontSize: 28, color: Color.White);
             });
-            v.Div(position: (10, 32), children: v =>
+            v.Flex(position: (10, 32), children: v =>
             {
                 v.Label($"Enemy Count: {InstanceManager.InstanceCount} / {500}", fontSize: 28, color: Color.White);
             });
-            v.Div(position: (10, 58), children: v =>
+            v.Flex(position: (10, 58), children: v =>
             {
                 v.Label($"^ If it's full, you lose!", fontSize: 24, color: Color.DarkGray);
             });
@@ -72,11 +72,11 @@ public partial class BasicEnemyManager : Actor
             EvolutionFactorWidget.BackgroundColor = Color.FromArgb(128, 0, 0, 0);
             EvolutionFactorWidget.Size = (512, 90);
             
-            v.Div(position: (10, 0), children: v =>
+            v.Flex(position: (10, 0), children: v =>
             {
                 v.Label($"Evolution Factor: {_evolutionFactor:F2}", fontSize: 28, color: Color.White);
             });
-            v.Div(position: (10, 32), children: v =>
+            v.Flex(position: (10, 32), children: v =>
             {
                 var color = Color.Green;
                 if (maxEnemies - InstanceManager.InstanceCount < 300)
@@ -87,7 +87,7 @@ public partial class BasicEnemyManager : Actor
                     color = Color.Red;
                 v.Label($"Enemy Count: {InstanceManager.InstanceCount} / {maxEnemies}", fontSize: 28, color: color);
             });
-            v.Div(position: (10, 58), children: v =>
+            v.Flex(position: (10, 58), children: v =>
             {
                 v.Label($"^ If it's full, you lose!", fontSize: 21, color: Color.DarkGray);
             });

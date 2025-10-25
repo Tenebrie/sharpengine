@@ -8,13 +8,13 @@ using User.Game.Player.PlayerAttributes;
 namespace User.Game.FirstPerson;
 
 [UsedImplicitly]
-public partial class FirstPersonClearAbility : ActorComponent, IAbility
+public partial class FirstPersonClearAbility : BaseAbility
 {
     private const double CooldownTime = 0.3;
     private double _cooldownRemaining = 0.0;
     
-    public bool Ready => _cooldownRemaining <= 0.0;
-    public void OnCast()
+    public override bool Ready => _cooldownRemaining <= 0.0;
+    public override void OnCast()
     {
         if (_cooldownRemaining > 0)
             return;
@@ -22,7 +22,7 @@ public partial class FirstPersonClearAbility : ActorComponent, IAbility
         OnAutoCast(Vector3.Zero);
     }
     
-    public void OnAutoCast(Vector3 position)
+    public override void OnAutoCast(Vector3 position)
     {
         var direction = FirstPersonPlayer.All.First().WorldTransform.Basis;
         
@@ -34,14 +34,14 @@ public partial class FirstPersonClearAbility : ActorComponent, IAbility
         _cooldownRemaining = CooldownTime;
     }
 
-    public void OnCooldownReduce(double deltaTime)
+    public override void OnCooldownReduce(double deltaTime)
     {
         if (_cooldownRemaining <= 0.0)
             return;
         _cooldownRemaining -= deltaTime;
     }
     
-    public double GetCooldownProgress()
+    public override double GetCooldownProgress()
     {
         return Math.Clamp(1.0 - (_cooldownRemaining / CooldownTime), 0.0, 1.0);
     }

@@ -41,6 +41,8 @@ public static class WindowStateManager
     
     public static void SaveWindowState(IWindow window)
     {
+        if (window.Size.X == 0 || window.Size.Y == 0)
+            return;
         var directory = Path.GetDirectoryName(WindowStateFilePath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             Directory.CreateDirectory(directory);

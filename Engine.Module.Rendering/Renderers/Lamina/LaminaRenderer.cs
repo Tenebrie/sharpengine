@@ -35,13 +35,17 @@ internal class LaminaRenderer : IDisposable
             if (renderable is not { Dirty: true })
                 continue;
             renderable.Dirty = false;
-            renderable.EnsureRenderTarget();
+            renderable.EnsureRenderTarget(context, context);
+            if (renderable.InternalTextureSize == Vector2.Zero)
+                continue;
+            context = new LaminaRenderContext(_textRenderer, _deviceContext);
             _renderTargetViews[0] = renderable.RenderTargetView;
             _host.FrameRenderLoop.SetRenderTargets(_renderTargetViews,
                 null,
                 renderable.InternalTextureSize,
                 clearColor: renderable.BackgroundColor);
-            renderable.CollectCommandList(context);
+            renderable.CollectCommandList(context, context);
+            context.FlushText();
             
             foreach (var request in context.RenderRequests)
             {
@@ -91,12 +95,13 @@ internal class LaminaRenderer : IDisposable
     }
 }
 
-internal class LaminaRenderContext(TextRenderer textRenderer, IDeviceContext deviceContext) : ILaminaRenderContext
+internal class LaminaRenderContext(TextRenderer textRenderer, IDeviceContext deviceContext) : ILaminaRenderContext, ILaminaReflowContext
 {
     private struct WidgetStackEntry
     {
         public required IWidget Widget { get; init; }
         public required Vector2 Position { get; set; }
+        public required Vector2 SpaceTakenByChildren { get; set; }
     }
 
     public Vector2 ChildrenPosition
@@ -111,7 +116,26 @@ internal class LaminaRenderContext(TextRenderer textRenderer, IDeviceContext dev
             _widgetStack[^1] = entry;
         }
     }
+
     public Vector2 OffsetToParent => _widgetStack.Count <= 1 ? throw new InvalidOperationException("No widget in stack") : _widgetStack[^2].Position;
+
+    public Vector2 SpaceTakenByChildren
+    {
+        get => _widgetStack.Count <= 0 ? throw new InvalidOperationException("No widget in stack") : _widgetStack[^1].SpaceTakenByChildren;
+        set
+        {
+            if (_widgetStack.Count <= 0)
+                throw new InvalidOperationException("No widget in stack to set space taken for.");
+            var entry = _widgetStack[^1];
+            entry.SpaceTakenByChildren = value;
+            _widgetStack[^1] = entry;
+        }
+    }
+    public Vector2 SpaceAvailable =>
+        _widgetStack.Count <= 1
+            ? throw new InvalidOperationException("No widget in stack")
+            : Vector2.Max(Vector2.Zero,
+                Parent.ContentSize - _widgetStack[^2].SpaceTakenByChildren);
     
     public IWidget Parent => _widgetStack.Count <= 1 ? null! : _widgetStack[^2].Widget;
 
@@ -122,6 +146,7 @@ internal class LaminaRenderContext(TextRenderer textRenderer, IDeviceContext dev
         {
             Widget = widget,
             Position = Vector2.Zero,
+            SpaceTakenByChildren = Vector2.Zero
         });
     }
 
@@ -133,14 +158,37 @@ internal class LaminaRenderContext(TextRenderer textRenderer, IDeviceContext dev
     }
 
     public readonly List<LaminaRenderRequest> RenderRequests = [];
-
-    public void RenderText(string font, int size, string text, Vector2 position, Color color, int shadowBlur = 2)
+    public LaminaRenderRequest GetRequest(int index) => RenderRequests[index];
+    public void SetRequest(int index, LaminaRenderRequest request) => RenderRequests[index] = request;
+    public int RenderRequest(LaminaRenderRequest request)
     {
-        textRenderer.RenderText(font, size, text, position + OffsetToParent, color, shadowBlur);
+        var requestIndex = RenderRequests.Count;
+        RenderRequests.Add(request);
+        return requestIndex;
     }
 
-    public void RenderRequest(LaminaRenderRequest request)
+
+    public readonly List<LaminaTextRenderRequest> TextRenderRequests = [];
+    public int RenderText(LaminaTextRenderRequest request)
     {
-        RenderRequests.Add(request);
+        var index = TextRenderRequests.Count;
+        TextRenderRequests.Add(request);
+        return index;
+    }
+    public Vector2 MeasureText(LaminaTextRenderRequest request)
+    {
+        return textRenderer.MeasureText(request.Font, request.Size, request.Text);
+    }
+
+    public LaminaTextRenderRequest GetTextRequest(int index) => TextRenderRequests[index];
+    public void SetTextRequest(int index, LaminaTextRenderRequest request) => TextRenderRequests[index] = request;
+
+    public void FlushText()
+    {
+        foreach (var request in TextRenderRequests)
+        {
+            textRenderer.RenderText(request.Font, request.Size, request.Text, request.Position, request.Color, request.ShadowBlur);
+        }
+        TextRenderRequests.Clear();
     }
 }

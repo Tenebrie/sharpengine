@@ -24,13 +24,32 @@ public interface ILaminaRenderContext
     public void PushWidget(IWidget widget);
     public void PopWidget();
     
-    public void RenderText(string font, int size, string text, Vector2 position, Color color, int shadowBlur = 0);
-    public void RenderRequest(LaminaRenderRequest request);
+    public int RenderRequest(LaminaRenderRequest request);
+    public int RenderText(LaminaTextRenderRequest request);
+    public Vector2 MeasureText(LaminaTextRenderRequest request);
+}
+
+public interface ILaminaReflowContext
+{
+    public IWidget Parent { get; }
+    public Vector2 OffsetToParent { get; }
+    public Vector2 ChildrenPosition { get; set; }
+    public Vector2 SpaceTakenByChildren { get; set; }
+    public Vector2 SpaceAvailable { get; }
+    public LaminaRenderRequest GetRequest(int index);
+    public void SetRequest(int index, LaminaRenderRequest request);
+    public LaminaTextRenderRequest GetTextRequest(int index);
+    public void SetTextRequest(int index, LaminaTextRenderRequest request);
+    
+    public void PushWidget(IWidget widget);
+    public void PopWidget();
 }
 
 public interface IWidget : ISpatial
 {
-     
+    public Vector2 Position { get; set; }
+    public Vector2 Size { get; }
+    public Vector2 ContentSize { get; }
 }
 
 public struct LaminaRenderRequest
@@ -45,4 +64,15 @@ public struct LaminaRenderRequest
     
     public Rect? ScissorRect;
     public required LaminaRenderScript.UserData ShaderParams;
+}
+
+public struct LaminaTextRenderRequest
+{
+    public required string Font { get; set; }
+    public required int Size { get; set; }
+    public required string Text { get; set; }
+    public required Vector2 Position { get; set; }
+    public required Color Color { get; set; }
+    
+    public int ShadowBlur { get; set; }
 }

@@ -2,7 +2,9 @@
 using Engine.Core.Common;
 using Engine.Core.Communication.Groups;
 using Engine.Core.EntitySystem.Attributes;
+using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.EntitySystem.Entities;
+using Engine.Core.Logging;
 using User.Game.Actors;
 using User.Game.Actors.BasicEnemies;
 using User.Game.Actors.CloudCover;
@@ -16,6 +18,8 @@ namespace User.Game;
 [MainBackstage]
 public partial class UserBackstage : GameplayHostBackstage
 {
+    [Component] public UserInterfaceComponent HotbarWidget;
+    
     [OnReady]
     protected void OnReady()
     {
@@ -30,6 +34,10 @@ public partial class UserBackstage : GameplayHostBackstage
     [OnUpdate]
     protected void OnUpdate(double deltaTime)
     {
+        // HotbarWidget.SetLayout(v =>
+        // {
+        //     v.Image(tint: Color.FromArgb(120, 0, 0, (int)FrameCounter.Current % 2));
+        // });
     }
 }
 

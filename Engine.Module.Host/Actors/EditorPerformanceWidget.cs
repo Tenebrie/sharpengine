@@ -28,10 +28,7 @@ public partial class EditorPerformanceWidget : Actor
             FramerateLabelWidget.Size = (512, Backstage.Window.FramebufferSize.Y);
             FramerateLabelWidget.Transform.Position = (Backstage.Window.FramebufferSize.X - 512, 0, 0);
             
-            v.Div(position: (0, 0), children: v =>  
-            {
-                FramerateCounter.WriteFramerateToGrid(TextGrid, v, FramerateLabelWidget.Size);
-            }); 
+            FramerateCounter.WriteFramerateToGrid(TextGrid, v, FramerateLabelWidget.Size);
         });
         
         FramerateGraphWidget.SetLayout(v => 
@@ -39,10 +36,11 @@ public partial class EditorPerformanceWidget : Actor
             FramerateGraphWidget.Padding = (8, 4);
             FramerateGraphWidget.Size = (FramerateCounterComponent.ValuesStored + FramerateGraphWidget.Padding.X * 2, 48);
             FramerateGraphWidget.Transform.Position = new Vector3(Backstage.Window.FramebufferSize.X - 300, 8, 0);
-            FramerateGraphWidget.BackgroundColor = Color.FromArgb(50, 0, 0, 0);
+            // FramerateGraphWidget.BackgroundColor = Color.FromArgb(50, 0, 0, 0);
             
-            v.Div(position: (0, 0), children: v =>
+            v.Flex(position: (0, 0), children: v =>
             {
+                v.Image(tint: Color.FromArgb(50, 0, 0, 0));
                 var height = FramerateGraphWidget.ContentSize.Y;
                 var scaleFactor = height / FramerateCounter.MaximumValue;
                 var graphData = FramerateCounter.FramerateHistory

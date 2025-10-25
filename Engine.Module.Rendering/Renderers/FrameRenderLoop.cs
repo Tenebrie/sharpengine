@@ -10,6 +10,7 @@ using Engine.Module.Rendering.Renderers.Atoms;
 using Engine.Module.Rendering.Renderers.Debug;
 using Engine.Module.Rendering.Renderers.Fonts;
 using Engine.Module.Rendering.Renderers.Lamina;
+using Silk.NET.Windowing;
 
 namespace Engine.Module.Rendering.Renderers;
 
@@ -36,6 +37,9 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
 
     public void RenderSingleFrame(double deltaTime)
     {
+        if (host.RootWindow.State == WindowState.Minimized)
+            return;
+        
         var stopwatch = Profiler.Start();
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingGpuWait);
         

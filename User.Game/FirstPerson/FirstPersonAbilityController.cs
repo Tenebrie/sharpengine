@@ -22,6 +22,8 @@ public partial class FirstPersonAbilityController : ActorComponent
     private List<IAbility?> _hotbar = [];
     
     public int CurrentAbilityIndex => _hotbar.IndexOf(_currentAbility);
+    public int AbilityCount => _hotbar.Count;
+    public IAbility? GetAbilityAt(int index) => _hotbar[index];
     
     public double GetProgress(int index)
     {
@@ -30,15 +32,49 @@ public partial class FirstPersonAbilityController : ActorComponent
             return 0.0;
         return ability.GetCooldownProgress();
     }
+    
+    public static class Assets
+    {
+        public static class Textures
+        {
+            public static class Icons
+            {
+                public static class DaggersRed
+                {
+                    public const string png = "Textures/Icons/DaggersRed.png";
+                }
+
+                public static class DaggersGreen
+                {
+                    public const string png = "Textures/Icons/DaggersGreen.png";
+                }
+                public static class DaggersBlue
+                {
+                    public const string png = "Textures/Icons/DaggersBlue.png";
+                }
+
+                public static class DaggersClean
+                {
+                    public const string png = "Textures/Icons/DaggersClean.png";
+                }
+            }
+        }
+    }
 
     [OnReady]
     protected void OnReady()
     {
         _hotbar = [BladeAttackA, BladeAttackB, BladeAttackC, BladeClear, null, null];
         _currentAbility = _hotbar[0];
+        // BladeAttackA.IconPath = "Textures/Icons/DaggersRed.png";
+
+        BladeAttackA.IconPath = Assets.Textures.Icons.DaggersRed.png;
         BladeAttackA.ProjectileTint = Color.DarkRed;
+        BladeAttackB.IconPath = "Textures/Icons/DaggersGreen.png";
         BladeAttackB.ProjectileTint = Color.DarkGreen;
+        BladeAttackC.IconPath = "Textures/Icons/DaggersBlue.png";
         BladeAttackC.ProjectileTint = Color.DarkBlue;
+        BladeClear.IconPath = "Textures/Icons/DaggersClean.png";
     }
 
     [OnUpdate]

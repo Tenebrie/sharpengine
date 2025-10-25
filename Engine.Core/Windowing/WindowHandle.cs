@@ -12,6 +12,8 @@ public class WindowHandle
     public Vector2 Size => SystemWindow.Size;
     public Vector2 FramebufferSize => SystemWindow.GetScaledFramebufferSize();
     public bool HasFocus = false;
+    
+    public WindowState State = WindowState.Normal;
 
     public Signal Load { get; } = new();
     public Signal<Vector2> Resize { get; } = new();
@@ -31,6 +33,7 @@ public class WindowHandle
         SystemWindow.Load += () => Load.Emit();
         SystemWindow.Resize += size => Resize.Emit(size);
         SystemWindow.Resize += size => OnSystemResize(size);
+        SystemWindow.StateChanged += state => State = state;
         SystemWindow.FocusChanged += value => {
             HasFocus = value;
             if (value)

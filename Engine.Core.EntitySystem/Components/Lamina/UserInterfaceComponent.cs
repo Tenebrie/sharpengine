@@ -13,6 +13,7 @@ using Engine.Core.EntitySystem.Components.Rendering;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.EntitySystem.Interfaces;
 using Engine.Core.Lamina;
+using Engine.Core.Logging;
 
 namespace Engine.Core.EntitySystem.Components.Lamina;
 
@@ -46,7 +47,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     public Vector2 Padding { get; set; } = new(0, 0);
     public Vector2 Size
     {
-        get => _explicitSize ?? Backstage.Window.FramebufferSize;
+        get => _explicitSize ?? Vector2.Zero;
         set => _explicitSize = value;
     }
     public Vector2 ContentSize => Size - Padding * 2;
@@ -66,7 +67,6 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     /**
      * End Public API
      */
-
     
     [OnReady]
     protected void OnReady()
@@ -99,7 +99,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     public void SetLayout(Action<LaminaLayout> renderFunction)
     {
         _layoutFunction = renderFunction;
-        var layout = new LaminaLayout(typeof(LaminaLayout));
+        var layout = new LaminaLayout(typeof(LaminaLayout), new LaminaBoxProps());
         renderFunction(layout);
         RootWidget.Initialize(layout);
         Dirty = true;
@@ -119,8 +119,12 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     public ITextureView RenderTargetView => _renderTargets.RenderTargetView;
     public ITextureView ShaderResourceView => _renderTargets.ShaderResourceView;
     
-    public void EnsureRenderTarget()
+    public void EnsureRenderTarget(ILaminaRenderContext renderContext, ILaminaReflowContext reflowContext)
     {
+        CollectCommandList(renderContext, reflowContext);
+        if (Size == Vector2.Zero)
+            return;
+        
         if (_renderTargetReady && Math.Abs(InternalTextureSize.X - Size.X) < 1 &&
             Math.Abs(InternalTextureSize.Y - Size.Y) < 1)
         {
@@ -129,6 +133,10 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         
         if (_renderTargetReady)
             _renderTargets.Target.Dispose();
+        
+        Logger.Info("Creating texture " + Size);
+        if (Size == Vector2.Zero)
+            return;
 
         var sizeCreated = Size;
         var targetTexture = RenderContext.Current.RenderDevice.CreateTexture(new TextureDesc
@@ -158,7 +166,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         MeshComponent.Material.SetRemoteTextureView(ShaderResourceView);
     }
 
-    public void CollectCommandList(ILaminaRenderContext renderContext)
+    public void CollectCommandList(ILaminaRenderContext renderContext, ILaminaReflowContext reflowContext)
     {
         if (!Visible)
             return;
@@ -166,10 +174,31 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         RootWidget.Transform.Position = (Padding.X, Padding.Y, 0);
         RootWidget.Transform.Scale = Transform.Scale - new Vector3(Padding.X * 2, Padding.Y * 2, 0);
         renderContext.ChildrenPosition = Padding;
-        foreach (var child in GetChildren<WidgetComponent>())
-        {
+        var children = GetChildren<WidgetComponent>();
+        foreach (var child in children)
             child.PerformRender(renderContext);
+
+        var largestX = 0.0;
+        var largestY = 0.0;
+        foreach (var child in children)
+        {
+            child.PerformReflow(reflowContext);
+            largestX = Math.Max(largestX, child.Position.X + child.MinSize.X);
+            largestY = Math.Max(largestY, child.Position.Y + child.MinSize.Y);
         }
+        
+        Size = (largestX, largestY) + Padding * 2;
+        Transform.Scale = new Vector3(Size.X, Size.Y, 1);
+        RootWidget.Transform.Scale = Transform.Scale - new Vector3(Padding.X * 2, Padding.Y * 2, 0);
+        
+        // foreach (var child in children)
+        //     child.PerformRender(renderContext);
+        
+        // foreach (var child in children)
+        // {
+        //     child.PerformReflow(reflowContext);
+        // }
+        
         renderContext.PopWidget();
 
         MeshComponent.Visible = true;

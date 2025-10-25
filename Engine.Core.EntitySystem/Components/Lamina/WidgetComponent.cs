@@ -2,12 +2,15 @@ using Engine.Core.Common;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.Lamina;
 using Engine.Core.Logging;
+using JetBrains.Annotations;
 
 namespace Engine.Core.EntitySystem.Components.Lamina;
 
-public abstract partial class LaminaWidgetComponent<T> : WidgetComponent
+[PublicAPI]
+public abstract partial class LaminaWidgetComponent<T> : WidgetComponent where T : LaminaLayout
 {
-    public abstract void OnRender(T layout, ILaminaRenderContext context);
+    public virtual void OnPopulateIntrinsics(T layout) {}
+    public virtual void OnRender(T layout, ILaminaRenderContext context) {}
     public virtual void OnRenderChildren(T layout, ILaminaRenderContext context)
     {
         // ReSharper disable once ForCanBeConvertedToForeach
@@ -19,58 +22,59 @@ public abstract partial class LaminaWidgetComponent<T> : WidgetComponent
         }
     }
     public virtual void OnPostRender(T layout, ILaminaRenderContext context) {}
-    public virtual void OnPopulateIntrinsics(T layout) {}
-}
-public partial class RootWidgetComponent : LaminaWidgetComponent<LaminaLayout>
-{
-    public override void OnRender(LaminaLayout layout, ILaminaRenderContext context)
+    public virtual void OnReflow(T layout, ILaminaReflowContext context) {}
+    public virtual void OnReflowChildren(T layout, ILaminaReflowContext context)
     {
-        
+        // ReSharper disable once ForCanBeConvertedToForeach
+        for (var index = 0; index < Children.Count; index++)
+        {
+            var child = Children[index];
+            if (child is WidgetComponent widget)
+                widget.PerformReflow(context);
+        }
     }
+    public virtual void OnPostReflow(T layout, ILaminaReflowContext context) {}
 }
+
+[UsedImplicitly]
+public partial class RootWidgetComponent : LaminaWidgetComponent<LaminaLayout>;
 
 public partial class WidgetComponent : Actor, IWidget
 {
     private LaminaLayout? _currentLayout;
-    // public Box BoundingBox
-    // {
-    //     get
-    //     {
-    //         if (_currentLayout == null)
-    //             return Box.Zero;
-    //
-    //         var boxMin = Position;
-    //         var boxMax = Position + Size;
-    //         
-    //         foreach (var child in GetChildren<WidgetComponent>())
-    //         {
-    //             var childBox = child.BoundingBox;
-    //             boxMin.X = Math.Min(boxMin.X, childBox.Left);
-    //             boxMin.Y = Math.Min(boxMin.Y, childBox.Top);
-    //             boxMax.X = Math.Max(boxMax.X, childBox.Right);
-    //             boxMax.Y = Math.Max(boxMax.Y, childBox.Bottom);
-    //         }
-    //         return new Box(boxMin.X, boxMin.Y, boxMax.X, boxMax.Y);
-    //     }
-    // }
+    public LaminaLayout CurrentLayout => _currentLayout ?? throw new InvalidOperationException("Widget has not been initialized with a layout yet.");
+    public Vector2 Position
+    {
+        get => Transform.Position.ToVector2();
+        set => Transform.Position = new Vector3(value.X, value.Y, Transform.Position.Z);
+    }
 
-    // TODO: Rely on existing local -> global transformations?
-    // Currently Transform is global (due to context)
-    // public Vector2 Position = Vector2.Zero;
-    // public Vector2 Size = Vector2.Zero;
+    public Vector2 Size 
+    {
+        get => Transform.Scale.ToVector2();
+        set => Transform.Scale = new Vector3(value.X, value.Y, Transform.Scale.Z);
+    }
+    public Vector2? ExplicitSize { get; set; } = null;
+    public Vector2 MinSize { get; set; } = new(0, 0);
+    public Vector2 Padding { get; set; } = new(0, 0);
+    public Vector2 ContentSize => MinSize - Padding * 2;
 
     public void Initialize(LaminaLayout layout)
     {
         PopulateIntrinsics(layout);
         if (_currentLayout != null && _currentLayout.Equals(layout))
             return;
-        
+
+        if (layout.SharedProps.Size.X > 0 || layout.SharedProps.Size.Y > 0)
+            ExplicitSize = layout.SharedProps.Size;
         _currentLayout = layout;
         InitializeChildren(layout);
     }
     
     private void SetLayoutWithIntrinsics(LaminaLayout layout)
     {
+        if (layout.SharedProps.Size.X > 0 || layout.SharedProps.Size.Y > 0)
+            ExplicitSize = layout.SharedProps.Size;
         _currentLayout = layout;
         PopulateIntrinsics(layout);
     }
@@ -126,23 +130,63 @@ public partial class WidgetComponent : Actor, IWidget
     private void PopulateIntrinsics(LaminaLayout layout)
     {
         // TODO: Optimize dynamic calls?
+        if (layout.SharedProps.Size is { X: > 0, Y: > 0 } && layout.SharedProps.FillMode == LaminaFillMode.FillContainer)
+            layout.SharedProps.FillMode = LaminaFillMode.None;
         ((dynamic)this).OnPopulateIntrinsics((dynamic)layout);
     }
-
     private void Render(LaminaLayout layout, ILaminaRenderContext context)
     {
+        Size = layout.SharedProps.Padding * 2;
         ((dynamic)this).OnRender((dynamic)layout, context);
     }
-
     private void RenderChildren(LaminaLayout layout, ILaminaRenderContext context)
     {
         ((dynamic)this).OnRenderChildren((dynamic)layout, context);
     }
-
     private void PostRender(LaminaLayout layout, ILaminaRenderContext context)
     {
         ((dynamic)this).OnPostRender((dynamic)layout, context);
     }
+    private void Reflow(LaminaLayout layout, ILaminaReflowContext context)
+    {
+        var position = context.OffsetToParent + layout.SharedProps.Position;
+        Position = position.Rounded();
+        Padding = layout.SharedProps.Padding;
+        context.ChildrenPosition = Padding;
+        if (layout.SharedProps.FillMode == LaminaFillMode.FillContainer && !ExplicitSize.HasValue)
+        {
+            Size = context.SpaceAvailable;
+        }
+        else
+            Size = ExplicitSize.HasValue ? Vector2.Max(ExplicitSize.Value, Size) : Size;
+        
+        ((dynamic)this).OnReflow((dynamic)layout, context);
+    }
+    private void ReflowChildren(LaminaLayout layout, ILaminaReflowContext context)
+    {
+        ((dynamic)this).OnReflowChildren((dynamic)layout, context);
+    }
+    private void PostReflow(LaminaLayout layout, ILaminaReflowContext context)
+    {
+        ((dynamic)this).OnPostReflow((dynamic)layout, context);
+        var largestX = 0.0;
+        var largestY = 0.0;
+        foreach (var child in Children)
+        {
+            if (child is not WidgetComponent widget)
+                continue;
+            largestX = Math.Max(largestX, widget.Position.X + Math.Max(widget.MinSize.X, widget.Size.X));
+            largestY = Math.Max(largestY, widget.Position.Y + Math.Max(widget.MinSize.Y, widget.Size.Y));
+        }
+        largestX = Math.Max(ExplicitSize?.X ?? 0, largestX);
+        largestY = Math.Max(ExplicitSize?.Y ?? 0, largestY);
+        if (layout.SharedProps.FillMode == LaminaFillMode.FillContainer)
+            MinSize = Vector2.Zero;
+        else
+            MinSize = (largestX, largestY) + Padding;
+        Size = Vector2.Max(Size, MinSize);
+    }
+    
     public void PerformRender(ILaminaRenderContext context)
     {
         if (_currentLayout == null)
@@ -158,11 +202,28 @@ public partial class WidgetComponent : Actor, IWidget
         }
         catch (Exception e)
         {
-            Logger.Error("Exception during widget rendering: " + e.Message, e);
+            Logger.Error("Exception during widget render: " + e.Message, e);
         }
-        finally
+        context.PopWidget();
+    }
+
+    public void PerformReflow(ILaminaReflowContext context)
+    {
+        if (_currentLayout == null)
+            return;
+        
+        context.PushWidget(this);
+        
+        try
         {
-            context.PopWidget();
+            Reflow(_currentLayout, context);
+            ReflowChildren(_currentLayout, context);
+            PostReflow(_currentLayout, context);
         }
+        catch (Exception e)
+        {
+            Logger.Error("Exception during widget reflow: " + e.Message, e);
+        }
+        context.PopWidget();
     }
 }

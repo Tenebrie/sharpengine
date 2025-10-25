@@ -47,7 +47,7 @@ public partial class ExperienceBarWidget : Actor
             _userInterface.Transform.Position = (windowSize.X / 2.0 - 256, windowSize.Y - 80, 0);
             
             var exp = Math.Floor(player.Experience.Experience);
-            v.Div(position: (0, 0), children: v =>
+            v.Flex(position: (0, 0), children: v =>
             {
                 var leftLabel = player.Experience.PrestigeLevel > 0 ?
                     $"Prestige {player.Experience.PrestigeLevel}" :

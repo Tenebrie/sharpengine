@@ -44,9 +44,9 @@ public class Transform
         get => new (Data.Row1.Length, Data.Row2.Length, Data.Row3.Length);
         set
         {
-            Data.Row1.SetLengthIfNotZero(value.X);
-            Data.Row2.SetLengthIfNotZero(value.Y);
-            Data.Row3.SetLengthIfNotZero(value.Z);
+            Data.Row1.SetLengthOrInitialize(value.X, (1.0, 0.0, 0.0, 0.0));
+            Data.Row2.SetLengthOrInitialize(value.Y, (0.0, 1.0, 0.0, 0.0));
+            Data.Row3.SetLengthOrInitialize(value.Z, (0.0, 0.0, 1.0, 0.0));
         }
     }
     

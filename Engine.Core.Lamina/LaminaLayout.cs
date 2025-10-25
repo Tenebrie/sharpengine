@@ -5,7 +5,23 @@ using Box = Engine.Core.Common.Box;
 
 namespace Engine.Core.Lamina;
 
-public partial record LaminaLayout(Type Type) : ILaminaLayout
+public interface ILaminaProps
+{
+    public Vector2 Position { get; set; }
+    public Vector2 Size { get; set; }
+    public Vector2 Padding { get; set; }
+    public LaminaFillMode FillMode { get; set; }
+}
+
+public enum LaminaFillMode
+{
+    None,
+    FillContainer,
+    FillHorizontal,
+    FillVertical
+}
+
+public partial record LaminaLayout(Type Type, ILaminaProps SharedProps) : ILaminaLayout
 {
     public readonly List<LaminaLayout> Children = [];
 
@@ -37,10 +53,14 @@ public partial record LaminaLayout(Type Type) : ILaminaLayout
 /// <summary>
 /// Button
 /// </summary>
-public record ButtonLayout(LaminaButtonProps Props) : LaminaLayout(typeof(ButtonLayout));
-public record struct LaminaButtonProps()
+public record ButtonLayout(LaminaButtonProps Props) : LaminaLayout(typeof(ButtonLayout), Props);
+public partial record struct LaminaButtonProps() : ILaminaProps
 {
-    public Vector2 Position = Vector2.Zero;
+    public Vector2 Position { get; set; } = Vector2.Zero;
+    public Vector2 Size { get; set; } = -Vector2.One;
+    public Vector2 Padding { get; set; } = Vector2.Zero;
+    public LaminaFillMode FillMode { get; set; } = LaminaFillMode.None;
+    
     public string Label = "";
     public Color BackgroundColor = Color.Gray;
     public Action? OnClick;
@@ -50,17 +70,33 @@ public record struct LaminaButtonProps()
 /// <summary>
 /// Div
 /// </summary>
-public record DivLayout(LaminaDivProps Props) : LaminaLayout(typeof(DivLayout));
-public record struct LaminaDivProps()
+public record BoxLayout(LaminaBoxProps Props) : LaminaLayout(typeof(BoxLayout), Props);
+public partial record struct LaminaBoxProps() : ILaminaProps
 {
-    public Vector2 Position = Vector2.Zero;
+    public Vector2 Position { get; set; } = Vector2.Zero;
+    public Vector2 Size { get; set; } = -Vector2.One;
+    public Vector2 Padding { get; set; } = Vector2.Zero;
+    public LaminaFillMode FillMode { get; set; } = LaminaFillMode.None;
+    public Action<LaminaLayout> Children;
+}
+
+/// <summary>
+/// Flex
+/// </summary>
+public record FlexLayout(LaminaFlexProps Props) : LaminaLayout(typeof(FlexLayout), Props);
+public partial record struct LaminaFlexProps() : ILaminaProps
+{
+    public Vector2 Position { get; set; } = Vector2.Zero;
+    public Vector2 Size { get; set; } = -Vector2.One;
+    public Vector2 Padding { get; set; } = Vector2.Zero;
+    public LaminaFillMode FillMode { get; set; } = LaminaFillMode.None;
     public double Gap = 0;
     public LaminaFlexAlign AlignContent = LaminaFlexAlign.Center;
     public LaminaFlexAlign JustifyContent = LaminaFlexAlign.Center;
-    public LaminaDivDirection Direction = LaminaDivDirection.Column;
+    public LaminaFlexDirection Direction = LaminaFlexDirection.Column;
     public Action<LaminaLayout> Children;
 }
-public enum LaminaDivDirection
+public enum LaminaFlexDirection
 {
     Row,
     Column
@@ -78,13 +114,15 @@ public enum LaminaFlexAlign
 /// <summary>
 /// Image
 /// </summary>
-public record ImageLayout(LaminaImageProps Props) : LaminaLayout(typeof(ImageLayout));
-public record struct LaminaImageProps()
+public record ImageLayout(LaminaImageProps Props) : LaminaLayout(typeof(ImageLayout), Props);
+public partial record struct LaminaImageProps() : ILaminaProps
 {
-    public Vector2 Position = Vector2.Zero;
+    public Vector2 Position { get; set; } = Vector2.Zero;
+    public Vector2 Size { get; set; } = Vector2.Zero;
+    public Vector2 Padding { get; set; } = Vector2.Zero;
+    public LaminaFillMode FillMode { get; set; } = LaminaFillMode.FillContainer;
     public string? ImagePath = null;
     public Box ClippingRect = Box.Full;
-    public Vector2 Size = new(100, 100);
     public Color Tint = Color.White;
     public Vector4Shorthand BorderRadius = 0;
 }
@@ -92,10 +130,13 @@ public record struct LaminaImageProps()
 /// <summary>
 /// Label
 /// </summary>
-public record LabelLayout(LaminaLabelProps Props) : LaminaLayout(typeof(LabelLayout));
-public record struct LaminaLabelProps()
+public record LabelLayout(LaminaLabelProps Props) : LaminaLayout(typeof(LabelLayout), Props);
+public partial record struct LaminaLabelProps() : ILaminaProps
 {
-    public Vector2 Position = Vector2.Zero;
+    public Vector2 Position { get; set; } = Vector2.Zero;
+    [Hidden] public Vector2 Size { get; set; } = Vector2.Zero;
+    public Vector2 Padding { get; set; } = Vector2.Zero;
+    public LaminaFillMode FillMode { get; set; } = LaminaFillMode.None;
     public string Text;
     public string Font = "RobotoMono-Bold";
     public int FontSize = 18;
@@ -105,11 +146,17 @@ public record struct LaminaLabelProps()
 /// <summary>  
 /// Line
 /// </summary>
-public record LineLayout(LaminaLineProps Props) : LaminaLayout(typeof(LineLayout));
-public record struct LaminaLineProps()
+public record LineLayout(LaminaLineProps Props) : LaminaLayout(typeof(LineLayout), Props);
+public partial record struct LaminaLineProps() : ILaminaProps
 {
-    public Vector2 Position = Vector2.Zero;
+    public Vector2 Position { get; set; } = Vector2.Zero;
+    public Vector2 Size { get; set; } = Vector2.Zero;
+    public Vector2 Padding { get; set; } = Vector2.Zero;
+    public LaminaFillMode FillMode { get; set; } = LaminaFillMode.FillContainer;
     public IReadOnlyList<Vector2> Points;
     public Color Color = Color.Black;
     public int Thickness = 1;
 }
+
+[AttributeUsage(AttributeTargets.Property)]
+internal class HiddenAttribute : Attribute;
