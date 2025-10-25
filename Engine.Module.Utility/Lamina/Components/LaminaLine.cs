@@ -18,6 +18,7 @@ public partial class LaminaLine : LaminaWidgetComponent<LineLayout>
     private LaminaLineMesh? _mesh = null;
     private Material? _material = null;
     private MaterialInstance? _materialInstance = null;
+    private int _renderRequestId = -1;
 
     public override void OnPopulateIntrinsics(LineLayout layout)
     {
@@ -39,10 +40,10 @@ public partial class LaminaLine : LaminaWidgetComponent<LineLayout>
             _materialInstance = _material.Instantiate().SetTintColor(layout.Props.Color);
         }
         
-        Transform = Transform.Identity;
-        Transform.Position = (Math.Round(context.OffsetToParent.X), Math.Round(context.OffsetToParent.Y), 0.0);
+        // Transform = Transform.Identity;
+        // Transform.Position = (Math.Round(context.OffsetToParent.X), Math.Round(context.OffsetToParent.Y), 0.0);
         
-        context.RenderRequest(new LaminaRenderRequest
+        _renderRequestId = context.RenderRequest(new LaminaRenderRequest
         {
             InstanceCount = 1,
             InstanceTransforms = [WorldTransformNoScale.Snapshot()],
@@ -55,6 +56,13 @@ public partial class LaminaLine : LaminaWidgetComponent<LineLayout>
                 BorderRadius = Vector4.Zero
             }
         });
+    }
+    
+    public override void OnReflow(LineLayout layout, ILaminaReflowContext context)
+    {
+        var request = context.GetRequest(_renderRequestId);
+        request.InstanceTransforms = [WorldTransformNoScale.Snapshot()];
+        context.SetRequest(_renderRequestId, request);
     }
     
     private void RegenerateMesh(LaminaLineProps props)

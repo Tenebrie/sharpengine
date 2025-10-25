@@ -7,6 +7,7 @@ public class MarshaledTask(string homeThreadName)
 {
     private long _taskIdCounter = 0;
     private List<QueuedTask> _queue = [];
+    private List<QueuedTask> _nextFrameQueue = [];
     public long Run(Action action, string label, Assembly sourceAssembly)
     {
         if (Thread.CurrentThread.Name == homeThreadName)
@@ -19,6 +20,21 @@ public class MarshaledTask(string homeThreadName)
         {
             var taskId = _taskIdCounter;
             _queue.Add(new QueuedTask
+            {
+                Id = _taskIdCounter,
+                SourceAssembly = sourceAssembly,
+                Action = action
+            });
+            _taskIdCounter += 1;
+            return taskId;
+        }
+    }
+    public long NextFrame(Action action, string label, Assembly sourceAssembly)
+    {
+        lock (_nextFrameQueue)
+        {
+            var taskId = _taskIdCounter;
+            _nextFrameQueue.Add(new QueuedTask
             {
                 Id = _taskIdCounter,
                 SourceAssembly = sourceAssembly,
@@ -57,6 +73,12 @@ public class MarshaledTask(string homeThreadName)
             }
 
             _queue.Clear();
+
+            lock (_nextFrameQueue)
+            {
+                _queue.AddRange(_nextFrameQueue);
+                _nextFrameQueue.Clear();
+            }
         }
     }
     
@@ -75,6 +97,7 @@ public static class MainThreadTask
 {
     private static readonly MarshaledTask Handle = new("MainThread");
     public static long Run(Action action) => Handle.Run(action, "", Assembly.GetCallingAssembly());
+    public static long NextFrame(Action action) => Handle.NextFrame(action, "", Assembly.GetCallingAssembly());
     public static void Cancel(long taskId) => Handle.Cancel(taskId);
     public static void ExecuteAllQueued() => Handle.ExecuteAllQueued();
     public static void Purge(Assembly assembly) => Handle.Purge(assembly);

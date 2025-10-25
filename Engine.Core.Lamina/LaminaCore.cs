@@ -20,6 +20,7 @@ public interface ILaminaRenderContext
     public Vector2 OffsetToParent { get; }
     public Vector2 ChildrenPosition { get; set; }
     public IWidget Parent { get; }
+    public Vector2 SpaceAvailable { get; }
     
     public void PushWidget(IWidget widget);
     public void PopWidget();
@@ -49,6 +50,7 @@ public interface IWidget : ISpatial
 {
     public Vector2 Position { get; set; }
     public Vector2 Size { get; }
+    public Vector2? ExplicitContentSize { get; }
     public Vector2 ContentSize { get; }
 }
 

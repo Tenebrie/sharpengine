@@ -12,7 +12,7 @@ public partial class WorkspaceHost : Backstage, IWorkspaceHost
     protected void OnReady()
     {
         CreateActor<EditorCamera>();
-        // CreateActor<EditorPerformanceWidget>();
+        CreateActor<EditorPerformanceWidget>();
         RegisterService<EditorInputService>();
         RegisterService<EditorLoggingService>();
     }

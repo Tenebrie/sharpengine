@@ -56,34 +56,25 @@ public partial class LaminaImage : LaminaWidgetComponent<ImageLayout>
 
     public override void OnReflow(ImageLayout layout, ILaminaReflowContext context)
     {
-        if (layout.SharedProps.FillMode == LaminaFillMode.FillHorizontal)
-            Size = (context.SpaceAvailable.X, Size.Y);
-        else if (layout.SharedProps.FillMode == LaminaFillMode.FillVertical)
-            Size = (Size.X, context.SpaceAvailable.Y);
-        if (layout.SharedProps.FillMode == LaminaFillMode.None && layout.SharedProps.Size == Vector2.Zero)
+        Size = layout.SharedProps.FillMode switch
         {
-            // Size = Vector2.Max(layout.SharedProps.Size, (64, 64));
-            // Logger.Info(context.SpaceAvailable);
-        }
-        // var position = context.OffsetToParent + layout.Props.Position;
-        // Position = position.Rounded();
-        //
-        // if (layout.Props.Size.X == 0 || layout.Props.Size.Y == 0)
-        //     Size = context.Parent.ContentSize;
-        // else
-        //     Size = layout.Props.Size;
-        
+            LaminaFillMode.FillHorizontal => (context.SpaceAvailable.X, Size.Y),
+            LaminaFillMode.FillVertical   => (Size.X, context.SpaceAvailable.Y),
+            LaminaFillMode.FillContainer  => context.SpaceAvailable,
+            _ => Size
+        };
+
         var req = context.GetRequest(_renderRequestId);
         var globalPos = WorldTransformOwnScaleOnly.Position;
-        // Logger.Log(WorldTransformNoScale.Position);
         req.InstanceTransforms = [WorldTransformOwnScaleOnly.Snapshot()];
+        var clipSize = Vector2.Min(Size, context.Parent.Size > Vector2.Zero ? context.Parent.Size : Size);
         req.ScissorRect = layout.Props.ClippingRect is var rect
             ? new Rect
             {
-                Top = (int)(globalPos.Y + rect.Top * Size.Y),
-                Left = (int)(globalPos.X + rect.Left * Size.X),
-                Right = (int)(globalPos.X + rect.Right * Size.X),
-                Bottom = (int)(globalPos.Y + rect.Bottom * Size.Y)
+                Top = (int)(globalPos.Y + rect.Top * clipSize.Y),
+                Left = (int)(globalPos.X + rect.Left * clipSize.X),
+                Right = (int)(globalPos.X + rect.Right * clipSize.X),
+                Bottom = (int)(globalPos.Y + rect.Bottom * clipSize.Y)
             }
             : null;
         context.SetRequest(_renderRequestId, req);

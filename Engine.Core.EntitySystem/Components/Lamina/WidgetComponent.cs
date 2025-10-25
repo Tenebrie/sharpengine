@@ -58,6 +58,7 @@ public partial class WidgetComponent : Actor, IWidget
     public Vector2 MinSize { get; set; } = new(0, 0);
     public Vector2 Padding { get; set; } = new(0, 0);
     public Vector2 ContentSize => MinSize - Padding * 2;
+    public Vector2? ExplicitContentSize => ExplicitSize.HasValue ? ExplicitSize.Value - Padding * 2 : null;
 
     public void Initialize(LaminaLayout layout)
     {
@@ -136,7 +137,17 @@ public partial class WidgetComponent : Actor, IWidget
     }
     private void Render(LaminaLayout layout, ILaminaRenderContext context)
     {
-        Size = layout.SharedProps.Padding * 2;
+        // Padding = layout.SharedProps.Padding;
+        Size = ExplicitSize ?? Vector2.Zero;
+        // MinSize = ExplicitSize ?? layout.SharedProps.Padding * 2;
+        if (layout.SharedProps.FillMode == LaminaFillMode.FillContainer && context.Parent.ExplicitContentSize.HasValue)
+            Size = context.Parent.ExplicitContentSize.Value;
+
+        if (layout.SharedProps.FillMode == LaminaFillMode.FillContainer && context.Parent.ExplicitContentSize.HasValue && !ExplicitSize.HasValue)
+        {
+            Size = context.Parent.ExplicitContentSize.Value;
+            ExplicitSize = context.Parent.ExplicitContentSize.Value;
+        }
         ((dynamic)this).OnRender((dynamic)layout, context);
     }
     private void RenderChildren(LaminaLayout layout, ILaminaRenderContext context)
@@ -154,9 +165,7 @@ public partial class WidgetComponent : Actor, IWidget
         Padding = layout.SharedProps.Padding;
         context.ChildrenPosition = Padding;
         if (layout.SharedProps.FillMode == LaminaFillMode.FillContainer && !ExplicitSize.HasValue)
-        {
             Size = context.SpaceAvailable;
-        }
         else
             Size = ExplicitSize.HasValue ? Vector2.Max(ExplicitSize.Value, Size) : Size;
         
@@ -178,8 +187,12 @@ public partial class WidgetComponent : Actor, IWidget
             largestX = Math.Max(largestX, widget.Position.X + Math.Max(widget.MinSize.X, widget.Size.X));
             largestY = Math.Max(largestY, widget.Position.Y + Math.Max(widget.MinSize.Y, widget.Size.Y));
         }
-        largestX = Math.Max(ExplicitSize?.X ?? 0, largestX);
-        largestY = Math.Max(ExplicitSize?.Y ?? 0, largestY);
+
+        if (ExplicitSize.HasValue)
+        {
+            largestX = ExplicitSize.Value.X;
+            largestY = ExplicitSize.Value.Y;
+        }
         if (layout.SharedProps.FillMode == LaminaFillMode.FillContainer)
             MinSize = Vector2.Zero;
         else

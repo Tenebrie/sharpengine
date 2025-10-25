@@ -34,7 +34,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         get => _visible;
         set
         {
-            _visible = value;
+            _visible = value; 
             Dirty = true;
         }
     }
@@ -48,9 +48,14 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     public Vector2 Size
     {
         get => _explicitSize ?? Vector2.Zero;
-        set => _explicitSize = value;
+        set
+        {
+            _explicitSize = value;
+            RootWidget.ExplicitSize = value;
+        }
     }
     public Vector2 ContentSize => Size - Padding * 2;
+    public Vector2 InnerContentSize => RootWidget.ContentSize;
     private Vector2? _explicitSize = null;
 
     private Color _backgroundColor = Color.FromArgb(0, 0, 0, 0);
@@ -105,6 +110,13 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         Dirty = true;
     }
 
+    public void Rerender()
+    {
+        var layout = new LaminaLayout(typeof(LaminaLayout), new LaminaBoxProps());
+        _layoutFunction?.Invoke(layout);
+        RootWidget.Initialize(layout);
+    }
+
     public bool Dirty { get; set; }
 
     private struct RenderTargetData
@@ -121,9 +133,8 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     
     public void EnsureRenderTarget(ILaminaRenderContext renderContext, ILaminaReflowContext reflowContext)
     {
-        CollectCommandList(renderContext, reflowContext);
         if (Size == Vector2.Zero)
-            return;
+            InferSize(renderContext, reflowContext);
         
         if (_renderTargetReady && Math.Abs(InternalTextureSize.X - Size.X) < 1 &&
             Math.Abs(InternalTextureSize.Y - Size.Y) < 1)
@@ -134,7 +145,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         if (_renderTargetReady)
             _renderTargets.Target.Dispose();
         
-        Logger.Info("Creating texture " + Size);
+        // Logger.Info("Creating texture " + Size);
         if (Size == Vector2.Zero)
             return;
 
@@ -165,6 +176,31 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         MeshComponent.Material.InvalidateCache();
         MeshComponent.Material.SetRemoteTextureView(ShaderResourceView);
     }
+    
+    private void InferSize(ILaminaRenderContext renderContext, ILaminaReflowContext reflowContext)
+    {
+        if (!Visible)
+            return;
+        renderContext.PushWidget(RootWidget);
+        renderContext.ChildrenPosition = Padding;
+        var children = GetChildren<WidgetComponent>();
+        foreach (var child in children)
+            child.PerformRender(renderContext);
+
+        var largestX = 0.0;
+        var largestY = 0.0;
+        foreach (var child in children)
+        {
+            child.PerformReflow(reflowContext);
+            largestX = Math.Max(largestX, child.Position.X + child.MinSize.X);
+            largestY = Math.Max(largestY, child.Position.Y + child.MinSize.Y);
+        }
+        
+        Size = (largestX, largestY) + Padding * 2;
+        Transform.Scale = new Vector3(Size.X, Size.Y, 1);
+        
+        renderContext.PopWidget();
+    }
 
     public void CollectCommandList(ILaminaRenderContext renderContext, ILaminaReflowContext reflowContext)
     {
@@ -186,18 +222,6 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
             largestX = Math.Max(largestX, child.Position.X + child.MinSize.X);
             largestY = Math.Max(largestY, child.Position.Y + child.MinSize.Y);
         }
-        
-        Size = (largestX, largestY) + Padding * 2;
-        Transform.Scale = new Vector3(Size.X, Size.Y, 1);
-        RootWidget.Transform.Scale = Transform.Scale - new Vector3(Padding.X * 2, Padding.Y * 2, 0);
-        
-        // foreach (var child in children)
-        //     child.PerformRender(renderContext);
-        
-        // foreach (var child in children)
-        // {
-        //     child.PerformReflow(reflowContext);
-        // }
         
         renderContext.PopWidget();
 

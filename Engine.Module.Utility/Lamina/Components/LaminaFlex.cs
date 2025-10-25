@@ -1,6 +1,7 @@
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Components.Lamina;
 using Engine.Core.Lamina;
+using Engine.Core.Logging;
 
 namespace Engine.Module.Utility.Lamina.Components;
 
@@ -9,18 +10,37 @@ public partial class LaminaFlex : LaminaWidgetComponent<FlexLayout>
 {
     public override void OnPopulateIntrinsics(FlexLayout layout)
     {
-        var forcedDir = LaminaFillMode.FillVertical;
+        var preferredFillDirection = LaminaFillMode.FillVertical;
         if (layout.Props.Direction == LaminaFlexDirection.Column)
-            forcedDir = LaminaFillMode.FillHorizontal;
+            preferredFillDirection = LaminaFillMode.FillHorizontal;
             
         foreach (var child in layout.Children)
         {
             if (child.SharedProps.FillMode != LaminaFillMode.FillContainer)
                 continue;
+
+            var fillMode = preferredFillDirection;
             
-            child.SharedProps.Size = Vector2.Max(child.SharedProps.Size, (64, 64));
-            child.SharedProps.FillMode = forcedDir;
+            if (child.SharedProps.Size is { X: > 0, Y: > 0 })
+                fillMode = LaminaFillMode.None;
+            else
+            {
+                if (child.SharedProps.Size.X <= 0)
+                    child.SharedProps.Size = (64, child.SharedProps.Size.Y);
+                if (child.SharedProps.Size.Y <= 0)
+                    child.SharedProps.Size = (child.SharedProps.Size.X, 64);
+            }
+            
+            // child.SharedProps.Size = Vector2.Max(child.SharedProps.Size, (64, 64));
+            child.SharedProps.FillMode = fillMode;
         }
+    }
+
+    public override void OnRender(FlexLayout layout, ILaminaRenderContext context)
+    {
+        // if (context.Parent.ExplicitContentSize.HasValue && !ExplicitSize.HasValue)
+        //     ExplicitSize = context.SpaceAvailable;
+        // Size = (1000, 1000);
     }
 
     public override void OnRenderChildren(FlexLayout layout, ILaminaRenderContext context)
@@ -69,6 +89,7 @@ public partial class LaminaFlex : LaminaWidgetComponent<FlexLayout>
         {
             if (child is WidgetComponent widget)
             {
+                // TODO: If size is already known, share the space available
                 context.SpaceTakenByChildren = (0, 0);
                 widget.PerformReflow(context);
                 var widgetSize = widget.Size;
@@ -83,14 +104,5 @@ public partial class LaminaFlex : LaminaWidgetComponent<FlexLayout>
             // Reset context state to actual value
             context.SpaceTakenByChildren = actualSpaceTakenByChildren;
         }
-    }
-
-    public override void OnPostReflow(FlexLayout layout, ILaminaReflowContext context)
-    {
-        // Logger.Info(context.SpaceTakenByChildren + Padding * 2);
-        // var size = Size;
-        // size.X = Math.Max(100, (context.SpaceTakenByChildren + Padding * 2).X);
-        // size.Y = Math.Max(100, (context.SpaceTakenByChildren + Padding * 2).Y);
-        // Size = size;
     }
 }

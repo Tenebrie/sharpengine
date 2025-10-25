@@ -33,24 +33,27 @@ public partial class EditorPerformanceWidget : Actor
         
         FramerateGraphWidget.SetLayout(v => 
         {
-            FramerateGraphWidget.Padding = (8, 4);
-            FramerateGraphWidget.Size = (FramerateCounterComponent.ValuesStored + FramerateGraphWidget.Padding.X * 2, 48);
+            // FramerateGraphWidget.Padding = (8, 4);
+            // FramerateGraphWidget.Size = (FramerateCounterComponent.ValuesStored + FramerateGraphWidget.Padding.X * 2, 48);
             FramerateGraphWidget.Transform.Position = new Vector3(Backstage.Window.FramebufferSize.X - 300, 8, 0);
             // FramerateGraphWidget.BackgroundColor = Color.FromArgb(50, 0, 0, 0);
-            
-            v.Flex(position: (0, 0), children: v =>
+
+            v.Box(size: (FramerateCounterComponent.ValuesStored, 48),
+                fillMode: LaminaFillMode.FillContainer,
+                padding: (8, 4),
+                children: v =>
             {
                 v.Image(tint: Color.FromArgb(50, 0, 0, 0));
-                var height = FramerateGraphWidget.ContentSize.Y;
+                const double height = 40.0;
                 var scaleFactor = height / FramerateCounter.MaximumValue;
                 var graphData = FramerateCounter.FramerateHistory
                     .Select((val, index) => new Vector2(index, height - val * scaleFactor))
                     .ToImmutableList();
-                v.Line(points: graphData);
+                v.Line(points: graphData, position: (0, 4));
                 var lowGraphData = FramerateCounter.LowFramerateHistory
                     .Select((val, index) => new Vector2(index, height - val * scaleFactor))
                     .ToImmutableList();
-                v.Line(points: lowGraphData, color: Color.Red);
+                v.Line(points: lowGraphData, color: Color.Red, position: (0, 4));
             });
         });
     }

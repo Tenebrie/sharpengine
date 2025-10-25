@@ -57,9 +57,10 @@ public record ButtonLayout(LaminaButtonProps Props) : LaminaLayout(typeof(Button
 public partial record struct LaminaButtonProps() : ILaminaProps
 {
     public Vector2 Position { get; set; } = Vector2.Zero;
-    public Vector2 Size { get; set; } = -Vector2.One;
+    public Vector2 Size { get; set; } = Vector2.Zero;
     public Vector2 Padding { get; set; } = Vector2.Zero;
     public LaminaFillMode FillMode { get; set; } = LaminaFillMode.None;
+    public ILaminaRenderContext RenderContext { get; set; } = null!;
     
     public string Label = "";
     public Color BackgroundColor = Color.Gray;
@@ -90,6 +91,7 @@ public partial record struct LaminaFlexProps() : ILaminaProps
     public Vector2 Size { get; set; } = -Vector2.One;
     public Vector2 Padding { get; set; } = Vector2.Zero;
     public LaminaFillMode FillMode { get; set; } = LaminaFillMode.None;
+    
     public double Gap = 0;
     public LaminaFlexAlign AlignContent = LaminaFlexAlign.Center;
     public LaminaFlexAlign JustifyContent = LaminaFlexAlign.Center;
