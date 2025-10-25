@@ -1,3 +1,4 @@
+using Engine.Core.Communication.Groups;
 using Engine.Core.EntitySystem.Attributes;
 using Engine.Core.EntitySystem.Entities;
 using Engine.Core.Input.Attributes;
@@ -7,6 +8,8 @@ namespace User.Game.Scenes;
 
 public partial class FirstPersonScene : Scene
 {
+    [DefaultGroup] public static readonly Group<FirstPersonScene> All = new();
+    
     [OnReady]
     protected void OnReady()
     {

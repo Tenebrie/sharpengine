@@ -37,8 +37,10 @@ public partial class SettingsMenuScene : Scene
     {
         Widget.Visible = !Widget.Visible;
         GetService<UserInputService>().SetPauseMenuOpened(Widget.Visible);
+        
         if (Widget.Visible)
         {
+            FirstPersonScene.All.First().Pause();
             GetService<InputService>().SetMouseCursor(new CursorModifier(this)
             {
                 Mode = CursorMode.Normal,
@@ -47,6 +49,7 @@ public partial class SettingsMenuScene : Scene
         }
         else
         {
+            FirstPersonScene.All.First().Unpause();
             GetService<InputService>().ClearMouseCursor(this);
         }
         
