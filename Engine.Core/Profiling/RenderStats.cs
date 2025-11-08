@@ -1,4 +1,5 @@
-﻿using Engine.Core.Common;
+﻿using Diligent;
+using Engine.Core.Common;
 
 namespace Engine.Core.Profiling;
 
@@ -7,8 +8,12 @@ public static class RenderStats
     public struct Buffer
     {
         public int NumDrawCalls;
+        public int NumLaminaRerenders;
+        public int NumLaminaRootDrawCalls;
+        public int NumLaminaWidgetDrawCalls;
         public int NumInstancesDrawn;
         public int NumInstancesCulled;
+        public DeviceContextStats ImmediateContextStats;
     }
 
     private static readonly Buffer[] Buffers = new Buffer[2];
@@ -19,6 +24,24 @@ public static class RenderStats
     {
         get => Buffers[Index].NumDrawCalls;
         set => Buffers[Index].NumDrawCalls = value;
+    }
+    
+    public static int LaminaRerenders
+    {
+        get => Buffers[Index].NumLaminaRerenders;
+        set => Buffers[Index].NumLaminaRerenders = value;
+    }
+    
+    public static int LaminaRootDrawCalls
+    {
+        get => Buffers[Index].NumLaminaRootDrawCalls;
+        set => Buffers[Index].NumLaminaRootDrawCalls = value;
+    }
+    
+    public static int LaminaWidgetDrawCalls
+    {
+        get => Buffers[Index].NumLaminaWidgetDrawCalls;
+        set => Buffers[Index].NumLaminaWidgetDrawCalls = value;
     }
 
     public static int InstancesDrawn
@@ -39,9 +62,17 @@ public static class RenderStats
         return Buffers[previousIndex];
     }
 
+    public static void Record(DeviceContextStats diligentStats)
+    {
+        Buffers[Index].ImmediateContextStats = diligentStats;
+    }
+    
     public static void Reset()
     {
         Buffers[Index].NumDrawCalls = 0;
+        Buffers[Index].NumLaminaRerenders = 0;
+        Buffers[Index].NumLaminaRootDrawCalls = 0;
+        Buffers[Index].NumLaminaWidgetDrawCalls = 0;
         Buffers[Index].NumInstancesDrawn = 0;
         Buffers[Index].NumInstancesCulled = 0;
     }

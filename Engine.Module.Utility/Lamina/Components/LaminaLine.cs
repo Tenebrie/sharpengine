@@ -25,7 +25,8 @@ public partial class LaminaLine : LaminaWidgetComponent<LineLayout>
         var points = layout.Props.Points;
         var minValues = new Vector2(points.Select(p => p.X).Min(), points.Select(p => p.Y).Min());
         var maxValues = new Vector2(points.Select(p => p.X).Max(), points.Select(p => p.Y).Max());
-        // Size = maxValues - minValues;
+        Size = maxValues - minValues;
+        MinSize = maxValues - minValues;
     }
 
     public override void OnRender(LineLayout layout, ILaminaRenderContext context)
@@ -42,7 +43,7 @@ public partial class LaminaLine : LaminaWidgetComponent<LineLayout>
         
         // Transform = Transform.Identity;
         // Transform.Position = (Math.Round(context.OffsetToParent.X), Math.Round(context.OffsetToParent.Y), 0.0);
-        
+
         _renderRequestId = context.RenderRequest(new LaminaRenderRequest
         {
             InstanceCount = 1,
@@ -51,10 +52,10 @@ public partial class LaminaLine : LaminaWidgetComponent<LineLayout>
             Mesh = _mesh,
             RenderScript = IRenderScript.LaminaWidget,
             MaterialInstances = [_materialInstance.Snapshot()],
-            ShaderParams = new LaminaRenderScript.UserData
+            ShaderParams = [new LaminaRenderScript.UserData
             {
                 BorderRadius = Vector4.Zero
-            }
+            }]
         });
     }
     
@@ -81,7 +82,8 @@ public partial class LaminaLine : LaminaWidgetComponent<LineLayout>
         }
         var minValues = new Vector2(_points.Select(p => p.X).Min(), _points.Select(p => p.Y).Min());
         var maxValues = new Vector2(_points.Select(p => p.X).Max(), _points.Select(p => p.Y).Max());
-        // Size = maxValues - minValues;
+        Size = maxValues - minValues;
+        MinSize = maxValues - minValues;
 
         _mesh ??= new LaminaLineMesh();
         _mesh.Generate(_points);

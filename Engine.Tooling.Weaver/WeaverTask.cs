@@ -7,13 +7,12 @@ internal static class WeaverTask
 {
     public static void Execute(string assemblyPath)
     {
-        var pdbPath = Path.ChangeExtension(assemblyPath, ".pdb");
         Console.WriteLine($"[Weaver] Rewriting: {assemblyPath}");
 
         using var fs = File.Open(assemblyPath, FileMode.Open, FileAccess.Read,
                                  FileShare.ReadWrite | FileShare.Delete);
 
-        var read = new ReaderParameters { ReadSymbols = File.Exists(pdbPath), InMemory = true };
+        var read = new ReaderParameters { ReadSymbols = true, InMemory = true };
         var asm  = AssemblyDefinition.ReadAssembly(fs, read);
         var module = asm.MainModule;
 
@@ -77,7 +76,7 @@ internal static class WeaverTask
 
         // Write atomically
         var tmp = assemblyPath + ".weave.tmp";
-        var write = new WriterParameters { WriteSymbols = File.Exists(pdbPath) };
+        var write = new WriterParameters { WriteSymbols = module.HasSymbols, SymbolWriterProvider = new EmbeddedPortablePdbWriterProvider()};
         asm.Write(tmp, write);
 
         var bak = assemblyPath + ".bak";

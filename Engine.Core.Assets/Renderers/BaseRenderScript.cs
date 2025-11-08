@@ -12,6 +12,8 @@ namespace Engine.Core.Assets.Renderers;
  */
 public interface IRenderScript
 {
+    public struct DummyData;
+    
     public static RenderScript Default { get; } = new();
     public static LaminaRenderScript LaminaWidget { get; } = new();
 
@@ -34,8 +36,8 @@ public abstract class BaseRenderScript<T> : IRenderScript where T : struct
     protected abstract List<InstanceBufferTicket> WriteInstanceData(int instanceCount,
         TransformSnapshot[] transforms,
         MaterialInstanceSnapshot[] instances,
-        T userData);
-
+        T[] userData);
+    
     public void Render(
         IDeviceContext device,
         int instanceCount,
@@ -46,8 +48,10 @@ public abstract class BaseRenderScript<T> : IRenderScript where T : struct
         object? userData = null
     )
     {
-        var extra = userData is null ? default : (T)userData;
-        Render(device, instanceCount, mesh, worldTransforms, material, materialInstances, extra);
+        if (userData is not T[] extraShaderParams)
+            extraShaderParams = [];
+        
+        Render(device, instanceCount, mesh, worldTransforms, material, materialInstances, extraShaderParams);
     }
 
     public void Render(
@@ -57,7 +61,7 @@ public abstract class BaseRenderScript<T> : IRenderScript where T : struct
         TransformSnapshot[] worldTransforms,
         Material material,
         MaterialInstanceSnapshot[] materialInstances,
-        T userData)
+        T[] userData)
     {
         if (instanceCount <= 0)
             return;

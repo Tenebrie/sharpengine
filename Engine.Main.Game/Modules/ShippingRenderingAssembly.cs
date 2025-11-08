@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.Communication.Tasks;
 using Engine.Core.Logging;
@@ -77,7 +78,7 @@ internal sealed class ShippingRenderingAssembly(IEntryPoint entryPoint) : Bundle
                 var deltaTime = (currentTime - lastFrameTime) / 1000000.0;
                 lastFrameTime = currentTime;
                 
-                RenderingHost?.RenderSingleFrame(deltaTime);
+                RenderingHost.RenderSingleFrame(deltaTime);
                 RenderThreadTask.ExecuteAllQueued();
                 MemoryManager.FreeDomain(MemoryDomain.Rendering);
                 

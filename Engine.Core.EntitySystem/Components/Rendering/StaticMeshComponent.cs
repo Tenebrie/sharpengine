@@ -13,7 +13,7 @@ namespace Engine.Core.EntitySystem.Components.Rendering;
 [UsedImplicitly]
 public partial class StaticMeshComponent : ActorComponent, ICullable
 {
-    [Component] private StaticMeshHolder _staticMeshHolder;
+    [Component] protected StaticMeshHolder _staticMeshHolder;
     public StaticMesh StaticMesh
     {
         get => _staticMeshHolder.Mesh;
@@ -46,7 +46,7 @@ public partial class StaticMeshComponent : ActorComponent, ICullable
 
     private readonly FrameBufferedSingletonArray<TransformSnapshot> _worldTransformBuffer = new();
     private readonly FrameBufferedSingletonArray<MaterialInstanceSnapshot> _materialInstanceBuffer = new();
-    public RenderRequest? ProduceRenderRequest()
+    public virtual RenderRequest? ProduceRenderRequest()
     {
         if (!Visible)
             return null;
@@ -62,7 +62,7 @@ public partial class StaticMeshComponent : ActorComponent, ICullable
 
             SortOrder = SortOrder,
             IsCullable = CullingEnabled
-        }; 
+        };
     }
 
     public CullingRequest? ProduceCullingRequest()

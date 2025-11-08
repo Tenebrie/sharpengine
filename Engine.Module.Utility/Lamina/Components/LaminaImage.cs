@@ -47,10 +47,10 @@ public partial class LaminaImage : LaminaWidgetComponent<ImageLayout>
             Mesh = InterfacePlaneMesh.Shared,
             RenderScript = IRenderScript.LaminaWidget,
             MaterialInstances = [_materialInstance.Snapshot()],
-            ShaderParams = new LaminaRenderScript.UserData
+            ShaderParams = [new LaminaRenderScript.UserData
             {
                 BorderRadius = layout.Props.BorderRadius,
-            }
+            }]
         });
     }
 

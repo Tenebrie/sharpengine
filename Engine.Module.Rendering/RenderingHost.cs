@@ -7,7 +7,6 @@ using Engine.Core.Common;
 using Engine.Core.Communication.Tasks;
 using Engine.Core.Enum;
 using Engine.Core.EntitySystem.Interfaces;
-using Engine.Core.Extensions;
 using Engine.Core.Modules;
 using Engine.Core.Modules.EntitySystem;
 using Engine.Core.Profiling;
@@ -19,7 +18,6 @@ using Engine.Module.Rendering.Renderers.Splash;
 using Engine.Module.Rendering.Utilities;
 using JetBrains.Annotations;
 using Silk.NET.Maths;
-using Silk.NET.Windowing;
 using ResourceDimension = Diligent.ResourceDimension;
 using Usage = Diligent.Usage;
 

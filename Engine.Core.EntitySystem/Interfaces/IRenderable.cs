@@ -36,6 +36,7 @@ public struct RenderRequest
     public required int InstanceCount;
     public required TransformSnapshot[] InstanceTransforms;
     public required MaterialInstanceSnapshot[] MaterialInstances;
+    public object? ExtraShaderParams;
     
     public required bool IsCullable { get; init; }
     public int SortOrder { get; init; }

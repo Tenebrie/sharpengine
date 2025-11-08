@@ -154,7 +154,7 @@ public partial record struct LaminaLineProps() : ILaminaProps
     public Vector2 Position { get; set; } = Vector2.Zero;
     public Vector2 Size { get; set; } = Vector2.Zero;
     public Vector2 Padding { get; set; } = Vector2.Zero;
-    public LaminaFillMode FillMode { get; set; } = LaminaFillMode.FillContainer;
+    public LaminaFillMode FillMode { get; set; } = LaminaFillMode.None;
     public IReadOnlyList<Vector2> Points;
     public Color Color = Color.Black;
     public int Thickness = 1;

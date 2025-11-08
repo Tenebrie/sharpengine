@@ -47,6 +47,9 @@ internal class LaminaRenderer : IDisposable
             renderable.CollectCommandList(context, context);
             context.FlushText();
             
+            RenderStats.LaminaRerenders += 1;
+            RenderStats.LaminaWidgetDrawCalls += context.RenderRequests.Count;
+            RenderStats.LaminaWidgetDrawCalls += context.TextRenderRequests.Count;
             foreach (var request in context.RenderRequests)
             {
                 if (request.ScissorRect is { } rect)

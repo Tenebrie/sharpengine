@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
+using System.Linq.Expressions;
 using System.Numerics;
+using System.Reflection;
 
 namespace Engine.Core.Memory;
 
@@ -173,8 +175,10 @@ public static class MemoryManager
         return rentedArray;
     }
     
-    public static ArrayHandle MergeArrays<T>(MemoryDomain domain, ArrayHandle left, int rightSize, T[] right)
+    public static ArrayHandle MergeArrays<T>(MemoryDomain domain, ArrayHandle left, int rightSize, T[]? right)
     {
+        if (right == null)
+            return left;
         var totalSize = left.SizeUsed + rightSize;
         if (left.Capacity >= totalSize)
         {
@@ -220,5 +224,94 @@ public static class MemoryManager
         {
             bucket.FreeAll();
         }
+    }
+    
+    // Non generic stuff
+    
+    // Cache: elementType -> (domain, size) => ArrayHandle of elementType
+    private static readonly Dictionary<Type, Func<MemoryDomain, int, ArrayHandle>> ProduceFactories = new();
+
+    private static Func<MemoryDomain, int, ArrayHandle> GetProducer(Type elementType)
+    {
+        if (ProduceFactories.TryGetValue(elementType, out var fn))
+            return fn;
+
+        // Build delegate for ProduceArray<T>(MemoryDomain, int)
+        var domainParam = Expression.Parameter(typeof(MemoryDomain), "domain");
+        var sizeParam   = Expression.Parameter(typeof(int), "size");
+
+        var method = typeof(MemoryManager)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .First(m => m.Name == nameof(ProduceArray)
+                     && m.IsGenericMethodDefinition
+                     && m.GetParameters().Length == 2);
+
+        var generic = method.MakeGenericMethod(elementType);
+        var call    = Expression.Call(generic, domainParam, sizeParam);
+        var lambda  = Expression.Lambda<Func<MemoryDomain, int, ArrayHandle>>(call, domainParam, sizeParam);
+
+        fn = lambda.Compile();
+        ProduceFactories[elementType] = fn;
+        return fn;
+    }
+
+    /// <summary>
+    /// Produce an ArrayHandle for arrays of the provided element <paramref name="elementType"/>.
+    /// Uses the same per-domain/type bucket.
+    /// </summary>
+    public static ArrayHandle ProduceArray(MemoryDomain domain, Type elementType, int minimalSize)
+    {
+        if (elementType is null) throw new ArgumentNullException(nameof(elementType));
+        var producer = GetProducer(elementType);
+        var handle = producer(domain, minimalSize);
+        // The generic version calls CheckForExpiredArrays; but calling here too is harmless.
+        CheckForExpiredArrays();
+        return handle;
+    }
+
+    /// <summary>
+    /// Merge when the right array’s element type is only known at runtime.
+    /// </summary>
+    public static ArrayHandle MergeArrays(MemoryDomain domain, ArrayHandle left, int rightSize, Array? right)
+    {
+        if (right == null || rightSize == 0)
+            return left;
+
+        // Validate sizes early to avoid Array.Copy throwing obscurely.
+        if ((uint)rightSize > (uint)right.Length)
+            throw new ArgumentOutOfRangeException(nameof(rightSize), $"rightSize={rightSize} exceeds right.Length={right.Length}");
+
+        var leftElemType  = left.Array.GetType().GetElementType()
+                            ?? throw new InvalidOperationException("Left array has no element type.");
+        var rightElemType = right.GetType().GetElementType()
+                            ?? throw new ArgumentException("Right array has no element type.", nameof(right));
+
+        if (!ReferenceEquals(leftElemType, rightElemType))
+            throw new ArgumentException($"Element type mismatch: left={leftElemType}, right={rightElemType}");
+
+        var totalSize = left.SizeUsed + rightSize;
+
+        // Fast path: append in-place
+        if (left.Capacity >= totalSize)
+        {
+            Array.Copy(right, 0, left.Array, left.SizeUsed, rightSize);
+            left.SizeUsed = totalSize;
+            left.AccessedAt = Stopwatch.GetTimestamp();
+            return left;
+        }
+
+        // Need a larger handle of the same element type, in the same domain
+        var result = ProduceArray(domain, leftElemType, totalSize);
+
+        Array.Copy(left.Array,  0, result.Array, 0,            left.SizeUsed);
+        Array.Copy(right,       0, result.Array, left.SizeUsed, rightSize);
+
+        result.SizeUsed = totalSize;
+        result.AccessedAt = Stopwatch.GetTimestamp();
+
+        left.MarkAsFree();
+        CheckForExpiredArrays();
+
+        return result;
     }
 }

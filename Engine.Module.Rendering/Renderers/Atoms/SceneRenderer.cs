@@ -4,6 +4,7 @@ using Engine.Core.Assets.Renderers;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
 using Engine.Core.EntitySystem.Interfaces;
+using Engine.Core.Logging;
 using Engine.Core.Memory;
 using Engine.Core.Profiling;
 using Engine.Module.Rendering.RegistrationHandlers;
@@ -50,7 +51,14 @@ public class SceneRenderer(RenderingHost host)
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingSortRequests);
         
         stopwatch = Profiler.Start();
-        RenderStats.DrawCalls += _renderRequestPool.Values.Count;
+        foreach (var request in _renderRequestPool.Values)
+        {
+            if (request.RenderScript is RenderScript)
+                RenderStats.DrawCalls += 1;
+            else if (request.RenderScript is LaminaRenderScript)
+                RenderStats.LaminaRootDrawCalls += 1;
+        }
+        // RenderStats.DrawCalls += _renderRequestPool.Values.Count;
         foreach (var req in mergedRequests)
         {
             req.RenderScript.Render(
@@ -59,7 +67,8 @@ public class SceneRenderer(RenderingHost host)
                 req.Mesh,
                 (TransformSnapshot[])req.InstanceTransforms.Array,
                 req.Material,
-                (MaterialInstanceSnapshot[])req.MaterialInstances.Array);
+                (MaterialInstanceSnapshot[])req.MaterialInstances.Array,
+                req.ExtraShaderParams.Array);
         }
         stopwatch.StopAndReport(typeof(RenderingHost), ProfilingContext.RenderingSubmitAtoms);
     }
@@ -73,21 +82,25 @@ public class SceneRenderer(RenderingHost host)
         public required int InstanceCount;
         public required MemoryManager.ArrayHandle InstanceTransforms;
         public required MemoryManager.ArrayHandle MaterialInstances;
+        public required MemoryManager.ArrayHandle ExtraShaderParams;
 
         public required int SortOrder;
     
         public static MergedRenderRequest Create(RenderRequest request)
-        { 
+        {
+            var typeOfExtraParams = request.ExtraShaderParams?.GetType();
             var req = new MergedRenderRequest  
-            {
-                Mesh = request.Mesh, 
+            {    
+                Mesh = request.Mesh,   
                 Material = request.Material, 
-                RenderScript = request.RenderScript,
+                RenderScript = request.RenderScript, 
                 InstanceCount = request.InstanceCount,
                 InstanceTransforms = 
                     MemoryManager.ProduceArray<TransformSnapshot>(MemoryDomain.Rendering, request.InstanceCount),
-                MaterialInstances =
+                MaterialInstances = 
                     MemoryManager.ProduceArray<MaterialInstanceSnapshot>(MemoryDomain.Rendering, request.InstanceCount),
+                ExtraShaderParams = 
+                    MemoryManager.ProduceArray(MemoryDomain.Rendering, typeOfExtraParams != null ? typeOfExtraParams.GetElementType()! : typeof(object), request.InstanceCount),
                 SortOrder = request.SortOrder
             };
 
@@ -95,6 +108,8 @@ public class SceneRenderer(RenderingHost host)
                 request.InstanceCount, request.MaterialInstances);
             req.InstanceTransforms = MemoryManager.MergeArrays(MemoryDomain.Rendering, req.InstanceTransforms,
                 request.InstanceCount, request.InstanceTransforms);
+            req.ExtraShaderParams = MemoryManager.MergeArrays(MemoryDomain.Rendering, req.ExtraShaderParams,
+                request.InstanceCount, request.ExtraShaderParams as Array);
             return req;
         }
     }

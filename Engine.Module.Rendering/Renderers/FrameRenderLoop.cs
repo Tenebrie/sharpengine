@@ -22,7 +22,6 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
     private readonly CullingComputer _cullingComputer = new(host);
     
     // Renderers
-    private readonly DebugFramerateFrameRenderer _debugFramerateFrameRenderer = new(host, immediateTextRenderer);
     private readonly DebugLogFrameRenderer _debugLogFrameRenderer = new(host, immediateTextRenderer);
     private readonly DebugProfilerFrameRenderer _debugProfilerFrameRenderer = new(host, immediateTextRenderer);
     private readonly LaminaRenderer _laminaRenderer = new(host, ImmediateContext);
@@ -45,6 +44,7 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         
         var fullFrameStopwatch = Profiler.Start();
         
+        RenderStats.Record(ImmediateContext.GetStats());
         ImmediateContext.ClearStats();
         
         PrepareRenderers();
@@ -168,7 +168,6 @@ public class FrameRenderLoop(RenderingHost host, TextRenderer immediateTextRende
         _atomsToRenderCount = 0;
         Array.Clear(_atomsToRender);
         
-        _debugFramerateFrameRenderer.RenderFrameWithTiming(deltaTime);
         _debugLogFrameRenderer.RenderFrameWithTiming(deltaTime);
         _debugProfilerFrameRenderer.RenderFrameWithTiming(deltaTime);
 

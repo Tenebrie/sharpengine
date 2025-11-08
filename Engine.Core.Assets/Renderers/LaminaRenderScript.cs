@@ -1,7 +1,6 @@
 ﻿using Engine.Core.Assets.Materials;
 using Engine.Core.Assets.Rendering;
 using Engine.Core.Common;
-using Engine.Core.Logging;
 
 namespace Engine.Core.Assets.Renderers;
 
@@ -18,7 +17,7 @@ public class LaminaRenderScript : BaseRenderScript<LaminaRenderScript.UserData>
         int instanceCount,
         TransformSnapshot[] transforms,
         MaterialInstanceSnapshot[] instances,
-        UserData userData)
+        UserData[] userData)
     {
         if (_instanceDataPool.Length < instanceCount)
             Array.Resize(ref _instanceDataPool, instanceCount * 2);
@@ -31,7 +30,7 @@ public class LaminaRenderScript : BaseRenderScript<LaminaRenderScript.UserData>
                 Tint = instances[i].Tint,
                 UvOffset = instances[i].UvOffset,
                 UvScale = instances[i].UvScale,
-                BorderRadius = userData.BorderRadius.Downgrade(),
+                BorderRadius = userData[i].BorderRadius.Downgrade(),
             };
         }
 

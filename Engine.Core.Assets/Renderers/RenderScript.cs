@@ -4,17 +4,15 @@ using Engine.Core.Common;
 
 namespace Engine.Core.Assets.Renderers;
 
-public class RenderScript : BaseRenderScript<RenderScript.Dummy>
+public class RenderScript : BaseRenderScript<IRenderScript.DummyData>
 {
     private static InstanceData[] _instanceDataPool = [];
-
-    public struct Dummy;
-
+    
     protected override List<InstanceBufferTicket> WriteInstanceData(
         int instanceCount,
         TransformSnapshot[] transforms,
         MaterialInstanceSnapshot[] instances,
-        Dummy userData)
+        IRenderScript.DummyData[] userData)
     {
         if (_instanceDataPool.Length < instanceCount)
             Array.Resize(ref _instanceDataPool, instanceCount * 2);

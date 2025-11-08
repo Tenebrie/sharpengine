@@ -19,7 +19,7 @@ namespace Engine.Core.EntitySystem.Components.Lamina;
 
 public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable, IDisposable
 {
-    [Component] public StaticMeshComponent MeshComponent;
+    [Component] public LaminaMeshComponent MeshComponent;
     [Component] protected RootWidgetComponent RootWidget;
     
     public Vector2 InternalTextureSize { get; private set; } = new();
@@ -45,9 +45,24 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         set => Transform.Position = new Vector3(value.X, value.Y, Transform.Position.Z);
     }
     public Vector2 Padding { get; set; } = new(0, 0);
+
+    public Vector4Shorthand BorderRadius
+    {
+        get => _borderRadius;
+        set
+        {
+            _borderRadius = value;
+            MeshComponent.ExtraShaderParams = new LaminaRenderScript.UserData
+            {
+                BorderRadius = BorderRadius
+            };
+            Dirty = true;
+        }
+    }
+
     public Vector2 Size
     {
-        get => _explicitSize ?? Vector2.Zero;
+        get => _explicitSize ?? _inferredSize ?? Vector2.Zero;
         set
         {
             _explicitSize = value;
@@ -57,6 +72,8 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
     public Vector2 ContentSize => Size - Padding * 2;
     public Vector2 InnerContentSize => RootWidget.ContentSize;
     private Vector2? _explicitSize = null;
+    private Vector2? _inferredSize = null;
+    private Vector4Shorthand _borderRadius = 0.0;
 
     private Color _backgroundColor = Color.FromArgb(0, 0, 0, 0);
     public Color BackgroundColor
@@ -82,6 +99,10 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         MeshComponent.SortOrder = 1;
         MeshComponent.CullingEnabled = false;
         MeshComponent.RenderScript = IRenderScript.LaminaWidget;
+        MeshComponent.ExtraShaderParams = new LaminaRenderScript.UserData
+        {
+            BorderRadius = BorderRadius
+        };
         Transform.Position = new Vector3(0, 0, 0);
         Transform.Scale = new Vector3(Size.X, Size.Y, 1);
         Dirty = true;
@@ -145,7 +166,6 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         if (_renderTargetReady)
             _renderTargets.Target.Dispose();
         
-        // Logger.Info("Creating texture " + Size);
         if (Size == Vector2.Zero)
             return;
 
@@ -196,7 +216,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
             largestY = Math.Max(largestY, child.Position.Y + child.MinSize.Y);
         }
         
-        Size = (largestX, largestY) + Padding * 2;
+        _inferredSize = (largestX, largestY) + Padding * 2;
         Transform.Scale = new Vector3(Size.X, Size.Y, 1);
         
         renderContext.PopWidget();
@@ -271,7 +291,6 @@ public class InterfacePlaneMesh : StaticMesh
                 .WithDepthTest(false, false)
                 .WithAlphaBlending(false, false);
         });
-        // AssetManager.Shared.Meshes.Put("Generated/InterfacePlaneMesh", this);
         return this;
     }
 }

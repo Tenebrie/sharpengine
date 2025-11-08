@@ -65,7 +65,7 @@ public struct LaminaRenderRequest
     public required MaterialInstanceSnapshot[] MaterialInstances;
     
     public Rect? ScissorRect;
-    public required LaminaRenderScript.UserData ShaderParams;
+    public required LaminaRenderScript.UserData[] ShaderParams;
 }
 
 public struct LaminaTextRenderRequest
