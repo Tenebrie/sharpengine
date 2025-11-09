@@ -1,4 +1,5 @@
 ﻿using Engine.Core.Common;
+using Engine.Core.Communication.Tasks;
 using Engine.Core.Logging;
 using Engine.Core.Modules.EntitySystem;
 using Silk.NET.GLFW;
@@ -91,10 +92,13 @@ public partial class InputHandler
     
     public void RecalculateMouseCursor()
     {
-        var cursor = GetStandardCursor();
-        var mode = GetCursorMode();
-        SetMouseCursor(cursor);
-        SetMouseCursorMode(mode);
+        MainThreadTask.Run(() =>
+        {
+            var cursor = GetStandardCursor();
+            var mode = GetCursorMode();
+            SetMouseCursor(cursor);
+            SetMouseCursorMode(mode);
+        });
     }
     
     public void BindMouseEvents(IMouse mouse)

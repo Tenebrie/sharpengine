@@ -64,7 +64,7 @@ public partial class InputHandler
 
     private void OnKeyDown(IKeyboard keyboard, Key key, int num)
     {
-        MainThreadTask.Run(() => OnKeyDownHandler(key));
+        GameThreadTask.Run(() => OnKeyDownHandler(key));
     }
     private void OnKeyDownHandler(Key key)
     {
@@ -92,7 +92,7 @@ public partial class InputHandler
 
     private void OnKeyUp(IKeyboard keyboard, Key key, int num)
     {
-        MainThreadTask.Run(() => OnKeyUpHandler(key));
+        GameThreadTask.Run(() => OnKeyUpHandler(key));
     }
     
     private void OnKeyUpHandler(Key key)

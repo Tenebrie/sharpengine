@@ -56,9 +56,9 @@ public partial class SettingsMenuScene : Scene
         Widget.SetLayout(v =>
         {
             Widget.Position = (-5000, -5000);
-            MainThreadTask.NextFrame(() =>
+            GameThreadTask.NextFrame(() =>
             {  
-                MainThreadTask.NextFrame(() =>
+                GameThreadTask.NextFrame(() =>
                 {
                     Widget.Position = Backstage.Window.Size / 2 - Widget.InnerContentSize / 2;
                 });

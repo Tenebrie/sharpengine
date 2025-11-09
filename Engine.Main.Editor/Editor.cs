@@ -1,4 +1,5 @@
 ﻿using System.Runtime;
+using Engine.Core.Communication.Tasks;
 using Engine.Core.Enum;
 using Engine.Core.Extensions;
 using Engine.Core.Logging;
@@ -129,6 +130,11 @@ internal class EntryPoint : IEntryPoint
         MainWindow.Update += deltaTime =>
         {
             deltaTotal += deltaTime;
+            if (deltaTotal < 0.003)
+                return;
+            
+            MainThreadTask.ExecuteAllQueued();
+            
             if (deltaTotal < 0.05)
                 return;
             

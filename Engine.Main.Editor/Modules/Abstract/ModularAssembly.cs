@@ -17,7 +17,7 @@ public abstract class ModularAssembly(string assemblyName, EngineModule module) 
     {
         if (Loader.Assembly is not null)
         {
-            MainThreadTask.Purge(Loader.Assembly);
+            GameThreadTask.Purge(Loader.Assembly);
             RenderThreadTask.Purge(Loader.Assembly);
         }
         base.Unload();

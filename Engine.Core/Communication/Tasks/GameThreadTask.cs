@@ -103,6 +103,16 @@ public static class MainThreadTask
     public static void Purge(Assembly assembly) => Handle.Purge(assembly);
 }
 
+public static class GameThreadTask
+{
+    private static readonly MarshaledTask Handle = new("GameThread");
+    public static long Run(Action action) => Handle.Run(action, "", Assembly.GetCallingAssembly());
+    public static long NextFrame(Action action) => Handle.NextFrame(action, "", Assembly.GetCallingAssembly());
+    public static void Cancel(long taskId) => Handle.Cancel(taskId);
+    public static void ExecuteAllQueued() => Handle.ExecuteAllQueued();
+    public static void Purge(Assembly assembly) => Handle.Purge(assembly);
+}
+
 public static class RenderThreadTask
 {
     private static readonly MarshaledTask Handle = new("RenderThread");

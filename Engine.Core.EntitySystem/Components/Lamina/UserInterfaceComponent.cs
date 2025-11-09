@@ -112,7 +112,7 @@ public partial class UserInterfaceComponent : ActorComponent, ILaminaRenderable,
         
         Backstage.Window.ResizeDebounced.Connect(this, _ =>
         {
-            MainThreadTask.Run(() =>
+            GameThreadTask.Run(() =>
             {
                 Dirty = true;
                 if (_layoutFunction != null)

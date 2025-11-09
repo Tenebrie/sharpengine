@@ -44,7 +44,7 @@ public class GameLogicThread(IEntryPoint entryPoint)
                         Thread.Sleep(1);
                 }
                 
-                MainThreadTask.ExecuteAllQueued();
+                GameThreadTask.ExecuteAllQueued();
                 
                 var currentTime = stopwatch.Elapsed.TotalMicroseconds;
                 var deltaTime = (currentTime - lastFrameTime) / 1000000.0;
